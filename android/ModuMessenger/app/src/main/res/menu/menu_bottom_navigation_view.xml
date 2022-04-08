@@ -2,15 +2,15 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/searchItem"
-        android:icon="@android:drawable/ic_menu_search"
-        android:title="Search" />
-    <item
-        android:id="@+id/cameraItem"
-        android:icon="@android:drawable/ic_menu_camera"
-        android:title="Camera" />
-    <item
-        android:id="@+id/callItem"
+        android:id="@+id/friendsItem"
         android:icon="@android:drawable/ic_menu_call"
-        android:title="Call" />
+        android:title="@string/friends" />
+    <item
+        android:id="@+id/chatItem"
+        android:icon="@android:drawable/sym_action_chat"
+        android:title="@string/chat" />
+    <item
+        android:id="@+id/settingItem"
+        android:icon="@android:drawable/ic_menu_search"
+        android:title="@string/setting" />
 </menu>

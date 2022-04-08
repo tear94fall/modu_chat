@@ -1,4 +1,4 @@
-package com.example.myapplication.Fragments;
+package com.example.modumessenger.Fragments;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -12,7 +12,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.modumessenger.R;
 
-public class FragmentCamera extends Fragment {
+public class FragmentChat extends Fragment {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -41,7 +41,7 @@ public class FragmentCamera extends Fragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_camera, container, false);
+        return inflater.inflate(R.layout.fragment_friends, container, false);
     }
 
 }

@@ -11,9 +11,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
-import com.example.myapplication.Fragments.FragmentCall;
-import com.example.myapplication.Fragments.FragmentCamera;
-import com.example.myapplication.Fragments.FragmentSearch;
+import com.example.modumessenger.Fragments.FragmentFriends;
+import com.example.modumessenger.Fragments.FragmentChat;
+import com.example.modumessenger.Fragments.FragmentSetting;
 import com.example.modumessenger.R;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
@@ -21,9 +21,9 @@ import com.google.android.material.navigation.NavigationBarView;
 public class MainActivity extends AppCompatActivity {
 
     private final FragmentManager fragmentManager = getSupportFragmentManager();
-    private final FragmentSearch fragmentSearch = new FragmentSearch();
-    private final FragmentCamera fragmentCamera = new FragmentCamera();
-    private final FragmentCall fragmentCall = new FragmentCall();
+    private final FragmentFriends fragmentFriends = new FragmentFriends();
+    private final FragmentChat fragmentChat = new FragmentChat();
+    private final FragmentSetting fragmentSetting = new FragmentSetting();
 
     private boolean isReady = false;
 
@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
                 });
 
         FragmentTransaction transaction = fragmentManager.beginTransaction();
-        transaction.replace(R.id.frameLayout, fragmentSearch).commitAllowingStateLoss();
+        transaction.replace(R.id.frameLayout, fragmentFriends).commitAllowingStateLoss();
 
         BottomNavigationView bottomNavigationView = findViewById(R.id.navigationView);
         bottomNavigationView.setOnItemSelectedListener(new ItemSelectedListener());
@@ -72,14 +72,14 @@ public class MainActivity extends AppCompatActivity {
             FragmentTransaction transaction = fragmentManager.beginTransaction();
 
             switch(menuItem.getItemId()) {
-                case R.id.searchItem:
-                    transaction.replace(R.id.frameLayout, fragmentSearch).commitAllowingStateLoss();
+                case R.id.friendsItem:
+                    transaction.replace(R.id.frameLayout, fragmentFriends).commitAllowingStateLoss();
                     break;
-                case R.id.cameraItem:
-                    transaction.replace(R.id.frameLayout, fragmentCamera).commitAllowingStateLoss();
+                case R.id.chatItem:
+                    transaction.replace(R.id.frameLayout, fragmentChat).commitAllowingStateLoss();
                     break;
-                case R.id.callItem:
-                    transaction.replace(R.id.frameLayout, fragmentCall).commitAllowingStateLoss();
+                case R.id.settingItem:
+                    transaction.replace(R.id.frameLayout, fragmentSetting).commitAllowingStateLoss();
                     break;
             }
             return true;

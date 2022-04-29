@@ -15,3 +15,9 @@ spring:
       hibernate:
         format_sql: true
     show-sql: true
+
+security:
+  jwt:
+    token:
+      secret-key: modu_secret_key
+      expire-length: 3600000

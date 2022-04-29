@@ -3,15 +3,19 @@
     package="com.example.modumessenger">
 
     <application
+        android:name=".Global.App"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.ModuMessenger">
+        android:theme="@style/Theme.ModuMessenger"
+        android:usesCleartextTraffic="true">
 
+        <!-- activities -->
         <activity android:name=".Activity.LoginActivity" />
         <activity android:name=".Activity.MainActivity" />
+
         <activity
             android:name=".Activity.SplashActivity"
             android:theme="@style/SplashTheme"
@@ -22,5 +26,9 @@
             </intent-filter>
         </activity>
     </application>
+
+    <!-- permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
 </manifest>

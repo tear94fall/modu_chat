@@ -25,11 +25,6 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
         Member member = memberRepository.searchMemberByUserId(userId).orElseThrow(() -> new NoSuchElementException("일치하는 계정이 없습니다."));
 
-        System.out.println("userid : " + userId);
-        System.out.println("email : " + email);
-        System.out.println("email : " + member.getEmail());
-
-//        if(!CompareEmail(email, member)) {
         if(!email.equals(member.getEmail())) {
             throw new NoSuchElementException("이메일이 일치하지 않습니다.");
         }

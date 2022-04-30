@@ -6,7 +6,9 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -65,7 +67,6 @@ public class LoginActivity extends AppCompatActivity {
             SignupMember(member);
         } catch (ApiException e) {
             Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
-            updateUI(null);
         }
     }
 
@@ -87,6 +88,7 @@ public class LoginActivity extends AppCompatActivity {
         Button.OnClickListener onClickListener = v -> {
             if (v.getId() == R.id.googleButton) {
                 Log.d("로그인 버튼 클릭: ", "구글");
+                Toast.makeText(this.getApplicationContext(),"회원 가입을 시작합니다.", Toast.LENGTH_SHORT).show();
                 signIn();
             }
         };
@@ -99,35 +101,13 @@ public class LoginActivity extends AppCompatActivity {
         super.onStart();
         GoogleSignInAccount account = getLastSignedInAccount(this);
 
-        Log.d("소셜 로그인 시도: ", "구글");
-
         if(account!=null){
+            Log.d("이미 가입된 사용자 입니다. 소셜 로그인 시도: ", "구글");
+            Toast.makeText(this.getApplicationContext(),"로그인을 시도 합니다.", Toast.LENGTH_SHORT).show();
+
+            LoginButton.setVisibility(View.INVISIBLE);
             GetUserIdByLogin(account.getEmail());
         }
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == RC_SIGN_IN) {
-            Task<GoogleSignInAccount> task = getSignedInAccountFromIntent(data);
-            handleSignInResult(task);
-        }
-    }
-
-    private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
-        try {
-            GoogleSignInAccount account = completedTask.getResult(ApiException.class);
-
-            updateUI(account);
-        } catch (ApiException e) {
-            Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
-            updateUI(null);
-        }
-    }
-
-    private void updateUI(GoogleSignInAccount account) {
     }
 
     private void signIn() {
@@ -155,7 +135,7 @@ public class LoginActivity extends AppCompatActivity {
                     Log.d("중복검사: ", "중복된 번호가 아닙니다");
                 }
 
-                Log.d("로그인 요청` : ", response.body().toString());
+                Log.d("회원가입 요청 : ", response.body().toString());
                 LoginMember(result.getUserId(), result.getEmail());
             }
 
@@ -175,11 +155,14 @@ public class LoginActivity extends AppCompatActivity {
             public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void > response) {
                 if(!response.isSuccessful()){
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
+                    Toast.makeText(getApplicationContext(),"연결이 원활하지 않습니다.", Toast.LENGTH_SHORT).show();
                 }
 
                 String jwtToken = response.headers().get("token");
+                Log.e("jwt 토큰 발급 완료 : ", jwtToken);
                 PreferenceManager.setString("token", "Bearer" + " " + jwtToken);
+
+                Toast.makeText(getApplicationContext(),"로그인에 성공 하였습니다. 반갑습니다.", Toast.LENGTH_SHORT).show();
 
                 Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                 startActivity(intent);
@@ -189,6 +172,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
+                Toast.makeText(getApplicationContext(),"로그인에 실패하였습니다.", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -202,17 +186,18 @@ public class LoginActivity extends AppCompatActivity {
             public void onResponse(@NonNull Call<Member> call, @NonNull Response<Member> response) {
                 if(!response.isSuccessful()){
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                    Toast.makeText(getApplicationContext(),"연결이 원활하지 않습니다.", Toast.LENGTH_SHORT).show();
                 }
 
                 Member result = response.body();
+                assert result != null;
 
-                Log.d("로그인 요청` : ", response.body().toString());
                 LoginMember(result.getUserId(), result.getEmail());
             }
 
             @Override
             public void onFailure(@NonNull Call<Member> call, @NonNull Throwable t) {
-                Log.e("연결실패", t.getMessage());
+                Log.e("사용자 아이디 가져오기 실패", t.getMessage());
             }
         });
     }

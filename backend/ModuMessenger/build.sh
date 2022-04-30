@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# remove *.jar file
+rm build/libs/*
+
+# gradle clean
+./gradlew clean build
+
+# gradle build
+./gradlew build
+
 # stop container
 docker stop modu-chat
 

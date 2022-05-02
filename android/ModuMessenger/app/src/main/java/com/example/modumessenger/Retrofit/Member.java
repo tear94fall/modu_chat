@@ -54,7 +54,7 @@ public class Member implements Parcelable {
     public void setEmail(String email) { this.email = email; }
     public void setUsername(String username) { this.username = username; }
     public void setAuth(String auth) { this.auth = auth; }
-    public void setStatusMessage(String statusMessage) { this.username = statusMessage; }
+    public void setStatusMessage(String statusMessage) { this.statusMessage = statusMessage; }
     public void setProfileImage(String profileImage) { this.profileImage = profileImage; }
 
 

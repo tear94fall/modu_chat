@@ -75,7 +75,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        setTitle("Modu Login");
+        setTitle("로그인");
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
@@ -191,6 +191,11 @@ public class LoginActivity extends AppCompatActivity {
 
                 Member result = response.body();
                 assert result != null;
+
+                PreferenceManager.setString("userId", result.getUserId());
+                PreferenceManager.setString("username", result.getUsername());
+                PreferenceManager.setString("profileImage", result.getProfileImage());
+                PreferenceManager.setString("statusMessage", result.getStatusMessage());
 
                 LoginMember(result.getUserId(), result.getEmail());
             }

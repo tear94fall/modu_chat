@@ -11,18 +11,20 @@ import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.R;
 
 public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.MyViewHolder> {
 
-    String data1[], data2[];
-    int images[];
+    String[] username;
+    String[] statusMessage;
+    String[] profileImage;
 
-    public FriendsAdapter(String s1[], String s2[], int img[]) {
-        data1 = s1;
-        data2 = s2;
-        images = img;
+    public FriendsAdapter(String[] username, String[] statusMessage, String[] profileImage) {
+        this.username = username;
+        this.statusMessage = statusMessage;
+        this.profileImage = profileImage;
     }
 
     @NonNull
@@ -35,17 +37,17 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.MyViewHo
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-        holder.textView1.setText(data1[position]);
-        holder.textView2.setText(data2[position]);
-        holder.imageView.setImageResource(images[position]);
+        holder.textView1.setText(username[position]);
+        holder.textView2.setText(statusMessage[position]);
+        Glide.with(holder.imageView).load(profileImage[position]).into(holder.imageView);
 
         holder.cardViewLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(v.getContext(), ProfileActivity.class);
-                intent.putExtra("title", data1[position]);
-                intent.putExtra("description", data2[position]);
-                intent.putExtra("images", images[position]);
+                intent.putExtra("username", username[position]);
+                intent.putExtra("statusMessage", statusMessage[position]);
+                intent.putExtra("profileImage", profileImage[position]);
 
                 v.getContext().startActivity(intent);
             }
@@ -54,10 +56,10 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.MyViewHo
 
     @Override
     public int getItemCount() {
-        return images.length;
+        return profileImage.length;
     }
 
-    public class MyViewHolder extends RecyclerView.ViewHolder {
+    public static class MyViewHolder extends RecyclerView.ViewHolder {
 
         TextView textView1, textView2;
         ImageView imageView;

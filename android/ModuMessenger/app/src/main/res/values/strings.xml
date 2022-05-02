@@ -37,4 +37,21 @@
         <item>Hello world!!</item>
         <item>Hello world!!</item>
     </string-array>
+
+    <string-array name="images" >
+        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
+        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
+        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
+        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
+        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
+        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
+        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
+        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
+        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
+        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
+        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
+        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
+        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
+        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
+    </string-array>
 </resources>

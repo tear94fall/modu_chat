@@ -5,6 +5,7 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.gson.annotations.SerializedName;
 
 import java.time.LocalDateTime;
@@ -23,6 +24,18 @@ public class Member implements Parcelable {
     @SerializedName("profileImage")
     private String profileImage;
 
+    public Member() {
+
+    }
+
+    public Member(GoogleSignInAccount account) {
+        setUserId(account.getEmail());
+        setEmail(account.getEmail());
+        setAuth("google");
+        setUsername(account.getDisplayName());
+        setStatusMessage("Hello! Modu Chat!");
+        setProfileImage(account.getPhotoUrl() == null ? null : account.getPhotoUrl().toString());
+    }
 
     public Member(String email) {
         this.userId = null;
@@ -55,7 +68,7 @@ public class Member implements Parcelable {
     public void setUsername(String username) { this.username = username; }
     public void setAuth(String auth) { this.auth = auth; }
     public void setStatusMessage(String statusMessage) { this.statusMessage = statusMessage; }
-    public void setProfileImage(String profileImage) { this.profileImage = profileImage; }
+    public void setProfileImage(String profileImage) { this.profileImage = profileImage == null || profileImage.equals("") ? "" : profileImage; }
 
 
     @NonNull

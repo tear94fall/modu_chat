@@ -14,7 +14,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
-            android:id="@+id/imageView2"
+            android:id="@+id/my_profile_image"
             android:layout_width="70dp"
             android:layout_height="70dp"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -25,7 +25,7 @@
             tools:srcCompat="@tools:sample/avatars" />
 
         <TextView
-            android:id="@+id/textView"
+            android:id="@+id/my_user_name"
             android:layout_width="37dp"
             android:layout_height="22dp"
             android:text="Title"
@@ -37,7 +37,7 @@
             app:layout_constraintVertical_bias="0.291" />
 
         <TextView
-            android:id="@+id/textView4"
+            android:id="@+id/my_status_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Description"

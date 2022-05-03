@@ -14,17 +14,16 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.R;
+import com.example.modumessenger.dto.MemberDto;
+
+import java.util.List;
 
 public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.MyViewHolder> {
 
-    String[] username;
-    String[] statusMessage;
-    String[] profileImage;
+    List<MemberDto> friendsList;
 
-    public FriendsAdapter(String[] username, String[] statusMessage, String[] profileImage) {
-        this.username = username;
-        this.statusMessage = statusMessage;
-        this.profileImage = profileImage;
+    public FriendsAdapter(List<MemberDto> friendsList) {
+        this.friendsList = friendsList;
     }
 
     @NonNull
@@ -37,40 +36,52 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.MyViewHo
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-        holder.textView1.setText(username[position]);
-        holder.textView2.setText(statusMessage[position]);
-        Glide.with(holder.imageView).load(profileImage[position]).into(holder.imageView);
+        MemberDto member = this.friendsList.get(position);
 
-        holder.cardViewLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(v.getContext(), ProfileActivity.class);
-                intent.putExtra("username", username[position]);
-                intent.putExtra("statusMessage", statusMessage[position]);
-                intent.putExtra("profileImage", profileImage[position]);
-
-                v.getContext().startActivity(intent);
-            }
-        });
+        holder.setUserInfo(member);
+        holder.setUserClickEvent(member);
     }
 
     @Override
     public int getItemCount() {
-        return profileImage.length;
+        return this.friendsList.size();
     }
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
 
-        TextView textView1, textView2;
-        ImageView imageView;
+        TextView username;
+        TextView statusMessage;
+        ImageView profileImage;
         ConstraintLayout cardViewLayout;
 
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
-            textView1 = itemView.findViewById(R.id.textView);
-            textView2 = itemView.findViewById(R.id.textView4);
-            imageView = itemView.findViewById(R.id.imageView2);
+            username = itemView.findViewById(R.id.my_user_name);
+            statusMessage = itemView.findViewById(R.id.my_status_message);
+            profileImage = itemView.findViewById(R.id.my_profile_image);
             cardViewLayout = itemView.findViewById(R.id.cardViewLayout);
+        }
+
+        public void setUserInfo(MemberDto member) {
+            this.username.setText(member.getUsername());
+            this.statusMessage.setText(member.getStatusMessage());
+            Glide.with(profileImage)
+                    .load(member.getProfileImage())
+                    .error(Glide.with(profileImage)
+                            .load(R.drawable.basic_profile_image)
+                            .into(profileImage))
+                    .into(profileImage);
+        }
+
+        public void setUserClickEvent(MemberDto member) {
+            this.cardViewLayout.setOnClickListener(v -> {
+                Intent intent = new Intent(v.getContext(), ProfileActivity.class);
+                intent.putExtra("username", member.getUsername());
+                intent.putExtra("statusMessage", member.getStatusMessage());
+                intent.putExtra("profileImage", member.getProfileImage());
+
+                v.getContext().startActivity(intent);
+            });
         }
     }
 }

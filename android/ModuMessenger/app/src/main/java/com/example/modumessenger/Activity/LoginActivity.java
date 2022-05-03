@@ -27,6 +27,8 @@ import com.google.android.gms.tasks.Task;
 
 import com.example.modumessenger.Retrofit.*;
 
+import java.util.Objects;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -57,14 +59,7 @@ public class LoginActivity extends AppCompatActivity {
     private void SignupToBackend(Task<GoogleSignInAccount> completedTask) {
         try {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
-
-            Member member = new Member(account.getEmail(), account.getEmail());
-            member.setAuth("google");
-            member.setUsername(account.getDisplayName());
-            member.setStatusMessage("Hello! Modu Chat!");
-            member.setProfileImage(account.getPhotoUrl().toString());
-
-            SignupMember(member);
+            SignupMember(new Member(account));
         } catch (ApiException e) {
             Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
         }
@@ -127,15 +122,13 @@ public class LoginActivity extends AppCompatActivity {
                 }
 
                 Member result = response.body();
-
-                assert response.body() != null;
                 assert result != null;
 
                 if(member.getEmail().equals(result.getEmail())){
                     Log.d("중복검사: ", "중복된 번호가 아닙니다");
                 }
 
-                Log.d("회원가입 요청 : ", response.body().toString());
+                Log.d("회원가입 요청 : ", result.toString());
                 LoginMember(result.getUserId(), result.getEmail());
             }
 

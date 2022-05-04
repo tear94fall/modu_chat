@@ -9,6 +9,10 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -31,6 +35,7 @@ public class MemberService {
         member.setEmail(memberDto.getEmail());
         member.setStatusMessage(memberDto.getStatusMessage());
         member.setProfileImage(memberDto.getProfileImage());
+        member.setFriends(new ArrayList<>());
 
         Member save = memberRepository.save(member);
 
@@ -42,5 +47,15 @@ public class MemberService {
     public MemberDto getUserIdByEmail(String email) {
         Member findMember = memberRepository.searchMemberByUserId(email).orElseGet(Member::new);
         return modelMapper.map(findMember, MemberDto.class);
+    }
+
+    public List<MemberDto> getFriendsList(String userId) {
+        Member member = memberRepository.findByUserId(userId);
+        List<Member> memberList = memberRepository.findAllFriends(member.getFriends());
+
+        return memberList
+                .stream()
+                .map(u -> modelMapper.map(u, MemberDto.class))
+                .collect(Collectors.toList());
     }
 }

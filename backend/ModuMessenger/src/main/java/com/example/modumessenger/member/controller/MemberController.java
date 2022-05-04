@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,4 +32,13 @@ public class MemberController {
         return ResponseEntity.ok().body(modelMapper.map(memberDto, ResponseMemberDto.class));
     }
 
+    @GetMapping("group/{userId}/friends")
+    public ResponseEntity<List<ResponseMemberDto>> friendsList(@Valid @PathVariable("userId") String userId) {
+        List<MemberDto> friendsList = memberService.getFriendsList(userId);
+        List<ResponseMemberDto> result = friendsList.stream()
+                .map(f -> modelMapper.map(f, ResponseMemberDto.class))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok().body(result);
+    }
 }

@@ -6,6 +6,7 @@ import lombok.*;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.List;
 
 @Entity
 @Getter
@@ -30,6 +31,11 @@ public class Member extends BaseTimeEntity {
 
     private String statusMessage;
     private String profileImage;
+
+    @ElementCollection
+    @CollectionTable(name = "friends", joinColumns = @JoinColumn(name = "id"))
+    @Column(name = "friends")
+    private List<Long> Friends;
 
     @Override
     public String toString() {

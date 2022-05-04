@@ -24,24 +24,24 @@ public class FragmentChat extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        Log.e("DEBUG", "onResume of FragmentCamera");
+        Log.e("DEBUG", "onResume of FragmentChat");
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        Log.e("DEBUG", "onPause of FragmentCamera");
+        Log.e("DEBUG", "onPause of FragmentChat");
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        Log.e("DEBUG", "onStop of FragmentCamera");
+        Log.e("DEBUG", "onStop of FragmentChat");
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_friends, container, false);
+        return inflater.inflate(R.layout.fragment_chat, container, false);
     }
 
 }

@@ -7,9 +7,11 @@ import androidx.fragment.app.FragmentTransaction;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.widget.Toast;
 
 import com.example.modumessenger.Fragments.FragmentFriends;
 import com.example.modumessenger.Fragments.FragmentChat;
@@ -60,12 +62,13 @@ public class MainActivity extends AppCompatActivity {
 
         FragmentTransaction transaction = fragmentManager.beginTransaction();
         transaction.replace(R.id.frameLayout, fragmentFriends).commitAllowingStateLoss();
+        setTitle("친구");
 
         BottomNavigationView bottomNavigationView = findViewById(R.id.navigationView);
         bottomNavigationView.setOnItemSelectedListener(new ItemSelectedListener());
     }
 
-     class ItemSelectedListener implements NavigationBarView.OnItemSelectedListener{
+    class ItemSelectedListener implements NavigationBarView.OnItemSelectedListener{
         @SuppressLint("NonConstantResourceId")
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
@@ -73,16 +76,38 @@ public class MainActivity extends AppCompatActivity {
 
             switch(menuItem.getItemId()) {
                 case R.id.friendsItem:
+                    setTitle("친구");
                     transaction.replace(R.id.frameLayout, fragmentFriends).commitAllowingStateLoss();
                     break;
                 case R.id.chatItem:
+                    setTitle("채팅");
                     transaction.replace(R.id.frameLayout, fragmentChat).commitAllowingStateLoss();
                     break;
                 case R.id.settingItem:
+                    setTitle("설정");
                     transaction.replace(R.id.frameLayout, fragmentSetting).commitAllowingStateLoss();
                     break;
             }
             return true;
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_friends_list, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int itemId = item.getItemId();
+
+        if(itemId == R.id.menu_search) {
+            Toast.makeText(this, "검색", Toast.LENGTH_LONG).show();
+        } else if(itemId == R.id.menu_settings) {
+            Toast.makeText(this, "설정", Toast.LENGTH_LONG).show();
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 }

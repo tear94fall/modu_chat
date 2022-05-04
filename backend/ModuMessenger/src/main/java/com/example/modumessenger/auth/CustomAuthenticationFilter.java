@@ -1,6 +1,6 @@
 package com.example.modumessenger.auth;
 
-import com.example.modumessenger.member.dto.RequestLoginDto;
+import com.example.modumessenger.member.dto.RequestMemberDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -32,7 +32,7 @@ public class CustomAuthenticationFilter extends AbstractAuthenticationProcessing
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException, ServletException {
 
         try {
-            RequestLoginDto dto = new ObjectMapper().readValue(request.getReader(), RequestLoginDto.class);
+            RequestMemberDto dto = new ObjectMapper().readValue(request.getReader(), RequestMemberDto.class);
             return getAuthenticationManager().authenticate(
                     new CustomAuthenticationToken(dto.getUserId(), dto.getEmail(), new ArrayList<>())
             );

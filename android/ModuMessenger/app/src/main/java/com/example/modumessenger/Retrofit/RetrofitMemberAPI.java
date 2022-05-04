@@ -8,6 +8,7 @@ import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
+import retrofit2.http.Path;
 
 public interface RetrofitMemberAPI {
 
@@ -20,6 +21,6 @@ public interface RetrofitMemberAPI {
     @POST("member")
     Call<Member> RequestUserId(@Body Member member);
 
-    @GET("member/friends")
-    Call<List<MemberDto>> RequestFriends(@Body Member member);
+    @GET("group/{userId}/friends")
+    Call<List<MemberDto>> RequestFriends(@Path("userId") String userId);
 }

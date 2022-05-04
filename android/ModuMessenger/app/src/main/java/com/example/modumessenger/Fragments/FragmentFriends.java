@@ -25,7 +25,6 @@ import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.MemberDto;
 
 import java.util.List;
-import java.util.Objects;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -94,10 +93,10 @@ public class FragmentFriends extends Fragment {
         super.onResume();
         Log.e("DEBUG", "onResume of FragmentFriends");
 
-        Member member = new Member("asdf", "asdf");
+        Member member = new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email"));
 
-        getMyProfileInfo(member);
         getFriendsList(member);
+        getMyProfileInfo(member);
     }
 
     @Override
@@ -114,7 +113,7 @@ public class FragmentFriends extends Fragment {
 
     // Retrofit function
     public void getFriendsList(Member member) {
-        Call<List<MemberDto>> call = RetrofitClient.getApiService().RequestFriends(member);
+        Call<List<MemberDto>> call = RetrofitClient.getApiService().RequestFriends(member.getUserId());
 
         call.enqueue(new Callback<List<MemberDto>>() {
             @Override
@@ -144,7 +143,7 @@ public class FragmentFriends extends Fragment {
     }
 
     public void getMyProfileInfo(Member member) {
-        Call<Member> call = RetrofitClient.getApiService().RequestSignup(member);
+        Call<Member> call = RetrofitClient.getApiService().RequestUserId(member);
 
         call.enqueue(new Callback<Member>() {
             @Override

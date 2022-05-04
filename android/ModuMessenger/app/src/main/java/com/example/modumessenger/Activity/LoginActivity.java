@@ -145,7 +145,7 @@ public class LoginActivity extends AppCompatActivity {
 
         call.enqueue(new Callback<Void>() {
             @Override
-            public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void > response) {
+            public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
                 if(!response.isSuccessful()){
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
                     Toast.makeText(getApplicationContext(),"연결이 원활하지 않습니다.", Toast.LENGTH_SHORT).show();
@@ -176,7 +176,7 @@ public class LoginActivity extends AppCompatActivity {
 
         call.enqueue(new Callback<Member>() {
             @Override
-            public void onResponse(@NonNull Call<Member> call, @NonNull Response<Member> response) {
+            public void onResponse(@NonNull Call<Member> call, Response<Member> response) {
                 if(!response.isSuccessful()){
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
                     Toast.makeText(getApplicationContext(),"연결이 원활하지 않습니다.", Toast.LENGTH_SHORT).show();
@@ -186,6 +186,7 @@ public class LoginActivity extends AppCompatActivity {
                 assert result != null;
 
                 PreferenceManager.setString("userId", result.getUserId());
+                PreferenceManager.setString("email", result.getEmail());
                 PreferenceManager.setString("username", result.getUsername());
                 PreferenceManager.setString("profileImage", result.getProfileImage());
                 PreferenceManager.setString("statusMessage", result.getStatusMessage());

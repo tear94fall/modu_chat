@@ -58,4 +58,20 @@ public class MemberService {
                 .map(u -> modelMapper.map(u, MemberDto.class))
                 .collect(Collectors.toList());
     }
+
+    public MemberDto addFriends(String userId, MemberDto memberDto) {
+        if(!memberRepository.existsByEmail(memberDto.getEmail())) {
+            throw new DuplicateKeyException(String.format(
+                    "존재하지 않는 유저입니다 'auth: %s, email: %s'", memberDto.getAuth(), memberDto.getEmail()
+            ));
+        }
+
+        Member member = memberRepository.findByUserId(userId);
+        Member friend = memberRepository.findByEmail(memberDto.getEmail());
+
+        member.getFriends().add(friend.getId());
+        memberRepository.save(member);
+
+        return modelMapper.map(friend, MemberDto.class);
+    }
 }

@@ -23,4 +23,7 @@ public interface RetrofitMemberAPI {
 
     @GET("group/{userId}/friends")
     Call<List<MemberDto>> RequestFriends(@Path("userId") String userId);
+
+    @POST("member/{userId}/friends")
+    Call<Member> RequestAddFriends(@Path("userId") String userId, @Body Member member);
 }

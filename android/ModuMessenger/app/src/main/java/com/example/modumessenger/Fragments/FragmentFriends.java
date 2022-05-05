@@ -4,10 +4,15 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.Toolbar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,7 +21,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.modumessenger.Activity.MainActivity;
 import com.example.modumessenger.Activity.ProfileActivity;
+import com.example.modumessenger.Activity.SearchActivity;
 import com.example.modumessenger.Adapter.FriendsAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
@@ -25,6 +32,7 @@ import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.MemberDto;
 
 import java.util.List;
+import java.util.Objects;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -54,6 +62,7 @@ public class FragmentFriends extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_friends, container, false);
+        setHasOptionsMenu(true);
 
         // my profile
         myProfileImage = view.findViewById(R.id.myProfileImage);
@@ -93,6 +102,8 @@ public class FragmentFriends extends Fragment {
         super.onResume();
         Log.e("DEBUG", "onResume of FragmentFriends");
 
+        requireActivity().invalidateOptionsMenu();
+
         Member member = new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email"));
 
         getFriendsList(member);
@@ -109,6 +120,28 @@ public class FragmentFriends extends Fragment {
     public void onStop() {
         super.onStop();
         Log.e("DEBUG", "onStop of FragmentFriends");
+    }
+
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.menu_friends_list, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int itemId = item.getItemId();
+
+        if(itemId == R.id.menu_search) {
+            Intent intent = new Intent(getContext(), SearchActivity.class);
+            startActivity(intent);
+            return true;
+        } else if(itemId == R.id.menu_settings) {
+            Toast.makeText(getActivity(), "fragA", Toast.LENGTH_SHORT).show();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     // Retrofit function

@@ -69,9 +69,17 @@ public class MemberService {
         Member member = memberRepository.findByUserId(userId);
         Member friend = memberRepository.findByEmail(memberDto.getEmail());
 
-        member.getFriends().add(friend.getId());
+        memberRepository.findByUserId(userId).getFriends().add(friend.getId());
         memberRepository.save(member);
 
         return modelMapper.map(friend, MemberDto.class);
+    }
+
+    public MemberDto findFriend(String email) {
+        if(!memberRepository.existsByEmail(email)) {
+            throw new DuplicateKeyException(String.format("존재하지 않는 유저의 이메일 입니다 'email: %s'", email));
+        }
+
+        return modelMapper.map(memberRepository.findByEmail(email), MemberDto.class);
     }
 }

@@ -31,4 +31,12 @@ public class MemberRepositoryImpl implements MemberCustomRepository {
                 .where(member.id.in(friendsIds))
                 .fetch();
     }
+
+    @Override
+    public List<Member> findFriendsByEmail(String email) {
+        return queryFactory
+                .selectFrom(member)
+                .where(member.email.eq(email))
+                .fetch();
+    }
 }

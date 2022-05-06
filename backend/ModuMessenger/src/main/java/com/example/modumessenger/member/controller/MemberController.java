@@ -5,6 +5,7 @@ import com.example.modumessenger.member.dto.RequestMemberDto;
 import com.example.modumessenger.member.dto.ResponseMemberDto;
 import com.example.modumessenger.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.Response;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -48,7 +49,12 @@ public class MemberController {
     }
 
     @GetMapping("member/friends/{email}")
-    public ResponseEntity<ResponseMemberDto> findFriend(@Valid @PathVariable("email") String email) {
-        return ResponseEntity.ok().body(modelMapper.map(memberService.findFriend(email), ResponseMemberDto.class));
+    public ResponseEntity<List<ResponseMemberDto>> findFriend(@Valid @PathVariable("email") String email) {
+        List<MemberDto> friendsList = memberService.findFriend(email);
+        List<ResponseMemberDto> result = friendsList.stream()
+                .map(f -> modelMapper.map(f, ResponseMemberDto.class))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok().body(result);
     }
 }

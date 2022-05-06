@@ -75,11 +75,16 @@ public class MemberService {
         return modelMapper.map(friend, MemberDto.class);
     }
 
-    public MemberDto findFriend(String email) {
+    public List<MemberDto> findFriend(String email) {
         if(!memberRepository.existsByEmail(email)) {
             throw new DuplicateKeyException(String.format("존재하지 않는 유저의 이메일 입니다 'email: %s'", email));
         }
 
-        return modelMapper.map(memberRepository.findByEmail(email), MemberDto.class);
+        List<Member> memberList = memberRepository.findFriendsByEmail(email);
+
+        return memberList
+                .stream()
+                .map(u -> modelMapper.map(u, MemberDto.class))
+                .collect(Collectors.toList());
     }
 }

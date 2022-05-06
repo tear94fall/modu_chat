@@ -165,7 +165,7 @@ public class FragmentFriends extends Fragment {
                 String friendCountMessage = "친구 " + count + " 명";
                 friendsCount.setText(friendCountMessage);
 
-                Log.d("회원가입 요청 : ", response.body().toString());
+                Log.d("친구 리스트 가져오기 요청 : ", response.body().toString());
             }
 
             @Override
@@ -205,7 +205,7 @@ public class FragmentFriends extends Fragment {
                     Log.d("중복검사: ", "중복된 번호가 아닙니다");
                 }
 
-                Log.d("회원가입 요청 : ", response.body().toString());
+                Log.d("내 정보 가져오기 요청 : ", response.body().toString());
             }
 
             @Override

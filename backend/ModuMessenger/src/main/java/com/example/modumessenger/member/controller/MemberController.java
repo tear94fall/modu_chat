@@ -32,7 +32,7 @@ public class MemberController {
         return ResponseEntity.ok().body(modelMapper.map(memberDto, ResponseMemberDto.class));
     }
 
-    @GetMapping("group/{userId}/friends")
+    @GetMapping("member/{userId}/friends")
     public ResponseEntity<List<ResponseMemberDto>> friendsList(@Valid @PathVariable("userId") String userId) {
         List<MemberDto> friendsList = memberService.getFriendsList(userId);
         List<ResponseMemberDto> result = friendsList.stream()
@@ -45,5 +45,10 @@ public class MemberController {
     @PostMapping("member/{userId}/friends")
     public ResponseEntity<ResponseMemberDto> addFriends(@Valid @PathVariable("userId") String userId, @RequestBody RequestMemberDto requestMemberDto) {
         return ResponseEntity.ok().body(modelMapper.map(memberService.addFriends(userId, modelMapper.map(requestMemberDto, MemberDto.class)), ResponseMemberDto.class));
+    }
+
+    @GetMapping("member/friends/{email}")
+    public ResponseEntity<ResponseMemberDto> findFriend(@Valid @PathVariable("email") String email) {
+        return ResponseEntity.ok().body(modelMapper.map(memberService.findFriend(email), ResponseMemberDto.class));
     }
 }

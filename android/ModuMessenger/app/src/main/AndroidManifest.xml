@@ -16,6 +16,7 @@
         <activity android:name=".Activity.LoginActivity" />
         <activity android:name=".Activity.MainActivity" />
         <activity android:name=".Activity.ProfileActivity" />
+        <activity android:name=".Activity.SearchActivity" />
 
         <activity
             android:name=".Activity.SplashActivity"

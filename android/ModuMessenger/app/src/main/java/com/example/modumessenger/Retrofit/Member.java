@@ -5,6 +5,7 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
+import com.example.modumessenger.dto.MemberDto;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.gson.annotations.SerializedName;
 
@@ -24,8 +25,17 @@ public class Member implements Parcelable {
     @SerializedName("profileImage")
     private String profileImage;
 
-    public Member() {
+    public Member(String userId, Member member) {
 
+    }
+
+    public Member(MemberDto memberDto) {
+        setUserId(memberDto.getEmail());
+        setEmail(memberDto.getEmail());
+        setAuth("google");
+        setUsername(memberDto.getUsername());
+        setStatusMessage("Hello! Modu Chat!");
+        setProfileImage(memberDto.getProfileImage() == null ? null : memberDto.getProfileImage().toString());
     }
 
     public Member(GoogleSignInAccount account) {

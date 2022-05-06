@@ -10,4 +10,6 @@ public interface MemberCustomRepository {
     Optional<Member> searchMemberByUserId(String userId);
 
     List<Member> findAllFriends(List<Long> friendsIds);
+
+    List<Member> findFriendsByEmail(String email);
 }

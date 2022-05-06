@@ -58,12 +58,15 @@ public class MainActivity extends AppCompatActivity {
             public void onPageSelected(int position) {
                 switch (position) {
                     case 0:
+                        setTitle("친구");
                         bottomNavigationView.getMenu().findItem(R.id.friendsItem).setChecked(true);
                         break;
                     case 1:
+                        setTitle("채팅");
                         bottomNavigationView.getMenu().findItem(R.id.chatItem).setChecked(true);
                         break;
                     case 2:
+                        setTitle("설정");
                         bottomNavigationView.getMenu().findItem(R.id.settingItem).setChecked(true);
                         break;
                 }

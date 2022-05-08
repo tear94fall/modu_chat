@@ -1,5 +1,6 @@
 package com.example.modumessenger;
 
+import com.example.modumessenger.common.listener.AppStartedListener;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -7,7 +8,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class ModuMessengerApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(ModuMessengerApplication.class, args);
+
+        SpringApplication application = new SpringApplication(ModuMessengerApplication.class);
+        application.addListeners(new AppStartedListener());
+        application.run(args);
     }
 
 }

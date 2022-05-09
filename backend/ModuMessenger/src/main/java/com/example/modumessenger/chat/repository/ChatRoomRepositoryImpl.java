@@ -14,10 +14,10 @@ public class ChatRoomRepositoryImpl implements ChatRoomCustomRepository {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<ChatRoom> findAllByUserId(String userId) {
+    public List<ChatRoom> findAllById(Long id) {
         return queryFactory
                 .selectFrom(chatRoom)
-                .where(chatRoom.userIds.contains(userId))
+                .where(chatRoom.userIds.contains(id))
                 .fetch();
     }
 }

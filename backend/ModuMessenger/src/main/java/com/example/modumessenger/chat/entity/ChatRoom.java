@@ -23,5 +23,5 @@ public class ChatRoom extends BaseTimeEntity {
     @ElementCollection
     @CollectionTable(name = "chat_members", joinColumns = @JoinColumn(name = "user_ids"))
     @Column(name = "chat_members")
-    private List<String> userIds;
+    private List<Long> userIds;
 }

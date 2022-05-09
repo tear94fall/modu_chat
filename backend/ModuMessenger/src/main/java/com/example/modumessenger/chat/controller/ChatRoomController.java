@@ -1,5 +1,6 @@
 package com.example.modumessenger.chat.controller;
 
+import com.example.modumessenger.chat.dto.ChatRoomDto;
 import com.example.modumessenger.chat.entity.ChatRoom;
 import com.example.modumessenger.chat.service.ChatService;
 import lombok.RequiredArgsConstructor;
@@ -14,9 +15,9 @@ import java.util.List;
 public class ChatRoomController {
     private final ChatService chatService;
 
-    @GetMapping("/{userId}/rooms")
-    public ResponseEntity<List<ChatRoom>> chatRoomList(@Valid @PathVariable("userId") String userId) {
-        List<ChatRoom> chatRoomList = chatService.searchChatRoomByUserId(userId);
+    @GetMapping("/chat/{userId}/rooms")
+    public ResponseEntity<List<ChatRoomDto>> chatRoomList(@Valid @PathVariable("userId") String userId) {
+        List<ChatRoomDto> chatRoomList = chatService.searchChatRoomByUserId(userId);
         return ResponseEntity.ok().body(chatRoomList);
     }
 }

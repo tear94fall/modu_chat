@@ -10,6 +10,7 @@ public class RetrofitClient {
     private static final String BASE_URL = "http://192.168.0.3:8080/";
 
     public static RetrofitMemberAPI getApiService(){return getInstance().create(RetrofitMemberAPI.class);}
+    public static RetrofitChatRoomAPI getChatApiService(){ return getInstance().create(RetrofitChatRoomAPI.class); }
 
     private static Retrofit getInstance(){
         Gson gson = new GsonBuilder().setLenient().create();

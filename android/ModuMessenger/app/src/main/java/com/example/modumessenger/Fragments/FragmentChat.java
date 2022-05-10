@@ -15,13 +15,14 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.modumessenger.Activity.ChatActivity;
+import com.example.modumessenger.Activity.InviteActivity;
 import com.example.modumessenger.Adapter.ChatRoomAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatRoomDto;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.List;
 
@@ -35,6 +36,8 @@ public class FragmentChat extends Fragment {
     RecyclerView.LayoutManager chatLayoutManager;
 
     List<ChatRoomDto> chatRoomList;
+
+    FloatingActionButton chatFloatingActionButton;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -56,6 +59,13 @@ public class FragmentChat extends Fragment {
         chatLayoutManager = new LinearLayoutManager(getActivity());
         chatRecyclerView.setLayoutManager(chatLayoutManager);
         chatRecyclerView.scrollToPosition(0);
+
+        chatFloatingActionButton = view.findViewById(R.id.chatFloatingActionButton);
+
+        chatFloatingActionButton.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), InviteActivity.class);
+            v.getContext().startActivity(intent);
+        });
     }
 
     @Override

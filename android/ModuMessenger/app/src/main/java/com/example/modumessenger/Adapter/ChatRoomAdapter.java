@@ -79,7 +79,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
         public void setChatRoomClickEvent(ChatRoomDto chatRoom) {
             this.chatRoomCardView.setOnClickListener(view -> {
                 Intent intent = new Intent(view.getContext(), ChatActivity.class);
-                intent.putExtra("username", chatRoom.getRoomId());
+                intent.putExtra("roomId", chatRoom.getRoomId());
                 view.getContext().startActivity(intent);
             });
         }

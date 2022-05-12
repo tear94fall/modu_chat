@@ -63,6 +63,12 @@ public class InviteActivity extends AppCompatActivity {
         inviteButton.setOnClickListener(v -> {
             if (addChatList.size()!=0) {
                 Toast.makeText(getApplicationContext(), "채팅방을 생성합니다.", Toast.LENGTH_SHORT).show();
+
+                // dummy
+                Intent intent = new Intent(getApplicationContext(), ChatActivity.class);
+                startActivity(intent);
+                finish();
+
                 createChatRoom(addChatList);
             } else {
                 Toast.makeText(getApplicationContext(), "추가할 친구가 없습니다.", Toast.LENGTH_SHORT).show();

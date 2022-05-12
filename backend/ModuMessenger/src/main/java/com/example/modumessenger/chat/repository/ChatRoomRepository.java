@@ -8,7 +8,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface ChatRoomRepository extends JpaRepository<Chat, Long>, ChatRoomCustomRepository {
+public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long>, ChatRoomCustomRepository {
 
     List<ChatRoom> findAllByRoomId(String roomId);
+
+    ChatRoom findByRoomId(String roomId);
 }

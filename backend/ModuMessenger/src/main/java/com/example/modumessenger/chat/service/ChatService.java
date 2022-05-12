@@ -31,4 +31,21 @@ public class ChatService {
                 .map(c -> modelMapper.map(c, ChatRoomDto.class))
                 .collect(Collectors.toList());
     }
+
+    public ChatRoomDto searchChatRoomByRoomId(String roomId) {
+        ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId);
+        return modelMapper.map(chatRoom, ChatRoomDto.class);
+    }
+
+    public ChatRoomDto createChatRoom(List<String> userId) {
+        ChatRoom chatRoom = new ChatRoom();
+        chatRoom.setRoomId("");
+        chatRoom.setRoomName("");
+        chatRoom.setRoomImage("");
+        chatRoom.setLastChatMsg("");
+        chatRoom.setMembers(userId);
+
+        ChatRoom newRoom = chatRoomRepository.save(chatRoom);
+        return modelMapper.map(newRoom, ChatRoomDto.class);
+    }
 }

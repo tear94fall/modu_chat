@@ -1,9 +1,11 @@
 package com.example.modumessenger.chat.entity;
 
 import com.example.modumessenger.common.domain.BaseTimeEntity;
+import com.example.modumessenger.member.entity.Member;
 import lombok.*;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -20,8 +22,20 @@ public class ChatRoom extends BaseTimeEntity {
     @Column(nullable = false)
     private String roomId;
 
+    @Column(nullable = false)
+    private String roomName;
+
+    @Column(nullable = false)
+    private String roomImage;
+
+    @Column(nullable = false)
+    private String lastChatMsg;
+
+    @Column(nullable = false)
+    private LocalDateTime lastChatTime;
+
     @ElementCollection
-    @CollectionTable(name = "chat_members", joinColumns = @JoinColumn(name = "user_ids"))
-    @Column(name = "chat_members")
-    private List<Long> userIds;
+    @CollectionTable(name = "members", joinColumns = @JoinColumn(name = "member_id"))
+    @Column(name = "members")
+    private List<String> members;
 }

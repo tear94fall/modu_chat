@@ -20,4 +20,16 @@ public class ChatRoomController {
         List<ChatRoomDto> chatRoomList = chatService.searchChatRoomByUserId(userId);
         return ResponseEntity.ok().body(chatRoomList);
     }
+
+    @GetMapping("/chat/{roomId}/room")
+    public ResponseEntity<ChatRoomDto> getChatRoomInfo(@Valid @PathVariable("roomId") String roomId) {
+        ChatRoomDto chatRoomDto = chatService.searchChatRoomByRoomId(roomId);
+        return ResponseEntity.ok().body(chatRoomDto);
+    }
+
+    @PostMapping("chat/chat/room")
+    public ResponseEntity<ChatRoomDto> createChatRoom(@Valid @RequestBody List<String> userId) {
+        ChatRoomDto chatRoomDto = chatService.createChatRoom(userId);
+        return ResponseEntity.ok().body(chatRoomDto);
+    }
 }

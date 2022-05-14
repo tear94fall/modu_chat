@@ -1,5 +1,6 @@
 package com.example.modumessenger.Adapter;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -58,6 +59,12 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public int getItemViewType(int position) {
         return chatList.get(position).getViewType();
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    public void addChatMsg(ChatBubble chatBubble) {
+        this.chatList.add(chatBubble);
+        notifyDataSetChanged();
     }
 
     public static class ChatBubbleLeftViewHolder extends RecyclerView.ViewHolder {

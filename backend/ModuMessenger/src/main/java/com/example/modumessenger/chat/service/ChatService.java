@@ -1,7 +1,10 @@
 package com.example.modumessenger.chat.service;
 
+import com.example.modumessenger.chat.dto.ChatDto;
 import com.example.modumessenger.chat.dto.ChatRoomDto;
+import com.example.modumessenger.chat.entity.Chat;
 import com.example.modumessenger.chat.entity.ChatRoom;
+import com.example.modumessenger.chat.repository.ChatRepository;
 import com.example.modumessenger.chat.repository.ChatRoomRepository;
 import com.example.modumessenger.member.dto.MemberDto;
 import com.example.modumessenger.member.entity.Member;
@@ -20,6 +23,7 @@ import java.util.stream.Collectors;
 public class ChatService {
     private final MemberRepository memberRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final ChatRepository chatRepository;
     private final ModelMapper modelMapper;
 
     public List<ChatRoomDto> searchChatRoomByUserId(String userId) {
@@ -47,5 +51,13 @@ public class ChatService {
 
         ChatRoom newRoom = chatRoomRepository.save(chatRoom);
         return modelMapper.map(newRoom, ChatRoomDto.class);
+    }
+
+    public List<ChatDto> searchChatByRoomId(String roomId) {
+        List<Chat> chatList = chatRepository.findAllByRoomId(roomId);
+        return chatList
+                .stream()
+                .map(c -> modelMapper.map(c, ChatDto.class))
+                .collect(Collectors.toList());
     }
 }

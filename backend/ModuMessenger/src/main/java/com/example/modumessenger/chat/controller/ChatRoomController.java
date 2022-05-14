@@ -1,5 +1,6 @@
 package com.example.modumessenger.chat.controller;
 
+import com.example.modumessenger.chat.dto.ChatDto;
 import com.example.modumessenger.chat.dto.ChatRoomDto;
 import com.example.modumessenger.chat.entity.ChatRoom;
 import com.example.modumessenger.chat.service.ChatService;
@@ -31,5 +32,11 @@ public class ChatRoomController {
     public ResponseEntity<ChatRoomDto> createChatRoom(@Valid @RequestBody List<String> userId) {
         ChatRoomDto chatRoomDto = chatService.createChatRoom(userId);
         return ResponseEntity.ok().body(chatRoomDto);
+    }
+
+    @GetMapping("/chat/{roomId}/chats")
+    public ResponseEntity<List<ChatDto>> getChatRoomHistory(@Valid @PathVariable("roomId") String roomId) {
+        List<ChatDto> chatDtoList = chatService.searchChatByRoomId(roomId);
+        return ResponseEntity.ok().body(chatDtoList);
     }
 }

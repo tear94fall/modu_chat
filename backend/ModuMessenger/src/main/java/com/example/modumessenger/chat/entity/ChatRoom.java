@@ -32,10 +32,10 @@ public class ChatRoom extends BaseTimeEntity {
     private String lastChatMsg;
 
     @Column(nullable = false)
-    private LocalDateTime lastChatTime;
+    private String lastChatTime;
 
     @ElementCollection
     @CollectionTable(name = "members", joinColumns = @JoinColumn(name = "member_id"))
     @Column(name = "members")
-    private List<String> members;
+    private List<String> userIds;
 }

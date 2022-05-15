@@ -6,14 +6,12 @@ import com.example.modumessenger.chat.entity.Chat;
 import com.example.modumessenger.chat.entity.ChatRoom;
 import com.example.modumessenger.chat.repository.ChatRepository;
 import com.example.modumessenger.chat.repository.ChatRoomRepository;
-import com.example.modumessenger.member.dto.MemberDto;
-import com.example.modumessenger.member.entity.Member;
-import com.example.modumessenger.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,14 +19,12 @@ import java.util.stream.Collectors;
 @Transactional
 @RequiredArgsConstructor
 public class ChatService {
-    private final MemberRepository memberRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRepository chatRepository;
     private final ModelMapper modelMapper;
 
     public List<ChatRoomDto> searchChatRoomByUserId(String userId) {
-        Member member = memberRepository.findByUserId(userId);
-        List<ChatRoom> chatRoomList = chatRoomRepository.findAllById(member.getId());
+        List<ChatRoom> chatRoomList = chatRoomRepository.findAllById(userId);
 
         return chatRoomList
                 .stream()
@@ -42,12 +38,15 @@ public class ChatService {
     }
 
     public ChatRoomDto createChatRoom(List<String> userId) {
+        Long count = chatRoomRepository.count() + 1;
+
         ChatRoom chatRoom = new ChatRoom();
-        chatRoom.setRoomId("");
-        chatRoom.setRoomName("");
+        chatRoom.setRoomId(Long.toString(count));
+        chatRoom.setRoomName("새로운 채팅방");
         chatRoom.setRoomImage("");
         chatRoom.setLastChatMsg("");
-        chatRoom.setMembers(userId);
+        chatRoom.setLastChatTime(LocalDateTime.now().toString());
+        chatRoom.setUserIds(userId);
 
         ChatRoom newRoom = chatRoomRepository.save(chatRoom);
         return modelMapper.map(newRoom, ChatRoomDto.class);

@@ -6,5 +6,7 @@ import java.util.List;
 
 public interface ChatRoomCustomRepository {
 
-    public List<ChatRoom> findAllById(Long id);
+    List<ChatRoom> findAllById(String userId);
+
+    Long countAll();
 }

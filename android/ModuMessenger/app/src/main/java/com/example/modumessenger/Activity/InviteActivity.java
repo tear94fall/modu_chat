@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.modumessenger.Adapter.inviteAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.ChatRoom;
 import com.example.modumessenger.Retrofit.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatRoomDto;
@@ -63,6 +64,7 @@ public class InviteActivity extends AppCompatActivity {
         inviteButton.setOnClickListener(v -> {
             if (addChatList.size()!=0) {
                 Toast.makeText(getApplicationContext(), "채팅방을 생성합니다.", Toast.LENGTH_SHORT).show();
+                addChatList.add(member.getUserId());
                 createChatRoom(addChatList);
             } else {
                 Toast.makeText(getApplicationContext(), "추가할 친구가 없습니다.", Toast.LENGTH_SHORT).show();
@@ -77,6 +79,12 @@ public class InviteActivity extends AppCompatActivity {
     public void addUserIdOnAddChatList(String userId) {
         if(!PreferenceManager.getString("userId").equals(userId)) {
             this.addChatList.add(userId);
+        }
+    }
+
+    public void removeUserIdOnAddChatList(String userId) {
+        if(!PreferenceManager.getString("userId").equals(userId)) {
+            this.addChatList.remove(userId);
         }
     }
 
@@ -108,18 +116,18 @@ public class InviteActivity extends AppCompatActivity {
     }
 
     public void createChatRoom(List<String> userIds) {
-        Call<ChatRoomDto> call = RetrofitClient.getChatApiService().RequestCreateChatRoom(userIds);
+        Call<ChatRoom> call = RetrofitClient.getChatApiService().RequestCreateChatRoom(userIds);
 
-        call.enqueue(new Callback<ChatRoomDto>() {
+        call.enqueue(new Callback<ChatRoom>() {
             @Override
-            public void onResponse(@NonNull Call<ChatRoomDto> call, @NonNull Response<ChatRoomDto> response) {
+            public void onResponse(@NonNull Call<ChatRoom> call, @NonNull Response<ChatRoom> response) {
                 if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code() + ", body : " + response.body());
                     return;
                 }
 
                 assert response.body() != null;
-                ChatRoomDto chatRoom = response.body();
+                ChatRoom chatRoom = response.body();
 
                 Intent intent = new Intent(getApplicationContext(), ChatActivity.class);
                 intent.putExtra("roomId", chatRoom.getRoomId());
@@ -130,7 +138,7 @@ public class InviteActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(@NonNull Call<ChatRoomDto> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<ChatRoom> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
             }
         });

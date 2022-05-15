@@ -14,16 +14,18 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.ChatActivity;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.ChatRoom;
 import com.example.modumessenger.dto.ChatRoomDto;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRoomViewHolder> {
 
-    List<ChatRoomDto> chatRoomList;
+    List<ChatRoom> chatRoomList;
 
-    public ChatRoomAdapter(List<ChatRoomDto> chatRoomList) {
-        this.chatRoomList = chatRoomList;
+    public ChatRoomAdapter(List<ChatRoom> chatRoomList) {
+        this.chatRoomList = (chatRoomList == null || chatRoomList.size() == 0) ? new ArrayList<>() : chatRoomList;
     }
 
     @NonNull
@@ -36,7 +38,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
 
     @Override
     public void onBindViewHolder(@NonNull ChatRoomAdapter.ChatRoomViewHolder holder, int position) {
-        ChatRoomDto chatRoom = this.chatRoomList.get(position);
+        ChatRoom chatRoom = this.chatRoomList.get(position);
 
         holder.setChatRoomInfo(chatRoom);
         holder.setChatRoomClickEvent(chatRoom);
@@ -57,26 +59,29 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
 
         public ChatRoomViewHolder(@NonNull View itemView) {
             super(itemView);
-            chatRoomName = itemView.findViewById(R.id.my_user_name);
-            lastChatMessage = itemView.findViewById(R.id.my_status_message);
+            chatRoomName = itemView.findViewById(R.id.chat_room_name);
+            lastChatMessage = itemView.findViewById(R.id.last_chat_message);
             lastChatTime = itemView.findViewById(R.id.last_chat_time);
-            chatRoomImage = itemView.findViewById(R.id.my_profile_image);
-            chatRoomCardView = itemView.findViewById(R.id.cardViewLayout);
+            chatRoomImage = itemView.findViewById(R.id.chat_room_image);
+            chatRoomCardView = itemView.findViewById(R.id.chatRoomCardViewLayout);
         }
 
-        public void setChatRoomInfo(ChatRoomDto chatRoom) {
+        public void setChatRoomInfo(ChatRoom chatRoom) {
             this.chatRoomName.setText(chatRoom.getRoomName());
             this.lastChatMessage.setText(chatRoom.getLastChatMsg());
             this.lastChatTime.setText(chatRoom.getLastChatTime().toString());
-            Glide.with(chatRoomImage)
-                    .load(chatRoom.getRoomImage())
-                    .error(Glide.with(chatRoomImage)
-                            .load(R.drawable.basic_profile_image)
-                            .into(chatRoomImage))
-                    .into(chatRoomImage);
+
+            if(chatRoom.getRoomImage()!=null && !chatRoom.getRoomImage().equals("")) {
+                Glide.with(chatRoomImage)
+                        .load(chatRoom.getRoomImage())
+                        .error(Glide.with(chatRoomImage)
+                                .load(R.drawable.basic_profile_image)
+                                .into(chatRoomImage))
+                        .into(chatRoomImage);
+            }
         }
 
-        public void setChatRoomClickEvent(ChatRoomDto chatRoom) {
+        public void setChatRoomClickEvent(ChatRoom chatRoom) {
             this.chatRoomCardView.setOnClickListener(view -> {
                 Intent intent = new Intent(view.getContext(), ChatActivity.class);
                 intent.putExtra("roomId", chatRoom.getRoomId());

@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.R;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -19,7 +20,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private List<ChatBubble> chatList;
 
     public ChatHistoryAdapter(List<ChatBubble> chatList) {
-        this.chatList = chatList;
+        this.chatList = (chatList == null || chatList.size() == 0) ? new ArrayList<>() : chatList;
     }
 
     @NonNull

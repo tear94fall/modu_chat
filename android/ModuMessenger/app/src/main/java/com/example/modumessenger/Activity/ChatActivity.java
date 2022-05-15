@@ -16,11 +16,13 @@ import com.example.modumessenger.Adapter.ChatBubble;
 import com.example.modumessenger.Adapter.ChatHistoryAdapter;
 import com.example.modumessenger.Global.ChatWebSocketListener;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.ChatRoom;
 import com.example.modumessenger.Retrofit.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatDto;
 import com.example.modumessenger.dto.ChatRoomDto;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
@@ -32,7 +34,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class ChatActivity extends AppCompatActivity {
-    ChatRoomDto chatRoomInfo;
+    ChatRoom roomInfo;
 
     OkHttpClient client;
     WebSocket webSocket;
@@ -52,17 +54,24 @@ public class ChatActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
-        String roomId = getIntent().getStringExtra("roomId");
-        getRoomInfo(roomId);
+        recyclerView = findViewById(R.id.chat_history_recycler_view);
+        manager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+        recyclerView.setLayoutManager(manager);
 
-        setTitle(chatRoomInfo != null ? chatRoomInfo.getRoomName() : "채팅방");
-
-        inputMsgTextView = findViewById(R.id.chat_message_edit_text);
         sendMsg = findViewById(R.id.send_message_button);
         sendOthers = findViewById(R.id.send_others_button);
+        inputMsgTextView = findViewById(R.id.chat_message_edit_text);
+        inputMsgTextView.setEnabled(true);
+
+        chatBubbleList = new ArrayList<>();
+
+        String roomId = getIntent().getStringExtra("roomId");
+        if(!roomId.equals("")) {
+            getRoomInfo(roomId);
+        }
 
         sendMsg.setOnClickListener(v -> {
-            String msg = sendOthers.getText().toString();
+            String msg = inputMsgTextView.getText().toString();
             if(msg.length() !=0) {
                 ChatBubble chatBubble = new ChatBubble(msg, 2);
                 chatHistoryAdapter.addChatMsg(chatBubble);
@@ -81,45 +90,58 @@ public class ChatActivity extends AppCompatActivity {
 
         Request request = new Request
                 .Builder()
-                .url("ws://localhost")
+                .url("ws://localhost:8080/modu-chat")
                 .build();
         listener = new ChatWebSocketListener();
         webSocket = client.newWebSocket(request, listener);
 
         client.dispatcher().executorService().shutdown();
 
-        getChatList(chatRoomInfo);
+        if(roomInfo!=null) {
+            getChatList(roomInfo);
+        }
+    }
 
-        recyclerView = findViewById(R.id.chat_history_recycler_view);
-        manager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
-        recyclerView.setLayoutManager(manager);
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+        webSocket.close(1000, null);
     }
 
     public void getRoomInfo(String roomId) {
-        Call<ChatRoomDto> call = RetrofitClient.getChatApiService().RequestChatRoom(roomId);
+        Call<ChatRoom> call = RetrofitClient.getChatApiService().RequestChatRoom(roomId);
 
-        call.enqueue(new Callback<ChatRoomDto>() {
+        call.enqueue(new Callback<ChatRoom>() {
             @Override
-            public void onResponse(@NonNull Call<ChatRoomDto> call, @NonNull Response<ChatRoomDto> response) {
+            public void onResponse(@NonNull Call<ChatRoom> call, @NonNull Response<ChatRoom> response) {
                 if(!response.isSuccessful()){
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
                     return;
                 }
 
                 assert response.body() != null;
-                chatRoomInfo = response.body();
+                roomInfo = response.body();
+
+                setTitle(roomInfo.getRoomName());
+                getChatList(roomInfo);
+
                 Log.d("채팅방 정보 가져오기 요청 : ", response.body().toString());
             }
 
             @Override
-            public void onFailure(@NonNull Call<ChatRoomDto> call, @NonNull Throwable t) {
-                Log.e("연결실패", t.getMessage());
+            public void onFailure(@NonNull Call<ChatRoom> call, @NonNull Throwable t) {
+                Log.e("채팅방 정보 가져오기 요청 실패", t.getMessage());
             }
         });
     }
 
-    public void getChatList(ChatRoomDto chatRoomDto) {
-        Call<List<ChatDto>> call = RetrofitClient.getChatApiService().RequestChatHistory(chatRoomDto.getRoomId());
+    public void getChatList(ChatRoom chatRoom) {
+        Call<List<ChatDto>> call = RetrofitClient.getChatApiService().RequestChatHistory(chatRoom.getRoomId());
 
         call.enqueue(new Callback<List<ChatDto>>() {
             @Override
@@ -131,14 +153,13 @@ public class ChatActivity extends AppCompatActivity {
 
                 List<ChatDto> chatHistory = response.body();
                 assert chatHistory != null;
-
                 for (ChatDto chatDto : chatHistory) {
                     chatBubbleList.add(new ChatBubble(chatDto));
                 }
 
                 chatHistoryAdapter = new ChatHistoryAdapter(chatBubbleList);
 
-                Log.d("채팅 내역 가져오기 요청 : ", chatRoomDto.getRoomId());
+                Log.d("채팅 내역 가져오기 요청 : ", chatRoom.getRoomId());
             }
 
             @Override

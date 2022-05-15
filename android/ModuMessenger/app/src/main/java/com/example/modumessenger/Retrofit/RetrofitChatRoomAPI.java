@@ -15,13 +15,13 @@ import retrofit2.http.Path;
 public interface RetrofitChatRoomAPI {
 
     @GET("chat/{userId}/rooms")
-    Call<List<ChatRoomDto>> RequestChatRooms(@Path("userId") String userId);
+    Call<List<ChatRoom>> RequestChatRooms(@Path("userId") String userId);
 
     @GET("chat/{roomId}/room")
-    Call<ChatRoomDto> RequestChatRoom(@Path("roomId") String roomId);
+    Call<ChatRoom> RequestChatRoom(@Path("roomId") String roomId);
 
     @POST("chat/chat/room")
-    Call<ChatRoomDto> RequestCreateChatRoom(@Body List<String> userIds);
+    Call<ChatRoom> RequestCreateChatRoom(@Body List<String> userIds);
 
     @GET("chat/{roomId}/chats")
     Call<List<ChatDto>> RequestChatHistory(@Path("roomId") String roomId);

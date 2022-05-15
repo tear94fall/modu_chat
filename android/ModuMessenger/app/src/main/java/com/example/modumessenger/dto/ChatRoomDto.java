@@ -8,13 +8,20 @@ public class ChatRoomDto {
     private String roomName;
     private String roomImage;
     private String lastChatMsg;
-    private LocalDateTime lastChatTime;
-    private List<Long> userIds;
+    private String lastChatTime;
+    private List<String> userIds;
 
     public String getRoomId() { return this.roomId; }
     public String getRoomName() { return this.roomName; }
     public String getRoomImage() { return this.roomImage; }
     public String getLastChatMsg() { return this.lastChatMsg; }
-    public LocalDateTime getLastChatTime() { return this.lastChatTime; }
-    public List<Long> getUserIds() { return this.userIds; }
+    public String getLastChatTime() { return this.lastChatTime; }
+    public List<String> getUserIds() { return this.userIds; }
+
+    public void setRoomId(String roomId) { this.roomId = roomId; }
+    public void setRoomName(String roomName) { this.roomName = roomName; }
+    public void setRoomImage(String roomImage) { this.roomImage = roomImage; }
+    public void setLastChatMsg(String lastChatMsg) { this.lastChatMsg = lastChatMsg; }
+    public void setLastChatTime(String lastChatTime) { this.lastChatTime = lastChatTime; }
+    public void setUserIds(List<String> userIds) { this.userIds = userIds; }
 }

@@ -19,6 +19,7 @@ import com.example.modumessenger.Activity.InviteActivity;
 import com.example.modumessenger.Adapter.ChatRoomAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.ChatRoom;
 import com.example.modumessenger.Retrofit.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatRoomDto;
@@ -35,7 +36,7 @@ public class FragmentChat extends Fragment {
     RecyclerView chatRecyclerView;
     RecyclerView.LayoutManager chatLayoutManager;
 
-    List<ChatRoomDto> chatRoomList;
+    List<ChatRoom> chatRoomList;
 
     FloatingActionButton chatFloatingActionButton;
 
@@ -100,11 +101,11 @@ public class FragmentChat extends Fragment {
 
     // Retrofit function
     public void getChatRoomList(Member member ) {
-        Call<List<ChatRoomDto>> call = RetrofitClient.getChatApiService().RequestChatRooms(member.getUserId());
+        Call<List<ChatRoom>> call = RetrofitClient.getChatApiService().RequestChatRooms(member.getUserId());
 
-        call.enqueue(new Callback<List<ChatRoomDto>>() {
+        call.enqueue(new Callback<List<ChatRoom>>() {
             @Override
-            public void onResponse(@NonNull Call<List<ChatRoomDto>> call, @NonNull Response<List<ChatRoomDto>> response) {
+            public void onResponse(@NonNull Call<List<ChatRoom>> call, @NonNull Response<List<ChatRoom>> response) {
                 if(!response.isSuccessful()){
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
                     return;
@@ -118,8 +119,8 @@ public class FragmentChat extends Fragment {
             }
 
             @Override
-            public void onFailure(@NonNull Call<List<ChatRoomDto>> call, @NonNull Throwable t) {
-                Log.e("연결실패", t.getMessage());
+            public void onFailure(@NonNull Call<List<ChatRoom>> call, @NonNull Throwable t) {
+                Log.e("-->연결실패", t.getMessage());
             }
         });
     }

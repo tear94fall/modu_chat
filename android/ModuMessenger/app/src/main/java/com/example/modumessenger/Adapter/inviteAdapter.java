@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.TextView;
@@ -54,7 +55,7 @@ public class inviteAdapter extends RecyclerView.Adapter<inviteAdapter.AddChatVie
         TextView username;
         TextView statusMessage;
         ImageView profileImage;
-        RadioButton addChatButton;
+        CheckBox addCHatCheck;
         ConstraintLayout addChatCardViewLayout;
 
         public AddChatViewHolder(@NonNull View itemView) {
@@ -64,7 +65,7 @@ public class inviteAdapter extends RecyclerView.Adapter<inviteAdapter.AddChatVie
             username = itemView.findViewById(R.id.add_user_name);
             statusMessage = itemView.findViewById(R.id.add_status_message);
             profileImage = itemView.findViewById(R.id.add_profile_image);
-            addChatButton = itemView.findViewById(R.id.add_radio_button);
+            addCHatCheck = itemView.findViewById(R.id.invite_check_button);
             addChatCardViewLayout = itemView.findViewById(R.id.addChatCardViewLayout);
         }
 
@@ -91,8 +92,14 @@ public class inviteAdapter extends RecyclerView.Adapter<inviteAdapter.AddChatVie
         }
 
         public void setAddChatButton(MemberDto member) {
-            this.addChatButton.setOnClickListener(view -> {
-                addChatActivity.addUserIdOnAddChatList(member.getUserId());
+            this.addCHatCheck.setOnClickListener(view -> {
+                boolean checked = ((CheckBox) view).isChecked();
+
+                if(checked) {
+                    addChatActivity.addUserIdOnAddChatList(member.getUserId());
+                } else {
+                    addChatActivity.removeUserIdOnAddChatList(member.getUserId());
+                }
             });
         }
     }

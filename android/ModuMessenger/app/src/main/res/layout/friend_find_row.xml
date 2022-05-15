@@ -27,7 +27,7 @@
             android:layout_width="70dp"
             android:layout_height="22dp"
             android:layout_marginStart="12dp"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="16dp"
             android:text="Title"
             app:layout_constraintEnd_toStartOf="@+id/add_friends_button"
             app:layout_constraintHorizontal_bias="0.0"

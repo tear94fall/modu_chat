@@ -1,12 +1,20 @@
 package com.example.modumessenger.Activity;
 
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -15,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.modumessenger.Adapter.ChatBubble;
 import com.example.modumessenger.Adapter.ChatHistoryAdapter;
 import com.example.modumessenger.Global.ChatWebSocketListener;
+import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.ChatRoom;
 import com.example.modumessenger.Retrofit.Member;
@@ -22,6 +31,9 @@ import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatDto;
 import com.example.modumessenger.dto.ChatRoomDto;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,6 +61,10 @@ public class ChatActivity extends AppCompatActivity {
     TextView inputMsgTextView;
     Button sendMsg, sendOthers;
 
+    String jwtToken;
+    String userId;
+    String roomId;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,7 +81,9 @@ public class ChatActivity extends AppCompatActivity {
 
         chatBubbleList = new ArrayList<>();
 
-        String roomId = getIntent().getStringExtra("roomId");
+        jwtToken = PreferenceManager.getString("token");
+        userId = PreferenceManager.getString("userId");
+        roomId = getIntent().getStringExtra("roomId");
         if(!roomId.equals("")) {
             getRoomInfo(roomId);
         }
@@ -82,7 +100,30 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
 
+        ActivityResultLauncher<Intent> resultLauncher;
+
+        resultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if(result.getResultCode() == RESULT_OK){
+                        Intent intent = result.getData();
+                        Uri uri = intent != null ? intent.getData() : null;
+
+                        if(uri!=null) {
+                            // send image to server
+                            sendPicture(uri);
+                        } else {
+                            Toast.makeText(getApplicationContext(), "선택된 이미지가 없습니다.", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+        );
+
         sendOthers.setOnClickListener(v -> {
+            Intent intent = new Intent();
+            intent.setType("image/*");
+            intent.setAction(Intent.ACTION_GET_CONTENT);
+            resultLauncher.launch(intent);
         });
 
         // init web socket
@@ -90,7 +131,9 @@ public class ChatActivity extends AppCompatActivity {
 
         Request request = new Request
                 .Builder()
-                .url("ws://localhost:8080/modu-chat")
+                .url("ws://localhost:8080/modu-chat/" + roomId)
+                .addHeader("token", jwtToken)
+                .addHeader("userId", userId)
                 .build();
         listener = new ChatWebSocketListener();
         webSocket = client.newWebSocket(request, listener);
@@ -113,6 +156,31 @@ public class ChatActivity extends AppCompatActivity {
         webSocket.close(1000, null);
     }
 
+    private void sendPicture(Uri imgUri) {
+        String imagePath = getRealPathFromURI(imgUri);
+        File file = new File(imagePath);
+
+        try {
+            FileInputStream fileStream = new FileInputStream(imagePath);
+            byte[] imageFile = Files.readAllBytes(file.toPath());
+            // send image file to server
+
+            fileStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String getRealPathFromURI(Uri contentUri) {
+        String[] proj = {MediaStore.Images.Media.DATA};
+        Cursor cursor = getContentResolver().query(contentUri, proj, null, null, null);
+        cursor.moveToFirst();
+        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+
+        return cursor.getString(column_index);
+    }
+
+    // Retrofit function
     public void getRoomInfo(String roomId) {
         Call<ChatRoom> call = RetrofitClient.getChatApiService().RequestChatRoom(roomId);
 

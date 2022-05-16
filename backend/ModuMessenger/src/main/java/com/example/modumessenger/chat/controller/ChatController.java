@@ -11,14 +11,4 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ChatController {
 
-    private final SimpMessageSendingOperations sendingOperations;
-
-    @Scheduled(fixedRate = 5000)
-    @MessageMapping("/comm/chat")
-    public void message(Chat chat) {
-        if (Chat.ChatType.ENTER.equals(chat.getChatType())) {
-            chat.setMessage(chat.getSender() + "이 입장했습니다.");
-        }
-        sendingOperations.convertAndSend("/sub/comm/room/" + chat.getRoomId(), chat);
-    }
 }

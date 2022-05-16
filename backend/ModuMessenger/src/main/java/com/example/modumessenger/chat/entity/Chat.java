@@ -2,18 +2,19 @@ package com.example.modumessenger.chat.entity;
 
 import com.example.modumessenger.common.domain.BaseTimeEntity;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @Getter
 @Setter
 @Entity
+@NoArgsConstructor
 public class Chat extends BaseTimeEntity {
     @Id
+    @Column(name = "chat_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -25,4 +26,16 @@ public class Chat extends BaseTimeEntity {
     private String roomId;
     private String sender;
     private String message;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "chat_room_id")
+    @ToString.Exclude
+    private ChatRoom chatRoom;
+
+    public Chat(String msg) { this.message = msg; }
+
+    public Chat(String msg, ChatRoom chatRoom) {
+        this.message = msg;
+        this.chatRoom = chatRoom;
+    }
 }

@@ -11,30 +11,38 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @RequiredArgsConstructor
 public class WebSocketHandler extends TextWebSocketHandler {
-    private static List<WebSocketSession> list = new ArrayList<>();
+    private static final ConcurrentHashMap<String, WebSocketSession> CLIENTS = new ConcurrentHashMap<String, WebSocketSession>();
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        String payload = message.getPayload();
+        String id = session.getId();
 
-        for(WebSocketSession sess: list) {
-            sess.sendMessage(message);
-        }
+        CLIENTS.forEach((key, value) -> {
+            if (!key.equals(id)) {
+                try {
+                    value.sendMessage(message);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        list.add(session);
+        CLIENTS.put(session.getId(), session);
     }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        list.remove(session);
+        CLIENTS.remove(session.getId());
     }
 }

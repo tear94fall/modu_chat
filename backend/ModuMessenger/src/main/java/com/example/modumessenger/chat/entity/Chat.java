@@ -38,4 +38,11 @@ public class Chat extends BaseTimeEntity {
         this.message = msg;
         this.chatRoom = chatRoom;
     }
+
+    public Chat(String msg, String roomId, ChatRoom chatRoom, String sender) {
+        this.message = msg;
+        this.roomId = roomId;
+        this.chatRoom = chatRoom;
+        this.sender = sender;
+    }
 }

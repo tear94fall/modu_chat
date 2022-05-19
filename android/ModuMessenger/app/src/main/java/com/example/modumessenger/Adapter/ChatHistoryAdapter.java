@@ -10,7 +10,9 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.modumessenger.Activity.ChatActivity;
 import com.example.modumessenger.R;
+import com.example.modumessenger.dto.ChatBubbleViewType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,10 +33,10 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         Context context = parent.getContext();
         LayoutInflater inflater = LayoutInflater.from(context);
 
-        if(viewType == BubbleViewType.LEFT) {
+        if(viewType == ChatBubbleViewType.LEFT) {
             view = inflater.inflate(R.layout.chat_bubble_left, parent, false);
             return new ChatHistoryAdapter.ChatBubbleLeftViewHolder(view);
-        } else if(viewType == BubbleViewType.RIGHT) {
+        } else if(viewType == ChatBubbleViewType.RIGHT) {
             view = inflater.inflate(R.layout.chat_bubble_right, parent, false);
             return new ChatHistoryAdapter.ChatBubbleRightViewHolder(view);
         } else {

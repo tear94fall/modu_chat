@@ -7,9 +7,11 @@ import com.example.modumessenger.chat.repository.ChatRoomRepository;
 import com.example.modumessenger.common.parser.JsonParser;
 import com.example.modumessenger.member.entity.Member;
 import lombok.RequiredArgsConstructor;
-import org.apache.tomcat.util.json.JSONParser;
-import org.apache.tomcat.util.json.ParseException;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -19,6 +21,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.LinkedHashMap;
@@ -26,6 +29,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
+@Transactional
 @RequiredArgsConstructor
 public class WebSocketHandler extends TextWebSocketHandler {
 
@@ -36,13 +40,15 @@ public class WebSocketHandler extends TextWebSocketHandler {
     private static final String FILE_UPLOAD_PATH = "/modu-chat/images";
 
     @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws ParseException {
+    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws ParseException, IOException {
         String payload = message.getPayload();
-        JSONParser jsonParser = new JSONParser(payload);
-        LinkedHashMap<String, Object> jsonpObject = jsonParser.object();
+        System.out.println(payload);
 
-        String roomId = (String) jsonpObject.get("roomId");
-        String msg = (String) jsonpObject.get("message");
+        JSONParser jsonParser = new JSONParser();
+        JSONObject jsonObject = (JSONObject) jsonParser.parse(new StringReader(payload));
+
+        String roomId = (String) jsonObject.get("roomId");
+        String msg = (String) jsonObject.get("message");
         String sender = Objects.requireNonNull(session.getHandshakeHeaders().get("userId")).get(0);
 
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId);

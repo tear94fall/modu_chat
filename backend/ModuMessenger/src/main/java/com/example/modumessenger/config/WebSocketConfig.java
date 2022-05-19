@@ -18,6 +18,7 @@ public class WebSocketConfig implements WebSocketConfigurer{
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(webSocketHandler, "/modu-chat").setAllowedOrigins("*");
+        registry.addHandler(webSocketHandler, "/modu-chat/**")
+                .setAllowedOrigins("*");
     }
 }

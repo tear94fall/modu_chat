@@ -5,7 +5,10 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+
+import static javax.persistence.FetchType.LAZY;
 
 @Entity
 @Getter
@@ -34,14 +37,14 @@ public class ChatRoom extends BaseTimeEntity {
     @Column(nullable = false)
     private String lastChatTime;
 
-    @ElementCollection
+    @ElementCollection(fetch = LAZY)
     @CollectionTable(name = "members", joinColumns = @JoinColumn(name = "member_id"))
     @Column(name = "members")
-    private List<String> userIds;
+    private List<String> userIds = new ArrayList<>();
 
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL)
     @ToString.Exclude
-    private List<Chat> chat;
+    private List<Chat> chat = new ArrayList<>();
 
     public ChatRoom(String roomName) { this.roomName = roomName; }
 

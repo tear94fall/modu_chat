@@ -1,5 +1,6 @@
 package com.example.modumessenger.Adapter;
 
+import com.example.modumessenger.dto.ChatBubbleViewType;
 import com.example.modumessenger.dto.ChatDto;
 
 // Sample Chat
@@ -14,18 +15,12 @@ public class ChatBubble {
 
     public ChatBubble(ChatDto chatDto) {
         chatMsg = chatDto.getMessage();
-        viewType = BubbleViewType.LEFT;
+        viewType = chatDto.getChatType();
     }
 
     public String getChatMsg() { return this.chatMsg; }
     public int getViewType() { return this.viewType; }
 
     public void setChatMsg(String msg) { this.chatMsg = msg; }
-    public void setViewType(int type) { this.viewType = BubbleViewType.RIGHT; }
-}
-
-// View Type
-class BubbleViewType {
-    public static final int LEFT = 1;
-    public static final int RIGHT = 2;
+    public void setViewType(int type) { this.viewType = ChatBubbleViewType.RIGHT; }
 }

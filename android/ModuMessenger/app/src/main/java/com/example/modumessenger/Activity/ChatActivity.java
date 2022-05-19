@@ -28,8 +28,11 @@ import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.ChatRoom;
 import com.example.modumessenger.Retrofit.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
+import com.example.modumessenger.dto.ChatBubbleViewType;
 import com.example.modumessenger.dto.ChatDto;
 import com.example.modumessenger.dto.ChatRoomDto;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -51,6 +54,8 @@ public class ChatActivity extends AppCompatActivity {
     OkHttpClient client;
     WebSocket webSocket;
     WebSocketListener listener;
+
+    ObjectMapper objectMapper;
 
     List<ChatBubble> chatBubbleList;
 
@@ -79,6 +84,8 @@ public class ChatActivity extends AppCompatActivity {
         inputMsgTextView = findViewById(R.id.chat_message_edit_text);
         inputMsgTextView.setEnabled(true);
 
+        objectMapper = new ObjectMapper();
+
         chatBubbleList = new ArrayList<>();
 
         jwtToken = PreferenceManager.getString("token");
@@ -91,12 +98,30 @@ public class ChatActivity extends AppCompatActivity {
         sendMsg.setOnClickListener(v -> {
             String msg = inputMsgTextView.getText().toString();
             if(msg.length() !=0) {
-                ChatBubble chatBubble = new ChatBubble(msg, 2);
-                chatHistoryAdapter.addChatMsg(chatBubble);
-                chatBubbleList.add(chatBubble);
+                ChatDto chatDto = new ChatDto();
+                chatDto.setRoomId(roomId);
+                chatDto.setMessage(msg);
+                chatDto.setSender(userId);
+                chatDto.setChatType(ChatBubbleViewType.RIGHT);
 
-                // add send at websocket
-                webSocket.send(msg);
+                String message = null;
+                try {
+                    message = objectMapper.writeValueAsString(chatDto);
+                } catch (JsonProcessingException e) {
+                    e.printStackTrace();
+                }
+
+                System.out.println(message);
+
+                if(message!=null){
+                    webSocket.send(message);
+
+                    ChatBubble chatBubble = new ChatBubble(msg, 2);
+                    chatHistoryAdapter.addChatMsg(chatBubble);
+                    recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
+                } else {
+                    Toast.makeText(getApplicationContext(), "메세지 전송에 실패하였습니다.", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -125,24 +150,6 @@ public class ChatActivity extends AppCompatActivity {
             intent.setAction(Intent.ACTION_GET_CONTENT);
             resultLauncher.launch(intent);
         });
-
-        // init web socket
-        client = new OkHttpClient();
-
-        Request request = new Request
-                .Builder()
-                .url("ws://localhost:8080/modu-chat/" + roomId)
-                .addHeader("token", jwtToken)
-                .addHeader("userId", userId)
-                .build();
-        listener = new ChatWebSocketListener();
-        webSocket = client.newWebSocket(request, listener);
-
-        client.dispatcher().executorService().shutdown();
-
-        if(roomInfo!=null) {
-            getChatList(roomInfo);
-        }
     }
 
     @Override
@@ -196,9 +203,26 @@ public class ChatActivity extends AppCompatActivity {
                 roomInfo = response.body();
 
                 setTitle(roomInfo.getRoomName());
-                getChatList(roomInfo);
 
                 Log.d("채팅방 정보 가져오기 요청 : ", response.body().toString());
+
+                // init web socket
+                client = new OkHttpClient();
+
+                Request request = new Request
+                        .Builder()
+                        .url("ws://192.168.0.3:8080/modu-chat/" + roomId)
+                        .addHeader("token", jwtToken)
+                        .addHeader("userId", userId)
+                        .build();
+                listener = new ChatWebSocketListener();
+                webSocket = client.newWebSocket(request, listener);
+
+                client.dispatcher().executorService().shutdown();
+
+                if(roomInfo!=null) {
+                    getChatList(roomInfo);
+                }
             }
 
             @Override
@@ -226,6 +250,8 @@ public class ChatActivity extends AppCompatActivity {
                 }
 
                 chatHistoryAdapter = new ChatHistoryAdapter(chatBubbleList);
+                recyclerView.setAdapter(chatHistoryAdapter);
+                recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
 
                 Log.d("채팅 내역 가져오기 요청 : ", chatRoom.getRoomId());
             }

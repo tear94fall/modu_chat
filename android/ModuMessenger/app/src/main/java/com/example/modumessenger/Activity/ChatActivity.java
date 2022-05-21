@@ -37,6 +37,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.FileInputStream;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -102,6 +105,7 @@ public class ChatActivity extends AppCompatActivity {
                 chatDto.setRoomId(roomId);
                 chatDto.setMessage(msg);
                 chatDto.setSender(userId);
+                chatDto.setChatTime(LocalDateTime.now().format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)));
                 chatDto.setChatType(ChatBubbleViewType.RIGHT);
 
                 String message = null;
@@ -116,7 +120,7 @@ public class ChatActivity extends AppCompatActivity {
                 if(message!=null){
                     webSocket.send(message);
 
-                    ChatBubble chatBubble = new ChatBubble(msg, 2);
+                    ChatBubble chatBubble = new ChatBubble(chatDto);
                     chatHistoryAdapter.addChatMsg(chatBubble);
                     recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
                 } else {

@@ -2,14 +2,17 @@ package com.example.modumessenger.Adapter;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.media.Image;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.ChatActivity;
 import com.example.modumessenger.R;
 import com.example.modumessenger.dto.ChatBubbleViewType;
@@ -48,9 +51,23 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if(holder instanceof ChatBubbleLeftViewHolder) {
-            ((ChatBubbleLeftViewHolder) holder).textView.setText(chatList.get(position).getChatMsg());
+
+            Glide.with(((ChatBubbleLeftViewHolder) holder).senderImage)
+                    .load(R.drawable.basic_profile_image)
+                    .into(((ChatBubbleLeftViewHolder) holder).senderImage);
+//            Glide.with(((ChatBubbleLeftViewHolder) holder).senderImage)
+//                    .load(chatList.get(position).getSender())
+//                    .error(Glide.with(((ChatBubbleLeftViewHolder) holder).senderImage)
+//                            .load(R.drawable.basic_profile_image)
+//                            .into(((ChatBubbleLeftViewHolder) holder).senderImage))
+//                    .into(((ChatBubbleLeftViewHolder) holder).senderImage);
+
+            ((ChatBubbleLeftViewHolder) holder).chatSender.setText(chatList.get(position).getSender());
+            ((ChatBubbleLeftViewHolder) holder).chatMessage.setText(chatList.get(position).getChatMsg());
+            ((ChatBubbleLeftViewHolder) holder).leftChatTime.setText(chatList.get(position).getChatTime());
         } else if (holder instanceof  ChatBubbleRightViewHolder) {
-            ((ChatBubbleRightViewHolder) holder).textView.setText(chatList.get(position).getChatMsg());
+            ((ChatBubbleRightViewHolder) holder).chatMessage.setText(chatList.get(position).getChatMsg());
+            ((ChatBubbleRightViewHolder) holder).rightChatTime.setText(chatList.get(position).getChatTime());
         }
     }
 
@@ -71,20 +88,28 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     public static class ChatBubbleLeftViewHolder extends RecyclerView.ViewHolder {
-        TextView textView;
+        ImageView senderImage;
+        TextView chatMessage;
+        TextView leftChatTime;
+        TextView chatSender;
 
         public ChatBubbleLeftViewHolder(@NonNull View itemView) {
             super(itemView);
-            textView = itemView.findViewById(R.id.left_chat_text);
+            senderImage = itemView.findViewById(R.id.message_sender_image);
+            chatMessage = itemView.findViewById(R.id.left_chat_text);
+            chatSender = itemView.findViewById(R.id.message_sender);
+            leftChatTime = itemView.findViewById(R.id.left_chat_time);
         }
     }
 
     public static class ChatBubbleRightViewHolder extends RecyclerView.ViewHolder {
-        TextView textView;
+        TextView chatMessage;
+        TextView rightChatTime;
 
         public ChatBubbleRightViewHolder(@NonNull View itemView) {
             super(itemView);
-            textView = itemView.findViewById(R.id.right_chat_text);
+            chatMessage = itemView.findViewById(R.id.right_chat_text);
+            rightChatTime = itemView.findViewById(R.id.right_chat_time);
         }
     }
 }

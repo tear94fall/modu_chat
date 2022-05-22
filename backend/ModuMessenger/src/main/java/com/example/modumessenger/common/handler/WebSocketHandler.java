@@ -60,11 +60,13 @@ public class WebSocketHandler extends TextWebSocketHandler {
         String senderName = sender.getUserId();
         LocalDateTime TimeNow = LocalDateTime.now();
         String sendTime = TimeNow.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT));
-//        String chatType = (String) jsonObject.get("chatType");
-//        int chatTypeNum = Integer.parseInt(chatType);
         Long chatType = (Long) jsonObject.get("chatType");
 
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId);
+        chatRoom.setLastChatMsg(msg);
+        chatRoom.setLastChatTime(sendTime);
+
+        chatRoomRepository.save(chatRoom);
 
         Chat chat = new Chat(msg, roomId, chatRoom, senderName, sendTime, chatType.intValue());
         chatRepository.save(chat);

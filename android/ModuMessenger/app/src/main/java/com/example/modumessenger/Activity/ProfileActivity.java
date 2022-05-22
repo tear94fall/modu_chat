@@ -95,7 +95,7 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
         setTextOnView(statusMessageTextView, statusMessage);
         Glide.with(this).load(profileImage).into(profileImageView);
 
-        if(username.equals(PreferenceManager.getString("username"))) {
+        if(username!=null && username.length() !=0 && username.equals(PreferenceManager.getString("username"))) {
             profileEditButton.setVisibility(View.VISIBLE);
         }
     }

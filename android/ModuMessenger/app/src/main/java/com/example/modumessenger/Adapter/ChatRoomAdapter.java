@@ -78,6 +78,10 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
                                 .load(R.drawable.basic_profile_image)
                                 .into(chatRoomImage))
                         .into(chatRoomImage);
+            } else {
+                Glide.with(chatRoomImage)
+                        .load(R.drawable.basic_profile_image)
+                        .into(chatRoomImage);
             }
         }
 

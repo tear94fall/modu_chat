@@ -123,6 +123,8 @@ public class ChatActivity extends AppCompatActivity {
                     ChatBubble chatBubble = new ChatBubble(chatDto);
                     chatHistoryAdapter.addChatMsg(chatBubble);
                     recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
+
+                    inputMsgTextView.setText(null);
                 } else {
                     Toast.makeText(getApplicationContext(), "메세지 전송에 실패하였습니다.", Toast.LENGTH_SHORT).show();
                 }

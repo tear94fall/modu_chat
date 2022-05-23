@@ -11,5 +11,7 @@ public interface MemberCustomRepository {
 
     List<Member> findAllFriends(List<Long> friendsIds);
 
+    List<Member> findAllByUserIds(List<String> userIds);
+
     List<Member> findFriendsByEmail(String email);
 }

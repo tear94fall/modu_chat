@@ -8,6 +8,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -25,7 +26,9 @@ import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -53,6 +56,8 @@ public class FragmentChat extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        chatRoomList = new ArrayList<>();
 
         chatRecyclerView = view.findViewById(R.id.chat_recycler_view);
         chatRecyclerView.setHasFixedSize(true);
@@ -100,26 +105,33 @@ public class FragmentChat extends Fragment {
     }
 
     // Retrofit function
-    public void getChatRoomList(Member member ) {
-        Call<List<ChatRoom>> call = RetrofitClient.getChatApiService().RequestChatRooms(member.getUserId());
+    public void getChatRoomList(Member member) {
+        Call<List<ChatRoomDto>> call = RetrofitClient.getChatApiService().RequestChatRooms(member.getUserId());
 
-        call.enqueue(new Callback<List<ChatRoom>>() {
+        call.enqueue(new Callback<List<ChatRoomDto>>() {
             @Override
-            public void onResponse(@NonNull Call<List<ChatRoom>> call, @NonNull Response<List<ChatRoom>> response) {
-                if(!response.isSuccessful()){
+            public void onResponse(@NonNull Call<List<ChatRoomDto>> call, @NonNull Response<List<ChatRoomDto>> response) {
+                if (!response.isSuccessful()) {
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
                     return;
                 }
 
                 assert response.body() != null;
-                chatRoomList = response.body();
+                List<ChatRoomDto> chatRoomDtoList = response.body();
+
+                chatRoomList.clear();
+
+                chatRoomDtoList.forEach(c -> {
+                    chatRoomList.add(new ChatRoom(c));
+                });
+
                 chatRecyclerView.setAdapter(new ChatRoomAdapter(chatRoomList));
 
                 Log.d("채팅방 목록 가져오기 요청 : ", response.body().toString());
             }
 
             @Override
-            public void onFailure(@NonNull Call<List<ChatRoom>> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<List<ChatRoomDto>> call, @NonNull Throwable t) {
                 Log.e("-->연결실패", t.getMessage());
             }
         });

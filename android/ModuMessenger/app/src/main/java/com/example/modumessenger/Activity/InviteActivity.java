@@ -116,21 +116,21 @@ public class InviteActivity extends AppCompatActivity {
     }
 
     public void createChatRoom(List<String> userIds) {
-        Call<ChatRoom> call = RetrofitClient.getChatApiService().RequestCreateChatRoom(userIds);
+        Call<ChatRoomDto> call = RetrofitClient.getChatApiService().RequestCreateChatRoom(userIds);
 
-        call.enqueue(new Callback<ChatRoom>() {
+        call.enqueue(new Callback<ChatRoomDto>() {
             @Override
-            public void onResponse(@NonNull Call<ChatRoom> call, @NonNull Response<ChatRoom> response) {
+            public void onResponse(@NonNull Call<ChatRoomDto> call, @NonNull Response<ChatRoomDto> response) {
                 if(!response.isSuccessful()){
                     Log.e("연결이 비정상적 : ", "error code : " + response.code() + ", body : " + response.body());
                     return;
                 }
 
                 assert response.body() != null;
-                ChatRoom chatRoom = response.body();
+                ChatRoomDto chatRoomDto = response.body();
 
                 Intent intent = new Intent(getApplicationContext(), ChatActivity.class);
-                intent.putExtra("roomId", chatRoom.getRoomId());
+                intent.putExtra("roomId", chatRoomDto.getRoomId());
                 startActivity(intent);
                 finish();
 
@@ -138,7 +138,7 @@ public class InviteActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(@NonNull Call<ChatRoom> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<ChatRoomDto> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
             }
         });

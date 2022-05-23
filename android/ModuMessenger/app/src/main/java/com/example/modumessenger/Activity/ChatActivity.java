@@ -199,18 +199,19 @@ public class ChatActivity extends AppCompatActivity {
 
     // Retrofit function
     public void getRoomInfo(String roomId) {
-        Call<ChatRoom> call = RetrofitClient.getChatApiService().RequestChatRoom(roomId);
+        Call<ChatRoomDto> call = RetrofitClient.getChatApiService().RequestChatRoom(roomId);
 
-        call.enqueue(new Callback<ChatRoom>() {
+        call.enqueue(new Callback<ChatRoomDto>() {
             @Override
-            public void onResponse(@NonNull Call<ChatRoom> call, @NonNull Response<ChatRoom> response) {
+            public void onResponse(@NonNull Call<ChatRoomDto> call, @NonNull Response<ChatRoomDto> response) {
                 if(!response.isSuccessful()){
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
                     return;
                 }
 
                 assert response.body() != null;
-                roomInfo = response.body();
+                ChatRoomDto chatRoomDto = response.body();
+                roomInfo = new ChatRoom(chatRoomDto);
 
                 setTitle(roomInfo.getRoomName());
 
@@ -237,7 +238,7 @@ public class ChatActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(@NonNull Call<ChatRoom> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<ChatRoomDto> call, @NonNull Throwable t) {
                 Log.e("채팅방 정보 가져오기 요청 실패", t.getMessage());
             }
         });

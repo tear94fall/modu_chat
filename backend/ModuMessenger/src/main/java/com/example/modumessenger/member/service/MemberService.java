@@ -59,6 +59,15 @@ public class MemberService {
                 .collect(Collectors.toList());
     }
 
+    public List<MemberDto> getMemberByUserIds(List<String> userIds) {
+        List<Member> memberList  = memberRepository.findAllByUserIds(userIds);
+
+        return memberList
+                .stream()
+                .map(m -> modelMapper.map(m, MemberDto.class))
+                .collect(Collectors.toList());
+    }
+
     public MemberDto addFriends(String userId, MemberDto memberDto) {
         if(!memberRepository.existsByEmail(memberDto.getEmail())) {
             throw new DuplicateKeyException(String.format(

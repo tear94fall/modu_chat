@@ -26,4 +26,6 @@ public interface RetrofitChatRoomAPI {
     @GET("chat/{roomId}/chats")
     Call<List<ChatDto>> RequestChatHistory(@Path("roomId") String roomId);
 
+    @GET("chat/{roomId}/members")
+    Call<List<MemberDto>> RequestChatRoomMembers(@Path("roomId") String roomId);
 }

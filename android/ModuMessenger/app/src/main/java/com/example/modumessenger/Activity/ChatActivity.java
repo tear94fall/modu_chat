@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.Adapter.ChatBubble;
 import com.example.modumessenger.Adapter.ChatHistoryAdapter;
+import com.example.modumessenger.Adapter.inviteAdapter;
 import com.example.modumessenger.Global.ChatWebSocketListener;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
@@ -31,6 +32,7 @@ import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatBubbleViewType;
 import com.example.modumessenger.dto.ChatDto;
 import com.example.modumessenger.dto.ChatRoomDto;
+import com.example.modumessenger.dto.MemberDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -60,6 +62,7 @@ public class ChatActivity extends AppCompatActivity {
 
     ObjectMapper objectMapper;
 
+    List<Member> chatMemberList;
     List<ChatBubble> chatBubbleList;
 
     RecyclerView recyclerView;
@@ -89,6 +92,7 @@ public class ChatActivity extends AppCompatActivity {
 
         objectMapper = new ObjectMapper();
 
+        chatMemberList = new ArrayList<>();
         chatBubbleList = new ArrayList<>();
 
         jwtToken = PreferenceManager.getString("token");
@@ -227,6 +231,7 @@ public class ChatActivity extends AppCompatActivity {
                 client.dispatcher().executorService().shutdown();
 
                 if(roomInfo!=null) {
+                    getChatRoomMember(roomInfo);
                     getChatList(roomInfo);
                 }
             }
@@ -234,6 +239,33 @@ public class ChatActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Call<ChatRoom> call, @NonNull Throwable t) {
                 Log.e("채팅방 정보 가져오기 요청 실패", t.getMessage());
+            }
+        });
+    }
+
+    public void getChatRoomMember(ChatRoom chatRoom) {
+        Call<List<MemberDto>> call = RetrofitClient.getChatApiService().RequestChatRoomMembers(chatRoom.getRoomId());
+
+        call.enqueue(new Callback<List<MemberDto>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<MemberDto>> call, @NonNull Response<List<MemberDto>> response) {
+                if(!response.isSuccessful()){
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                    return;
+                }
+
+                assert response.body() != null;
+                List<MemberDto> memberList = response.body();
+                memberList.forEach(m -> {
+                    chatMemberList.add(new Member(m));
+                });
+
+                Log.d("채팅방 멤버 리스트 가져오기 요청 : ", response.body().toString());
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<MemberDto>> call, @NonNull Throwable t) {
+                Log.e("연결실패", t.getMessage());
             }
         });
     }
@@ -251,11 +283,11 @@ public class ChatActivity extends AppCompatActivity {
 
                 List<ChatDto> chatHistory = response.body();
                 assert chatHistory != null;
-                for (ChatDto chatDto : chatHistory) {
-                    chatBubbleList.add(new ChatBubble(chatDto));
-                }
+                chatHistory.forEach(c->{
+                    chatBubbleList.add(new ChatBubble(c));
+                });
 
-                chatHistoryAdapter = new ChatHistoryAdapter(chatBubbleList);
+                chatHistoryAdapter = new ChatHistoryAdapter(chatBubbleList, chatMemberList);
                 recyclerView.setAdapter(chatHistoryAdapter);
                 recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
 

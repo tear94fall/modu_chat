@@ -90,7 +90,7 @@ public class InviteActivity extends AppCompatActivity {
 
     // Retrofit function
     public void getFriendsList(Member member) {
-        Call<List<MemberDto>> call = RetrofitClient.getApiService().RequestFriends(member.getUserId());
+        Call<List<MemberDto>> call = RetrofitClient.getMemberApiService().RequestFriends(member.getUserId());
 
         call.enqueue(new Callback<List<MemberDto>>() {
             @Override

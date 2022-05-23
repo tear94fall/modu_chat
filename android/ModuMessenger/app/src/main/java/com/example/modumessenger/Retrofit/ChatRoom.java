@@ -1,5 +1,6 @@
 package com.example.modumessenger.Retrofit;
 
+import com.example.modumessenger.dto.ChatRoomDto;
 import com.google.gson.annotations.SerializedName;
 
 import java.time.LocalDateTime;
@@ -32,4 +33,13 @@ public class ChatRoom {
     public void setLastChatMsg(String lastChatMsg) { this.lastChatMsg = lastChatMsg; }
     public void setLastChatTime(String lastChatTime) { this.lastChatTime = lastChatTime; }
     public void setUserIds(List<String> userIds) { this.userIds = userIds; }
+
+    public ChatRoom(ChatRoomDto chatRoomDto) {
+        setRoomId(chatRoomDto.getRoomId());
+        setRoomName(chatRoomDto.getRoomName());
+        setRoomImage(chatRoomDto.getRoomImage());
+        setLastChatMsg(chatRoomDto.getLastChatMsg());
+        setLastChatTime(chatRoomDto.getLastChatTime());
+        setUserIds(chatRoomDto.getUserIds());
+    }
 }

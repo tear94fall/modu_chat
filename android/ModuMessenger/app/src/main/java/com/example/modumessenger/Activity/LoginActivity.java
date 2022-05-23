@@ -111,7 +111,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public void SignupMember(Member member) {
-        Call<Member> call = RetrofitClient.getApiService().RequestSignup(member);
+        Call<Member> call = RetrofitClient.getMemberApiService().RequestSignup(member);
 
         call.enqueue(new Callback<Member>() {
             @Override
@@ -141,7 +141,7 @@ public class LoginActivity extends AppCompatActivity {
 
     public void LoginMember(String userId, String email){
         Member member = new Member(userId, email);
-        Call<Void> call = RetrofitClient.getApiService().RequestLogin(member);
+        Call<Void> call = RetrofitClient.getMemberApiService().RequestLogin(member);
 
         call.enqueue(new Callback<Void>() {
             @Override
@@ -172,7 +172,7 @@ public class LoginActivity extends AppCompatActivity {
 
     public void GetUserIdByLogin(String email) {
         Member member = new Member(email);
-        Call<Member> call = RetrofitClient.getApiService().RequestUserId(member);
+        Call<Member> call = RetrofitClient.getMemberApiService().RequestUserId(member);
 
         call.enqueue(new Callback<Member>() {
             @Override

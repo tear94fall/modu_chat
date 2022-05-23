@@ -34,7 +34,7 @@ public class Member implements Parcelable {
         setEmail(memberDto.getEmail());
         setAuth("google");
         setUsername(memberDto.getUsername());
-        setStatusMessage("Hello! Modu Chat!");
+        setStatusMessage(memberDto.getStatusMessage());
         setProfileImage(memberDto.getProfileImage() == null ? null : memberDto.getProfileImage().toString());
     }
 
@@ -43,7 +43,7 @@ public class Member implements Parcelable {
         setEmail(account.getEmail());
         setAuth("google");
         setUsername(account.getDisplayName());
-        setStatusMessage("Hello! Modu Chat!");
+        setStatusMessage("");
         setProfileImage(account.getPhotoUrl() == null ? null : account.getPhotoUrl().toString());
     }
 

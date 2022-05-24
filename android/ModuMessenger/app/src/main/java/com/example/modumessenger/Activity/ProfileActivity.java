@@ -1,6 +1,7 @@
 package com.example.modumessenger.Activity;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -70,6 +71,15 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
 
         profileEditButton = findViewById(R.id.profile_edit_button);
         profileEditButton.setVisibility(View.INVISIBLE);
+        profileEditButton.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), ProfileEditActivity.class);
+
+            intent.putExtra("username", PreferenceManager.getString("username"));
+            intent.putExtra("statusMessage", PreferenceManager.getString("statusMessage"));
+            intent.putExtra("profileImage", PreferenceManager.getString("profileImage"));
+
+            startActivity(intent);
+        });
 
         profileCloseButton = findViewById(R.id.profile_close_button);
 

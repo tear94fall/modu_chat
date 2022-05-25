@@ -3,6 +3,8 @@
     <string name="friends">친구</string>
     <string name="chat">채팅</string>
     <string name="setting">설정</string>
+    <string name="open">열기</string>
+    <string name="closed">닫기</string>
 
     <string-array name="friend_name">
         <item>A</item>

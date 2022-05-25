@@ -12,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -20,8 +21,14 @@ import com.bumptech.glide.Glide;
 import com.example.modumessenger.Global.OnSwipeListener;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.Member;
+import com.example.modumessenger.Retrofit.RetrofitClient;
 
 import java.util.Objects;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ProfileActivity extends AppCompatActivity implements View.OnTouchListener{
 
@@ -89,6 +96,12 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
         setData();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        getMyProfileInfo(new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
+    }
+
     private void getData() {
         if(getIntentExtra("profileImage") && getIntentExtra("username") && getIntentExtra("statusMessage"))
         {
@@ -132,5 +145,45 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
         Log.d(event.toString(), "onTouch: ");
         gestureDetector.onTouchEvent(event);
         return true;
+    }
+
+    public void getMyProfileInfo(Member member) {
+        Call<Member> call = RetrofitClient.getMemberApiService().RequestUserId(member);
+
+        call.enqueue(new Callback<Member>() {
+            @Override
+            public void onResponse(@NonNull Call<Member> call, @NonNull Response<Member> response) {
+                if(!response.isSuccessful()){
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                    return;
+                }
+
+                Member result = response.body();
+
+                assert response.body() != null;
+                assert result != null;
+
+                // get my Profile Info
+                usernameTextView.setText(result.getUsername());
+                statusMessageTextView.setText(result.getStatusMessage());
+                Glide.with(getApplicationContext())
+                        .load(result.getProfileImage())
+                        .error(Glide.with(getApplicationContext())
+                                .load(R.drawable.basic_profile_image)
+                                .into(profileImageView))
+                        .into(profileImageView);
+
+                if(member.getEmail().equals(result.getEmail())){
+                    Log.d("중복검사: ", "중복된 번호가 아닙니다");
+                }
+
+                Log.d("내 정보 가져오기 요청 : ", response.body().toString());
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Member> call, @NonNull Throwable t) {
+                Log.e("연결실패", t.getMessage());
+            }
+        });
     }
 }

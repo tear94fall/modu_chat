@@ -76,7 +76,7 @@ public class ProfileEditActivity extends AppCompatActivity {
         getData();
         setData();
 
-        changeProfileButton.setOnClickListener(v -> {
+        myProfileSaveButton.setOnClickListener(v -> {
             if(!member.getUsername().equals(myProfileName.getText().toString()) ||
                     !member.getStatusMessage().equals(myStatusMessage.getText().toString())) {
 
@@ -113,6 +113,12 @@ public class ProfileEditActivity extends AppCompatActivity {
         });
 
         profileCloseButton.setOnClickListener(view -> finish());
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        getMyProfileInfo(new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
     }
 
     private void getData() {
@@ -182,6 +188,8 @@ public class ProfileEditActivity extends AppCompatActivity {
                     member = new Member(myInfo);
 
                     Log.d("내정보 업데이트 요청 : ", response.body().toString());
+
+                    finish();
                 } catch (Exception e) {
                     Log.e("오류 발생 : ", e.getMessage());
                 }
@@ -189,6 +197,46 @@ public class ProfileEditActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(@NonNull Call<MemberDto> call, @NonNull Throwable t) {
+                Log.e("연결실패", t.getMessage());
+            }
+        });
+    }
+
+    public void getMyProfileInfo(Member member) {
+        Call<Member> call = RetrofitClient.getMemberApiService().RequestUserId(member);
+
+        call.enqueue(new Callback<Member>() {
+            @Override
+            public void onResponse(@NonNull Call<Member> call, @NonNull Response<Member> response) {
+                if(!response.isSuccessful()){
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                    return;
+                }
+
+                Member result = response.body();
+
+                assert response.body() != null;
+                assert result != null;
+
+                // get my Profile Info
+                myProfileName.setText(result.getUsername());
+                myStatusMessage.setText(result.getStatusMessage());
+                Glide.with(getApplicationContext())
+                        .load(result.getProfileImage())
+                        .error(Glide.with(getApplicationContext())
+                                .load(R.drawable.basic_profile_image)
+                                .into(profileImageView))
+                        .into(profileImageView);
+
+                if(member.getEmail().equals(result.getEmail())){
+                    Log.d("중복검사: ", "중복된 번호가 아닙니다");
+                }
+
+                Log.d("내 정보 가져오기 요청 : ", response.body().toString());
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Member> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
             }
         });

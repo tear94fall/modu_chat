@@ -8,6 +8,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -16,10 +17,15 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.modumessenger.Adapter.ChatBubble;
 import com.example.modumessenger.Adapter.ChatHistoryAdapter;
 import com.example.modumessenger.Adapter.inviteAdapter;
@@ -35,6 +41,7 @@ import com.example.modumessenger.dto.ChatRoomDto;
 import com.example.modumessenger.dto.MemberDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.android.material.navigation.NavigationView;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -160,6 +167,54 @@ public class ChatActivity extends AppCompatActivity {
             intent.setAction(Intent.ACTION_GET_CONTENT);
             resultLauncher.launch(intent);
         });
+
+        this.settingSideNavBar();
+    }
+
+    public void settingSideNavBar() {
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_baseline_dehaze_24);
+
+        DrawerLayout drawLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+
+        ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
+                ChatActivity.this,
+                drawLayout,
+                toolbar,
+                R.string.open,
+                R.string.closed
+        );
+
+        drawLayout.addDrawerListener(actionBarDrawerToggle);
+
+        navigationView.setNavigationItemSelectedListener(menuItem -> {
+            int id = menuItem.getItemId();
+
+            if (id == R.id.menu_item1){
+                Toast.makeText(getApplicationContext(), "메뉴아이템 1 선택", Toast.LENGTH_SHORT).show();
+            }else if(id == R.id.menu_item2){
+                Toast.makeText(getApplicationContext(), "메뉴아이템 2 선택", Toast.LENGTH_SHORT).show();
+            }else if(id == R.id.menu_item3){
+                Toast.makeText(getApplicationContext(), "메뉴아이템 3 선택", Toast.LENGTH_SHORT).show();
+            }
+
+            drawLayout.closeDrawer(GravityCompat.START);
+            return true;
+        });
+    }
+
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
     }
 
     @Override
@@ -197,6 +252,22 @@ public class ChatActivity extends AppCompatActivity {
         return cursor.getString(column_index);
     }
 
+    public void setNavInfo(ChatRoom chatRoom) {
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        View headerView = navigationView.getHeaderView(0);
+
+        String count = roomInfo.getUserIds().size() + " 명";
+        ((TextView) headerView.findViewById(R.id.menu_header_name)).setText(roomInfo.getRoomName());
+        ((TextView) headerView.findViewById(R.id.chat_room_member_count)).setText(count);
+
+        Glide.with(this)
+                .load(chatRoom.getRoomImage())
+                .error(Glide.with(this)
+                        .load(R.drawable.basic_profile_image)
+                        .into((ImageView)headerView.findViewById(R.id.chat_room_profile_image)))
+                .into((ImageView)headerView.findViewById(R.id.chat_room_profile_image));
+    }
+
     // Retrofit function
     public void getRoomInfo(String roomId) {
         Call<ChatRoomDto> call = RetrofitClient.getChatApiService().RequestChatRoom(roomId);
@@ -214,6 +285,7 @@ public class ChatActivity extends AppCompatActivity {
                 roomInfo = new ChatRoom(chatRoomDto);
 
                 setTitle(roomInfo.getRoomName());
+                setNavInfo(roomInfo);
 
                 Log.d("채팅방 정보 가져오기 요청 : ", response.body().toString());
 

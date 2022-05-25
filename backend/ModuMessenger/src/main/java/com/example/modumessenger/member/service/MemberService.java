@@ -49,6 +49,17 @@ public class MemberService {
         return modelMapper.map(findMember, MemberDto.class);
     }
 
+    public MemberDto updateMember(String userId, MemberDto memberDto) {
+        Member findMember = memberRepository.searchMemberByUserId(userId).orElseGet(Member::new);
+
+        findMember.setUsername(memberDto.getUsername());
+        findMember.setStatusMessage(memberDto.getStatusMessage());
+        findMember.setProfileImage(memberDto.getProfileImage());
+
+        Member updateMember = memberRepository.save(findMember);
+        return modelMapper.map(updateMember, MemberDto.class);
+    }
+
     public List<MemberDto> getFriendsList(String userId) {
         Member member = memberRepository.findByUserId(userId);
         List<Member> memberList = memberRepository.findAllFriends(member.getFriends());

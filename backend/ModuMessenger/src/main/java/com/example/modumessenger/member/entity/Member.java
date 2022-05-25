@@ -1,6 +1,7 @@
 package com.example.modumessenger.member.entity;
 
 import com.example.modumessenger.common.domain.BaseTimeEntity;
+import com.example.modumessenger.member.dto.MemberDto;
 import lombok.*;
 
 import javax.persistence.*;
@@ -42,4 +43,12 @@ public class Member extends BaseTimeEntity {
         return getUserId() + ", " + getUsername() + "," + getEmail() + "," + getAuth() + "," + getStatusMessage() + "," + getProfileImage();
     }
 
+    public Member(MemberDto memberDto) {
+        setUserId(memberDto.getUserId());
+        setAuth(memberDto.getAuth());
+        setEmail(memberDto.getEmail());
+        setUsername(memberDto.getUsername());
+        setStatusMessage(memberDto.getStatusMessage());
+        setProfileImage(memberDto.getProfileImage());
+    }
 }

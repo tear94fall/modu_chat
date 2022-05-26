@@ -28,6 +28,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Adapter.ChatBubble;
 import com.example.modumessenger.Adapter.ChatHistoryAdapter;
+import com.example.modumessenger.Adapter.ChatRoomAdapter;
+import com.example.modumessenger.Adapter.ChatRoomMemberAdapter;
 import com.example.modumessenger.Adapter.inviteAdapter;
 import com.example.modumessenger.Global.ChatWebSocketListener;
 import com.example.modumessenger.Global.PreferenceManager;
@@ -42,6 +44,8 @@ import com.example.modumessenger.dto.MemberDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.android.material.navigation.NavigationView;
+
+import org.w3c.dom.Text;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -173,6 +177,8 @@ public class ChatActivity extends AppCompatActivity {
 
     public void settingSideNavBar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
+
+        toolbar.setTitleTextColor(getResources().getColor(android.R.color.white, getTheme()));
         setSupportActionBar(toolbar);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -253,20 +259,35 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     public void setNavInfo(ChatRoom chatRoom) {
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        View headerView = navigationView.getHeaderView(0);
+        View headerView = findViewById(R.id.nav_header);
 
         String count = roomInfo.getUserIds().size() + " 명";
         ((TextView) headerView.findViewById(R.id.menu_header_name)).setText(roomInfo.getRoomName());
         ((TextView) headerView.findViewById(R.id.chat_room_member_count)).setText(count);
 
         Glide.with(this)
-                .load(chatRoom.getRoomImage())
+                .load(chatRoom.getRoomImage().equals("") ? R.drawable.basic_profile_image : chatRoom.getRoomImage())
                 .error(Glide.with(this)
                         .load(R.drawable.basic_profile_image)
-                        .into((ImageView)headerView.findViewById(R.id.chat_room_profile_image)))
-                .into((ImageView)headerView.findViewById(R.id.chat_room_profile_image));
+                        .into((ImageView) headerView.findViewById(R.id.chat_room_profile_image)))
+                .into((ImageView) headerView.findViewById(R.id.chat_room_profile_image));
     }
+
+    public void setNavMember() {
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+
+        RecyclerView chatRecyclerView;
+        RecyclerView.LayoutManager chatLayoutManager;
+
+        chatRecyclerView = navigationView.findViewById(R.id.chat_room_member_recycler_view);
+        chatRecyclerView.setHasFixedSize(true);
+
+        chatLayoutManager = new LinearLayoutManager(this);
+        chatRecyclerView.setLayoutManager(chatLayoutManager);
+
+        chatRecyclerView.setAdapter(new ChatRoomMemberAdapter(chatMemberList));
+    }
+
 
     // Retrofit function
     public void getRoomInfo(String roomId) {
@@ -363,6 +384,8 @@ public class ChatActivity extends AppCompatActivity {
                 chatHistoryAdapter = new ChatHistoryAdapter(chatBubbleList, chatMemberList);
                 recyclerView.setAdapter(chatHistoryAdapter);
                 recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
+
+                setNavMember();
 
                 Log.d("채팅 내역 가져오기 요청 : ", chatRoom.getRoomId());
             }

@@ -99,7 +99,9 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
     @Override
     public void onResume() {
         super.onResume();
-        getMyProfileInfo(new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
+        if(username.equals(PreferenceManager.getString("username"))){
+            getMyProfileInfo(new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
+        }
     }
 
     private void getData() {

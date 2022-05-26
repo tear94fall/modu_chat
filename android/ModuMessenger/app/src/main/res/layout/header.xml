@@ -6,7 +6,8 @@
     android:layout_height="200dp"
     android:gravity="center"
     android:orientation="vertical"
-    android:background="@color/purple_200">
+    android:background="@color/sky_blue"
+    android:id="@+id/nav_header">
 
     <ImageView
         android:id="@+id/chat_room_info_setting"
@@ -23,6 +24,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="60dp"
+        android:textColor="@color/white"
         android:text="채팅방 이름"
         android:textSize="24dp"
         app:layout_constraintEnd_toEndOf="@+id/chat_room_info_setting"
@@ -33,6 +35,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
+        android:textColor="@color/white"
         android:text="10명"
         app:layout_constraintStart_toStartOf="@+id/menu_header_name"
         app:layout_constraintTop_toBottomOf="@+id/menu_header_name" />

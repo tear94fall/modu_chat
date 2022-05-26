@@ -77,7 +77,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
 
         public void setChatRoomImage(ChatRoom chatRoom) {
             if(chatRoom.getRoomImage()!=null && !chatRoom.getRoomImage().equals("")) {
-                    setGlide(chatRoom.getRoomImage());
+                setGlide(chatRoom.getRoomImage());
             } else {
                 setGlide(null);
             }

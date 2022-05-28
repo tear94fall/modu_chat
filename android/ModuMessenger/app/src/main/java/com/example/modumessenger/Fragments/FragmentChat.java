@@ -8,7 +8,6 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,7 +15,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.modumessenger.Activity.InviteActivity;
+import com.example.modumessenger.Activity.CreateRoomActivity;
 import com.example.modumessenger.Adapter.ChatRoomAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
@@ -28,7 +27,6 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -69,7 +67,7 @@ public class FragmentChat extends Fragment {
         chatFloatingActionButton = view.findViewById(R.id.chatFloatingActionButton);
 
         chatFloatingActionButton.setOnClickListener(v -> {
-            Intent intent = new Intent(v.getContext(), InviteActivity.class);
+            Intent intent = new Intent(v.getContext(), CreateRoomActivity.class);
             v.getContext().startActivity(intent);
         });
     }

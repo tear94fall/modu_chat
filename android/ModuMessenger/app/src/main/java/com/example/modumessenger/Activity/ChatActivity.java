@@ -6,18 +6,18 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
@@ -28,9 +28,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Adapter.ChatBubble;
 import com.example.modumessenger.Adapter.ChatHistoryAdapter;
-import com.example.modumessenger.Adapter.ChatRoomAdapter;
 import com.example.modumessenger.Adapter.ChatRoomMemberAdapter;
-import com.example.modumessenger.Adapter.inviteAdapter;
 import com.example.modumessenger.Global.ChatWebSocketListener;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
@@ -44,8 +42,6 @@ import com.example.modumessenger.dto.MemberDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.android.material.navigation.NavigationView;
-
-import org.w3c.dom.Text;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -175,7 +171,13 @@ public class ChatActivity extends AppCompatActivity {
         this.settingSideNavBar();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+    }
+
     public void settingSideNavBar() {
+        View headerView = findViewById(R.id.nav_header);
         Toolbar toolbar = findViewById(R.id.toolbar);
 
         toolbar.setTitleTextColor(getResources().getColor(android.R.color.white, getTheme()));
@@ -186,6 +188,44 @@ public class ChatActivity extends AppCompatActivity {
 
         DrawerLayout drawLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+
+        Button ExitButton = navigationView.findViewById(R.id.nav_exit_button);
+        ExitButton.setOnClickListener(v -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog);
+
+            AlertDialog alertDialog = builder.setMessage("채팅방을 나가시겠습니까?")
+                    .setTitle("나가기")
+                    .setPositiveButton("아니오", (dialog, which) -> {
+                        Toast.makeText(getApplicationContext(), "취소", Toast.LENGTH_LONG).show();
+                    })
+                    .setNeutralButton("예", (dialog, which) -> {
+                        exitChatRoom(roomId, userId);
+                        Toast.makeText(getApplicationContext(), "채팅방에서 나갑니다.", Toast.LENGTH_SHORT).show();
+                    })
+                    .setCancelable(false)
+                    .create();
+
+            alertDialog.getWindow().setGravity(Gravity.CENTER);
+            alertDialog.show();
+        });
+
+        Button InviteButton = navigationView.findViewById(R.id.nav_invite_button);
+        InviteButton.setOnClickListener(v -> {
+            Intent intent = new Intent(getApplicationContext(), InviteActivity.class);
+
+            ArrayList<String> currentMembers = new ArrayList<>();
+            chatMemberList.forEach(m -> {
+                currentMembers.add(m.getUserId());
+            });
+
+            intent.putStringArrayListExtra("currentMember", currentMembers);
+
+            startActivity(intent);
+        });
+
+        headerView.setOnClickListener(v -> {
+            Toast.makeText(getApplicationContext(), "채팅방 설정으로 이동", Toast.LENGTH_SHORT).show();
+        });
 
         ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
                 ChatActivity.this,
@@ -393,6 +433,34 @@ public class ChatActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Call<List<ChatDto>> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
+            }
+        });
+    }
+
+    public void exitChatRoom(String roomId, String userId) {
+        Call<ChatRoomDto> call = RetrofitClient.getChatApiService().RequestExitChatRoom(roomId, userId);
+
+        call.enqueue(new Callback<ChatRoomDto>() {
+            @Override
+            public void onResponse(@NonNull Call<ChatRoomDto> call, @NonNull Response<ChatRoomDto> response) {
+                if(!response.isSuccessful()){
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                    return;
+                }
+
+                assert response.body() != null;
+                ChatRoomDto chatRoomDto = response.body();
+
+                if(chatRoomDto.getRoomId().equals(roomId) && chatRoomDto.getUserIds().contains(userId)) {
+                    finish();
+                }
+
+                Log.d("채팅방 나가기 요청 : ", response.body().toString());
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ChatRoomDto> call, @NonNull Throwable t) {
+                Log.e("채팅방 나가기 요청 실패", t.getMessage());
             }
         });
     }

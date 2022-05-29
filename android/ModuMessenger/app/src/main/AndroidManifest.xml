@@ -21,6 +21,7 @@
         <activity android:name=".Activity.ChatActivity" android:windowSoftInputMode="adjustPan" android:theme="@style/AppTheme"/>
         <activity android:name=".Activity.CreateRoomActivity" />
         <activity android:name=".Activity.InviteActivity" />
+        <activity android:name=".Activity.ChatRoomEdit" />
 
         <activity
             android:name=".Activity.SplashActivity"

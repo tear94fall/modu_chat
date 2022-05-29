@@ -1,5 +1,7 @@
 package com.example.modumessenger.dto;
 
+import com.example.modumessenger.Retrofit.ChatRoom;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,4 +26,13 @@ public class ChatRoomDto {
     public void setLastChatMsg(String lastChatMsg) { this.lastChatMsg = lastChatMsg; }
     public void setLastChatTime(String lastChatTime) { this.lastChatTime = lastChatTime; }
     public void setUserIds(List<String> userIds) { this.userIds = userIds; }
+
+    public ChatRoomDto(ChatRoom chatRoom) {
+        setRoomId(chatRoom.getRoomId());
+        setRoomName(chatRoom.getRoomName());
+        setRoomImage(chatRoom.getRoomImage());
+        setLastChatMsg(chatRoom.getLastChatMsg());
+        setLastChatTime(chatRoom.getLastChatTime());
+        setUserIds(chatRoom.getUserIds());
+    }
 }

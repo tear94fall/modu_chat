@@ -109,7 +109,7 @@
 
                 <include
                     android:id="@+id/nav_header"
-                    layout="@layout/header"
+                    layout="@layout/chat_room_nav_header"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />

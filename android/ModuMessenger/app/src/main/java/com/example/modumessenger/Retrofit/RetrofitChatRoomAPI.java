@@ -32,4 +32,7 @@ public interface RetrofitChatRoomAPI {
 
     @DELETE("chat/{roomId}/{userId}")
     Call<ChatRoomDto> RequestExitChatRoom(@Path("roomId") String roomId, @Path("userId") String userId);
+
+    @POST("chat/{roomId}/room")
+    Call<ChatRoomDto> RequestUpdateChatRoom(@Path("roomId") String roomId, @Body ChatRoomDto chatRoomDto);
 }

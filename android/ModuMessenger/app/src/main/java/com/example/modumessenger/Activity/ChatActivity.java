@@ -67,6 +67,8 @@ public class ChatActivity extends AppCompatActivity {
     WebSocket webSocket;
     WebSocketListener listener;
 
+    ActivityResultLauncher<Intent> resultLauncher;
+
     ObjectMapper objectMapper;
 
     List<Member> chatMemberList;
@@ -79,15 +81,63 @@ public class ChatActivity extends AppCompatActivity {
     TextView inputMsgTextView;
     Button sendMsg, sendOthers;
 
-    String jwtToken;
-    String userId;
-    String roomId;
+    String jwtToken,userId, roomId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
+        bindingView();
+        getData();
+        setData();
+        setLauncher();
+        setButtonClickEvent();
+        settingSideNavBar();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+        webSocket.close(1000, null);
+    }
+
+    private void getData() {
+        jwtToken = PreferenceManager.getString("token");
+        userId = PreferenceManager.getString("userId");
+        roomId = getIntent().getStringExtra("roomId");
+        if(roomId != null && !roomId.equals("")) {
+            getRoomInfo(roomId);
+        }
+    }
+
+    private void setData() {
+        objectMapper = new ObjectMapper();
+        chatMemberList = new ArrayList<>();
+        chatBubbleList = new ArrayList<>();
+    }
+
+    private void bindingView() {
         recyclerView = findViewById(R.id.chat_history_recycler_view);
         manager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(manager);
@@ -96,19 +146,28 @@ public class ChatActivity extends AppCompatActivity {
         sendOthers = findViewById(R.id.send_others_button);
         inputMsgTextView = findViewById(R.id.chat_message_edit_text);
         inputMsgTextView.setEnabled(true);
+    }
 
-        objectMapper = new ObjectMapper();
+    private void setLauncher() {
+        resultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if(result.getResultCode() == RESULT_OK){
+                        Intent intent = result.getData();
+                        Uri uri = intent != null ? intent.getData() : null;
 
-        chatMemberList = new ArrayList<>();
-        chatBubbleList = new ArrayList<>();
+                        if(uri!=null) {
+                            // send image to server
+                            sendPicture(uri);
+                        } else {
+                            Toast.makeText(getApplicationContext(), "선택된 이미지가 없습니다.", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+        );
+    }
 
-        jwtToken = PreferenceManager.getString("token");
-        userId = PreferenceManager.getString("userId");
-        roomId = getIntent().getStringExtra("roomId");
-        if(!roomId.equals("")) {
-            getRoomInfo(roomId);
-        }
-
+    private void setButtonClickEvent() {
         sendMsg.setOnClickListener(v -> {
             String msg = inputMsgTextView.getText().toString();
             if(msg.length() !=0) {
@@ -142,38 +201,12 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
 
-        ActivityResultLauncher<Intent> resultLauncher;
-
-        resultLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if(result.getResultCode() == RESULT_OK){
-                        Intent intent = result.getData();
-                        Uri uri = intent != null ? intent.getData() : null;
-
-                        if(uri!=null) {
-                            // send image to server
-                            sendPicture(uri);
-                        } else {
-                            Toast.makeText(getApplicationContext(), "선택된 이미지가 없습니다.", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                }
-        );
-
         sendOthers.setOnClickListener(v -> {
             Intent intent = new Intent();
             intent.setType("image/*");
             intent.setAction(Intent.ACTION_GET_CONTENT);
             resultLauncher.launch(intent);
         });
-
-        this.settingSideNavBar();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
     }
 
     public void settingSideNavBar() {
@@ -223,7 +256,12 @@ public class ChatActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        headerView.setOnClickListener(v -> {
+        ImageView chatRoomEditImage = headerView.findViewById(R.id.chat_room_info_setting);
+        chatRoomEditImage.setOnClickListener(v -> {
+            Intent intent = new Intent(getApplicationContext(), ChatRoomEdit.class);
+            intent.putExtra("roomId", roomId);
+            startActivity(intent);
+
             Toast.makeText(getApplicationContext(), "채팅방 설정으로 이동", Toast.LENGTH_SHORT).show();
         });
 
@@ -251,27 +289,6 @@ public class ChatActivity extends AppCompatActivity {
             drawLayout.closeDrawer(GravityCompat.START);
             return true;
         });
-    }
-
-    @Override
-    public void onBackPressed() {
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-    }
-
-    @Override
-    public void finish() {
-        super.finish();
-        webSocket.close(1000, null);
     }
 
     private void sendPicture(Uri imgUri) {

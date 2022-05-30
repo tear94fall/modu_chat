@@ -137,7 +137,7 @@ public class FragmentFriends extends Fragment {
             startActivity(intent);
             return true;
         } else if(itemId == R.id.menu_settings) {
-            Toast.makeText(getActivity(), "fragA", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), "설정", Toast.LENGTH_SHORT).show();
             return true;
         }
 

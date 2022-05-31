@@ -22,3 +22,7 @@ security:
     token:
       secret-key: modu_secret_key
       expire-length: 3600000
+
+modu:
+  chat:
+    image: "modu-chat/image"

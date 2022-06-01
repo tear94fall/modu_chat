@@ -1,10 +1,7 @@
 package com.example.modumessenger.Activity;
 
 import android.content.Intent;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -13,8 +10,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
@@ -43,9 +38,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.android.material.navigation.NavigationView;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
@@ -67,8 +59,6 @@ public class ChatActivity extends AppCompatActivity {
     WebSocket webSocket;
     WebSocketListener listener;
 
-    ActivityResultLauncher<Intent> resultLauncher;
-
     ObjectMapper objectMapper;
 
     List<Member> chatMemberList;
@@ -77,6 +67,8 @@ public class ChatActivity extends AppCompatActivity {
     RecyclerView recyclerView;
     LinearLayoutManager manager;
     ChatHistoryAdapter chatHistoryAdapter;
+
+    ChatSendOthersActivity chatSendOthersActivity;
 
     TextView inputMsgTextView;
     Button sendMsg, sendOthers;
@@ -91,7 +83,6 @@ public class ChatActivity extends AppCompatActivity {
         bindingView();
         getData();
         setData();
-        setLauncher();
         setButtonClickEvent();
         settingSideNavBar();
     }
@@ -146,25 +137,8 @@ public class ChatActivity extends AppCompatActivity {
         sendOthers = findViewById(R.id.send_others_button);
         inputMsgTextView = findViewById(R.id.chat_message_edit_text);
         inputMsgTextView.setEnabled(true);
-    }
 
-    private void setLauncher() {
-        resultLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if(result.getResultCode() == RESULT_OK){
-                        Intent intent = result.getData();
-                        Uri uri = intent != null ? intent.getData() : null;
-
-                        if(uri!=null) {
-                            // send image to server
-                            sendPicture(uri);
-                        } else {
-                            Toast.makeText(getApplicationContext(), "선택된 이미지가 없습니다.", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                }
-        );
+        chatSendOthersActivity = new ChatSendOthersActivity();
     }
 
     private void setButtonClickEvent() {
@@ -202,10 +176,7 @@ public class ChatActivity extends AppCompatActivity {
         });
 
         sendOthers.setOnClickListener(v -> {
-            Intent intent = new Intent();
-            intent.setType("image/*");
-            intent.setAction(Intent.ACTION_GET_CONTENT);
-            resultLauncher.launch(intent);
+            chatSendOthersActivity.show(getSupportFragmentManager(), chatSendOthersActivity.getTag());
         });
     }
 
@@ -289,30 +260,6 @@ public class ChatActivity extends AppCompatActivity {
             drawLayout.closeDrawer(GravityCompat.START);
             return true;
         });
-    }
-
-    private void sendPicture(Uri imgUri) {
-        String imagePath = getRealPathFromURI(imgUri);
-        File file = new File(imagePath);
-
-        try {
-            FileInputStream fileStream = new FileInputStream(imagePath);
-            byte[] imageFile = Files.readAllBytes(file.toPath());
-            // send image file to server
-
-            fileStream.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private String getRealPathFromURI(Uri contentUri) {
-        String[] proj = {MediaStore.Images.Media.DATA};
-        Cursor cursor = getContentResolver().query(contentUri, proj, null, null, null);
-        cursor.moveToFirst();
-        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-
-        return cursor.getString(column_index);
     }
 
     public void setNavInfo(ChatRoom chatRoom) {

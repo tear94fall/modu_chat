@@ -15,23 +15,30 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.modumessenger.Activity.ProfileActivity;
+import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.Member;
-import com.example.modumessenger.dto.ChatBubbleViewType;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+
+    public final int LEFT = 1;
+    public final int RIGHT = 2;
+    public final int LEFT_DUP = 3;
 
     private final List<Member> memberList;
     private final List<ChatBubble> chatList;
     private String lastChatTime;
+    private String userId;
 
     public ChatHistoryAdapter(List<ChatBubble> chatList, List<Member> memberList) {
         this.memberList = (memberList == null || memberList.size() == 0) ? new ArrayList<>() : memberList;
         this.chatList = (chatList == null || chatList.size() == 0) ? new ArrayList<>() : chatList;
+        userId = PreferenceManager.getString("userId");
     }
 
     @NonNull
@@ -42,13 +49,13 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         Context context = parent.getContext();
         LayoutInflater inflater = LayoutInflater.from(context);
 
-        if (viewType == ChatBubbleViewType.LEFT) {
+        if (viewType == LEFT) {
             view = inflater.inflate(R.layout.chat_bubble_left, parent, false);
             return new ChatHistoryAdapter.ChatBubbleLeftViewHolder(view);
-        } else if (viewType == ChatBubbleViewType.RIGHT) {
+        } else if (viewType == RIGHT) {
             view = inflater.inflate(R.layout.chat_bubble_right, parent, false);
             return new ChatHistoryAdapter.ChatBubbleRightViewHolder(view);
-        } else if (viewType == ChatBubbleViewType.LEFT_DUP) {
+        } else if (viewType == LEFT_DUP) {
             view = inflater.inflate(R.layout.chat_bubble_left_dup, parent, false);
             return new ChatHistoryAdapter.ChatBubbleLeftDuplicateViewHolder(view);
         } else {
@@ -104,24 +111,22 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public int getItemViewType(int position) {
         ChatBubble chat = chatList.get(position);
-        int type = chat.getViewType();
+        int type = RIGHT;
 
-        if (type == ChatBubbleViewType.LEFT) {
+        if(!chat.getSender().equals(userId)){
+            type = LEFT;
             if(position < getItemCount()-1 && position > 0) {
                 ChatBubble beforeChat = chatList.get(position+1);
                 ChatBubble afterChat = chatList.get(position-1);
                 if(!chat.getSender().equals(beforeChat.getSender()) && chat.getSender().equals(afterChat.getSender())) {
-                    return ChatBubbleViewType.LEFT_DUP;
+                    type = LEFT_DUP;
                 }
             } else if (position == getItemCount()-1) {
                 ChatBubble afterChat = chatList.get(position-1);
                 if(chat.getSender().equals(afterChat.getSender())) {
-                    return ChatBubbleViewType.LEFT_DUP;
+                    type = LEFT_DUP;
                 }
             }
-            return type;
-        } else if (type == ChatBubbleViewType.RIGHT) {
-            return type;
         }
 
         return type;

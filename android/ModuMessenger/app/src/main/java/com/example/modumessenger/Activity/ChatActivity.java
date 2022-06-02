@@ -30,9 +30,9 @@ import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.ChatRoom;
 import com.example.modumessenger.Retrofit.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
-import com.example.modumessenger.dto.ChatBubbleViewType;
 import com.example.modumessenger.dto.ChatDto;
 import com.example.modumessenger.dto.ChatRoomDto;
+import com.example.modumessenger.dto.ChatType;
 import com.example.modumessenger.dto.MemberDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -150,7 +150,7 @@ public class ChatActivity extends AppCompatActivity {
                 chatDto.setMessage(msg);
                 chatDto.setSender(userId);
                 chatDto.setChatTime(LocalDateTime.now().format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)));
-                chatDto.setChatType(ChatBubbleViewType.RIGHT);
+                chatDto.setChatType(ChatType.CHAT_TYPE_TEXT);
 
                 String message = null;
                 try {

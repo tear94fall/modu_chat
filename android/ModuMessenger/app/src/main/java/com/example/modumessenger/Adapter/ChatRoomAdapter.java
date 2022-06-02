@@ -19,6 +19,7 @@ import com.example.modumessenger.Retrofit.ChatRoom;
 import com.example.modumessenger.Retrofit.Member;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,6 +29,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
 
     public ChatRoomAdapter(List<ChatRoom> chatRoomList) {
         this.chatRoomList = (chatRoomList == null || chatRoomList.size() == 0) ? new ArrayList<>() : chatRoomList;
+        sortChatRoom();
     }
 
     @NonNull
@@ -45,6 +47,10 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
         holder.setChatRoomInfo(chatRoom);
         holder.setChatRoomImage(chatRoom);
         holder.setChatRoomClickEvent(chatRoom);
+    }
+
+    public void sortChatRoom() {
+        this.chatRoomList.sort(Comparator.comparing(ChatRoom::getLastChatTime));
     }
 
     @Override

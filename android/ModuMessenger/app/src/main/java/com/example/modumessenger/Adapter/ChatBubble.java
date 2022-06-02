@@ -1,6 +1,5 @@
 package com.example.modumessenger.Adapter;
 
-import com.example.modumessenger.dto.ChatBubbleViewType;
 import com.example.modumessenger.dto.ChatDto;
 
 // Sample Chat
@@ -30,5 +29,5 @@ public class ChatBubble {
     public void setChatMsg(String msg) { this.chatMsg = msg; }
     public void getChatTime(String time) { this.chatTime = time; }
     public void getSender(String sender) { this.sender = sender; }
-    public void setViewType(int type) { this.viewType = ChatBubbleViewType.RIGHT; }
+    public void setViewType(int type) { this.viewType = type; }
 }

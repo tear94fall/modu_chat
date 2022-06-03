@@ -12,7 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,14 +41,15 @@ public class ChatService {
     }
 
     public ChatRoomDto createChatRoom(List<String> userId) {
-        Long count = chatRoomRepository.count() + 1;
+        LocalDateTime TimeNow = LocalDateTime.now();
+        String sendTime = TimeNow.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT));
 
         ChatRoom chatRoom = new ChatRoom();
-        chatRoom.setRoomId(Long.toString(count));
+        chatRoom.setRoomId(UUID.randomUUID().toString());
         chatRoom.setRoomName("새로운 채팅방");
         chatRoom.setRoomImage("");
         chatRoom.setLastChatMsg("");
-        chatRoom.setLastChatTime(LocalDateTime.now().toString());
+        chatRoom.setLastChatTime(sendTime);
         chatRoom.setUserIds(userId);
 
         ChatRoom newRoom = chatRoomRepository.save(chatRoom);
@@ -58,5 +62,22 @@ public class ChatService {
                 .stream()
                 .map(c -> modelMapper.map(c, ChatDto.class))
                 .collect(Collectors.toList());
+    }
+
+    public ChatRoomDto removeChatRoomMember(String roomId, String userId) {
+        ChatRoom findChatRoom = chatRoomRepository.findByRoomId(roomId);
+        findChatRoom.getUserIds().remove(userId);
+        ChatRoom removeChatRoom = chatRoomRepository.save(findChatRoom);
+        return modelMapper.map(removeChatRoom, ChatRoomDto.class);
+    }
+
+    public ChatRoomDto updateChatRoom(String roomId, ChatRoomDto chatRoomDto) {
+        ChatRoom findChatRoom = chatRoomRepository.findByRoomId(roomId);
+
+        findChatRoom.setRoomName(chatRoomDto.getRoomName());
+        findChatRoom.setRoomImage(chatRoomDto.getRoomImage());
+
+        ChatRoom updateChatRoom = chatRoomRepository.save(findChatRoom);
+        return modelMapper.map(updateChatRoom, ChatRoomDto.class);
     }
 }

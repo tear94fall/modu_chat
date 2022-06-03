@@ -33,6 +33,14 @@ public class MemberRepositoryImpl implements MemberCustomRepository {
     }
 
     @Override
+    public List<Member> findAllByUserIds(List<String> userIds) {
+        return queryFactory
+                .selectFrom(member)
+                .where(member.userId.in(userIds))
+                .fetch();
+    }
+
+    @Override
     public List<Member> findFriendsByEmail(String email) {
         return queryFactory
                 .selectFrom(member)

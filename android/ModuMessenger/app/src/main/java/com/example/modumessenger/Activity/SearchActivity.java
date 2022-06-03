@@ -96,7 +96,7 @@ public class SearchActivity extends AppCompatActivity {
 
     // Retrofit function
     public void searchFriend(String email) {
-        Call<List<MemberDto>> call = RetrofitClient.getApiService().RequestFriend(email);
+        Call<List<MemberDto>> call = RetrofitClient.getMemberApiService().RequestFriend(email);
 
         call.enqueue(new Callback<List<MemberDto>>() {
             @Override
@@ -128,7 +128,7 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     public void addFriend(Member member, Member friend) {
-        Call<Member> call = RetrofitClient.getApiService().RequestAddFriends(member.getUserId(), friend);
+        Call<Member> call = RetrofitClient.getMemberApiService().RequestAddFriends(member.getUserId(), friend);
 
         call.enqueue(new Callback<Member>() {
             @Override

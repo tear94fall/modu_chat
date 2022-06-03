@@ -21,6 +21,9 @@ public interface RetrofitMemberAPI {
     @POST("member")
     Call<Member> RequestUserId(@Body Member member);
 
+    @POST("member/{userId}")
+    Call<MemberDto> RequestUpdate(@Path("userId") String userId, @Body MemberDto memberDto);
+
     @GET("member/{userId}/friends")
     Call<List<MemberDto>> RequestFriends(@Path("userId") String userId);
 

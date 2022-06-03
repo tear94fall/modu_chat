@@ -22,6 +22,7 @@ public class Chat extends BaseTimeEntity {
     private String roomId;
     private String sender;
     private String message;
+    private String chatTime;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chat_room_id")
@@ -35,10 +36,12 @@ public class Chat extends BaseTimeEntity {
         this.chatRoom = chatRoom;
     }
 
-    public Chat(String msg, String roomId, ChatRoom chatRoom, String sender) {
+    public Chat(String msg, String roomId, ChatRoom chatRoom, String sender, String chatTime, int type) {
         this.message = msg;
         this.roomId = roomId;
         this.chatRoom = chatRoom;
         this.sender = sender;
+        this.chatTime = chatTime;
+        this.chatType = type;
     }
 }

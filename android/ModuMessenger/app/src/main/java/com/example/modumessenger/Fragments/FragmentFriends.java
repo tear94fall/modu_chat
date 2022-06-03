@@ -137,7 +137,7 @@ public class FragmentFriends extends Fragment {
             startActivity(intent);
             return true;
         } else if(itemId == R.id.menu_settings) {
-            Toast.makeText(getActivity(), "fragA", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), "설정", Toast.LENGTH_SHORT).show();
             return true;
         }
 
@@ -146,7 +146,7 @@ public class FragmentFriends extends Fragment {
 
     // Retrofit function
     public void getFriendsList(Member member) {
-        Call<List<MemberDto>> call = RetrofitClient.getApiService().RequestFriends(member.getUserId());
+        Call<List<MemberDto>> call = RetrofitClient.getMemberApiService().RequestFriends(member.getUserId());
 
         call.enqueue(new Callback<List<MemberDto>>() {
             @Override
@@ -176,7 +176,7 @@ public class FragmentFriends extends Fragment {
     }
 
     public void getMyProfileInfo(Member member) {
-        Call<Member> call = RetrofitClient.getApiService().RequestUserId(member);
+        Call<Member> call = RetrofitClient.getMemberApiService().RequestUserId(member);
 
         call.enqueue(new Callback<Member>() {
             @Override

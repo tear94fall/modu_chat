@@ -13,12 +13,15 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.ChatActivity;
+import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.ChatRoom;
-import com.example.modumessenger.dto.ChatRoomDto;
+import com.example.modumessenger.Retrofit.Member;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRoomViewHolder> {
 
@@ -26,6 +29,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
 
     public ChatRoomAdapter(List<ChatRoom> chatRoomList) {
         this.chatRoomList = (chatRoomList == null || chatRoomList.size() == 0) ? new ArrayList<>() : chatRoomList;
+        sortChatRoom();
     }
 
     @NonNull
@@ -41,7 +45,12 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
         ChatRoom chatRoom = this.chatRoomList.get(position);
 
         holder.setChatRoomInfo(chatRoom);
+        holder.setChatRoomImage(chatRoom);
         holder.setChatRoomClickEvent(chatRoom);
+    }
+
+    public void sortChatRoom() {
+        this.chatRoomList.sort(Comparator.comparing(ChatRoom::getLastChatTime));
     }
 
     @Override
@@ -70,13 +79,30 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
             this.chatRoomName.setText(chatRoom.getRoomName());
             this.lastChatMessage.setText(chatRoom.getLastChatMsg());
             this.lastChatTime.setText(chatRoom.getLastChatTime().toString());
+        }
 
+        public void setChatRoomImage(ChatRoom chatRoom) {
             if(chatRoom.getRoomImage()!=null && !chatRoom.getRoomImage().equals("")) {
+                setGlide(chatRoom.getRoomImage());
+            } else {
+                setGlide(null);
+            }
+        }
+
+        public void setGlide(String imageUrl) {
+            if(imageUrl != null) {
                 Glide.with(chatRoomImage)
-                        .load(chatRoom.getRoomImage())
+                        .load(imageUrl)
+                        .override(70, 70)
                         .error(Glide.with(chatRoomImage)
                                 .load(R.drawable.basic_profile_image)
+                                .override(70, 70)
                                 .into(chatRoomImage))
+                        .into(chatRoomImage);
+            } else {
+                Glide.with(chatRoomImage)
+                        .load(R.drawable.basic_profile_image)
+                        .override(70, 70)
                         .into(chatRoomImage);
             }
         }

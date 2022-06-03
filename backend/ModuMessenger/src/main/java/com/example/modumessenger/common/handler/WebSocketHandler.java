@@ -6,6 +6,7 @@ import com.example.modumessenger.chat.repository.ChatRepository;
 import com.example.modumessenger.chat.repository.ChatRoomRepository;
 import com.example.modumessenger.common.parser.JsonParser;
 import com.example.modumessenger.member.entity.Member;
+import com.example.modumessenger.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -24,6 +25,9 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class WebSocketHandler extends TextWebSocketHandler {
 
+    private final MemberRepository memberRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRepository chatRepository;
 
@@ -47,13 +52,23 @@ public class WebSocketHandler extends TextWebSocketHandler {
         JSONParser jsonParser = new JSONParser();
         JSONObject jsonObject = (JSONObject) jsonParser.parse(new StringReader(payload));
 
+        String senderId = Objects.requireNonNull(session.getHandshakeHeaders().get("userId")).get(0);
+        Member sender = memberRepository.findByUserId(senderId);
+
         String roomId = (String) jsonObject.get("roomId");
         String msg = (String) jsonObject.get("message");
-        String sender = Objects.requireNonNull(session.getHandshakeHeaders().get("userId")).get(0);
+        String senderName = sender.getUserId();
+        LocalDateTime TimeNow = LocalDateTime.now();
+        String sendTime = TimeNow.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT));
+        Long chatType = (Long) jsonObject.get("chatType");
 
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId);
+        chatRoom.setLastChatMsg(msg);
+        chatRoom.setLastChatTime(sendTime);
 
-        Chat chat = new Chat(msg, roomId, chatRoom, sender);
+        chatRoomRepository.save(chatRoom);
+
+        Chat chat = new Chat(msg, roomId, chatRoom, senderName, sendTime, chatType.intValue());
         chatRepository.save(chat);
 
         for (String userId : chatRoom.getUserIds()) {

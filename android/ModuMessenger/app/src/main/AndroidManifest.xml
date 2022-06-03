@@ -16,9 +16,12 @@
         <activity android:name=".Activity.LoginActivity" />
         <activity android:name=".Activity.MainActivity" />
         <activity android:name=".Activity.ProfileActivity" />
+        <activity android:name=".Activity.ProfileEditActivity" />
         <activity android:name=".Activity.SearchActivity" />
-        <activity android:name=".Activity.ChatActivity" />
+        <activity android:name=".Activity.ChatActivity" android:windowSoftInputMode="adjustPan" android:theme="@style/AppTheme"/>
+        <activity android:name=".Activity.CreateRoomActivity" />
         <activity android:name=".Activity.InviteActivity" />
+        <activity android:name=".Activity.ChatRoomEdit" />
 
         <activity
             android:name=".Activity.SplashActivity"

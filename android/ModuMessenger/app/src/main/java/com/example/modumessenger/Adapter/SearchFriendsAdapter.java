@@ -42,6 +42,12 @@ public class SearchFriendsAdapter extends RecyclerView.Adapter<SearchFriendsAdap
         holder.setUserInfo(member);
         holder.setUserClickEvent(member);
         holder.setAddFriendsButton(member);
+
+        findFriendsList.forEach(m -> {
+            if(m.getUserId().equals(member.getUserId())) {
+                holder.addFriendsButton.setVisibility(View.INVISIBLE);
+            }
+        });
     }
 
     @Override

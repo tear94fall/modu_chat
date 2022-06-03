@@ -17,6 +17,25 @@
 
 ---
 
+## 모두의 채팅 어플리케이션
+
+| 시작 화면 | 친구 리스트 | 채팅방 리스트 |
+| :--------: | :--------: | :--------: |
+|<img src="images/start.jpg" width="270" height="480">|<img src="images/friends_list.jpg" width="270" height="480">| <img src="images/chat_room_list.jpg" width="270" height="480"> |
+| 구글 소셜 로그인 | 친구 프로필 사진, 상태 메세지 표시 | 채팅방 목록 표시<br> 1대1 채팅방, 단체 채팅방 |
+
+| 채팅방 화면 | 채팅방 메뉴 | 프로필 수정 |
+| :--------: | :--------: | :--------: |
+|<img src="images/chat_room.jpg" width="270" height="480">|<img src="images/chat_side_menu.jpg" width="270" height="480">| <img src="images/profile_edit.jpg" width="270" height="480"> |
+| 채팅중인 친구의 프로필 및 시간 표시 | 채팅방 친구 표시<br>채팅방 설정 및 친구 초대 | 프로필 수정<br>프로필 사진, 이름, 상태메세지 수정 |
+
+| 친구 찾기 |
+| :--------: |
+|<img src="images/friends_search.jpg" width="270" height="480">|
+| 새로운 친구 추가 가능 |
+
+---
+
 ## 브랜치 관리 전략
 
 ### 브랜치 종류

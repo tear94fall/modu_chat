@@ -5,7 +5,6 @@ import com.example.modumessenger.member.dto.RequestMemberDto;
 import com.example.modumessenger.member.dto.ResponseMemberDto;
 import com.example.modumessenger.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.Response;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +29,12 @@ public class MemberController {
     @PostMapping("/member/signup")
     public ResponseEntity<ResponseMemberDto> signupMember(@Valid @RequestBody RequestMemberDto requestMemberDto) {
         MemberDto memberDto = memberService.registerMember(modelMapper.map(requestMemberDto, MemberDto.class));
+        return ResponseEntity.ok().body(modelMapper.map(memberDto, ResponseMemberDto.class));
+    }
+
+    @PostMapping("/member/{userId}")
+    private ResponseEntity<ResponseMemberDto> updateMember(@Valid @PathVariable("userId") String userId, @RequestBody RequestMemberDto requestMemberDto) {
+        MemberDto memberDto = memberService.updateMember(userId, modelMapper.map(requestMemberDto, MemberDto.class));
         return ResponseEntity.ok().body(modelMapper.map(memberDto, ResponseMemberDto.class));
     }
 

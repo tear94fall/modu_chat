@@ -13,15 +13,14 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.ChatActivity;
-import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.ChatRoom;
-import com.example.modumessenger.Retrofit.Member;
+import com.example.modumessenger.RoomDatabase.Database.ChatRoomDatabase;
+import com.example.modumessenger.RoomDatabase.Entity.ChatRoomEntity;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRoomViewHolder> {
 
@@ -44,6 +43,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
     public void onBindViewHolder(@NonNull ChatRoomAdapter.ChatRoomViewHolder holder, int position) {
         ChatRoom chatRoom = this.chatRoomList.get(position);
 
+        holder.setDatabase(chatRoom);
         holder.setChatRoomInfo(chatRoom);
         holder.setChatRoomImage(chatRoom);
         holder.setChatRoomClickEvent(chatRoom);
@@ -60,6 +60,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
 
     public static class ChatRoomViewHolder extends RecyclerView.ViewHolder {
 
+        ChatRoomDatabase chatRoomDB;
         TextView chatRoomName;
         TextView lastChatMessage;
         TextView lastChatTime;
@@ -68,11 +69,17 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
 
         public ChatRoomViewHolder(@NonNull View itemView) {
             super(itemView);
+            chatRoomDB = ChatRoomDatabase.getInstance(this.itemView.getContext());
             chatRoomName = itemView.findViewById(R.id.chat_room_name);
             lastChatMessage = itemView.findViewById(R.id.last_chat_message);
             lastChatTime = itemView.findViewById(R.id.last_chat_time);
             chatRoomImage = itemView.findViewById(R.id.chat_room_image);
             chatRoomCardView = itemView.findViewById(R.id.chatRoomCardViewLayout);
+        }
+
+        public void setDatabase(ChatRoom chatRoom) {
+            ChatRoomEntity chatRoomEntity = new ChatRoomEntity(chatRoom);
+            chatRoomDB.chatRoomDao().update(chatRoomEntity);
         }
 
         public void setChatRoomInfo(ChatRoom chatRoom) {

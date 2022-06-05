@@ -18,6 +18,8 @@ import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.Member;
+import com.example.modumessenger.RoomDatabase.Database.ChatDatabase;
+import com.example.modumessenger.RoomDatabase.Entity.ChatEntity;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,6 +37,8 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private String lastChatTime;
     private String userId;
 
+    ChatDatabase chatDatabase;
+
     public ChatHistoryAdapter(List<ChatBubble> chatList, List<Member> memberList) {
         this.memberList = (memberList == null || memberList.size() == 0) ? new ArrayList<>() : memberList;
         this.chatList = (chatList == null || chatList.size() == 0) ? new ArrayList<>() : chatList;
@@ -48,6 +52,8 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         View view;
         Context context = parent.getContext();
         LayoutInflater inflater = LayoutInflater.from(context);
+
+        chatDatabase = ChatDatabase.getInstance(parent.getContext());
 
         if (viewType == LEFT) {
             view = inflater.inflate(R.layout.chat_bubble_left, parent, false);
@@ -67,6 +73,8 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ChatBubble chat = chatList.get(position);
+        ChatEntity chatEntity = new ChatEntity(chat);
+        chatDatabase.chatDao().update(chatEntity);
 
         if (holder instanceof ChatBubbleLeftViewHolder) {
             ChatBubbleLeftViewHolder leftHolder = ((ChatBubbleLeftViewHolder) holder);

@@ -7,6 +7,7 @@ import lombok.*;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -50,5 +51,6 @@ public class Member extends BaseTimeEntity {
         setUsername(memberDto.getUsername());
         setStatusMessage(memberDto.getStatusMessage());
         setProfileImage(memberDto.getProfileImage());
+        this.Friends = new ArrayList<>();
     }
 }

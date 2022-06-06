@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -15,7 +14,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.modumessenger.Global.App;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -27,68 +25,28 @@ import com.google.android.gms.tasks.Task;
 
 import com.example.modumessenger.Retrofit.*;
 
-import java.util.Objects;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private static final int RC_SIGN_IN = 9001;
     private static final String TAG = "Oauth2Google";
 
     GoogleSignInClient mGoogleSignInClient;
-
     SignInButton LoginButton;
-
-    ActivityResultLauncher<Intent> startActivityResult = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> {
-                if (result.getResultCode() == Activity.RESULT_OK) {
-                    Log.d(TAG, "구글 소셜 로그인 성공. 백엔드에 회원가입 요청.");
-
-                    Intent intent = result.getData();
-                    Task<GoogleSignInAccount> task = getSignedInAccountFromIntent(intent);
-
-                    SignupToBackend(task);
-                }
-            });
-
-    // 백엔드에 회원 가입 요청
-    private void SignupToBackend(Task<GoogleSignInAccount> completedTask) {
-        try {
-            GoogleSignInAccount account = completedTask.getResult(ApiException.class);
-            SignupMember(new Member(account));
-        } catch (ApiException e) {
-            Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
-        }
-    }
+    ActivityResultLauncher<Intent> startActivityResult;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        setTitle("로그인");
-
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .build();
-
-        mGoogleSignInClient = getClient(this, gso);
-
-        LoginButton = findViewById(R.id.googleButton);
-
-        Button.OnClickListener onClickListener = v -> {
-            if (v.getId() == R.id.googleButton) {
-                Log.d("로그인 버튼 클릭: ", "구글");
-                Toast.makeText(this.getApplicationContext(),"회원 가입을 시작합니다.", Toast.LENGTH_SHORT).show();
-                signIn();
-            }
-        };
-
-        LoginButton.setOnClickListener(onClickListener);
+        bindingView();
+        setLauncher();
+        getData();
+        setData();
+        setButtonClickEvent();
     }
 
     @Override
@@ -105,11 +63,60 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    private void bindingView() {
+        setTitle("로그인");
+        LoginButton = findViewById(R.id.googleButton);
+    }
+
+    private void setLauncher() {
+        startActivityResult = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK) {
+                        Log.d(TAG, "구글 소셜 로그인 성공. 백엔드에 회원가입 요청.");
+
+                        Intent intent = result.getData();
+                        Task<GoogleSignInAccount> task = getSignedInAccountFromIntent(intent);
+
+                        SignupToBackend(task);
+                    }
+                });
+    }
+
+    private void getData() {
+    }
+
+    private void setData() {
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .build();
+
+        mGoogleSignInClient = getClient(this, gso);
+    }
+
+    private void setButtonClickEvent() {
+        LoginButton.setOnClickListener(v -> {
+            Log.d("로그인 버튼 클릭: ", "구글");
+            Toast.makeText(getApplicationContext(),"회원 가입을 시작합니다.", Toast.LENGTH_SHORT).show();
+            signIn();
+        });
+    }
+
+    private void SignupToBackend(Task<GoogleSignInAccount> completedTask) {
+        try {
+            GoogleSignInAccount account = completedTask.getResult(ApiException.class);
+            SignupMember(new Member(account));
+        } catch (ApiException e) {
+            Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
+        }
+    }
+
     private void signIn() {
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
         startActivityResult.launch(signInIntent);
     }
 
+    // Retrofit function
     public void SignupMember(Member member) {
         Call<Member> call = RetrofitClient.getMemberApiService().RequestSignup(member);
 
@@ -129,7 +136,7 @@ public class LoginActivity extends AppCompatActivity {
                 }
 
                 Log.d("회원가입 요청 : ", result.toString());
-                LoginMember(result.getUserId(), result.getEmail());
+                GetUserIdByLogin(result.getEmail());
             }
 
             @Override
@@ -191,6 +198,7 @@ public class LoginActivity extends AppCompatActivity {
                 PreferenceManager.setString("profileImage", result.getProfileImage());
                 PreferenceManager.setString("statusMessage", result.getStatusMessage());
 
+                Log.d("내정보 가져오기 요청 : ", result.toString());
                 LoginMember(result.getUserId(), result.getEmail());
             }
 

@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 
 @Data
-@Builder
 @NoArgsConstructor
 public class PictureDto implements Serializable {
 

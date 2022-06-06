@@ -23,23 +23,12 @@ public class MemberService {
 
     public MemberDto registerMember(MemberDto memberDto) {
         if(memberRepository.existsByEmail(memberDto.getEmail())) {
-            throw new DuplicateKeyException(String.format(
-                    "이미 존재하는 유저입니다 'auth: %s, email: %s'", memberDto.getAuth(), memberDto.getEmail()
-            ));
+            Member findMember = memberRepository.findByEmail(memberDto.getEmail());
+            return modelMapper.map(findMember, MemberDto.class);
         }
 
-        Member member = new Member();
-        member.setUserId(memberDto.getUserId());
-        member.setUsername(memberDto.getUsername());
-        member.setAuth(memberDto.getAuth());
-        member.setEmail(memberDto.getEmail());
-        member.setStatusMessage(memberDto.getStatusMessage());
-        member.setProfileImage(memberDto.getProfileImage());
-        member.setFriends(new ArrayList<>());
-
+        Member member = new Member(memberDto);
         Member save = memberRepository.save(member);
-
-        System.out.println(save);
 
         return memberDto;
     }

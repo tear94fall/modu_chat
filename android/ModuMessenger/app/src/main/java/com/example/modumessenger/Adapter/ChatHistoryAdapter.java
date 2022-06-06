@@ -81,15 +81,20 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             memberList.forEach(member->{
                 if (member.getUserId().equals(chatList.get(position).getSender())) {
-
-                    Glide.with(((ChatBubbleLeftViewHolder) holder).senderImage)
-                            .load(member.getProfileImage())
-                            .override(70, 70)
-                            .diskCacheStrategy(DiskCacheStrategy.DATA)
-                            .error(Glide.with(((ChatBubbleLeftViewHolder) holder).senderImage)
-                                    .load(R.drawable.basic_profile_image)
-                                    .into(((ChatBubbleLeftViewHolder) holder).senderImage))
-                            .into(((ChatBubbleLeftViewHolder) holder).senderImage);
+                    if(!member.getProfileImage().equals("") && member.getProfileImage()!=null) {
+                        Glide.with(((ChatBubbleLeftViewHolder) holder).senderImage)
+                                .load(member.getProfileImage())
+                                .override(70, 70)
+                                .diskCacheStrategy(DiskCacheStrategy.DATA)
+                                .error(Glide.with(((ChatBubbleLeftViewHolder) holder).senderImage)
+                                        .load(R.drawable.basic_profile_image)
+                                        .into(((ChatBubbleLeftViewHolder) holder).senderImage))
+                                .into(((ChatBubbleLeftViewHolder) holder).senderImage);
+                    } else {
+                        Glide.with(((ChatBubbleLeftViewHolder) holder).senderImage)
+                                .load(R.drawable.basic_profile_image)
+                                .into(((ChatBubbleLeftViewHolder) holder).senderImage);
+                    }
 
                     ((ChatBubbleLeftViewHolder) holder).setUserClickEvent(member);
                 }
@@ -121,7 +126,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         ChatBubble chat = chatList.get(position);
         int type = RIGHT;
 
-        if(!chat.getSender().equals(userId)){
+        if(getItemCount() > 0 && !chat.getSender().equals(userId)){
             type = LEFT;
             if(position < getItemCount()-1 && position > 0) {
                 ChatBubble beforeChat = chatList.get(position+1);

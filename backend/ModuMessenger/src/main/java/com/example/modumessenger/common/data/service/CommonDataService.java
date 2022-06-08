@@ -4,6 +4,9 @@ import com.example.modumessenger.common.data.dto.CommonDataDto;
 import com.example.modumessenger.common.data.entity.CommonData;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Service;
+
+@Service
 @RequiredArgsConstructor
 public class CommonDataService {
     private final ModelMapper modelMapper;

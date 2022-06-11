@@ -38,7 +38,7 @@ public class SplashActivity extends AppCompatActivity {
 
     // Retrofit function
     public void getVersion() {
-        Call<CommonData> call = RetrofitClient.getCommonApiService().RequestAppVersion();
+        Call<CommonData> call = RetrofitClient.getCommonApiService().RequestCommonData("version");
 
         call.enqueue(new Callback<CommonData>() {
             @Override
@@ -59,6 +59,7 @@ public class SplashActivity extends AppCompatActivity {
 
                     if(key.equals(version)) {
                         // start app
+                        Toast.makeText(getApplicationContext(), "버전 : " + value, Toast.LENGTH_SHORT).show();
                     } else {
                         // not start app
                     }

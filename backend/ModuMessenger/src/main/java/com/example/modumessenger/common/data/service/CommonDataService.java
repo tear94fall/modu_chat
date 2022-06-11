@@ -14,6 +14,22 @@ public class CommonDataService {
     public CommonDataDto getVersion() {
         CommonData commonData = new CommonData();
         commonData.setKey("version");
+        commonData.setValue("1.0.0");
+
+        return modelMapper.map(commonData, CommonDataDto.class);
+    }
+
+    public CommonDataDto getLocale() {
+        CommonData commonData = new CommonData();
+        commonData.setKey("locale");
+        commonData.setValue("");
+
+        return modelMapper.map(commonData, CommonDataDto.class);
+    }
+
+    public CommonDataDto getTime() {
+        CommonData commonData = new CommonData();
+        commonData.setKey("time");
         commonData.setValue("");
 
         return modelMapper.map(commonData, CommonDataDto.class);

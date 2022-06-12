@@ -24,7 +24,6 @@ import com.bumptech.glide.Glide;
 import com.example.modumessenger.Adapter.ChatBubble;
 import com.example.modumessenger.Adapter.ChatHistoryAdapter;
 import com.example.modumessenger.Adapter.ChatRoomMemberAdapter;
-import com.example.modumessenger.Global.ChatWebSocketListener;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.ChatRoom;
@@ -37,6 +36,13 @@ import com.example.modumessenger.dto.MemberDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.android.material.navigation.NavigationView;
+import com.google.gson.JsonParser;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -48,6 +54,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
+import okio.ByteString;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -83,6 +90,7 @@ public class ChatActivity extends AppCompatActivity {
         bindingView();
         getData();
         setData();
+        setEventBus(true);
         setButtonClickEvent();
         settingSideNavBar();
     }
@@ -105,6 +113,7 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        setEventBus(false);
     }
 
     @Override
@@ -139,6 +148,14 @@ public class ChatActivity extends AppCompatActivity {
         inputMsgTextView.setEnabled(true);
 
         chatSendOthersActivity = new ChatSendOthersActivity();
+    }
+
+    private void setEventBus(boolean flag) {
+        if (flag) {
+            EventBus.getDefault().register(this);
+        } else {
+            EventBus.getDefault().unregister(this);
+        }
     }
 
     private void setButtonClickEvent() {
@@ -292,6 +309,61 @@ public class ChatActivity extends AppCompatActivity {
         chatRecyclerView.setAdapter(new ChatRoomMemberAdapter(chatMemberList));
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onEvent(MessageEvent messageEvent) {
+        Log.e("event bus call", "Chat Event " + messageEvent.message);
+        // update room database
+    }
+
+    // event bus class
+    public static class MessageEvent {
+        public final String message;
+
+        public MessageEvent(String message) {
+            this.message = message;
+        }
+    }
+
+    public static class ChatWebSocketListener extends okhttp3.WebSocketListener {
+
+        private static final int NORMAL_CLOSURE_STATUS = 1000;
+
+        @Override
+        public void onOpen(@NonNull WebSocket webSocket, @NonNull okhttp3.Response response) {
+//        webSocket.close(NORMAL_CLOSURE_STATUS, "close");
+        }
+
+        @Override
+        public void onMessage(@NonNull WebSocket webSocket, @NonNull String text) {
+            System.out.println(text);
+
+            JsonParser jsonParser = new JsonParser();
+            Object object = jsonParser.parse(text);
+            JSONObject jsonObject = (JSONObject) object;
+            String msg = null;
+
+            try {
+                msg = (String) jsonObject.get("message");
+                EventBus.getDefault().post(new MessageEvent(msg));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onMessage(@NonNull WebSocket webSocket, @NonNull ByteString bytes) {
+        }
+
+        @Override
+        public void onClosing(WebSocket webSocket, int code, @NonNull String reason) {
+            webSocket.close(NORMAL_CLOSURE_STATUS, null);
+        }
+
+        @Override
+        public void onFailure(@NonNull WebSocket webSocket, Throwable t, okhttp3.Response response) {
+            t.printStackTrace();
+        }
+    }
 
     // Retrofit function
     public void getRoomInfo(String roomId) {

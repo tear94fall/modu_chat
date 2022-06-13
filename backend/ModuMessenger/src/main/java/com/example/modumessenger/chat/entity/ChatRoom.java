@@ -37,6 +37,9 @@ public class ChatRoom extends BaseTimeEntity {
     @Column(nullable = false)
     private String lastChatTime;
 
+    @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL)
+    private List<ChatRoomMember> chatRoomMemberList = new ArrayList<>();
+
     @ElementCollection(fetch = LAZY)
     @CollectionTable(name = "members", joinColumns = @JoinColumn(name = "member_id"))
     @Column(name = "members")

@@ -1,7 +1,6 @@
 package com.example.modumessenger.dto;
 
-import com.example.modumessenger.Retrofit.Member;
-import com.google.gson.annotations.SerializedName;
+import com.example.modumessenger.entity.Member;
 
 public class MemberDto {
     private String userId;
@@ -24,6 +23,19 @@ public class MemberDto {
     public void setUsername(String username) { this.username = username; }
     public void setStatusMessage(String statusMessage) { this.statusMessage = statusMessage; }
     public void setProfileImage(String profileImage) { this.profileImage = profileImage; }
+
+    public MemberDto() {
+
+    }
+
+    public MemberDto(String email) {
+        setEmail(email);
+    }
+
+    public MemberDto(String userId, String email) {
+        setUserId(userId);
+        setEmail(email);
+    }
 
     public MemberDto(Member member) {
         setUserId(member.getUserId());

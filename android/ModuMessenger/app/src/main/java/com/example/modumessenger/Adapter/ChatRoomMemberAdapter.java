@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.R;
-import com.example.modumessenger.Retrofit.Member;
+import com.example.modumessenger.entity.Member;
 
 import java.util.List;
 

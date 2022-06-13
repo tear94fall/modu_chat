@@ -17,13 +17,11 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
-import com.example.modumessenger.Retrofit.Member;
+import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.RoomDatabase.Database.ChatDatabase;
 import com.example.modumessenger.RoomDatabase.Entity.ChatEntity;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {

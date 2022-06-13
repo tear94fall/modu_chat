@@ -1,4 +1,4 @@
-package com.example.modumessenger.Retrofit;
+package com.example.modumessenger.entity;
 
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.google.gson.annotations.SerializedName;

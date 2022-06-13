@@ -20,7 +20,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
-import com.example.modumessenger.Retrofit.Member;
+import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.MemberDto;
 
@@ -118,7 +118,7 @@ public class ProfileEditActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        getMyProfileInfo(new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
+        getMyProfileInfo(new MemberDto(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
     }
 
     private void getData() {
@@ -202,18 +202,18 @@ public class ProfileEditActivity extends AppCompatActivity {
         });
     }
 
-    public void getMyProfileInfo(Member member) {
-        Call<Member> call = RetrofitClient.getMemberApiService().RequestUserId(member);
+    public void getMyProfileInfo(MemberDto memberDto) {
+        Call<MemberDto> call = RetrofitClient.getMemberApiService().RequestUserId(memberDto);
 
-        call.enqueue(new Callback<Member>() {
+        call.enqueue(new Callback<MemberDto>() {
             @Override
-            public void onResponse(@NonNull Call<Member> call, @NonNull Response<Member> response) {
+            public void onResponse(@NonNull Call<MemberDto> call, @NonNull Response<MemberDto> response) {
                 if(!response.isSuccessful()){
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
                     return;
                 }
 
-                Member result = response.body();
+                MemberDto result = response.body();
 
                 assert response.body() != null;
                 assert result != null;
@@ -236,7 +236,7 @@ public class ProfileEditActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(@NonNull Call<Member> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<MemberDto> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
             }
         });

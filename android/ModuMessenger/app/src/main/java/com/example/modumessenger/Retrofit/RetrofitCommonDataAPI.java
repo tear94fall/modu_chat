@@ -1,8 +1,6 @@
 package com.example.modumessenger.Retrofit;
 
-import com.example.modumessenger.dto.ChatRoomDto;
-
-import java.util.List;
+import com.example.modumessenger.entity.CommonData;
 
 import retrofit2.Call;
 import retrofit2.http.GET;

@@ -1,8 +1,7 @@
 package com.example.modumessenger.dto;
 
-import com.example.modumessenger.Retrofit.ChatRoom;
+import com.example.modumessenger.entity.ChatRoom;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 public class ChatRoomDto {

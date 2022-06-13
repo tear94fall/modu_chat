@@ -1,6 +1,5 @@
 package com.example.modumessenger.Activity;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
@@ -14,8 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.modumessenger.Adapter.inviteAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
-import com.example.modumessenger.Retrofit.ChatRoom;
-import com.example.modumessenger.Retrofit.Member;
+import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.example.modumessenger.dto.MemberDto;

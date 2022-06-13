@@ -16,6 +16,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
+import com.example.modumessenger.dto.MemberDto;
+import com.example.modumessenger.dto.SignUpDto;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -105,7 +107,7 @@ public class LoginActivity extends AppCompatActivity {
     private void SignupToBackend(Task<GoogleSignInAccount> completedTask) {
         try {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
-            SignupMember(new Member(account));
+            SignupMember(new SignUpDto(account));
         } catch (ApiException e) {
             Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
         }
@@ -117,21 +119,21 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     // Retrofit function
-    public void SignupMember(Member member) {
-        Call<Member> call = RetrofitClient.getMemberApiService().RequestSignup(member);
+    public void SignupMember(SignUpDto signUpDto) {
+        Call<SignUpDto> call = RetrofitClient.getMemberApiService().RequestSignup(signUpDto);
 
-        call.enqueue(new Callback<Member>() {
+        call.enqueue(new Callback<SignUpDto>() {
             @Override
-            public void onResponse(@NonNull Call<Member> call, @NonNull Response<Member> response) {
+            public void onResponse(@NonNull Call<SignUpDto> call, @NonNull Response<SignUpDto> response) {
                 if(!response.isSuccessful()){
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
                     return;
                 }
 
-                Member result = response.body();
+                SignUpDto result = response.body();
                 assert result != null;
 
-                if(member.getEmail().equals(result.getEmail())){
+                if(signUpDto.getEmail().equals(result.getEmail())){
                     Log.d("중복검사: ", "중복된 번호가 아닙니다");
                 }
 
@@ -140,15 +142,15 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(@NonNull Call<Member> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<SignUpDto> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
             }
         });
     }
 
     public void LoginMember(String userId, String email){
-        Member member = new Member(userId, email);
-        Call<Void> call = RetrofitClient.getMemberApiService().RequestLogin(member);
+        MemberDto memberDto = new MemberDto(userId, email);
+        Call<Void> call = RetrofitClient.getMemberApiService().RequestLogin(memberDto);
 
         call.enqueue(new Callback<Void>() {
             @Override
@@ -178,18 +180,19 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public void GetUserIdByLogin(String email) {
-        Member member = new Member(email);
-        Call<Member> call = RetrofitClient.getMemberApiService().RequestUserId(member);
+        MemberDto memberDto = new MemberDto();
+        memberDto.setEmail(email);
+        Call<MemberDto> call = RetrofitClient.getMemberApiService().RequestUserId(memberDto);
 
-        call.enqueue(new Callback<Member>() {
+        call.enqueue(new Callback<MemberDto>() {
             @Override
-            public void onResponse(@NonNull Call<Member> call, @NonNull Response<Member> response) {
+            public void onResponse(@NonNull Call<MemberDto> call, @NonNull Response<MemberDto> response) {
                 if(!response.isSuccessful()){
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
                     Toast.makeText(getApplicationContext(),"연결이 원활하지 않습니다.", Toast.LENGTH_SHORT).show();
                 }
 
-                Member result = response.body();
+                MemberDto result = response.body();
                 assert result != null;
 
                 PreferenceManager.setString("userId", result.getUserId());
@@ -203,7 +206,7 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(@NonNull Call<Member> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<MemberDto> call, @NonNull Throwable t) {
                 Log.e("사용자 아이디 가져오기 실패", t.getMessage());
             }
         });

@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.ChatActivity;
 import com.example.modumessenger.R;
-import com.example.modumessenger.Retrofit.ChatRoom;
+import com.example.modumessenger.entity.ChatRoom;
 import com.example.modumessenger.RoomDatabase.Database.ChatRoomDatabase;
 import com.example.modumessenger.RoomDatabase.Entity.ChatRoomEntity;
 

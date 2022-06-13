@@ -9,12 +9,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.modumessenger.Adapter.SearchFriendsAdapter;
-import com.example.modumessenger.Retrofit.CommonData;
+import com.example.modumessenger.entity.CommonData;
 import com.example.modumessenger.Retrofit.RetrofitClient;
-import com.example.modumessenger.dto.MemberDto;
-
-import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;

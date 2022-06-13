@@ -14,7 +14,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.modumessenger.Adapter.SearchFriendsAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
-import com.example.modumessenger.Retrofit.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.MemberDto;
 
@@ -82,12 +81,9 @@ public class SearchActivity extends AppCompatActivity {
     @SuppressLint("NotifyDataSetChanged")
     public void addFriendByEmail(MemberDto friends) {
         try {
-            Member member = new Member(
-                    PreferenceManager.getString("userId"),
-                    PreferenceManager.getString("email")
-            );
+            MemberDto memberDto = new MemberDto(PreferenceManager.getString("userId"), PreferenceManager.getString("email"));
 
-            addFriend(member, new Member(friends));
+            addFriend(memberDto, friends);
             searchFriendsAdapter.notifyDataSetChanged();
         } catch (Exception e) {
             Toast.makeText(getApplicationContext(), "친구 추가에 실패헀습니다", Toast.LENGTH_SHORT).show();
@@ -127,12 +123,12 @@ public class SearchActivity extends AppCompatActivity {
         });
     }
 
-    public void addFriend(Member member, Member friend) {
-        Call<Member> call = RetrofitClient.getMemberApiService().RequestAddFriends(member.getUserId(), friend);
+    public void addFriend(MemberDto member, MemberDto friend) {
+        Call<MemberDto> call = RetrofitClient.getMemberApiService().RequestAddFriends(member.getUserId(), friend);
 
-        call.enqueue(new Callback<Member>() {
+        call.enqueue(new Callback<MemberDto>() {
             @Override
-            public void onResponse(@NonNull Call<Member> call, @NonNull Response<Member> response) {
+            public void onResponse(@NonNull Call<MemberDto> call, @NonNull Response<MemberDto> response) {
                 if(!response.isSuccessful()){
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
                     return;
@@ -141,7 +137,7 @@ public class SearchActivity extends AppCompatActivity {
                 try {
                     assert response.body() != null;
                     Log.d("친구 추가 요청 : ", response.body().toString());
-                    Member friend = response.body();
+                    MemberDto friend = response.body();
                     Toast.makeText(getApplicationContext(), friend.getUsername() + "님과 친구가 되었습니다.", Toast.LENGTH_SHORT).show();
                 } catch (Exception e) {
                     Log.e("오류 발생 : ", e.getMessage());
@@ -149,7 +145,7 @@ public class SearchActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(@NonNull Call<Member> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<MemberDto> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
             }
         });

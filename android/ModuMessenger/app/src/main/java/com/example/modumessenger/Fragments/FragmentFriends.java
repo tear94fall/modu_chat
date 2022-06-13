@@ -12,7 +12,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.Toolbar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -21,18 +20,15 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.modumessenger.Activity.MainActivity;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Activity.SearchActivity;
 import com.example.modumessenger.Adapter.FriendsAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
-import com.example.modumessenger.Retrofit.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.MemberDto;
 
 import java.util.List;
-import java.util.Objects;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -104,10 +100,10 @@ public class FragmentFriends extends Fragment {
 
         requireActivity().invalidateOptionsMenu();
 
-        Member member = new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email"));
+        MemberDto memberDto = new MemberDto(PreferenceManager.getString("userId"), PreferenceManager.getString("email"));
 
-        getFriendsList(member);
-        getMyProfileInfo(member);
+        getFriendsList(memberDto);
+        getMyProfileInfo(memberDto);
     }
 
     @Override
@@ -145,8 +141,8 @@ public class FragmentFriends extends Fragment {
     }
 
     // Retrofit function
-    public void getFriendsList(Member member) {
-        Call<List<MemberDto>> call = RetrofitClient.getMemberApiService().RequestFriends(member.getUserId());
+    public void getFriendsList(MemberDto memberDto) {
+        Call<List<MemberDto>> call = RetrofitClient.getMemberApiService().RequestFriends(memberDto.getUserId());
 
         call.enqueue(new Callback<List<MemberDto>>() {
             @Override
@@ -175,18 +171,18 @@ public class FragmentFriends extends Fragment {
         });
     }
 
-    public void getMyProfileInfo(Member member) {
-        Call<Member> call = RetrofitClient.getMemberApiService().RequestUserId(member);
+    public void getMyProfileInfo(MemberDto memberDto) {
+        Call<MemberDto> call = RetrofitClient.getMemberApiService().RequestUserId(memberDto);
 
-        call.enqueue(new Callback<Member>() {
+        call.enqueue(new Callback<MemberDto>() {
             @Override
-            public void onResponse(@NonNull Call<Member> call, @NonNull Response<Member> response) {
+            public void onResponse(@NonNull Call<MemberDto> call, @NonNull Response<MemberDto> response) {
                 if(!response.isSuccessful()){
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
                     return;
                 }
 
-                Member result = response.body();
+                MemberDto result = response.body();
 
                 assert response.body() != null;
                 assert result != null;
@@ -201,7 +197,7 @@ public class FragmentFriends extends Fragment {
                                 .into(myProfileImage))
                         .into(myProfileImage);
 
-                if(member.getEmail().equals(result.getEmail())){
+                if(memberDto.getEmail().equals(result.getEmail())){
                     Log.d("중복검사: ", "중복된 번호가 아닙니다");
                 }
 
@@ -209,7 +205,7 @@ public class FragmentFriends extends Fragment {
             }
 
             @Override
-            public void onFailure(@NonNull Call<Member> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<MemberDto> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
             }
         });

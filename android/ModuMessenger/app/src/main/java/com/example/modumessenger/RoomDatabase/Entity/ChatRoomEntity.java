@@ -4,9 +4,7 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
-import com.example.modumessenger.Retrofit.ChatRoom;
-
-import java.util.List;
+import com.example.modumessenger.entity.ChatRoom;
 
 @Entity(tableName = "chat_room")
 public class ChatRoomEntity {

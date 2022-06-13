@@ -1,4 +1,4 @@
-package com.example.modumessenger.Retrofit;
+package com.example.modumessenger.entity;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -8,8 +8,6 @@ import androidx.annotation.NonNull;
 import com.example.modumessenger.dto.MemberDto;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.gson.annotations.SerializedName;
-
-import java.time.LocalDateTime;
 
 public class Member implements Parcelable {
     @SerializedName("userId")

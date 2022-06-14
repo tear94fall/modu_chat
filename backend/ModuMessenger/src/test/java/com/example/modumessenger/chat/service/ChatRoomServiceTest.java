@@ -32,10 +32,10 @@ class ChatRoomServiceTest {
 
     @Test
     public void initialize() {
-        ChatRoom roomA = new ChatRoom("roomA", "roomA", "roomA", "roomA");
-        ChatRoom roomB = new ChatRoom("roomB", "roomB", "roomB", "roomB");
-        ChatRoom roomC = new ChatRoom("roomC", "roomC", "roomC", "roomC");
-        ChatRoom roomD = new ChatRoom("roomD", "roomD", "roomD", "roomD");
+        ChatRoom roomA = new ChatRoom("roomA", "roomA", "roomA", "roomA", "roomA");
+        ChatRoom roomB = new ChatRoom("roomB", "roomB", "roomB", "roomB", "roomA");
+        ChatRoom roomC = new ChatRoom("roomC", "roomC", "roomC", "roomC", "roomA");
+        ChatRoom roomD = new ChatRoom("roomD", "roomD", "roomD", "roomD", "roomA");
 
         Member memberA = new Member("memberA", "memberA@test.com");
         Member memberB = new Member("memberB", "memberB@test.com");

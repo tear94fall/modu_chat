@@ -37,13 +37,6 @@ public class ChatRoomController {
         return ResponseEntity.ok().body(chatRoomDto);
     }
 
-    @GetMapping("/chat/{roomId}/members")
-    public ResponseEntity<List<MemberDto>> getChatRoomMembers(@Valid @PathVariable("roomId") String roomId) {
-        ChatRoomDto chatRoomDto = chatRoomService.searchChatRoomByRoomId(roomId);
-        List<MemberDto> memberDtoList = memberService.getMemberByUserIds(chatRoomDto.getUserIds());
-        return ResponseEntity.ok().body(memberDtoList);
-    }
-
     @DeleteMapping("/chat/{roomId}/{userId}")
     public ResponseEntity<ChatRoomDto> removeChatRoomMember(@Valid @PathVariable("roomId") String roomId, @PathVariable("userId") String userId) {
         ChatRoomDto chatRoomDto = chatRoomService.removeChatRoomMember(roomId, userId);

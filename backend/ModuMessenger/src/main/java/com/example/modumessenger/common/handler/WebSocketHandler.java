@@ -58,8 +58,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
         String roomId = (String) jsonObject.get("roomId");
         String msg = (String) jsonObject.get("message");
         String senderName = sender.getUserId();
-        LocalDateTime TimeNow = LocalDateTime.now();
-        String sendTime = TimeNow.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT));
+        String sendTime = LocalDateTime.now().format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT));
         Long chatType = (Long) jsonObject.get("chatType");
 
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId);
@@ -71,8 +70,9 @@ public class WebSocketHandler extends TextWebSocketHandler {
         Chat chat = new Chat(msg, roomId, chatRoom, senderName, sendTime, chatType.intValue());
         chatRepository.save(chat);
 
-        for (String userId : chatRoom.getUserIds()) {
-            if(!sender.equals(userId)) {
+        chatRoom.getChatRoomMemberList().forEach(chatRoomMember -> {
+            String userId = chatRoomMember.getMember().getUserId();
+            if(sender.getUserId().equals(userId)) {
                 WebSocketSession s = CLIENTS.get(userId);
                 if (s != null) {
                     try {
@@ -82,7 +82,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
                     }
                 }
             }
-        }
+        });
     }
 
     @Override
@@ -98,7 +98,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
         byteBuffer.position(0);
 
         if(save) {
-            for (String userId : chatRoom.getUserIds()) {
+            chatRoom.getChatRoomMemberList().forEach(chatRoomMember -> {
+                String userId = chatRoomMember.getMember().getUserId();
                 if (!sender.equals(userId)) {
                     WebSocketSession s = CLIENTS.get(userId);
                     if (s != null) {
@@ -109,7 +110,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
                         }
                     }
                 }
-            }
+            });
         }
     }
 

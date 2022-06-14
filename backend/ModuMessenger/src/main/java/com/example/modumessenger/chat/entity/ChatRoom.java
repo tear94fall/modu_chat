@@ -40,22 +40,17 @@ public class ChatRoom extends BaseTimeEntity {
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL)
     private List<ChatRoomMember> chatRoomMemberList = new ArrayList<>();
 
-    @ElementCollection(fetch = LAZY)
-    @CollectionTable(name = "members", joinColumns = @JoinColumn(name = "member_id"))
-    @Column(name = "members")
-    private List<String> userIds = new ArrayList<>();
-
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL)
     @ToString.Exclude
     private List<Chat> chat = new ArrayList<>();
 
     public ChatRoom(String roomName) { this.roomName = roomName; }
 
-    public ChatRoom(String roomId, String roomName, String roomImage, String lastChatMsg) {
+    public ChatRoom(String roomId, String roomName, String roomImage, String lastChatMsg, String lastChatTime) {
         this.roomId = roomId;
         this.roomName = roomName;
         this.roomImage = roomImage;
         this.lastChatMsg = lastChatMsg;
-        this.lastChatTime = LocalDateTime.now().toString();
+        this.lastChatTime = lastChatTime;
     }
 }

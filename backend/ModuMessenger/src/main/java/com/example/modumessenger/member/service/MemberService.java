@@ -30,7 +30,7 @@ public class MemberService {
         Member member = new Member(memberDto);
         Member save = memberRepository.save(member);
 
-        return memberDto;
+        return new MemberDto(save);
     }
 
     public MemberDto getUserIdByEmail(String email) {
@@ -56,15 +56,6 @@ public class MemberService {
         return memberList
                 .stream()
                 .map(u -> modelMapper.map(u, MemberDto.class))
-                .collect(Collectors.toList());
-    }
-
-    public List<MemberDto> getMemberByUserIds(List<String> userIds) {
-        List<Member> memberList  = memberRepository.findAllByUserIds(userIds);
-
-        return memberList
-                .stream()
-                .map(m -> modelMapper.map(m, MemberDto.class))
                 .collect(Collectors.toList());
     }
 

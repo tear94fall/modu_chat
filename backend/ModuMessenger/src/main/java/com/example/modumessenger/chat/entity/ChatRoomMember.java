@@ -27,4 +27,9 @@ public class ChatRoomMember {
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "chat_room_id")
     private ChatRoom chatRoom;
+
+    public ChatRoomMember(Member member, ChatRoom chatRoom) {
+        setMember(member);
+        setChatRoom(chatRoom);
+    }
 }

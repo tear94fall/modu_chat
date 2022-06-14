@@ -49,6 +49,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -282,7 +283,7 @@ public class ChatActivity extends AppCompatActivity {
     public void setNavInfo(ChatRoom chatRoom) {
         View headerView = findViewById(R.id.nav_header);
 
-        String count = roomInfo.getUserIds().size() + " 명";
+        String count = roomInfo.getMembers().size() + " 명";
         ((TextView) headerView.findViewById(R.id.menu_header_name)).setText(roomInfo.getRoomName());
         ((TextView) headerView.findViewById(R.id.chat_room_member_count)).setText(count);
 
@@ -367,7 +368,7 @@ public class ChatActivity extends AppCompatActivity {
 
     // Retrofit function
     public void getRoomInfo(String roomId) {
-        Call<ChatRoomDto> call = RetrofitClient.getChatApiService().RequestChatRoom(roomId);
+        Call<ChatRoomDto> call = RetrofitClient.getChatRoomApiService().RequestChatRoom(roomId);
 
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override
@@ -380,6 +381,10 @@ public class ChatActivity extends AppCompatActivity {
                 assert response.body() != null;
                 ChatRoomDto chatRoomDto = response.body();
                 roomInfo = new ChatRoom(chatRoomDto);
+
+                chatRoomDto.getMembers().forEach(m -> {
+                    chatMemberList.add(new Member(m));
+                });
 
                 setTitle(roomInfo.getRoomName());
                 setNavInfo(roomInfo);
@@ -401,7 +406,6 @@ public class ChatActivity extends AppCompatActivity {
                 client.dispatcher().executorService().shutdown();
 
                 if(roomInfo!=null) {
-                    getChatRoomMember(roomInfo);
                     getChatList(roomInfo);
                 }
             }
@@ -409,33 +413,6 @@ public class ChatActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Call<ChatRoomDto> call, @NonNull Throwable t) {
                 Log.e("채팅방 정보 가져오기 요청 실패", t.getMessage());
-            }
-        });
-    }
-
-    public void getChatRoomMember(ChatRoom chatRoom) {
-        Call<List<MemberDto>> call = RetrofitClient.getChatApiService().RequestChatRoomMembers(chatRoom.getRoomId());
-
-        call.enqueue(new Callback<List<MemberDto>>() {
-            @Override
-            public void onResponse(@NonNull Call<List<MemberDto>> call, @NonNull Response<List<MemberDto>> response) {
-                if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
-                }
-
-                assert response.body() != null;
-                List<MemberDto> memberList = response.body();
-                memberList.forEach(m -> {
-                    chatMemberList.add(new Member(m));
-                });
-
-                Log.d("채팅방 멤버 리스트 가져오기 요청 : ", response.body().toString());
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<List<MemberDto>> call, @NonNull Throwable t) {
-                Log.e("연결실패", t.getMessage());
             }
         });
     }
@@ -474,7 +451,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     public void exitChatRoom(String roomId, String userId) {
-        Call<ChatRoomDto> call = RetrofitClient.getChatApiService().RequestExitChatRoom(roomId, userId);
+        Call<ChatRoomDto> call = RetrofitClient.getChatRoomApiService().RequestExitChatRoom(roomId, userId);
 
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override
@@ -487,7 +464,7 @@ public class ChatActivity extends AppCompatActivity {
                 assert response.body() != null;
                 ChatRoomDto chatRoomDto = response.body();
 
-                if(chatRoomDto.getRoomId().equals(roomId) && chatRoomDto.getUserIds().contains(userId)) {
+                if(chatRoomDto.getRoomId().equals(roomId) && chatRoomDto.getMembers().contains(userId)) {
                     finish();
                 }
 

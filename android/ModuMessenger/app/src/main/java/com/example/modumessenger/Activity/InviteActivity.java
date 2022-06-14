@@ -126,7 +126,7 @@ public class InviteActivity extends AppCompatActivity {
     }
 
     public void inviteChatRoom(List<String> userIds) {
-        Call<ChatRoomDto> call = RetrofitClient.getChatApiService().RequestCreateChatRoom(userIds);
+        Call<ChatRoomDto> call = RetrofitClient.getChatRoomApiService().RequestCreateChatRoom(userIds);
 
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override
@@ -140,9 +140,11 @@ public class InviteActivity extends AppCompatActivity {
                 ChatRoomDto chatRoomDto = response.body();
 
                 userIds.forEach(invite -> {
-                    if(!chatRoomDto.getUserIds().contains(invite)) {
-                        Toast.makeText(getApplicationContext(), invite + "님을 채팅방 초대에 실패하엿습니다. ", Toast.LENGTH_SHORT).show();
-                    }
+                    chatRoomDto.getMembers().forEach(member -> {
+                        if(member.getUserId().equals(invite)) {
+                            Toast.makeText(getApplicationContext(), invite + "님을 채팅방 초대에 실패하엿습니다. ", Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 });
 
                 finish();

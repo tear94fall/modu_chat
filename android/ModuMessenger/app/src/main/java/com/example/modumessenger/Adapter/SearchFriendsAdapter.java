@@ -16,6 +16,7 @@ import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.MainActivity;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Activity.SearchActivity;
+import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.dto.MemberDto;
 
@@ -43,8 +44,10 @@ public class SearchFriendsAdapter extends RecyclerView.Adapter<SearchFriendsAdap
         holder.setUserClickEvent(member);
         holder.setAddFriendsButton(member);
 
+        String userId = PreferenceManager.getString("userId");
+
         findFriendsList.forEach(m -> {
-            if(m.getUserId().equals(member.getUserId())) {
+            if(userId.equals(member.getUserId())) {
                 holder.addFriendsButton.setVisibility(View.INVISIBLE);
             }
         });

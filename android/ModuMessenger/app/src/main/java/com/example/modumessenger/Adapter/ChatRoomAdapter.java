@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.ChatActivity;
+import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.entity.ChatRoom;
 import com.example.modumessenger.RoomDatabase.Database.ChatRoomDatabase;
@@ -44,6 +45,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
         ChatRoom chatRoom = this.chatRoomList.get(position);
 
         holder.setDatabase(chatRoom);
+        holder.setChatRoomTitle(chatRoom);
         holder.setChatRoomInfo(chatRoom);
         holder.setChatRoomImage(chatRoom);
         holder.setChatRoomClickEvent(chatRoom);
@@ -60,6 +62,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
 
     public static class ChatRoomViewHolder extends RecyclerView.ViewHolder {
 
+        String userId;
         ChatRoomDatabase chatRoomDB;
         TextView chatRoomName;
         TextView lastChatMessage;
@@ -69,6 +72,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
 
         public ChatRoomViewHolder(@NonNull View itemView) {
             super(itemView);
+            userId = PreferenceManager.getString("userId");
             chatRoomDB = ChatRoomDatabase.getInstance(this.itemView.getContext());
             chatRoomName = itemView.findViewById(R.id.chat_room_name);
             lastChatMessage = itemView.findViewById(R.id.last_chat_message);
@@ -82,34 +86,50 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
             chatRoomDB.chatRoomDao().update(chatRoomEntity);
         }
 
+        public void setChatRoomTitle(ChatRoom chatRoom) {
+            if(chatRoom.getMembers().size() == 2) {
+                chatRoom.getMembers().forEach(member -> {
+                    if(!member.getUserId().equals(userId)) {
+                        this.chatRoomName.setText(member.getUsername());
+                    }
+                });
+            } else {
+                this.chatRoomName.setText(chatRoom.getRoomName());
+            }
+        }
+
         public void setChatRoomInfo(ChatRoom chatRoom) {
-            this.chatRoomName.setText(chatRoom.getRoomName());
             this.lastChatMessage.setText(chatRoom.getLastChatMsg());
             this.lastChatTime.setText(chatRoom.getLastChatTime().toString());
         }
 
         public void setChatRoomImage(ChatRoom chatRoom) {
-            if(chatRoom.getRoomImage()!=null && !chatRoom.getRoomImage().equals("")) {
-                setGlide(chatRoom.getRoomImage());
+            if(chatRoom.getMembers().size() == 2) {
+                chatRoom.getMembers().forEach(member -> {
+                    if(!member.getUserId().equals(userId)) {
+                        setGlide(member.getProfileImage());
+                    }
+                });
             } else {
-                setGlide(null);
+                if (chatRoom.getRoomImage() != null && !chatRoom.getRoomImage().equals("")) {
+                    setGlide(chatRoom.getRoomImage());
+                } else {
+                    setGlide(null);
+                }
             }
         }
 
         public void setGlide(String imageUrl) {
-            if(imageUrl != null) {
+            if(imageUrl != null && !imageUrl.equals("")) {
                 Glide.with(chatRoomImage)
                         .load(imageUrl)
-                        .override(70, 70)
                         .error(Glide.with(chatRoomImage)
                                 .load(R.drawable.basic_profile_image)
-                                .override(70, 70)
                                 .into(chatRoomImage))
                         .into(chatRoomImage);
             } else {
                 Glide.with(chatRoomImage)
                         .load(R.drawable.basic_profile_image)
-                        .override(70, 70)
                         .into(chatRoomImage);
             }
         }

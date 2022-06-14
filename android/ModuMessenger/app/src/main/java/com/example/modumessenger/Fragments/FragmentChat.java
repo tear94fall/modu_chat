@@ -104,7 +104,7 @@ public class FragmentChat extends Fragment {
 
     // Retrofit function
     public void getChatRoomList(Member member) {
-        Call<List<ChatRoomDto>> call = RetrofitClient.getChatApiService().RequestChatRooms(member.getUserId());
+        Call<List<ChatRoomDto>> call = RetrofitClient.getChatRoomApiService().RequestChatRooms(member.getUserId());
 
         call.enqueue(new Callback<List<ChatRoomDto>>() {
             @Override

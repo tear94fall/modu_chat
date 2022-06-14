@@ -135,7 +135,7 @@ public class ChatRoomEdit extends AppCompatActivity {
 
     // Retrofit function
     public void getRoomInfo(String roomId) {
-        Call<ChatRoomDto> call = RetrofitClient.getChatApiService().RequestChatRoom(roomId);
+        Call<ChatRoomDto> call = RetrofitClient.getChatRoomApiService().RequestChatRoom(roomId);
 
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override
@@ -171,7 +171,7 @@ public class ChatRoomEdit extends AppCompatActivity {
     }
 
     public void updateChatRoomInfo(ChatRoomDto chatRoomDto) {
-        Call<ChatRoomDto> call = RetrofitClient.getChatApiService().RequestUpdateChatRoom(roomId, chatRoomDto);
+        Call<ChatRoomDto> call = RetrofitClient.getChatRoomApiService().RequestUpdateChatRoom(roomId, chatRoomDto);
 
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override

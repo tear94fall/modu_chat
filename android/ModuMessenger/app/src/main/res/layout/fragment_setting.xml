@@ -17,6 +17,14 @@
         app:srcCompat="@drawable/ic_baseline_favorite_24" />
 
     <ImageView
+        android:id="@+id/app_info_image_view"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/favorite_image_view"
+        app:srcCompat="@drawable/ic_baseline_info_24" />
+
+    <ImageView
         android:id="@+id/blocked_image_view"
         android:layout_width="100dp"
         android:layout_height="100dp"

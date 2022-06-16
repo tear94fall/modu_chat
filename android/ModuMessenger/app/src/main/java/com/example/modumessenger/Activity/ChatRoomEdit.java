@@ -1,8 +1,12 @@
 package com.example.modumessenger.Activity;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -16,6 +20,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
+import com.example.modumessenger.Global.OnSwipeListener;
 import com.example.modumessenger.R;
 import com.example.modumessenger.entity.ChatRoom;
 import com.example.modumessenger.Retrofit.RetrofitClient;
@@ -27,7 +32,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class ChatRoomEdit extends AppCompatActivity {
+public class ChatRoomEdit extends AppCompatActivity implements View.OnTouchListener {
 
     ChatRoom roomInfo;
     String roomId;
@@ -35,6 +40,8 @@ public class ChatRoomEdit extends AppCompatActivity {
     ImageView chatRoomImageView;
     EditText chatRoomName;
     Button chatRoomEditCloseButton, chatRoomImageChangeButton, chatRoomSaveButton;
+
+    GestureDetector gestureDetector;
 
     ActivityResultLauncher<Intent> launcher;
 
@@ -54,6 +61,14 @@ public class ChatRoomEdit extends AppCompatActivity {
         super.onResume();
     }
 
+    @SuppressLint("ClickableViewAccessibility")
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        Log.d(event.toString(), "onTouch: ");
+        gestureDetector.onTouchEvent(event);
+        return true;
+    }
+
     private void getData() {
         roomId = getIntent().getStringExtra("roomId");
         if(roomId != null && !roomId.equals("")) {
@@ -61,11 +76,14 @@ public class ChatRoomEdit extends AppCompatActivity {
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void bindingView() {
         ActionBar actionBar = getSupportActionBar();
         Objects.requireNonNull(actionBar).hide();
 
         chatRoomImageView = findViewById(R.id.chat_room_image);
+        chatRoomImageView.setOnTouchListener(this);
+
         chatRoomName = findViewById(R.id.chat_room_name);
         chatRoomEditCloseButton = findViewById(R.id.chat_room_edit_close_button);
         chatRoomImageChangeButton = findViewById(R.id.chat_room_image_change_button);
@@ -90,6 +108,23 @@ public class ChatRoomEdit extends AppCompatActivity {
     }
 
     private void setButtonClickEvent() {
+        gestureDetector = new GestureDetector(this,new OnSwipeListener(){
+            @Override
+            public boolean onSwipe(Direction direction) {
+                if (direction==Direction.up){
+                    //do your stuff
+                    Log.d("Swipe Up", "onSwipe: up");
+                }
+
+                if (direction==Direction.down){
+                    //do your stuff
+                    Log.d("Swipe Down", "onSwipe: down");
+                    finish();
+                }
+                return true;
+            }
+        });
+
         chatRoomEditCloseButton.setOnClickListener(v -> {
             finish();
         });

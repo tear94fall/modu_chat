@@ -27,6 +27,9 @@ import com.google.android.gms.tasks.Task;
 
 import com.example.modumessenger.Retrofit.*;
 
+import java.io.IOException;
+import java.net.SocketTimeoutException;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -208,6 +211,11 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Call<MemberDto> call, @NonNull Throwable t) {
                 Log.e("사용자 아이디 가져오기 실패", t.getMessage());
+
+                Toast.makeText(getApplicationContext(),"오프라인 모드 입니다.", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                startActivity(intent);
+                finish();
             }
         });
     }

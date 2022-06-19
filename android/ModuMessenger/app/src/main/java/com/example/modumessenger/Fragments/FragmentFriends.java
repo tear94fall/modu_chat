@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Activity.SearchActivity;
+import com.example.modumessenger.Activity.SetFriendsActivity;
 import com.example.modumessenger.Adapter.FriendsAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
@@ -127,14 +128,22 @@ public class FragmentFriends extends Fragment {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int itemId = item.getItemId();
+        Intent intent = null;
+        String clickMessage = "";
 
         if(itemId == R.id.menu_search) {
-            Intent intent = new Intent(getContext(), SearchActivity.class);
-            startActivity(intent);
-            return true;
+            clickMessage = "친구 찾기";
+            intent = new Intent(getContext(), SearchActivity.class);
         } else if(itemId == R.id.menu_settings) {
-            Toast.makeText(getActivity(), "설정", Toast.LENGTH_SHORT).show();
-            return true;
+            clickMessage = "친구 설정";
+            intent = new Intent(getContext(), SetFriendsActivity.class);
+        } else if(itemId == R.id.add_friends) {
+            clickMessage = "친구 추가";
+        }
+
+        if(intent!=null) {
+            Toast.makeText(getActivity(), clickMessage, Toast.LENGTH_SHORT).show();
+            startActivity(intent);
         }
 
         return super.onOptionsItemSelected(item);

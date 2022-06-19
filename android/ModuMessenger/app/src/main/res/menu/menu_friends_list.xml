@@ -9,6 +9,12 @@
         app:showAsAction="always"/>
 
     <item
+        android:id="@+id/add_friends"
+        android:title="설정"
+        android:icon="@drawable/ic_baseline_person_add_alt_1_24"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/menu_settings"
         android:title="설정"
         android:icon="@drawable/ic_baseline_settings_24"

@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.modumessenger.Activity.FindFriendsActivity;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Activity.SearchActivity;
 import com.example.modumessenger.Activity.SetFriendsActivity;
@@ -133,12 +134,13 @@ public class FragmentFriends extends Fragment {
 
         if(itemId == R.id.menu_search) {
             clickMessage = "친구 찾기";
-            intent = new Intent(getContext(), SearchActivity.class);
+            intent = new Intent(getContext(), FindFriendsActivity.class);
         } else if(itemId == R.id.menu_settings) {
             clickMessage = "친구 설정";
             intent = new Intent(getContext(), SetFriendsActivity.class);
         } else if(itemId == R.id.add_friends) {
             clickMessage = "친구 추가";
+            intent = new Intent(getContext(), SearchActivity.class);
         }
 
         if(intent!=null) {

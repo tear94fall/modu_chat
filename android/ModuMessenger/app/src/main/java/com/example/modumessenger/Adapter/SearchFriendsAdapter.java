@@ -13,7 +13,6 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.modumessenger.Activity.MainActivity;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Activity.SearchActivity;
 import com.example.modumessenger.Global.PreferenceManager;
@@ -24,21 +23,21 @@ import java.util.List;
 
 public class SearchFriendsAdapter extends RecyclerView.Adapter<SearchFriendsAdapter.SearchFriendsViewHolder> {
 
-    List<MemberDto> findFriendsList;
+    List<MemberDto> searchMemberList;
 
-    public SearchFriendsAdapter(List<MemberDto> findFriendsList) { this.findFriendsList = findFriendsList; }
+    public SearchFriendsAdapter(List<MemberDto> searchMemberList) { this.searchMemberList = searchMemberList; }
 
     @NonNull
     @Override
     public SearchFriendsViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        View view = inflater.inflate(R.layout.friend_find_row, parent, false);
+        View view = inflater.inflate(R.layout.friend_search_row, parent, false);
         return new SearchFriendsViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull SearchFriendsViewHolder holder, int position) {
-        MemberDto member = this.findFriendsList.get(position);
+        MemberDto member = this.searchMemberList.get(position);
 
         holder.setUserInfo(member);
         holder.setUserClickEvent(member);
@@ -46,16 +45,18 @@ public class SearchFriendsAdapter extends RecyclerView.Adapter<SearchFriendsAdap
 
         String userId = PreferenceManager.getString("userId");
 
-        findFriendsList.forEach(m -> {
+        searchMemberList.forEach(m -> {
+            // exclude my info
             if(userId.equals(member.getUserId())) {
                 holder.addFriendsButton.setVisibility(View.INVISIBLE);
             }
+            // need to add exclude already friends info
         });
     }
 
     @Override
     public int getItemCount() {
-        return findFriendsList.size();
+        return searchMemberList.size();
     }
 
     public static class SearchFriendsViewHolder extends RecyclerView.ViewHolder {
@@ -75,7 +76,7 @@ public class SearchFriendsAdapter extends RecyclerView.Adapter<SearchFriendsAdap
             statusMessage = itemView.findViewById(R.id.search_status_message);
             profileImage = itemView.findViewById(R.id.search_profile_image);
             addFriendsButton = itemView.findViewById(R.id.add_friends_button);
-            cardViewLayout = itemView.findViewById(R.id.findFriendCardViewLayout);
+            cardViewLayout = itemView.findViewById(R.id.searchFriendCardViewLayout);
         }
 
         public void setUserInfo(MemberDto member) {

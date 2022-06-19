@@ -25,12 +25,12 @@ import retrofit2.Response;
 
 public class SearchActivity extends AppCompatActivity {
     private static SearchActivity instance;
-    private SearchView searchView;
 
+    SearchView searchView;
     RecyclerView findFriendRecyclerView;
     RecyclerView.LayoutManager findFriendLayoutManager;
     SearchFriendsAdapter searchFriendsAdapter;
-    List<MemberDto> findFriendList;
+    List<MemberDto> searchMemberList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,7 +38,7 @@ public class SearchActivity extends AppCompatActivity {
         setContentView(R.layout.activity_search);
 
         instance = this;
-        setTitle("친구 찾기");
+        setTitle("친구 추가");
 
         findFriendRecyclerView = (RecyclerView) findViewById(R.id.friend_search_recycler_view);
         findFriendRecyclerView.setHasFixedSize(true);
@@ -107,8 +107,8 @@ public class SearchActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), email + " 을 검색하였습니다.", Toast.LENGTH_SHORT).show();
 
                     assert response.body() != null;
-                    findFriendList = response.body();
-                    searchFriendsAdapter = new SearchFriendsAdapter(findFriendList);
+                    searchMemberList = response.body();
+                    searchFriendsAdapter = new SearchFriendsAdapter(searchMemberList);
                     findFriendRecyclerView.setAdapter(searchFriendsAdapter);
 
                 } catch (Exception e) {

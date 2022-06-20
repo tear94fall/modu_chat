@@ -1,12 +1,11 @@
 package com.example.modumessenger.Fragments;
 
-import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -14,16 +13,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import com.example.modumessenger.Activity.AppInfoActivity;
-import com.example.modumessenger.Activity.CreateRoomActivity;
 import com.example.modumessenger.Global.PreferenceManager;
+import com.example.modumessenger.Grid.SettingGridAdapter;
 import com.example.modumessenger.R;
 
 public class FragmentSetting extends Fragment {
 
     String userId;
-    ImageView favoriteImageView, BlockedImageView, ThemeImageView, BackupImageView;
-    ImageView AppInfoImageView;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -68,34 +64,18 @@ public class FragmentSetting extends Fragment {
     }
 
     private void bindingView(View view) {
-        favoriteImageView = view.findViewById(R.id.favorite_image_view);
-        BlockedImageView = view.findViewById(R.id.blocked_image_view);
-        ThemeImageView = view.findViewById(R.id.theme_image_view);
-        BackupImageView = view.findViewById(R.id.backup_image_view);
-        AppInfoImageView = view.findViewById(R.id.app_info_image_view);
+        GridView settingGridView = view.findViewById(R.id.grid_test);
+        SettingGridAdapter settingGridAdapter = new SettingGridAdapter(requireActivity());
+        settingGridView.setAdapter(settingGridAdapter);
+
+        settingGridAdapter.setGridItems();
+
+        settingGridView.setOnItemClickListener((parent, view1, position, id) -> {
+            String itemName = settingGridAdapter.getGridItem(position).getItemName();
+            Toast.makeText(requireActivity().getApplicationContext(), itemName, Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void setButtonClickEvent() {
-        favoriteImageView.setOnClickListener(v -> {
-            Toast.makeText(getActivity(), "즐겨 찾기", Toast.LENGTH_SHORT).show();
-        });
-
-        BlockedImageView.setOnClickListener(v -> {
-            Toast.makeText(getActivity(), "차단 하기", Toast.LENGTH_SHORT).show();
-        });
-
-        ThemeImageView.setOnClickListener(v -> {
-            Toast.makeText(getActivity(), "테마 설정", Toast.LENGTH_SHORT).show();
-        });
-
-        BackupImageView.setOnClickListener(v -> {
-            Toast.makeText(getActivity(), "백업 하기", Toast.LENGTH_SHORT).show();
-        });
-
-        AppInfoImageView.setOnClickListener(v -> {
-            Toast.makeText(getActivity(), "정보 보기", Toast.LENGTH_SHORT).show();
-            Intent intent = new Intent(v.getContext(), AppInfoActivity.class);
-            v.getContext().startActivity(intent);
-        });
     }
 }

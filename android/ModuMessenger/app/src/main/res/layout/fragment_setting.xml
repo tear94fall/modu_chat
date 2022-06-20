@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -7,47 +6,22 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-
-    <ImageView
-        android:id="@+id/favorite_image_view"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        app:layout_constraintStart_toStartOf="parent"
+    <GridView
+        android:id="@+id/grid_test"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_baseline_favorite_24" />
+        android:verticalSpacing="30dp"
+        android:horizontalSpacing="30dp"
+        android:layout_margin="10dp"
+        android:numColumns="4"
+        android:scrollbarStyle="insideInset"
+        android:verticalScrollbarPosition="right"
+        android:scrollbarSize="10dp"
+        android:scrollbarThumbVertical="@color/purple_500"
+        android:scrollbarTrackVertical="@color/white" />
 
-    <ImageView
-        android:id="@+id/app_info_image_view"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/favorite_image_view"
-        app:srcCompat="@drawable/ic_baseline_info_24" />
-
-    <ImageView
-        android:id="@+id/blocked_image_view"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:layout_marginStart="8dp"
-        app:layout_constraintStart_toEndOf="@+id/favorite_image_view"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_baseline_block_24" />
-
-    <ImageView
-        android:id="@+id/theme_image_view"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        app:layout_constraintEnd_toStartOf="@+id/backup_image_view"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toEndOf="@+id/blocked_image_view"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_baseline_color_lens_24" />
-
-    <ImageView
-        android:id="@+id/backup_image_view"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_baseline_cloud_download_24" />
 </androidx.constraintlayout.widget.ConstraintLayout>

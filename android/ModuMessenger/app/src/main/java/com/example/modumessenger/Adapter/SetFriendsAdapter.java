@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.SetFriendsActivity;
+import com.example.modumessenger.Grid.SettingGridItem;
 import com.example.modumessenger.R;
 
 import java.util.ArrayList;
@@ -23,9 +24,9 @@ public class SetFriendsAdapter extends RecyclerView.Adapter<SetFriendsAdapter.Se
     List<String> setFriendsList = new ArrayList<>();
 
     public SetFriendsAdapter() {
-        setFriendsList.add("친한 친구");
-        setFriendsList.add("숨김 친구");
-        setFriendsList.add("차단 친구");
+        setFriendsList.add("즐겨찾기");
+        setFriendsList.add("숨김친구");
+        setFriendsList.add("차단친구");
     }
 
     @NonNull
@@ -65,10 +66,25 @@ public class SetFriendsAdapter extends RecyclerView.Adapter<SetFriendsAdapter.Se
         public void setSettingName(String name) {
             this.setting_name.setText(name);
 
-            int setting_image_drawable = R.drawable.basic_profile_image;
+            int drawableImage = 0;
+
+            switch (name) {
+                case "즐겨찾기":
+                    drawableImage = R.drawable.ic_baseline_person_24;
+                    break;
+                case "숨김친구":
+                    drawableImage = R.drawable.ic_baseline_person_outline_24;
+                    break;
+                case "차단친구":
+                    drawableImage = R.drawable.ic_baseline_person_off_24;
+                    break;
+                default:
+                    drawableImage = R.drawable.basic_profile_image;
+                    break;
+            }
 
             Glide.with(setting_image)
-                    .load(setting_image_drawable)
+                    .load(drawableImage)
                     .error(Glide.with(setting_image)
                             .load(R.drawable.basic_profile_image)
                             .into(setting_image))
@@ -81,14 +97,18 @@ public class SetFriendsAdapter extends RecyclerView.Adapter<SetFriendsAdapter.Se
 
                 Intent intent = null;
 
-                if(setName.equals("친한 친구")) {
-                    intent = new Intent(v.getContext(), SetFriendsActivity.class);
-                } else if(setName.equals("숨김 친구")) {
-                    intent = new Intent(v.getContext(), SetFriendsActivity.class);
-                } else if(setName.equals("차단 친구")) {
-                    intent = new Intent(v.getContext(), SetFriendsActivity.class);
-                } else {
-                    intent = null;
+                switch (setName) {
+                    case "즐겨찾기":
+                        intent = new Intent(v.getContext(), SetFriendsActivity.class);
+                        break;
+                    case "숨김친구":
+                        intent = new Intent(v.getContext(), SetFriendsActivity.class);
+                        break;
+                    case "차단친구":
+                        intent = new Intent(v.getContext(), SetFriendsActivity.class);
+                        break;
+                    default:
+                        break;
                 }
 
                 if(intent!=null) {

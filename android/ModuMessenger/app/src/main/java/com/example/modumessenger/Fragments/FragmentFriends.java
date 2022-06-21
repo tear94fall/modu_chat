@@ -135,12 +135,12 @@ public class FragmentFriends extends Fragment {
         if(itemId == R.id.menu_search) {
             clickMessage = "친구 찾기";
             intent = new Intent(getContext(), FindFriendsActivity.class);
-        } else if(itemId == R.id.menu_settings) {
-            clickMessage = "친구 설정";
-            intent = new Intent(getContext(), SetFriendsActivity.class);
         } else if(itemId == R.id.add_friends) {
             clickMessage = "친구 추가";
             intent = new Intent(getContext(), SearchActivity.class);
+        }else if(itemId == R.id.menu_settings) {
+            clickMessage = "친구 설정";
+            intent = new Intent(getContext(), SetFriendsActivity.class);
         }
 
         if(intent!=null) {

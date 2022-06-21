@@ -26,7 +26,7 @@ public class SetFriendsActivity extends AppCompatActivity {
     }
 
     private void bindingView() {
-        setTitle("친구 찾기");
+        setTitle("친구 설정");
 
         findFriendRecyclerView = (RecyclerView) findViewById(R.id.set_friends_recycler_view);
         findFriendRecyclerView.setLayoutManager(new LinearLayoutManager(this));

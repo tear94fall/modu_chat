@@ -68,7 +68,6 @@ public class SettingGridAdapter extends BaseAdapter {
     }
 
     public void setGridItems() {
-        setGridItem(new SettingGridItem("내프로필", R.drawable.basic_profile_image));
         setGridItem(new SettingGridItem("공지사항", R.drawable.ic_baseline_celebration_24));
         setGridItem(new SettingGridItem("백업", R.drawable.ic_baseline_cloud_download_24));
         setGridItem(new SettingGridItem("설정", R.drawable.ic_baseline_settings_24_grey));

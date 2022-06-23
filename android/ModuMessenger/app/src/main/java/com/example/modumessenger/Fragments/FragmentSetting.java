@@ -17,6 +17,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
+import com.example.modumessenger.Activity.AppInfoActivity;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.Grid.SettingGridAdapter;
@@ -94,6 +95,11 @@ public class FragmentSetting extends Fragment {
         settingGridView.setOnItemClickListener((parent, view1, position, id) -> {
             String itemName = settingGridAdapter.getGridItem(position).getItemName();
             Toast.makeText(requireActivity().getApplicationContext(), itemName, Toast.LENGTH_SHORT).show();
+
+            if(position==0){
+                Intent intent = new Intent(view.getContext(), AppInfoActivity.class);
+                view.getContext().startActivity(intent);
+            }
         });
     }
 

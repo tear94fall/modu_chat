@@ -8,6 +8,11 @@ spring:
     username: root
     password: root1234
 
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
   jpa:
     hibernate:
       ddl-auto: update

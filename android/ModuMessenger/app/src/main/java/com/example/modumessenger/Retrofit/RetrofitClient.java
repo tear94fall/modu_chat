@@ -16,6 +16,7 @@ public class RetrofitClient {
     public static RetrofitChatRoomAPI getChatRoomApiService(){ return getInstance().create(RetrofitChatRoomAPI.class); }
     public static RetrofitChatAPI getChatApiService(){ return getInstance().create(RetrofitChatAPI.class); }
     public static RetrofitCommonDataAPI getCommonApiService(){ return getInstance().create(RetrofitCommonDataAPI.class); }
+    public static RetrofitImageAPI getImageApiService(){ return getInstance().create(RetrofitImageAPI.class); }
 
     private static Retrofit getInstance(){
         Gson gson = new GsonBuilder().setLenient().create();

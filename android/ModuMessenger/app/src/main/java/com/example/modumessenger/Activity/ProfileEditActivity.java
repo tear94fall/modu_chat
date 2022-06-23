@@ -26,6 +26,9 @@ import com.example.modumessenger.dto.MemberDto;
 
 import java.util.Objects;
 
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -44,15 +47,19 @@ public class ProfileEditActivity extends AppCompatActivity {
                     Intent intent = result.getData();
                     if(intent!=null) {
                         Uri uri = intent.getData();
-                        if (uri != null) {
-                            // image upload logic
-                            Glide.with(this)
-                                    .load(uri)
-                                    .error(Glide.with(this)
-                                            .load(R.drawable.basic_profile_image)
-                                            .into(profileImageView))
-                                    .into(profileImageView);
-                        }
+                        String filename = uri.getLastPathSegment();
+
+                        RequestBody fileBody = RequestBody.Companion.create(String.valueOf(uri), MediaType.parse("multipart/form-data"));
+                        MultipartBody.Part filePart = MultipartBody.Part.createFormData("file", filename, fileBody);
+                        uploadProfileImage(filePart);
+
+                        // image upload logic
+                        Glide.with(this)
+                                .load(uri)
+                                .error(Glide.with(this)
+                                        .load(R.drawable.basic_profile_image)
+                                        .into(profileImageView))
+                                .into(profileImageView);
                     }
                 }
             });
@@ -102,7 +109,8 @@ public class ProfileEditActivity extends AppCompatActivity {
                 }else if (menuItem.getItemId() == R.id.action_menu2){
                     Toast.makeText(this, "기본 이미지로 변경합니다", Toast.LENGTH_SHORT).show();
                     member.setProfileImage("");
-                    setDefaultProfileImage();
+                    UpdateMyInfo(new MemberDto(member));
+                    setProfileImage(profileImageView, member.getProfileImage());
                 }else {
                     Toast.makeText(this, "프로필 이미지 변경", Toast.LENGTH_SHORT).show();
                 }
@@ -149,7 +157,7 @@ public class ProfileEditActivity extends AppCompatActivity {
 
     private void setProfileImage(ImageView imageView, String imageUrl) {
         Glide.with(this)
-                .load(imageUrl)
+                .load(imageUrl==null || imageUrl.equals("") ? R.drawable.basic_profile_image : imageUrl)
                 .error(Glide.with(this)
                         .load(R.drawable.basic_profile_image)
                         .into(imageView))
@@ -237,6 +245,27 @@ public class ProfileEditActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(@NonNull Call<MemberDto> call, @NonNull Throwable t) {
+                Log.e("연결실패", t.getMessage());
+            }
+        });
+    }
+
+    public void uploadProfileImage(MultipartBody.Part file) {
+        Call<String> call = RetrofitClient.getImageApiService().RequestUploadImage(file);
+
+        call.enqueue(new Callback<String>() {
+            @Override
+            public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
+                if(!response.isSuccessful()){
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                }
+
+                String filename = response.body();
+                System.out.println(filename);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
             }
         });

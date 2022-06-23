@@ -35,6 +35,7 @@ public class AppInfoActivity extends AppCompatActivity {
     }
 
     private void bindingView() {
+        setTitle("버전 정보");
         serverVersionTextView = findViewById(R.id.serverVersionTextView);
         appVersionTextView = findViewById(R.id.appVersionTextView);
     }

@@ -1,9 +1,7 @@
 package com.example.modumessenger.picture.controller;
 
-import com.example.modumessenger.auth.JwtFactory;
 import com.example.modumessenger.common.hash.SHA256;
 import com.example.modumessenger.picture.dto.PictureDto;
-import com.example.modumessenger.picture.entity.Picture;
 import com.example.modumessenger.picture.service.PictureService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -16,9 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -80,5 +76,32 @@ public class PictureController {
                 .contentType(MediaType.parseMediaType(contentType))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
                 .body(resource);
+    }
+
+    @PostMapping("image")
+    public String upload(@RequestParam("file") MultipartFile file) {
+        long size = file.getSize();
+        return file.getOriginalFilename();
+    }
+
+    @GetMapping(value = "image/{imageName}",  produces = MediaType.IMAGE_JPEG_VALUE)
+    public byte[] userSearch(@PathVariable("imageName") String imageName) throws IOException {
+        String imageFullPath = "/Users/imjunseob/Desktop/" + imageName;
+
+        InputStream imageStream = new FileInputStream(imageFullPath);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+        int length;
+        byte[] buffer = new byte[10*1024*1024];
+
+        try {
+            while ((length = imageStream.read(buffer, 0, buffer.length)) != -1) {
+                bos.write(buffer, 0, length);
+            }
+        } catch (IOException e) {
+            log.info("Could not determine file type.");
+        }
+
+        return buffer;
     }
 }

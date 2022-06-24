@@ -1,5 +1,6 @@
 package com.example.modumessenger.member.dto;
 
+import com.example.modumessenger.member.entity.Member;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,5 +22,12 @@ public class MemberDto implements Serializable {
     private String statusMessage;
     private String profileImage;
 
-
+    public MemberDto(Member member) {
+        setUserId(member.getUserId());
+        setAuth(member.getAuth());
+        setEmail(member.getEmail());
+        setUsername(member.getUsername());
+        setStatusMessage(member.getStatusMessage());
+        setProfileImage(member.getProfileImage());
+    }
 }

@@ -1,25 +1,40 @@
 package com.example.modumessenger.Fragments;
 
-import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
+import com.bumptech.glide.Glide;
+import com.example.modumessenger.Activity.AppInfoActivity;
+import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Global.PreferenceManager;
+import com.example.modumessenger.Grid.SettingGridAdapter;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.RetrofitClient;
+import com.example.modumessenger.dto.MemberDto;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class FragmentSetting extends Fragment {
 
-    String userId;
-    ImageView favoriteImageView, BlockedImageView, ThemeImageView, BackupImageView;
+    MemberDto myInfo;
+    ConstraintLayout setting_my_profile_card_view;
+    ImageView myProfileImage;
+    TextView myProfileName, myProfileEmail;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -45,6 +60,8 @@ public class FragmentSetting extends Fragment {
     public void onResume() {
         super.onResume();
         Log.e("DEBUG", "onResume of FragmentSetting");
+
+        getMyProfileInfo(new MemberDto(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
     }
 
     @Override
@@ -60,31 +77,79 @@ public class FragmentSetting extends Fragment {
     }
 
     private void setData() {
-        userId = PreferenceManager.getString("userId");
     }
 
     private void bindingView(View view) {
-        favoriteImageView = view.findViewById(R.id.favorite_image_view);
-        BlockedImageView = view.findViewById(R.id.blocked_image_view);
-        ThemeImageView = view.findViewById(R.id.theme_image_view);
-        BackupImageView = view.findViewById(R.id.backup_image_view);
+        myProfileImage = view.findViewById(R.id.setting_my_profile_image);
+        myProfileName = view.findViewById(R.id.setting_my_profile_name);
+        myProfileEmail = view.findViewById(R.id.setting_my_profile_email);
+
+        setting_my_profile_card_view = view.findViewById(R.id.setting_my_profile_card_view);
+
+        GridView settingGridView = view.findViewById(R.id.grid_test);
+        SettingGridAdapter settingGridAdapter = new SettingGridAdapter(requireActivity());
+        settingGridView.setAdapter(settingGridAdapter);
+
+        settingGridAdapter.setGridItems();
+
+        settingGridView.setOnItemClickListener((parent, view1, position, id) -> {
+            String itemName = settingGridAdapter.getGridItem(position).getItemName();
+            Toast.makeText(requireActivity().getApplicationContext(), itemName, Toast.LENGTH_SHORT).show();
+
+            if(position==0){
+                Intent intent = new Intent(view.getContext(), AppInfoActivity.class);
+                view.getContext().startActivity(intent);
+            }
+        });
     }
 
     private void setButtonClickEvent() {
-        favoriteImageView.setOnClickListener(v -> {
-            Toast.makeText(getActivity(), "즐겨 찾기", Toast.LENGTH_SHORT).show();
-        });
+        setting_my_profile_card_view.setOnClickListener(view -> {
+            Intent intent = new Intent(view.getContext(), ProfileActivity.class);
+            intent.putExtra("username", myInfo.getUsername());
+            intent.putExtra("statusMessage", myInfo.getStatusMessage());
+            intent.putExtra("profileImage", myInfo.getProfileImage());
 
-        BlockedImageView.setOnClickListener(v -> {
-            Toast.makeText(getActivity(), "차단 하기", Toast.LENGTH_SHORT).show();
+            view.getContext().startActivity(intent);
         });
+    }
 
-        ThemeImageView.setOnClickListener(v -> {
-            Toast.makeText(getActivity(), "테마 설정", Toast.LENGTH_SHORT).show();
-        });
+    // Retrofit function
+    public void getMyProfileInfo(MemberDto memberDto) {
+        Call<MemberDto> call = RetrofitClient.getMemberApiService().RequestUserId(memberDto);
 
-        BackupImageView.setOnClickListener(v -> {
-            Toast.makeText(getActivity(), "백업 하기", Toast.LENGTH_SHORT).show();
+        call.enqueue(new Callback<MemberDto>() {
+            @Override
+            public void onResponse(@NonNull Call<MemberDto> call, @NonNull Response<MemberDto> response) {
+                if(!response.isSuccessful()){
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                    return;
+                }
+
+                assert response.body() != null;
+                myInfo = response.body();
+
+                // get my Profile Info
+                myProfileName.setText(myInfo.getUsername());
+                myProfileEmail.setText(myInfo.getEmail());
+                Glide.with(requireContext())
+                        .load(myInfo.getProfileImage())
+                        .error(Glide.with(requireContext())
+                                .load(R.drawable.basic_profile_image)
+                                .into(myProfileImage))
+                        .into(myProfileImage);
+
+                if(memberDto.getEmail().equals(myInfo.getEmail())){
+                    Log.d("중복검사: ", "중복된 번호가 아닙니다");
+                }
+
+                Log.d("내 정보 가져오기 요청 : ", response.body().toString());
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<MemberDto> call, @NonNull Throwable t) {
+                Log.e("연결실패", t.getMessage());
+            }
         });
     }
 }

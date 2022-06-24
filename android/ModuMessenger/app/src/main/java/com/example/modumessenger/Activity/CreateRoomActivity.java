@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.modumessenger.Adapter.CreateRoomAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
-import com.example.modumessenger.Retrofit.Member;
+import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.example.modumessenger.dto.MemberDto;
@@ -115,7 +115,7 @@ public class CreateRoomActivity extends AppCompatActivity {
     }
 
     public void createChatRoom(List<String> userIds) {
-        Call<ChatRoomDto> call = RetrofitClient.getChatApiService().RequestCreateChatRoom(userIds);
+        Call<ChatRoomDto> call = RetrofitClient.getChatRoomApiService().RequestCreateChatRoom(userIds);
 
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override

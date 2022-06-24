@@ -15,14 +15,13 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Global.OnSwipeListener;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
-import com.example.modumessenger.Retrofit.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
+import com.example.modumessenger.dto.MemberDto;
 
 import java.util.Objects;
 
@@ -100,7 +99,7 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
     public void onResume() {
         super.onResume();
         if(username.equals(PreferenceManager.getString("username"))){
-            getMyProfileInfo(new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
+            getMyProfileInfo(new MemberDto(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
         }
     }
 
@@ -149,18 +148,18 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
         return true;
     }
 
-    public void getMyProfileInfo(Member member) {
-        Call<Member> call = RetrofitClient.getMemberApiService().RequestUserId(member);
+    public void getMyProfileInfo(MemberDto memberDto) {
+        Call<MemberDto> call = RetrofitClient.getMemberApiService().RequestUserId(memberDto);
 
-        call.enqueue(new Callback<Member>() {
+        call.enqueue(new Callback<MemberDto>() {
             @Override
-            public void onResponse(@NonNull Call<Member> call, @NonNull Response<Member> response) {
+            public void onResponse(@NonNull Call<MemberDto> call, @NonNull Response<MemberDto> response) {
                 if(!response.isSuccessful()){
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
                     return;
                 }
 
-                Member result = response.body();
+                MemberDto result = response.body();
 
                 assert response.body() != null;
                 assert result != null;
@@ -175,7 +174,7 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
                                 .into(profileImageView))
                         .into(profileImageView);
 
-                if(member.getEmail().equals(result.getEmail())){
+                if(memberDto.getEmail().equals(result.getEmail())){
                     Log.d("중복검사: ", "중복된 번호가 아닙니다");
                 }
 
@@ -183,7 +182,7 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
             }
 
             @Override
-            public void onFailure(@NonNull Call<Member> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<MemberDto> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
             }
         });

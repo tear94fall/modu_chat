@@ -1,6 +1,7 @@
 package com.example.modumessenger.Retrofit;
 
 import com.example.modumessenger.dto.MemberDto;
+import com.example.modumessenger.dto.SignUpDto;
 
 import java.util.List;
 
@@ -13,13 +14,13 @@ import retrofit2.http.Path;
 public interface RetrofitMemberAPI {
 
     @POST("member/signup")
-    Call<Member> RequestSignup(@Body Member member);
+    Call<SignUpDto> RequestSignup(@Body SignUpDto signUpDto);
 
     @POST("login")
-    Call<Void> RequestLogin(@Body Member member);
+    Call<Void> RequestLogin(@Body MemberDto MemberDto);
 
     @POST("member")
-    Call<Member> RequestUserId(@Body Member member);
+    Call<MemberDto> RequestUserId(@Body MemberDto MemberDto);
 
     @POST("member/{userId}")
     Call<MemberDto> RequestUpdate(@Path("userId") String userId, @Body MemberDto memberDto);
@@ -28,7 +29,7 @@ public interface RetrofitMemberAPI {
     Call<List<MemberDto>> RequestFriends(@Path("userId") String userId);
 
     @POST("member/{userId}/friends")
-    Call<Member> RequestAddFriends(@Path("userId") String userId, @Body Member member);
+    Call<MemberDto> RequestAddFriends(@Path("userId") String userId, @Body MemberDto memberDto);
 
     @GET("member/friends/{email}")
     Call<List<MemberDto>> RequestFriend(@Path("email") String email);

@@ -14,6 +14,7 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long>, ChatR
 
     List<ChatRoom> findAllByRoomId(String roomId);
 
-    @EntityGraph(attributePaths = {"userIds"})
+    ChatRoom findByRoomName(String roomName);
+
     ChatRoom findByRoomId(String roomId);
 }

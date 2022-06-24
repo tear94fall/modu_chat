@@ -20,12 +20,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
-import com.example.modumessenger.Retrofit.Member;
+import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.MemberDto;
 
 import java.util.Objects;
 
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -37,31 +40,27 @@ public class ProfileEditActivity extends AppCompatActivity {
     EditText myProfileName, myStatusMessage;
     Button profileCloseButton, changeProfileButton, myProfileSaveButton;
 
-    ActivityResultLauncher<Intent> launcher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> {
-                if (result.getResultCode() == RESULT_OK) {
-                    Intent intent = result.getData();
-                    if(intent!=null) {
-                        Uri uri = intent.getData();
-                        if (uri != null) {
-                            // image upload logic
-                            Glide.with(this)
-                                    .load(uri)
-                                    .error(Glide.with(this)
-                                            .load(R.drawable.basic_profile_image)
-                                            .into(profileImageView))
-                                    .into(profileImageView);
-                        }
-                    }
-                }
-            });
+    ActivityResultLauncher<Intent> launcher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile_edit);
 
+        bindingView();
+        setLauncher();
+        getData();
+        setData();
+        setButtonClickEvent();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        getMyProfileInfo(new MemberDto(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
+    }
+
+    private void bindingView() {
         ActionBar actionBar = getSupportActionBar();
         Objects.requireNonNull(actionBar).hide();
 
@@ -72,53 +71,20 @@ public class ProfileEditActivity extends AppCompatActivity {
         profileCloseButton = findViewById(R.id.profile_close_button);
         changeProfileButton = findViewById(R.id.my_profile_image_change_button);
         myProfileSaveButton = findViewById(R.id.my_profile_save_button);
-
-        getData();
-        setData();
-
-        myProfileSaveButton.setOnClickListener(v -> {
-            if(!member.getUsername().equals(myProfileName.getText().toString()) ||
-                    !member.getStatusMessage().equals(myStatusMessage.getText().toString())) {
-
-                member.setUsername(myProfileName.getText().toString());
-                member.setStatusMessage(myStatusMessage.getText().toString());
-
-                UpdateMyInfo(new MemberDto(member));
-            }
-        });
-
-        changeProfileButton.setOnClickListener(view -> {
-            final PopupMenu popupMenu = new PopupMenu(getApplicationContext(),view);
-            getMenuInflater().inflate(R.menu.profile_image_popup,popupMenu.getMenu());
-            popupMenu.setOnMenuItemClickListener(menuItem -> {
-                if (menuItem.getItemId() == R.id.action_menu1){
-                    Toast.makeText(this, "갤러리로 이동합니다", Toast.LENGTH_SHORT).show();
-
-                    Intent intent = new Intent();
-                    intent.setType("image/*");
-                    intent.setAction(Intent.ACTION_GET_CONTENT);
-                    launcher.launch(intent);
-
-                }else if (menuItem.getItemId() == R.id.action_menu2){
-                    Toast.makeText(this, "기본 이미지로 변경합니다", Toast.LENGTH_SHORT).show();
-                    member.setProfileImage("");
-                    setDefaultProfileImage();
-                }else {
-                    Toast.makeText(this, "프로필 이미지 변경", Toast.LENGTH_SHORT).show();
-                }
-
-                return false;
-            });
-            popupMenu.show();
-        });
-
-        profileCloseButton.setOnClickListener(view -> finish());
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        getMyProfileInfo(new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
+    private void setLauncher() {
+        launcher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK) {
+                        Intent intent = result.getData();
+                        if(intent!=null) {
+                            Uri uri = intent.getData();
+                            changeMyProfileImage(uri);
+                        }
+                    }
+                });
     }
 
     private void getData() {
@@ -143,13 +109,75 @@ public class ProfileEditActivity extends AppCompatActivity {
                 .into(profileImageView);
     }
 
+    private void setButtonClickEvent() {
+        myProfileSaveButton.setOnClickListener(v -> {
+            if(!member.getUsername().equals(myProfileName.getText().toString()) ||
+                    !member.getStatusMessage().equals(myStatusMessage.getText().toString())) {
+
+                member.setUsername(myProfileName.getText().toString());
+                member.setStatusMessage(myStatusMessage.getText().toString());
+
+                updateMyInfo(new MemberDto(member));
+            }
+        });
+
+        changeProfileButton.setOnClickListener(view -> {
+            final PopupMenu popupMenu = new PopupMenu(getApplicationContext(),view);
+            getMenuInflater().inflate(R.menu.profile_image_popup,popupMenu.getMenu());
+            popupMenu.setOnMenuItemClickListener(menuItem -> {
+                if (menuItem.getItemId() == R.id.action_menu1){
+                    Toast.makeText(this, "갤러리로 이동합니다", Toast.LENGTH_SHORT).show();
+
+                    Intent intent = new Intent();
+                    intent.setType("image/*");
+                    intent.setAction(Intent.ACTION_GET_CONTENT);
+                    launcher.launch(intent);
+
+                }else if (menuItem.getItemId() == R.id.action_menu2){
+                    Toast.makeText(this, "기본 이미지로 변경합니다", Toast.LENGTH_SHORT).show();
+                    member.setProfileImage("");
+                    updateMyInfo(new MemberDto(member));
+                    setProfileImage(profileImageView, member.getProfileImage());
+                }else {
+                    Toast.makeText(this, "프로필 이미지 변경", Toast.LENGTH_SHORT).show();
+                }
+
+                return false;
+            });
+            popupMenu.show();
+        });
+
+        profileCloseButton.setOnClickListener(view -> finish());
+    }
+
+    private void changeMyProfileImage(Uri uri) {
+        String filename = uri.getLastPathSegment();
+
+        RequestBody fileBody = RequestBody.Companion.create(String.valueOf(uri), MediaType.parse("multipart/form-data"));
+        MultipartBody.Part filePart = MultipartBody.Part.createFormData("file", filename, fileBody);
+
+        String originProfileImage = member.getProfileImage();
+        uploadProfileImage(filePart, originProfileImage);
+
+        if(!member.getProfileImage().equals(originProfileImage)) {
+            updateMyInfo(new MemberDto(member));
+
+            Glide.with(this)
+                    .load(!member.getProfileImage().equals("") && member.getProfileImage() != null ? member.getProfileImage() : R.drawable.basic_profile_image)
+                    .error(Glide.with(this)
+                            .load(R.drawable.basic_profile_image)
+                            .into(profileImageView))
+                    .into(profileImageView);
+        }
+    }
+
     private boolean getIntentExtra(String key) {
         return getIntent().hasExtra(key);
     }
 
     private void setProfileImage(ImageView imageView, String imageUrl) {
         Glide.with(this)
-                .load(imageUrl)
+                .load(imageUrl==null || imageUrl.equals("") ? R.drawable.basic_profile_image : imageUrl)
                 .error(Glide.with(this)
                         .load(R.drawable.basic_profile_image)
                         .into(imageView))
@@ -171,7 +199,7 @@ public class ProfileEditActivity extends AppCompatActivity {
     }
 
     // Retrofit function
-    public void UpdateMyInfo(MemberDto memberDto) {
+    public void updateMyInfo(MemberDto memberDto) {
         Call<MemberDto> call = RetrofitClient.getMemberApiService().RequestUpdate(member.getUserId(), memberDto);
 
         call.enqueue(new Callback<MemberDto>() {
@@ -202,18 +230,18 @@ public class ProfileEditActivity extends AppCompatActivity {
         });
     }
 
-    public void getMyProfileInfo(Member member) {
-        Call<Member> call = RetrofitClient.getMemberApiService().RequestUserId(member);
+    public void getMyProfileInfo(MemberDto memberDto) {
+        Call<MemberDto> call = RetrofitClient.getMemberApiService().RequestUserId(memberDto);
 
-        call.enqueue(new Callback<Member>() {
+        call.enqueue(new Callback<MemberDto>() {
             @Override
-            public void onResponse(@NonNull Call<Member> call, @NonNull Response<Member> response) {
+            public void onResponse(@NonNull Call<MemberDto> call, @NonNull Response<MemberDto> response) {
                 if(!response.isSuccessful()){
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
                     return;
                 }
 
-                Member result = response.body();
+                MemberDto result = response.body();
 
                 assert response.body() != null;
                 assert result != null;
@@ -236,8 +264,33 @@ public class ProfileEditActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(@NonNull Call<Member> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<MemberDto> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
+            }
+        });
+    }
+
+    public void uploadProfileImage(MultipartBody.Part file, String originProfileImage) {
+        Call<String> call = RetrofitClient.getImageApiService().RequestUploadImage(file);
+
+        call.enqueue(new Callback<String>() {
+            @Override
+            public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
+                if(!response.isSuccessful()){
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                }
+
+                assert response.body() != null;
+                String filePath = response.body();
+                member.setProfileImage(filePath);
+
+                Log.d("프로필 이미지 업로드 요청 : ", response.body());
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
+                Log.e("연결실패", t.getMessage());
+                member.setProfileImage(originProfileImage);
             }
         });
     }

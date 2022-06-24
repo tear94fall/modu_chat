@@ -25,7 +25,7 @@ public class ChatRoomRepositoryImpl implements ChatRoomCustomRepository {
     }
 
     @Override
-    public List<ChatRoom> findAllById(String userId) {
+    public List<ChatRoom> findByUserId(String userId) {
         return queryFactory
                 .selectFrom(chatRoom)
                 .where(chatRoom.userIds.contains(userId))

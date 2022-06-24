@@ -19,8 +19,8 @@ import com.example.modumessenger.Activity.CreateRoomActivity;
 import com.example.modumessenger.Adapter.ChatRoomAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
-import com.example.modumessenger.Retrofit.ChatRoom;
-import com.example.modumessenger.Retrofit.Member;
+import com.example.modumessenger.entity.ChatRoom;
+import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -104,7 +104,7 @@ public class FragmentChat extends Fragment {
 
     // Retrofit function
     public void getChatRoomList(Member member) {
-        Call<List<ChatRoomDto>> call = RetrofitClient.getChatApiService().RequestChatRooms(member.getUserId());
+        Call<List<ChatRoomDto>> call = RetrofitClient.getChatRoomApiService().RequestChatRooms(member.getUserId());
 
         call.enqueue(new Callback<List<ChatRoomDto>>() {
             @Override

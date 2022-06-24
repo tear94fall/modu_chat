@@ -1,5 +1,6 @@
 package com.example.modumessenger.member.entity;
 
+import com.example.modumessenger.chat.entity.ChatRoomMember;
 import com.example.modumessenger.common.domain.BaseTimeEntity;
 import com.example.modumessenger.member.dto.MemberDto;
 import lombok.*;
@@ -7,6 +8,7 @@ import lombok.*;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -17,6 +19,7 @@ import java.util.List;
 public class Member extends BaseTimeEntity {
 
     @Id
+    @Column(name = "member_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -32,6 +35,9 @@ public class Member extends BaseTimeEntity {
 
     private String statusMessage;
     private String profileImage;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
+    private List<ChatRoomMember> chatRoomMemberList = new ArrayList<>();
 
     @ElementCollection
     @CollectionTable(name = "friends", joinColumns = @JoinColumn(name = "id"))
@@ -50,5 +56,15 @@ public class Member extends BaseTimeEntity {
         setUsername(memberDto.getUsername());
         setStatusMessage(memberDto.getStatusMessage());
         setProfileImage(memberDto.getProfileImage());
+        this.Friends = new ArrayList<>();
+    }
+
+    public Member(String userId) {
+        this.userId = userId;
+    }
+
+    public Member(String userId, String email) {
+        this.userId = userId;
+        this.email = email;
     }
 }

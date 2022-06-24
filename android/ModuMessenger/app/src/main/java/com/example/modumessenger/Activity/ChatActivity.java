@@ -24,11 +24,10 @@ import com.bumptech.glide.Glide;
 import com.example.modumessenger.Adapter.ChatBubble;
 import com.example.modumessenger.Adapter.ChatHistoryAdapter;
 import com.example.modumessenger.Adapter.ChatRoomMemberAdapter;
-import com.example.modumessenger.Global.ChatWebSocketListener;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
-import com.example.modumessenger.Retrofit.ChatRoom;
-import com.example.modumessenger.Retrofit.Member;
+import com.example.modumessenger.entity.ChatRoom;
+import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatDto;
 import com.example.modumessenger.dto.ChatRoomDto;
@@ -37,17 +36,26 @@ import com.example.modumessenger.dto.MemberDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.android.material.navigation.NavigationView;
+import com.google.gson.JsonParser;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
+import okio.ByteString;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -83,6 +91,7 @@ public class ChatActivity extends AppCompatActivity {
         bindingView();
         getData();
         setData();
+        setEventBus(true);
         setButtonClickEvent();
         settingSideNavBar();
     }
@@ -105,6 +114,7 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        setEventBus(false);
     }
 
     @Override
@@ -139,6 +149,14 @@ public class ChatActivity extends AppCompatActivity {
         inputMsgTextView.setEnabled(true);
 
         chatSendOthersActivity = new ChatSendOthersActivity();
+    }
+
+    private void setEventBus(boolean flag) {
+        if (flag) {
+            EventBus.getDefault().register(this);
+        } else {
+            EventBus.getDefault().unregister(this);
+        }
     }
 
     private void setButtonClickEvent() {
@@ -265,7 +283,7 @@ public class ChatActivity extends AppCompatActivity {
     public void setNavInfo(ChatRoom chatRoom) {
         View headerView = findViewById(R.id.nav_header);
 
-        String count = roomInfo.getUserIds().size() + " 명";
+        String count = roomInfo.getMembers().size() + " 명";
         ((TextView) headerView.findViewById(R.id.menu_header_name)).setText(roomInfo.getRoomName());
         ((TextView) headerView.findViewById(R.id.chat_room_member_count)).setText(count);
 
@@ -292,10 +310,65 @@ public class ChatActivity extends AppCompatActivity {
         chatRecyclerView.setAdapter(new ChatRoomMemberAdapter(chatMemberList));
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onEvent(MessageEvent messageEvent) {
+        Log.e("event bus call", "Chat Event " + messageEvent.message);
+        // update room database
+    }
+
+    // event bus class
+    public static class MessageEvent {
+        public final String message;
+
+        public MessageEvent(String message) {
+            this.message = message;
+        }
+    }
+
+    public static class ChatWebSocketListener extends okhttp3.WebSocketListener {
+
+        private static final int NORMAL_CLOSURE_STATUS = 1000;
+
+        @Override
+        public void onOpen(@NonNull WebSocket webSocket, @NonNull okhttp3.Response response) {
+//        webSocket.close(NORMAL_CLOSURE_STATUS, "close");
+        }
+
+        @Override
+        public void onMessage(@NonNull WebSocket webSocket, @NonNull String text) {
+            System.out.println(text);
+
+            JsonParser jsonParser = new JsonParser();
+            Object object = jsonParser.parse(text);
+            JSONObject jsonObject = (JSONObject) object;
+            String msg = null;
+
+            try {
+                msg = (String) jsonObject.get("message");
+                EventBus.getDefault().post(new MessageEvent(msg));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onMessage(@NonNull WebSocket webSocket, @NonNull ByteString bytes) {
+        }
+
+        @Override
+        public void onClosing(WebSocket webSocket, int code, @NonNull String reason) {
+            webSocket.close(NORMAL_CLOSURE_STATUS, null);
+        }
+
+        @Override
+        public void onFailure(@NonNull WebSocket webSocket, Throwable t, okhttp3.Response response) {
+            t.printStackTrace();
+        }
+    }
 
     // Retrofit function
     public void getRoomInfo(String roomId) {
-        Call<ChatRoomDto> call = RetrofitClient.getChatApiService().RequestChatRoom(roomId);
+        Call<ChatRoomDto> call = RetrofitClient.getChatRoomApiService().RequestChatRoom(roomId);
 
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override
@@ -308,6 +381,10 @@ public class ChatActivity extends AppCompatActivity {
                 assert response.body() != null;
                 ChatRoomDto chatRoomDto = response.body();
                 roomInfo = new ChatRoom(chatRoomDto);
+
+                chatRoomDto.getMembers().forEach(m -> {
+                    chatMemberList.add(new Member(m));
+                });
 
                 setTitle(roomInfo.getRoomName());
                 setNavInfo(roomInfo);
@@ -329,7 +406,6 @@ public class ChatActivity extends AppCompatActivity {
                 client.dispatcher().executorService().shutdown();
 
                 if(roomInfo!=null) {
-                    getChatRoomMember(roomInfo);
                     getChatList(roomInfo);
                 }
             }
@@ -337,33 +413,6 @@ public class ChatActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Call<ChatRoomDto> call, @NonNull Throwable t) {
                 Log.e("채팅방 정보 가져오기 요청 실패", t.getMessage());
-            }
-        });
-    }
-
-    public void getChatRoomMember(ChatRoom chatRoom) {
-        Call<List<MemberDto>> call = RetrofitClient.getChatApiService().RequestChatRoomMembers(chatRoom.getRoomId());
-
-        call.enqueue(new Callback<List<MemberDto>>() {
-            @Override
-            public void onResponse(@NonNull Call<List<MemberDto>> call, @NonNull Response<List<MemberDto>> response) {
-                if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
-                }
-
-                assert response.body() != null;
-                List<MemberDto> memberList = response.body();
-                memberList.forEach(m -> {
-                    chatMemberList.add(new Member(m));
-                });
-
-                Log.d("채팅방 멤버 리스트 가져오기 요청 : ", response.body().toString());
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<List<MemberDto>> call, @NonNull Throwable t) {
-                Log.e("연결실패", t.getMessage());
             }
         });
     }
@@ -402,7 +451,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     public void exitChatRoom(String roomId, String userId) {
-        Call<ChatRoomDto> call = RetrofitClient.getChatApiService().RequestExitChatRoom(roomId, userId);
+        Call<ChatRoomDto> call = RetrofitClient.getChatRoomApiService().RequestExitChatRoom(roomId, userId);
 
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override
@@ -415,7 +464,7 @@ public class ChatActivity extends AppCompatActivity {
                 assert response.body() != null;
                 ChatRoomDto chatRoomDto = response.body();
 
-                if(chatRoomDto.getRoomId().equals(roomId) && chatRoomDto.getUserIds().contains(userId)) {
+                if(chatRoomDto.getRoomId().equals(roomId) && chatRoomDto.getMembers().contains(userId)) {
                     finish();
                 }
 

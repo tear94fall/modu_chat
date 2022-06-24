@@ -1,8 +1,8 @@
 package com.example.modumessenger.dto;
 
-import com.example.modumessenger.Retrofit.ChatRoom;
+import com.example.modumessenger.entity.ChatRoom;
+import com.example.modumessenger.entity.Member;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 public class ChatRoomDto {
@@ -11,21 +11,21 @@ public class ChatRoomDto {
     private String roomImage;
     private String lastChatMsg;
     private String lastChatTime;
-    private List<String> userIds;
+    private List<MemberDto> members;
 
     public String getRoomId() { return this.roomId; }
     public String getRoomName() { return this.roomName; }
     public String getRoomImage() { return this.roomImage; }
     public String getLastChatMsg() { return this.lastChatMsg; }
     public String getLastChatTime() { return this.lastChatTime; }
-    public List<String> getUserIds() { return this.userIds; }
+    public List<MemberDto> getMembers() { return this.members; }
 
     public void setRoomId(String roomId) { this.roomId = roomId; }
     public void setRoomName(String roomName) { this.roomName = roomName; }
     public void setRoomImage(String roomImage) { this.roomImage = roomImage; }
     public void setLastChatMsg(String lastChatMsg) { this.lastChatMsg = lastChatMsg; }
     public void setLastChatTime(String lastChatTime) { this.lastChatTime = lastChatTime; }
-    public void setUserIds(List<String> userIds) { this.userIds = userIds; }
+    public void setMembers(List<MemberDto> members) { this.members = members; }
 
     public ChatRoomDto(ChatRoom chatRoom) {
         setRoomId(chatRoom.getRoomId());
@@ -33,6 +33,5 @@ public class ChatRoomDto {
         setRoomImage(chatRoom.getRoomImage());
         setLastChatMsg(chatRoom.getLastChatMsg());
         setLastChatTime(chatRoom.getLastChatTime());
-        setUserIds(chatRoom.getUserIds());
     }
 }

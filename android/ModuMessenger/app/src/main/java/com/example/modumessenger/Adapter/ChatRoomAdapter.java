@@ -15,13 +15,13 @@ import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.ChatActivity;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
-import com.example.modumessenger.Retrofit.ChatRoom;
-import com.example.modumessenger.Retrofit.Member;
+import com.example.modumessenger.entity.ChatRoom;
+import com.example.modumessenger.RoomDatabase.Database.ChatRoomDatabase;
+import com.example.modumessenger.RoomDatabase.Entity.ChatRoomEntity;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRoomViewHolder> {
 
@@ -44,6 +44,8 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
     public void onBindViewHolder(@NonNull ChatRoomAdapter.ChatRoomViewHolder holder, int position) {
         ChatRoom chatRoom = this.chatRoomList.get(position);
 
+        holder.setDatabase(chatRoom);
+        holder.setChatRoomTitle(chatRoom);
         holder.setChatRoomInfo(chatRoom);
         holder.setChatRoomImage(chatRoom);
         holder.setChatRoomClickEvent(chatRoom);
@@ -60,6 +62,8 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
 
     public static class ChatRoomViewHolder extends RecyclerView.ViewHolder {
 
+        String userId;
+        ChatRoomDatabase chatRoomDB;
         TextView chatRoomName;
         TextView lastChatMessage;
         TextView lastChatTime;
@@ -68,6 +72,8 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
 
         public ChatRoomViewHolder(@NonNull View itemView) {
             super(itemView);
+            userId = PreferenceManager.getString("userId");
+            chatRoomDB = ChatRoomDatabase.getInstance(this.itemView.getContext());
             chatRoomName = itemView.findViewById(R.id.chat_room_name);
             lastChatMessage = itemView.findViewById(R.id.last_chat_message);
             lastChatTime = itemView.findViewById(R.id.last_chat_time);
@@ -75,34 +81,55 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
             chatRoomCardView = itemView.findViewById(R.id.chatRoomCardViewLayout);
         }
 
+        public void setDatabase(ChatRoom chatRoom) {
+            ChatRoomEntity chatRoomEntity = new ChatRoomEntity(chatRoom);
+            chatRoomDB.chatRoomDao().update(chatRoomEntity);
+        }
+
+        public void setChatRoomTitle(ChatRoom chatRoom) {
+            if(chatRoom.getMembers().size() == 2) {
+                chatRoom.getMembers().forEach(member -> {
+                    if(!member.getUserId().equals(userId)) {
+                        this.chatRoomName.setText(member.getUsername());
+                    }
+                });
+            } else {
+                this.chatRoomName.setText(chatRoom.getRoomName());
+            }
+        }
+
         public void setChatRoomInfo(ChatRoom chatRoom) {
-            this.chatRoomName.setText(chatRoom.getRoomName());
             this.lastChatMessage.setText(chatRoom.getLastChatMsg());
             this.lastChatTime.setText(chatRoom.getLastChatTime().toString());
         }
 
         public void setChatRoomImage(ChatRoom chatRoom) {
-            if(chatRoom.getRoomImage()!=null && !chatRoom.getRoomImage().equals("")) {
-                setGlide(chatRoom.getRoomImage());
+            if(chatRoom.getMembers().size() == 2) {
+                chatRoom.getMembers().forEach(member -> {
+                    if(!member.getUserId().equals(userId)) {
+                        setGlide(member.getProfileImage());
+                    }
+                });
             } else {
-                setGlide(null);
+                if (chatRoom.getRoomImage() != null && !chatRoom.getRoomImage().equals("")) {
+                    setGlide(chatRoom.getRoomImage());
+                } else {
+                    setGlide(null);
+                }
             }
         }
 
         public void setGlide(String imageUrl) {
-            if(imageUrl != null) {
+            if(imageUrl != null && !imageUrl.equals("")) {
                 Glide.with(chatRoomImage)
                         .load(imageUrl)
-                        .override(70, 70)
                         .error(Glide.with(chatRoomImage)
                                 .load(R.drawable.basic_profile_image)
-                                .override(70, 70)
                                 .into(chatRoomImage))
                         .into(chatRoomImage);
             } else {
                 Glide.with(chatRoomImage)
                         .load(R.drawable.basic_profile_image)
-                        .override(70, 70)
                         .into(chatRoomImage);
             }
         }

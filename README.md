@@ -5,12 +5,14 @@
   <h3 align="center">Modu-Messenger</h3>
 
   <p align="center">
-    모두의 메신저 프로젝트의 통합 저장소 입니다.
-    <br />
+    모두의 메신저 프로젝트의 통합 저장소 입니다.<br>
+    개발 내용에 관한 내용은 아래의 문서에서 확인 가능합니다.<br>
     <a href="./android/ModuMessenger/README.md"><strong>안드로이드 문서</strong></a><br>
     <a href="./backend/ModuMessenger/README.md"><strong>백엔드 문서</strong></a><br>
   </p>
 </div>
+
+---
 
 ## 프로젝트 구조
 ![architecture](./images/architecture.jpg)
@@ -19,20 +21,27 @@
 
 ## 모두의 채팅 어플리케이션
 
-| 시작 화면 | 친구 리스트 | 채팅방 리스트 |
-| :--------: | :--------: | :--------: |
-|<img src="images/start.jpg" width="270" height="480">|<img src="images/friends_list.jpg" width="270" height="480">| <img src="images/chat_room_list.jpg" width="270" height="480"> |
-| 구글 소셜 로그인 | 친구 프로필 사진, 상태 메세지 표시 | 채팅방 목록 표시<br> 1대1 채팅방, 단체 채팅방 |
+| 로그인 화면 | 친구 목록 | 프로필 보기 | 친구 찾기 |
+| :--------: | :--------: | :--------: | :--------: |
+|![start](./images/start.jpg)|![friends_list](./images/friends_list.jpg)|![profile_edit](./images/profile_edit.jpg)|![friends_search](./images/friends_search.jpg)|
 
-| 채팅방 화면 | 채팅방 메뉴 | 프로필 수정 |
-| :--------: | :--------: | :--------: |
-|<img src="images/chat_room.jpg" width="270" height="480">|<img src="images/chat_side_menu.jpg" width="270" height="480">| <img src="images/profile_edit.jpg" width="270" height="480"> |
-| 채팅중인 친구의 프로필 및 시간 표시 | 채팅방 친구 표시<br>채팅방 설정 및 친구 초대 | 프로필 수정<br>프로필 사진, 이름, 상태메세지 수정 |
+| 채팅방 목록 | 채팅 방 화면 | 채팅방 메뉴 | 설정 메뉴 |
+| :--------: | :--------: | :--------: | :--------: |
+|![chat_room_list](./images/chat_room_list.jpg)|![chat_room](./images/chat_room.jpg)|![chat_side_menu](./images/chat_side_menu.jpg)|![setting_menu](./images/setting_menu.jpg)|
 
-| 친구 찾기 |
-| :--------: |
-|<img src="images/friends_search.jpg" width="270" height="480">|
-| 새로운 친구 추가 가능 |
+---
+
+## 주요 도메인 모델
+
+### 채팅 관련 도메인 모델 구조
+
+![architecture](./images/domain_model.jpg)
+
+### 도메인 모델 개선
+
+1대다 연관관계 및 1대1 연관관계의 경우 초기 설계 그대로 진행   
+다대다 연관관계의 경우 중간에 연관 테이블을 하나 둠으로써 1대다, 1대다로 관계를 풀어나감   
+@ManyToMany 의 사용을 지양 (자세한 내용은 백엔드 개발 문서에 채팅방 - 유저에서 확인)   
 
 ---
 

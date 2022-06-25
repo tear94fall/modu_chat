@@ -21,9 +21,12 @@ import com.example.modumessenger.Activity.AppInfoActivity;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.Grid.SettingGridAdapter;
+import com.example.modumessenger.Grid.SettingGridItem;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.MemberDto;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -90,14 +93,14 @@ public class FragmentSetting extends Fragment {
         SettingGridAdapter settingGridAdapter = new SettingGridAdapter(requireActivity());
         settingGridView.setAdapter(settingGridAdapter);
 
-        settingGridAdapter.setGridItems();
+        settingGridAdapter.setGridItems(view);
 
         settingGridView.setOnItemClickListener((parent, view1, position, id) -> {
-            String itemName = settingGridAdapter.getGridItem(position).getItemName();
-            Toast.makeText(requireActivity().getApplicationContext(), itemName, Toast.LENGTH_SHORT).show();
+            SettingGridItem gridItem = settingGridAdapter.getGridItem(position);
+            Toast.makeText(requireActivity().getApplicationContext(), gridItem.getItemName(), Toast.LENGTH_SHORT).show();
 
-            if(position==0){
-                Intent intent = new Intent(view.getContext(), AppInfoActivity.class);
+            Intent intent = gridItem.getIntent();
+            if(intent != null) {
                 view.getContext().startActivity(intent);
             }
         });

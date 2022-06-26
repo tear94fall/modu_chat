@@ -25,6 +25,7 @@
         <activity android:name=".Activity.AppInfoActivity" />
         <activity android:name=".Activity.SetFriendsActivity" />
         <activity android:name=".Activity.FindFriendsActivity" />
+        <activity android:name=".Activity.SetupActivity" />
 
         <activity
             android:name=".Activity.SplashActivity"

@@ -13,9 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -43,6 +41,14 @@ public class CommonDataController {
             case "locale": return ResponseEntity.ok().body(commonDataService.getLocale());
             case "time": return ResponseEntity.ok().body(commonDataService.getTime());
             default: return ResponseEntity.ok().body(new CommonDataDto("empty", "empty"));
+        }
+    }
+
+    @GetMapping("commons/{key}")
+    public ResponseEntity<List<CommonDataDto>> getCommonDataList(@Valid @PathVariable("key") String key) {
+        switch(key) {
+            case "notification": return ResponseEntity.ok().body(commonDataService.getNotification());
+            default: return ResponseEntity.ok().body(new ArrayList<>(List.of(new CommonDataDto("empty", "empty"))));
         }
     }
 }

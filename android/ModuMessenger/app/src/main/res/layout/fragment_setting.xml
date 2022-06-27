@@ -63,7 +63,7 @@
         app:layout_constraintTop_toBottomOf="@+id/setting_my_profile_card_view" />
 
     <GridView
-        android:id="@+id/grid_test"
+        android:id="@+id/setting_grid"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_margin="10dp"

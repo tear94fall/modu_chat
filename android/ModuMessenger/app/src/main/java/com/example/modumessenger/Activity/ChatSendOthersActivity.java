@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.GridView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -18,6 +19,10 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.example.modumessenger.Grid.SendOthersGridAdapter;
+import com.example.modumessenger.Grid.SendOthersGridItem;
+import com.example.modumessenger.Grid.SettingGridAdapter;
+import com.example.modumessenger.Grid.SettingGridItem;
 import com.example.modumessenger.R;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
@@ -28,7 +33,8 @@ import java.nio.file.Files;
 public class ChatSendOthersActivity extends BottomSheetDialogFragment {
 
     ActivityResultLauncher<Intent> resultLauncher;
-    Button imageSend, fileSend, audioSend;
+    GridView settingGridView;
+    SendOthersGridAdapter sendOthersGridAdapter;
     String roomId;
 
     @Nullable
@@ -52,27 +58,22 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
     }
 
     private void bindingView(View view) {
-        imageSend = view.findViewById(R.id.send_image);
-        fileSend = view.findViewById(R.id.send_file);
-        audioSend = view.findViewById(R.id.send_audio);
+        settingGridView = view.findViewById(R.id.send_others_grid);
+        sendOthersGridAdapter = new SendOthersGridAdapter(requireActivity());
+        sendOthersGridAdapter.setGridItems(view);
+
+        settingGridView.setAdapter(sendOthersGridAdapter);
     }
 
     private void setButtonClickEvent() {
-        imageSend.setOnClickListener(view -> {
-            Toast.makeText(getContext(), "사진을 전송합니다.", Toast.LENGTH_SHORT).show();
+        settingGridView.setOnItemClickListener((parent, view1, position, id) -> {
+            SendOthersGridItem gridItem = sendOthersGridAdapter.getGridItem(position);
+            Toast.makeText(requireActivity().getApplicationContext(), gridItem.getItemName(), Toast.LENGTH_SHORT).show();
 
             Intent intent = new Intent();
             intent.setType("image/*");
             intent.setAction(Intent.ACTION_GET_CONTENT);
             resultLauncher.launch(intent);
-        });
-
-        fileSend.setOnClickListener(view -> {
-            Toast.makeText(getContext(), "파일을 전송합니다.", Toast.LENGTH_SHORT).show();
-        });
-
-        audioSend.setOnClickListener(view -> {
-            Toast.makeText(getContext(), "오디오를 전송합니다.", Toast.LENGTH_SHORT).show();
         });
     }
 

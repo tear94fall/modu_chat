@@ -89,7 +89,7 @@ public class FragmentSetting extends Fragment {
 
         setting_my_profile_card_view = view.findViewById(R.id.setting_my_profile_card_view);
 
-        GridView settingGridView = view.findViewById(R.id.grid_test);
+        GridView settingGridView = view.findViewById(R.id.setting_grid);
         SettingGridAdapter settingGridAdapter = new SettingGridAdapter(requireActivity());
         settingGridView.setAdapter(settingGridAdapter);
 

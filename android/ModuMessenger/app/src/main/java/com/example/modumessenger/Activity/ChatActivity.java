@@ -35,6 +35,8 @@ import com.example.modumessenger.dto.ChatType;
 import com.example.modumessenger.dto.MemberDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.android.material.navigation.NavigationView;
 import com.google.gson.JsonParser;
 
@@ -312,16 +314,21 @@ public class ChatActivity extends AppCompatActivity {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEvent(MessageEvent messageEvent) {
-        Log.e("event bus call", "Chat Event " + messageEvent.message);
-        // update room database
+        Log.e("event bus call", "Chat Event " + messageEvent.getChatBubble().getChatMsg());
+        this.chatBubbleList.add(messageEvent.getChatBubble());
+        recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
     }
 
     // event bus class
     public static class MessageEvent {
-        public final String message;
+        private final ChatBubble chatBubble;
 
-        public MessageEvent(String message) {
-            this.message = message;
+        public MessageEvent(ChatBubble chatBubble) {
+            this.chatBubble = chatBubble;
+        }
+
+        public ChatBubble getChatBubble() {
+            return this.chatBubble;
         }
     }
 
@@ -331,21 +338,26 @@ public class ChatActivity extends AppCompatActivity {
 
         @Override
         public void onOpen(@NonNull WebSocket webSocket, @NonNull okhttp3.Response response) {
-//        webSocket.close(NORMAL_CLOSURE_STATUS, "close");
+            Log.d("onOpen", "WebSocket connection success");
         }
 
         @Override
         public void onMessage(@NonNull WebSocket webSocket, @NonNull String text) {
+            Log.d("onMessage", "WebSocket receive text message");
             System.out.println(text);
 
-            JsonParser jsonParser = new JsonParser();
-            Object object = jsonParser.parse(text);
-            JSONObject jsonObject = (JSONObject) object;
-            String msg = null;
-
             try {
-                msg = (String) jsonObject.get("message");
-                EventBus.getDefault().post(new MessageEvent(msg));
+                JSONObject jsonObject = new JSONObject(text);
+
+                String roomId = (String) jsonObject.get("roomId");
+                String message = (String) jsonObject.get("message");
+                String chatTime = (String) jsonObject.get("chatTime");
+                String sender = (String) jsonObject.get("sender");
+                int chatType = (int) jsonObject.get("chatType");
+
+                ChatBubble chatBubble = new ChatBubble(roomId, message, chatTime, sender, chatType);
+
+                EventBus.getDefault().post(new MessageEvent(chatBubble));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -353,15 +365,24 @@ public class ChatActivity extends AppCompatActivity {
 
         @Override
         public void onMessage(@NonNull WebSocket webSocket, @NonNull ByteString bytes) {
+            Log.d("onMessage", "WebSocket receive binary message");
+        }
+
+        @Override
+        public void onClosed(@NonNull WebSocket webSocket, int code, @NonNull String reason) {
+            Log.d("onClosed", "WebSocket connection closed. code : " + code + " message : " + reason);
         }
 
         @Override
         public void onClosing(WebSocket webSocket, int code, @NonNull String reason) {
+            Log.d("onClosing", "WebSocket connection closing. code : " + code + " message : " + reason);
             webSocket.close(NORMAL_CLOSURE_STATUS, null);
+            webSocket.cancel();
         }
 
         @Override
         public void onFailure(@NonNull WebSocket webSocket, Throwable t, okhttp3.Response response) {
+            Log.d("onClosing", "WebSocket connection fail " + t.getMessage());
             t.printStackTrace();
         }
     }

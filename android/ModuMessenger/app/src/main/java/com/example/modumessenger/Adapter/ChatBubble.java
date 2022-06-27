@@ -15,6 +15,14 @@ public class ChatBubble {
         this.viewType = viewType;
     }
 
+    public ChatBubble(String roomId, String chatMsg, String chatTime, String sender, int viewType) {
+        setRoomId(roomId);
+        setChatMsg(chatMsg);
+        setChatTime(chatTime);
+        setSender(sender);
+        setViewType(viewType);
+    }
+
     public ChatBubble(ChatDto chatDto) {
         roomId = chatDto.getRoomId();
         chatMsg = chatDto.getMessage();
@@ -31,7 +39,7 @@ public class ChatBubble {
 
     public void setRoomId(String roomId) { this.roomId = roomId; }
     public void setChatMsg(String msg) { this.chatMsg = msg; }
-    public void getChatTime(String time) { this.chatTime = time; }
-    public void getSender(String sender) { this.sender = sender; }
+    public void setChatTime(String time) { this.chatTime = time; }
+    public void setSender(String sender) { this.sender = sender; }
     public void setViewType(int type) { this.viewType = type; }
 }

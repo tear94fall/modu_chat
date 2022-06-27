@@ -1,5 +1,6 @@
 package com.example.modumessenger.chat.entity;
 
+import com.example.modumessenger.chat.dto.ChatRoomDto;
 import com.example.modumessenger.common.domain.BaseTimeEntity;
 import lombok.*;
 
@@ -52,5 +53,13 @@ public class ChatRoom extends BaseTimeEntity {
         this.roomImage = roomImage;
         this.lastChatMsg = lastChatMsg;
         this.lastChatTime = lastChatTime;
+    }
+
+    public ChatRoom(ChatRoomDto chatRoomDto) {
+        setRoomId(chatRoomDto.getRoomId());
+        setRoomName(chatRoomDto.getRoomName());
+        setRoomImage(chatRoomDto.getRoomImage());
+        setLastChatMsg(chatRoomDto.getLastChatMsg());
+        setLastChatTime(chatRoomDto.getLastChatTime());
     }
 }

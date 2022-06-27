@@ -82,6 +82,8 @@ public class ChatRoomService {
 
         findChatRoom.setRoomName(chatRoomDto.getRoomName());
         findChatRoom.setRoomImage(chatRoomDto.getRoomImage());
+        findChatRoom.setLastChatMsg(chatRoomDto.getLastChatMsg());
+        findChatRoom.setLastChatTime(chatRoomDto.getLastChatTime());
 
         ChatRoom updateChatRoom = chatRoomRepository.save(findChatRoom);
         return modelMapper.map(updateChatRoom, ChatRoomDto.class);

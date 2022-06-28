@@ -88,4 +88,24 @@ public class ChatRoomService {
         ChatRoom updateChatRoom = chatRoomRepository.save(findChatRoom);
         return modelMapper.map(updateChatRoom, ChatRoomDto.class);
     }
+
+    public ChatRoomDto addMemberChatRoom(String roomId, List<String> userIds) {
+        ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId);
+        List<Member> members = memberRepository.findAllByUserIds(userIds);
+
+        chatRoom.getChatRoomMemberList().forEach(chatRoomMember -> members.remove(chatRoomMember.getMember()));
+
+        List<ChatRoomMember> chatRoomMemberList = members.stream()
+                .map(member -> {
+                    ChatRoomMember chatRoomMember = new ChatRoomMember(member, chatRoom);
+                    chatRoom.getChatRoomMemberList().add(chatRoomMember);
+                    return chatRoomMember;
+                })
+                .collect(Collectors.toList());
+
+        chatRoomMemberRepository.saveAll(chatRoomMemberList);
+        ChatRoom newRoom = chatRoomRepository.save(chatRoom);
+
+        return modelMapper.map(newRoom, ChatRoomDto.class);
+    }
 }

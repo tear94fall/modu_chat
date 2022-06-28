@@ -65,7 +65,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
         String roomId = (String) jsonObject.get("roomId");
         String msg = (String) jsonObject.get("message");
         String senderName = sender.getUserId();
-        String sendTime = LocalDateTime.now().format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT));
+        String sendTime = (String) jsonObject.get("chatTime");
         Long chatType = (Long) jsonObject.get("chatType");
 
         ChatRoomDto chatRoomDto = chatRoomService.searchChatRoomByRoomId(roomId);

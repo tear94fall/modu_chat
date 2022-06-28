@@ -48,4 +48,10 @@ public class ChatRoomController {
         ChatRoomDto chatRoomDto = chatRoomService.updateChatRoom(roomId, requestChatRoomDto);
         return ResponseEntity.ok().body(chatRoomDto);
     }
+
+    @PostMapping("/chat/{roomId}/member")
+    public ResponseEntity<ChatRoomDto> addMemberChatRoom(@Valid @PathVariable String roomId, @RequestBody List<String> userIds) {
+        ChatRoomDto chatRoomDto = chatRoomService.addMemberChatRoom(roomId, userIds);
+        return ResponseEntity.ok().body(chatRoomDto);
+    }
 }

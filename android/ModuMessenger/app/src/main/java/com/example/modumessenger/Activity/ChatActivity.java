@@ -1,5 +1,6 @@
 package com.example.modumessenger.Activity;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -32,13 +33,9 @@ import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatDto;
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.example.modumessenger.dto.ChatType;
-import com.example.modumessenger.dto.MemberDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.android.material.navigation.NavigationView;
-import com.google.gson.JsonParser;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -48,10 +45,9 @@ import org.json.JSONObject;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -83,7 +79,7 @@ public class ChatActivity extends AppCompatActivity {
     TextView inputMsgTextView;
     Button sendMsg, sendOthers;
 
-    String jwtToken,userId, roomId;
+    String jwtToken, userId, roomId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,6 +97,7 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
+        updateRoomInfo(roomId);
     }
 
     @Override
@@ -169,7 +166,7 @@ public class ChatActivity extends AppCompatActivity {
                 chatDto.setRoomId(roomId);
                 chatDto.setMessage(msg);
                 chatDto.setSender(userId);
-                chatDto.setChatTime(LocalDateTime.now().format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)));
+                chatDto.setChatTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                 chatDto.setChatType(ChatType.CHAT_TYPE_TEXT);
 
                 String message = null;
@@ -195,9 +192,7 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
 
-        sendOthers.setOnClickListener(v -> {
-            chatSendOthersActivity.show(getSupportFragmentManager(), chatSendOthersActivity.getTag());
-        });
+        sendOthers.setOnClickListener(v -> chatSendOthersActivity.show(getSupportFragmentManager(), chatSendOthersActivity.getTag()));
     }
 
     public void settingSideNavBar() {
@@ -207,7 +202,7 @@ public class ChatActivity extends AppCompatActivity {
         toolbar.setTitleTextColor(getResources().getColor(android.R.color.white, getTheme()));
         setSupportActionBar(toolbar);
 
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_baseline_dehaze_24);
 
         DrawerLayout drawLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -219,9 +214,7 @@ public class ChatActivity extends AppCompatActivity {
 
             AlertDialog alertDialog = builder.setMessage("채팅방을 나가시겠습니까?")
                     .setTitle("나가기")
-                    .setPositiveButton("아니오", (dialog, which) -> {
-                        Toast.makeText(getApplicationContext(), "취소", Toast.LENGTH_LONG).show();
-                    })
+                    .setPositiveButton("아니오", (dialog, which) -> Toast.makeText(getApplicationContext(), "취소", Toast.LENGTH_LONG).show())
                     .setNeutralButton("예", (dialog, which) -> {
                         exitChatRoom(roomId, userId);
                         Toast.makeText(getApplicationContext(), "채팅방에서 나갑니다.", Toast.LENGTH_SHORT).show();
@@ -238,10 +231,9 @@ public class ChatActivity extends AppCompatActivity {
             Intent intent = new Intent(getApplicationContext(), InviteActivity.class);
 
             ArrayList<String> currentMembers = new ArrayList<>();
-            chatMemberList.forEach(m -> {
-                currentMembers.add(m.getUserId());
-            });
+            chatMemberList.forEach(m -> currentMembers.add(m.getUserId()));
 
+            intent.putExtra("roomId", roomId);
             intent.putStringArrayListExtra("currentMember", currentMembers);
 
             startActivity(intent);
@@ -403,9 +395,7 @@ public class ChatActivity extends AppCompatActivity {
                 ChatRoomDto chatRoomDto = response.body();
                 roomInfo = new ChatRoom(chatRoomDto);
 
-                chatRoomDto.getMembers().forEach(m -> {
-                    chatMemberList.add(new Member(m));
-                });
+                chatRoomDto.getMembers().forEach(m -> chatMemberList.add(new Member(m)));
 
                 setTitle(roomInfo.getRoomName());
                 setNavInfo(roomInfo);
@@ -438,6 +428,37 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
+    public void updateRoomInfo(String roomId) {
+        Call<ChatRoomDto> call = RetrofitClient.getChatRoomApiService().RequestChatRoom(roomId);
+
+        call.enqueue(new Callback<ChatRoomDto>() {
+            @Override
+            public void onResponse(@NonNull Call<ChatRoomDto> call, @NonNull Response<ChatRoomDto> response) {
+                if(!response.isSuccessful()){
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                    return;
+                }
+
+                assert response.body() != null;
+                ChatRoomDto chatRoomDto = response.body();
+                roomInfo = new ChatRoom(chatRoomDto);
+
+                chatMemberList.clear();
+                chatRoomDto.getMembers().forEach(m -> chatMemberList.add(new Member(m)));
+
+                setTitle(roomInfo.getRoomName());
+                setNavInfo(roomInfo);
+
+                Log.d("채팅방 정보 가져오기 요청 : ", response.body().toString());
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ChatRoomDto> call, @NonNull Throwable t) {
+                Log.e("채팅방 정보 가져오기 요청 실패", t.getMessage());
+            }
+        });
+    }
+
     public void getChatList(ChatRoom chatRoom) {
         Call<List<ChatDto>> call = RetrofitClient.getChatApiService().RequestChatHistory(chatRoom.getRoomId());
 
@@ -451,9 +472,7 @@ public class ChatActivity extends AppCompatActivity {
 
                 List<ChatDto> chatHistory = response.body();
                 assert chatHistory != null;
-                chatHistory.forEach(c->{
-                    chatBubbleList.add(new ChatBubble(c));
-                });
+                chatHistory.forEach(c-> chatBubbleList.add(new ChatBubble(c)));
 
                 chatHistoryAdapter = new ChatHistoryAdapter(chatBubbleList, chatMemberList);
                 recyclerView.setAdapter(chatHistoryAdapter);
@@ -485,8 +504,12 @@ public class ChatActivity extends AppCompatActivity {
                 assert response.body() != null;
                 ChatRoomDto chatRoomDto = response.body();
 
-                if(chatRoomDto.getRoomId().equals(roomId) && chatRoomDto.getMembers().contains(userId)) {
-                    finish();
+                if(chatRoomDto.getRoomId().equals(roomId)) {
+                    chatRoomDto.getMembers().forEach(memberDto -> {
+                        if(memberDto.getUserId().equals(userId)){
+                            finish();
+                        }
+                    });
                 }
 
                 Log.d("채팅방 나가기 요청 : ", response.body().toString());

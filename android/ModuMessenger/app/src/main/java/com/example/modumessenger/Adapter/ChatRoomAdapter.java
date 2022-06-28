@@ -18,10 +18,15 @@ import com.example.modumessenger.R;
 import com.example.modumessenger.entity.ChatRoom;
 import com.example.modumessenger.RoomDatabase.Database.ChatRoomDatabase;
 import com.example.modumessenger.RoomDatabase.Entity.ChatRoomEntity;
+import com.example.modumessenger.entity.Member;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRoomViewHolder> {
 
@@ -52,7 +57,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
     }
 
     public void sortChatRoom() {
-        this.chatRoomList.sort(Comparator.comparing(ChatRoom::getLastChatTime));
+        this.chatRoomList.sort(Comparator.comparing(ChatRoom::getLastChatTime, Comparator.reverseOrder()));
     }
 
     @Override
@@ -87,12 +92,21 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
         }
 
         public void setChatRoomTitle(ChatRoom chatRoom) {
-            if(chatRoom.getMembers().size() == 2) {
+            if (chatRoom.getMembers().size() == 1) {
+                this.chatRoomName.setText(chatRoom.getRoomName());
+            } else if (chatRoom.getMembers().size() == 2) {
                 chatRoom.getMembers().forEach(member -> {
-                    if(!member.getUserId().equals(userId)) {
+                    if (!member.getUserId().equals(userId)) {
                         this.chatRoomName.setText(member.getUsername());
                     }
                 });
+            } else if (chatRoom.getMembers().size() > 2) {
+                List<String> userIds = chatRoom.getMembers().stream()
+                        .map(Member::getUsername)
+                        .collect(Collectors.toList());
+                String title = String.join(", ", userIds);
+                title = title.substring(0, Math.min(title.length(), 25));
+                this.chatRoomName.setText(title);
             } else {
                 this.chatRoomName.setText(chatRoom.getRoomName());
             }
@@ -100,16 +114,20 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
 
         public void setChatRoomInfo(ChatRoom chatRoom) {
             this.lastChatMessage.setText(chatRoom.getLastChatMsg());
-            this.lastChatTime.setText(chatRoom.getLastChatTime().toString());
+            this.lastChatTime.setText(getShortTime(chatRoom.getLastChatTime()));
         }
 
         public void setChatRoomImage(ChatRoom chatRoom) {
-            if(chatRoom.getMembers().size() == 2) {
+            if (chatRoom.getMembers().size() == 1) {
+                setGlide(R.drawable.basic_chat_room_image);
+            } else if(chatRoom.getMembers().size() == 2) {
                 chatRoom.getMembers().forEach(member -> {
                     if(!member.getUserId().equals(userId)) {
                         setGlide(member.getProfileImage());
                     }
                 });
+            } else if (chatRoom.getMembers().size() > 2) {
+                setGlide(R.drawable.basic_chat_room_image);
             } else {
                 if (chatRoom.getRoomImage() != null && !chatRoom.getRoomImage().equals("")) {
                     setGlide(chatRoom.getRoomImage());
@@ -117,6 +135,15 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
                     setGlide(null);
                 }
             }
+        }
+
+        public void setGlide(int resources) {
+            Glide.with(chatRoomImage)
+                    .load(resources)
+                    .error(Glide.with(chatRoomImage)
+                            .load(R.drawable.basic_profile_image)
+                            .into(chatRoomImage))
+                    .into(chatRoomImage);
         }
 
         public void setGlide(String imageUrl) {
@@ -140,6 +167,12 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
                 intent.putExtra("roomId", chatRoom.getRoomId());
                 view.getContext().startActivity(intent);
             });
+        }
+
+        public String getShortTime(String time) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            LocalDateTime dateTime = LocalDateTime.parse(time, formatter);
+            return dateTime.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT));
         }
     }
 }

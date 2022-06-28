@@ -21,6 +21,9 @@ import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.RoomDatabase.Database.ChatDatabase;
 import com.example.modumessenger.RoomDatabase.Entity.ChatEntity;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,8 +35,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     private final List<Member> memberList;
     private final List<ChatBubble> chatList;
-    private String lastChatTime;
-    private String userId;
+    private final String userId;
 
     ChatDatabase chatDatabase;
 
@@ -100,18 +102,16 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             leftHolder.chatSender.setText(chat.getSender());
             leftHolder.chatMessage.setText(chat.getChatMsg());
-            leftHolder.leftChatTime.setText(chat.getChatTime());
+            leftHolder.leftChatTime.setText(getShortTime(chat.getChatTime()));
         } else if (holder instanceof ChatBubbleLeftDuplicateViewHolder) {
             ChatBubbleLeftDuplicateViewHolder leftDupHolder = ((ChatBubbleLeftDuplicateViewHolder) holder);
             leftDupHolder.chatMessage.setText(chat.getChatMsg());
-            leftDupHolder.leftChatTime.setText(chat.getChatTime());
+            leftDupHolder.leftChatTime.setText(getShortTime(chat.getChatTime()));
         } else if (holder instanceof  ChatBubbleRightViewHolder) {
             ChatBubbleRightViewHolder rightHolder = ((ChatBubbleRightViewHolder) holder);
             rightHolder.chatMessage.setText(chat.getChatMsg());
-            rightHolder.rightChatTime.setText(chat.getChatTime());
+            rightHolder.rightChatTime.setText(getShortTime(chat.getChatTime()));
         }
-
-        lastChatTime = chat.getChatTime();
     }
 
     @Override
@@ -147,6 +147,12 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public void addChatMsg(ChatBubble chatBubble) {
         this.chatList.add(chatBubble);
         notifyDataSetChanged();
+    }
+
+    public String getShortTime(String time) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        LocalDateTime dateTime = LocalDateTime.parse(time, formatter);
+        return dateTime.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT));
     }
 
     public static class ChatBubbleLeftViewHolder extends RecyclerView.ViewHolder {

@@ -37,6 +37,13 @@ public class SearchActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
 
+        bindingView();
+        getData();
+        setData();
+        setButtonClickEvent();
+    }
+
+    private void bindingView() {
         instance = this;
         setTitle("친구 추가");
 
@@ -50,7 +57,17 @@ public class SearchActivity extends AppCompatActivity {
         searchView = findViewById(R.id.friends_search_view);
         searchView.setMaxWidth(Integer.MAX_VALUE);
         searchView.setSubmitButtonEnabled(true);
+    }
 
+    private void getData() {
+
+    }
+
+    private void setData() {
+
+    }
+
+    private void setButtonClickEvent() {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener(){
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -103,6 +120,7 @@ public class SearchActivity extends AppCompatActivity {
                 }
 
                 try {
+                    assert response.body() != null;
                     Log.d("친구 검색 요청 : ", response.body().toString());
                     Toast.makeText(getApplicationContext(), email + " 을 검색하였습니다.", Toast.LENGTH_SHORT).show();
 

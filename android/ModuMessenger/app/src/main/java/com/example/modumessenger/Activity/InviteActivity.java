@@ -10,7 +10,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.modumessenger.Adapter.inviteAdapter;
+import com.example.modumessenger.Adapter.InviteAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.entity.Member;
@@ -26,28 +26,31 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class InviteActivity extends AppCompatActivity {
-    private static InviteActivity instance;
-
     RecyclerView addChatRecyclerView;
     RecyclerView.LayoutManager addChatLayoutManager;
-    inviteAdapter inviteAdapter;
+    InviteAdapter inviteAdapter;
 
     Button inviteButton;
 
-    List<String> addChatList;
     List<MemberDto> friendsList;
 
     ArrayList<String> currentMember;
+    Member member;
+    String roomId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_invite);
 
-        instance = this;
-        setTitle("친구 초대 하기");
+        bindingView();
+        getData();
+        setData();
+        setButtonClickEvent();
+    }
 
-        currentMember = getIntent().getStringArrayListExtra("currentMember");
+    private void bindingView() {
+        setTitle("친구 초대 하기");
 
         addChatRecyclerView = (RecyclerView) findViewById(R.id.invite_friend_recycler_view);
         addChatRecyclerView.setHasFixedSize(true);
@@ -56,39 +59,32 @@ public class InviteActivity extends AppCompatActivity {
         addChatRecyclerView.setLayoutManager(addChatLayoutManager);
         addChatRecyclerView.scrollToPosition(0);
 
-        Member member = new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email"));
+        inviteButton = findViewById(R.id.invite_button);
+    }
+
+    private void getData() {
+        roomId = getIntent().getStringExtra("roomId");
+        currentMember = getIntent().getStringArrayListExtra("currentMember");
+        member = new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email"));
 
         getFriendsList(member);
+    }
 
-        addChatList = new ArrayList<>();
+    private void setData() {
         friendsList = new ArrayList<>();
+    }
 
-        inviteButton = findViewById(R.id.invite_button);
+    private void setButtonClickEvent() {
         inviteButton.setOnClickListener(v -> {
-            if (addChatList.size()!=0) {
-                Toast.makeText(getApplicationContext(), "채팅방을 생성합니다.", Toast.LENGTH_SHORT).show();
-                addChatList.add(member.getUserId());
-                inviteChatRoom(addChatList);
+            List<String> inviteMemberList = inviteAdapter.getInviteMemberList();
+
+            if (inviteMemberList.size()!=0) {
+                Toast.makeText(getApplicationContext(), "친구를 채팅방에 초대합니다.", Toast.LENGTH_SHORT).show();
+                inviteChatRoom(inviteMemberList);
             } else {
-                Toast.makeText(getApplicationContext(), "추가할 친구가 없습니다.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "초대할 친구가 없습니다.", Toast.LENGTH_SHORT).show();
             }
         });
-    }
-
-    public static InviteActivity getInstance() {
-        return instance;
-    }
-
-    public void addUserIdOnAddChatList(String userId) {
-        if(!PreferenceManager.getString("userId").equals(userId)) {
-            this.addChatList.add(userId);
-        }
-    }
-
-    public void removeUserIdOnAddChatList(String userId) {
-        if(!PreferenceManager.getString("userId").equals(userId)) {
-            this.addChatList.remove(userId);
-        }
     }
 
     // Retrofit function
@@ -112,7 +108,7 @@ public class InviteActivity extends AppCompatActivity {
                     }
                 });
 
-                inviteAdapter = new inviteAdapter(friendsList);
+                inviteAdapter = new InviteAdapter(friendsList);
                 addChatRecyclerView.setAdapter(inviteAdapter);
 
                 Log.d("친구 리스트 가져오기 요청 : ", response.body().toString());
@@ -126,7 +122,7 @@ public class InviteActivity extends AppCompatActivity {
     }
 
     public void inviteChatRoom(List<String> userIds) {
-        Call<ChatRoomDto> call = RetrofitClient.getChatRoomApiService().RequestCreateChatRoom(userIds);
+        Call<ChatRoomDto> call = RetrofitClient.getChatRoomApiService().RequestAddMemberChatRoom(roomId, userIds);
 
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override
@@ -139,13 +135,11 @@ public class InviteActivity extends AppCompatActivity {
                 assert response.body() != null;
                 ChatRoomDto chatRoomDto = response.body();
 
-                userIds.forEach(invite -> {
-                    chatRoomDto.getMembers().forEach(member -> {
-                        if(member.getUserId().equals(invite)) {
-                            Toast.makeText(getApplicationContext(), invite + "님을 채팅방 초대에 실패하엿습니다. ", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                });
+                userIds.forEach(invite -> chatRoomDto.getMembers().forEach(member -> {
+                    if(member.getUserId().equals(invite)) {
+                        Toast.makeText(getApplicationContext(), invite + "님을 채팅방 초대에 실패하엿습니다. ", Toast.LENGTH_SHORT).show();
+                    }
+                }));
 
                 finish();
 

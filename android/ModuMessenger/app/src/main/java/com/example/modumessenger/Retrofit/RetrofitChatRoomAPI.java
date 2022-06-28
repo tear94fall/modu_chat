@@ -1,6 +1,5 @@
 package com.example.modumessenger.Retrofit;
 
-import com.example.modumessenger.dto.ChatDto;
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.example.modumessenger.dto.MemberDto;
 
@@ -29,4 +28,7 @@ public interface RetrofitChatRoomAPI {
 
     @POST("chat/{roomId}/room")
     Call<ChatRoomDto> RequestUpdateChatRoom(@Path("roomId") String roomId, @Body ChatRoomDto chatRoomDto);
+
+    @POST("chat/{roomId}/member")
+    Call<ChatRoomDto> RequestAddMemberChatRoom(@Path("roomId") String roomId, @Body List<String> userIds);
 }

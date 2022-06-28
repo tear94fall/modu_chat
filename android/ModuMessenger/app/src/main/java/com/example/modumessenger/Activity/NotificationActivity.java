@@ -65,9 +65,7 @@ public class NotificationActivity extends AppCompatActivity {
 
                     List<CommonData> commonDataList = response.body();
 
-                    commonDataList.forEach(column -> {
-                        notifyMap.put(column.getKey(), column.getValue());
-                    });
+                    commonDataList.forEach(column -> notifyMap.put(column.getKey(), column.getValue()));
 
                 } catch (Exception e) {
                     Log.e("오류 발생 : ", e.getMessage());

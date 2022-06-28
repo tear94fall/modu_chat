@@ -10,7 +10,6 @@ import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.GridView;
 import android.widget.Toast;
 
@@ -21,8 +20,6 @@ import androidx.annotation.Nullable;
 
 import com.example.modumessenger.Grid.SendOthersGridAdapter;
 import com.example.modumessenger.Grid.SendOthersGridItem;
-import com.example.modumessenger.Grid.SettingGridAdapter;
-import com.example.modumessenger.Grid.SettingGridItem;
 import com.example.modumessenger.R;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 

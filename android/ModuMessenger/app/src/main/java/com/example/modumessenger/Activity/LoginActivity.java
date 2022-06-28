@@ -27,9 +27,6 @@ import com.google.android.gms.tasks.Task;
 
 import com.example.modumessenger.Retrofit.*;
 
-import java.io.IOException;
-import java.net.SocketTimeoutException;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;

@@ -125,9 +125,7 @@ public class ChatRoomEdit extends AppCompatActivity implements View.OnTouchListe
             }
         });
 
-        chatRoomEditCloseButton.setOnClickListener(v -> {
-            finish();
-        });
+        chatRoomEditCloseButton.setOnClickListener(v -> finish());
 
         chatRoomSaveButton.setOnClickListener(v -> {
             if(!roomInfo.getRoomName().equals(chatRoomName.getText().toString())) {

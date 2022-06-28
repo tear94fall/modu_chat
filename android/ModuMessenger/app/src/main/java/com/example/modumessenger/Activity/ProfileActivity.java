@@ -32,26 +32,32 @@ import retrofit2.Response;
 public class ProfileActivity extends AppCompatActivity implements View.OnTouchListener{
 
     ImageView profileImageView;
-    TextView usernameTextView;
-    TextView statusMessageTextView;
-    Button profileEditButton;
-    Button profileCloseButton;
-
-    String username;
-    String statusMessage;
-    String profileImage;
-
+    TextView usernameTextView, statusMessageTextView;
+    Button profileEditButton, profileCloseButton, startChatButton;
+    String username, statusMessage, profileImage;
     GestureDetector gestureDetector;
 
-    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
-        ActionBar actionBar = getSupportActionBar();
-        Objects.requireNonNull(actionBar).hide();
+        setGestureDetector();
+        bindingView();
+        getData();
+        setData();
+        setButtonClickEvent();
+    }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if(username.equals(PreferenceManager.getString("username"))){
+            getMyProfileInfo(new MemberDto(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
+        }
+    }
+
+    private void setGestureDetector() {
         gestureDetector = new GestureDetector(this,new OnSwipeListener(){
             @Override
             public boolean onSwipe(Direction direction) {
@@ -68,39 +74,22 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
                 return true;
             }
         });
+    }
+
+    private void bindingView() {
+        ActionBar actionBar = getSupportActionBar();
+        Objects.requireNonNull(actionBar).hide();
 
         profileImageView = findViewById(R.id.profile_activity_image);
-        profileImageView.setOnTouchListener(this);
-
         usernameTextView = findViewById(R.id.profile_activity_username);
         statusMessageTextView = findViewById(R.id.profile_activity_status_message);
 
         profileEditButton = findViewById(R.id.profile_edit_button);
-        profileEditButton.setVisibility(View.INVISIBLE);
-        profileEditButton.setOnClickListener(v -> {
-            Intent intent = new Intent(v.getContext(), ProfileEditActivity.class);
-
-            intent.putExtra("username", PreferenceManager.getString("username"));
-            intent.putExtra("statusMessage", PreferenceManager.getString("statusMessage"));
-            intent.putExtra("profileImage", PreferenceManager.getString("profileImage"));
-
-            startActivity(intent);
-        });
-
         profileCloseButton = findViewById(R.id.profile_close_button);
+        startChatButton = findViewById(R.id.start_chat_button);
 
-        profileCloseButton.setOnClickListener(view -> finish());
-
-        getData();
-        setData();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        if(username.equals(PreferenceManager.getString("username"))){
-            getMyProfileInfo(new MemberDto(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
-        }
+        profileEditButton.setVisibility(View.INVISIBLE);
+        startChatButton.setVisibility(View.INVISIBLE);
     }
 
     private void getData() {
@@ -119,9 +108,35 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
         setTextOnView(statusMessageTextView, statusMessage);
         Glide.with(this).load(profileImage).into(profileImageView);
 
-        if(username!=null && username.length() !=0 && username.equals(PreferenceManager.getString("username"))) {
-            profileEditButton.setVisibility(View.VISIBLE);
+        if(username!=null && username.length() !=0) {
+            if(username.equals(PreferenceManager.getString("username"))) {
+                profileEditButton.setVisibility(View.VISIBLE);
+            }else if(!username.equals(PreferenceManager.getString("username"))) {
+                startChatButton.setVisibility(View.VISIBLE);
+            }
         }
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private void setButtonClickEvent() {
+        profileImageView.setOnTouchListener(this);
+
+        profileEditButton.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), ProfileEditActivity.class);
+
+            intent.putExtra("username", PreferenceManager.getString("username"));
+            intent.putExtra("statusMessage", PreferenceManager.getString("statusMessage"));
+            intent.putExtra("profileImage", PreferenceManager.getString("profileImage"));
+
+            startActivity(intent);
+        });
+
+        profileCloseButton.setOnClickListener(view -> finish());
+
+        startChatButton.setOnClickListener(view -> {
+            // exist chat room
+            // if not, create chat room
+        });
     }
 
     private boolean getIntentExtra(String key) {
@@ -132,7 +147,7 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
         if(value != null && !value.equals("")) {
             view.setText(value);
         } else {
-            view.setText("No Value");
+            view.setText("");
         }
     }
 

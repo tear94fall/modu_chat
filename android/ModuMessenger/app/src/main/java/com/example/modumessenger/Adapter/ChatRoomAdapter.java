@@ -10,6 +10,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.room.util.StringUtil;
 
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.ChatActivity;
@@ -29,6 +30,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRoomViewHolder> {
+
+    public final int NORMAL_CHAT = 1;
+    public final int GROUP_CHAT = 2;
 
     List<ChatRoom> chatRoomList;
 
@@ -56,13 +60,18 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
         holder.setChatRoomClickEvent(chatRoom);
     }
 
-    public void sortChatRoom() {
-        this.chatRoomList.sort(Comparator.comparing(ChatRoom::getLastChatTime, Comparator.reverseOrder()));
-    }
-
     @Override
     public int getItemCount() {
         return this.chatRoomList.size();
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return chatRoomList.get(position).getMembers().size() > 2 ? NORMAL_CHAT : GROUP_CHAT;
+    }
+
+    public void sortChatRoom() {
+        this.chatRoomList.sort(Comparator.comparing(ChatRoom::getLastChatTime, Comparator.reverseOrder()));
     }
 
     public static class ChatRoomViewHolder extends RecyclerView.ViewHolder {
@@ -74,6 +83,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
         TextView lastChatTime;
         ImageView chatRoomImage;
         ConstraintLayout chatRoomCardView;
+        ImageView memberImage1, memberImage2, memberImage3, memberImage4;
 
         public ChatRoomViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -84,6 +94,16 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
             lastChatTime = itemView.findViewById(R.id.last_chat_time);
             chatRoomImage = itemView.findViewById(R.id.chat_room_image);
             chatRoomCardView = itemView.findViewById(R.id.chatRoomCardViewLayout);
+
+            memberImage1 = itemView.findViewById(R.id.chat_room_image1);
+            memberImage2 = itemView.findViewById(R.id.chat_room_image2);
+            memberImage3 = itemView.findViewById(R.id.chat_room_image3);
+            memberImage4 = itemView.findViewById(R.id.chat_room_image4);
+
+            memberImage1.setVisibility(View.INVISIBLE);
+            memberImage2.setVisibility(View.INVISIBLE);
+            memberImage3.setVisibility(View.INVISIBLE);
+            memberImage4.setVisibility(View.INVISIBLE);
         }
 
         public void setDatabase(ChatRoom chatRoom) {
@@ -105,7 +125,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
                         .map(Member::getUsername)
                         .collect(Collectors.toList());
                 String title = String.join(", ", userIds);
-                title = title.substring(0, Math.min(title.length(), 25));
+                title = title.substring(0, Math.min(title.length(), title.endsWith(",") ? 24 : 25));
                 this.chatRoomName.setText(title);
             } else {
                 this.chatRoomName.setText(chatRoom.getRoomName());
@@ -127,7 +147,30 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
                     }
                 });
             } else if (chatRoom.getMembers().size() > 2) {
-                setGlide(R.drawable.basic_chat_room_image);
+                if (chatRoom.getRoomImage() != null && !chatRoom.getRoomImage().equals("")) {
+                    setGlide(chatRoom.getRoomImage());
+                } else {
+                    for (int i = 0; i < Math.min(4, chatRoom.getMembers().size()); i++) {
+                        chatRoomImage.setVisibility(View.INVISIBLE);
+                        Member member = chatRoom.getMembers().get(i);
+                        ImageView imageView = null;
+
+                        if (i == 0) {
+                            imageView = memberImage1;
+                        } else if(i == 1) {
+                            imageView = memberImage2;
+                        } else if(i == 2) {
+                            imageView = memberImage3;
+                        } else {
+                            imageView = memberImage4;
+                        }
+
+                        if(imageView!=null) {
+                            imageView.setVisibility(View.VISIBLE);
+                            setGlide(imageView, member.getProfileImage());
+                        }
+                    }
+                }
             } else {
                 if (chatRoom.getRoomImage() != null && !chatRoom.getRoomImage().equals("")) {
                     setGlide(chatRoom.getRoomImage());
@@ -137,11 +180,29 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
             }
         }
 
+        public void setGlide(ImageView imageView, String imageUrl) {
+            if(imageUrl != null && !imageUrl.equals("")) {
+                Glide.with(imageView)
+                        .load(imageUrl)
+                        .override(30, 30)
+                        .error(Glide.with(imageView)
+                                .load(R.drawable.basic_profile_image)
+                                .into(imageView))
+                        .into(imageView);
+            } else {
+                Glide.with(imageView)
+                        .load(R.drawable.basic_profile_image)
+                        .override(30, 30)
+                        .into(imageView);
+            }
+        }
+
         public void setGlide(int resources) {
             Glide.with(chatRoomImage)
                     .load(resources)
                     .error(Glide.with(chatRoomImage)
                             .load(R.drawable.basic_profile_image)
+                            .override(30, 30)
                             .into(chatRoomImage))
                     .into(chatRoomImage);
         }
@@ -150,8 +211,10 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
             if(imageUrl != null && !imageUrl.equals("")) {
                 Glide.with(chatRoomImage)
                         .load(imageUrl)
+                        .override(30, 30)
                         .error(Glide.with(chatRoomImage)
                                 .load(R.drawable.basic_profile_image)
+                                .override(30, 30)
                                 .into(chatRoomImage))
                         .into(chatRoomImage);
             } else {

@@ -22,6 +22,38 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:srcCompat="@tools:sample/avatars" />
 
+        <ImageView
+            android:id="@+id/chat_room_image1"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:srcCompat="@tools:sample/avatars" />
+
+        <ImageView
+            android:id="@+id/chat_room_image2"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            app:layout_constraintStart_toEndOf="@+id/chat_room_image1"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:srcCompat="@tools:sample/avatars" />
+
+        <ImageView
+            android:id="@+id/chat_room_image3"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            app:layout_constraintStart_toStartOf="@+id/chat_room_image1"
+            app:layout_constraintTop_toBottomOf="@+id/chat_room_image1"
+            tools:srcCompat="@tools:sample/avatars" />
+
+        <ImageView
+            android:id="@+id/chat_room_image4"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            app:layout_constraintStart_toEndOf="@+id/chat_room_image3"
+            app:layout_constraintTop_toBottomOf="@+id/chat_room_image2"
+            tools:srcCompat="@tools:sample/avatars" />
+
         <TextView
             android:id="@+id/chat_room_name"
             android:layout_width="wrap_content"

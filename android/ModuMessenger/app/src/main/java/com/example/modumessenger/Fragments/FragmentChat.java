@@ -35,10 +35,7 @@ import retrofit2.Response;
 public class FragmentChat extends Fragment {
 
     RecyclerView chatRecyclerView;
-    RecyclerView.LayoutManager chatLayoutManager;
-
     List<ChatRoom> chatRoomList;
-
     FloatingActionButton chatFloatingActionButton;
 
     @Override
@@ -55,21 +52,10 @@ public class FragmentChat extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        chatRoomList = new ArrayList<>();
-
-        chatRecyclerView = view.findViewById(R.id.chat_recycler_view);
-        chatRecyclerView.setHasFixedSize(true);
-
-        chatLayoutManager = new LinearLayoutManager(getActivity());
-        chatRecyclerView.setLayoutManager(chatLayoutManager);
-        chatRecyclerView.scrollToPosition(0);
-
-        chatFloatingActionButton = view.findViewById(R.id.chatFloatingActionButton);
-
-        chatFloatingActionButton.setOnClickListener(v -> {
-            Intent intent = new Intent(v.getContext(), CreateRoomActivity.class);
-            v.getContext().startActivity(intent);
-        });
+        bindingView(view);
+        getData();
+        setData();
+        setButtonClickEvent();
     }
 
     @Override
@@ -78,10 +64,7 @@ public class FragmentChat extends Fragment {
         Log.e("DEBUG", "onResume of FragmentFriends");
 
         requireActivity().invalidateOptionsMenu();
-
-        Member member = new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email"));
-
-        getChatRoomList(member);
+        getChatRoomList(new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
     }
 
     @Override
@@ -100,6 +83,30 @@ public class FragmentChat extends Fragment {
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         inflater.inflate(R.menu.menu_friends_list, menu);
+    }
+
+    private void bindingView(View view) {
+        chatRecyclerView = view.findViewById(R.id.chat_recycler_view);
+        chatRecyclerView.setHasFixedSize(true);
+        chatRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        chatRecyclerView.scrollToPosition(0);
+
+        chatFloatingActionButton = view.findViewById(R.id.chatFloatingActionButton);
+    }
+
+    private void getData() {
+
+    }
+
+    private void setData() {
+        chatRoomList = new ArrayList<>();
+    }
+
+    private void setButtonClickEvent() {
+        chatFloatingActionButton.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), CreateRoomActivity.class);
+            v.getContext().startActivity(intent);
+        });
     }
 
     // Retrofit function

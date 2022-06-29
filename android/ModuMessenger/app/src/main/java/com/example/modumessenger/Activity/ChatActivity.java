@@ -395,6 +395,7 @@ public class ChatActivity extends AppCompatActivity {
                 ChatRoomDto chatRoomDto = response.body();
                 roomInfo = new ChatRoom(chatRoomDto);
 
+                chatMemberList.clear();
                 chatRoomDto.getMembers().forEach(m -> chatMemberList.add(new Member(m)));
 
                 setTitle(roomInfo.getRoomName());

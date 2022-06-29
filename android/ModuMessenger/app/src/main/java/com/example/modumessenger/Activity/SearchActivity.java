@@ -47,11 +47,9 @@ public class SearchActivity extends AppCompatActivity {
         instance = this;
         setTitle("친구 추가");
 
-        findFriendRecyclerView = (RecyclerView) findViewById(R.id.friend_search_recycler_view);
+        findFriendRecyclerView = findViewById(R.id.friend_search_recycler_view);
         findFriendRecyclerView.setHasFixedSize(true);
-
-        findFriendLayoutManager = new LinearLayoutManager(this);
-        findFriendRecyclerView.setLayoutManager(findFriendLayoutManager);
+        findFriendRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         findFriendRecyclerView.scrollToPosition(0);
 
         searchView = findViewById(R.id.friends_search_view);

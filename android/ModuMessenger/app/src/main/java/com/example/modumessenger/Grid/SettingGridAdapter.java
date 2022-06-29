@@ -62,11 +62,6 @@ public class SettingGridAdapter extends BaseAdapter {
                         .into(itemImageView))
                 .into(itemImageView);
 
-        itemImageView.setOnClickListener(v -> {
-            String itemName = settingGridItem.getItemName();
-            Toast.makeText(context, itemName, Toast.LENGTH_SHORT).show();
-        });
-
         return convertView;
     }
 

@@ -1,9 +1,6 @@
 package com.example.modumessenger.entity;
 
-import com.example.modumessenger.dto.ChatRoomDto;
 import com.google.gson.annotations.SerializedName;
-
-import java.util.List;
 
 public class CommonData {
 

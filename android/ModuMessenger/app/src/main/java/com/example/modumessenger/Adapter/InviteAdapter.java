@@ -13,7 +13,6 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.modumessenger.Activity.InviteActivity;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.R;
 import com.example.modumessenger.dto.MemberDto;

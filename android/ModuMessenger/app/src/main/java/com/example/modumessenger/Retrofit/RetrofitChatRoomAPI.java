@@ -20,6 +20,9 @@ public interface RetrofitChatRoomAPI {
     @GET("chat/{roomId}/room")
     Call<ChatRoomDto> RequestChatRoom(@Path("roomId") String roomId);
 
+    @POST("chat/room/member")
+    Call<ChatRoomDto> RequestCheckChatRoom(@Body List<String> userIds);
+
     @POST("chat/chat/room")
     Call<ChatRoomDto> RequestCreateChatRoom(@Body List<String> userIds);
 

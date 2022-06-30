@@ -10,7 +10,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.room.util.StringUtil;
 
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.ChatActivity;
@@ -184,7 +183,6 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
             if(imageUrl != null && !imageUrl.equals("")) {
                 Glide.with(imageView)
                         .load(imageUrl)
-                        .override(30, 30)
                         .error(Glide.with(imageView)
                                 .load(R.drawable.basic_profile_image)
                                 .into(imageView))
@@ -192,7 +190,6 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
             } else {
                 Glide.with(imageView)
                         .load(R.drawable.basic_profile_image)
-                        .override(30, 30)
                         .into(imageView);
             }
         }
@@ -202,7 +199,6 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
                     .load(resources)
                     .error(Glide.with(chatRoomImage)
                             .load(R.drawable.basic_profile_image)
-                            .override(30, 30)
                             .into(chatRoomImage))
                     .into(chatRoomImage);
         }
@@ -211,10 +207,8 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
             if(imageUrl != null && !imageUrl.equals("")) {
                 Glide.with(chatRoomImage)
                         .load(imageUrl)
-                        .override(30, 30)
                         .error(Glide.with(chatRoomImage)
                                 .load(R.drawable.basic_profile_image)
-                                .override(30, 30)
                                 .into(chatRoomImage))
                         .into(chatRoomImage);
             } else {

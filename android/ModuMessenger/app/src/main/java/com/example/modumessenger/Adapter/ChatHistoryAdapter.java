@@ -14,9 +14,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.example.modumessenger.Activity.ChatActivity;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
+import com.example.modumessenger.entity.ChatRoom;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.RoomDatabase.Database.ChatDatabase;
 import com.example.modumessenger.RoomDatabase.Entity.ChatEntity;
@@ -25,6 +27,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -32,6 +35,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public final int LEFT = 1;
     public final int RIGHT = 2;
     public final int LEFT_DUP = 3;
+    public final int RIGHT_DUP = 4;
 
     private final List<Member> memberList;
     private final List<ChatBubble> chatList;
@@ -43,6 +47,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.memberList = (memberList == null || memberList.size() == 0) ? new ArrayList<>() : memberList;
         this.chatList = (chatList == null || chatList.size() == 0) ? new ArrayList<>() : chatList;
         userId = PreferenceManager.getString("userId");
+        sortChatBubble();
     }
 
     @NonNull
@@ -64,6 +69,9 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         } else if (viewType == LEFT_DUP) {
             view = inflater.inflate(R.layout.chat_bubble_left_dup, parent, false);
             return new ChatHistoryAdapter.ChatBubbleLeftDuplicateViewHolder(view);
+        } else if (viewType == RIGHT_DUP) {
+            view = inflater.inflate(R.layout.chat_bubble_right_dup, parent, false);
+            return new ChatHistoryAdapter.ChatBubbleRightDuplicateViewHolder(view);
         } else {
             view = inflater.inflate(R.layout.chat_bubble_right, parent, false);
             return new ChatHistoryAdapter.ChatBubbleRightViewHolder(view);
@@ -84,7 +92,6 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                     if(!member.getProfileImage().equals("") && member.getProfileImage()!=null) {
                         Glide.with(((ChatBubbleLeftViewHolder) holder).senderImage)
                                 .load(member.getProfileImage())
-                                .override(70, 70)
                                 .diskCacheStrategy(DiskCacheStrategy.DATA)
                                 .error(Glide.with(((ChatBubbleLeftViewHolder) holder).senderImage)
                                         .load(R.drawable.basic_profile_image)
@@ -106,11 +113,15 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         } else if (holder instanceof ChatBubbleLeftDuplicateViewHolder) {
             ChatBubbleLeftDuplicateViewHolder leftDupHolder = ((ChatBubbleLeftDuplicateViewHolder) holder);
             leftDupHolder.chatMessage.setText(chat.getChatMsg());
-            leftDupHolder.leftChatTime.setText(getShortTime(chat.getChatTime()));
-        } else if (holder instanceof  ChatBubbleRightViewHolder) {
+            leftDupHolder.leftChatTime.setVisibility(View.INVISIBLE);
+        } else if (holder instanceof ChatBubbleRightViewHolder) {
             ChatBubbleRightViewHolder rightHolder = ((ChatBubbleRightViewHolder) holder);
             rightHolder.chatMessage.setText(chat.getChatMsg());
             rightHolder.rightChatTime.setText(getShortTime(chat.getChatTime()));
+        } else if (holder instanceof ChatBubbleRightDuplicateViewHolder) {
+            ChatBubbleRightDuplicateViewHolder rightDupHolder = ((ChatBubbleRightDuplicateViewHolder) holder);
+            rightDupHolder.chatMessage.setText(chat.getChatMsg());
+            rightDupHolder.leftChatTime.setVisibility(View.INVISIBLE);
         }
     }
 
@@ -122,25 +133,26 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public int getItemViewType(int position) {
         ChatBubble chat = chatList.get(position);
-        int type = RIGHT;
+        ChatBubble prevChat = chatList.get(Math.max(0, position - 1));
 
-        if(getItemCount() > 0 && !chat.getSender().equals(userId)){
-            type = LEFT;
-            if(position < getItemCount()-1 && position > 0) {
-                ChatBubble beforeChat = chatList.get(position+1);
-                ChatBubble afterChat = chatList.get(position-1);
-                if(!chat.getSender().equals(beforeChat.getSender()) && chat.getSender().equals(afterChat.getSender())) {
-                    type = LEFT_DUP;
-                }
-            } else if (position == getItemCount()-1) {
-                ChatBubble afterChat = chatList.get(position-1);
-                if(chat.getSender().equals(afterChat.getSender())) {
-                    type = LEFT_DUP;
-                }
+        if (!chat.getSender().equals(userId)) {
+            if (position > 0 &&
+                    chat.getSender().equals(prevChat.getSender()) &&
+                    getShortTime(chat.getChatTime()).equals(getShortTime(prevChat.getChatTime()))) {
+                return LEFT_DUP;
+            }
+            return LEFT;
+        } else {
+            if (position > 0 && getShortTime(chat.getChatTime()).equals(getShortTime(prevChat.getChatTime()))) {
+                return RIGHT_DUP;
             }
         }
 
-        return type;
+        return RIGHT;
+    }
+
+    public void sortChatBubble() {
+        this.chatList.sort(Comparator.comparing(ChatBubble::getChatTime, Comparator.naturalOrder()));
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -200,6 +212,17 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             super(itemView);
             chatMessage = itemView.findViewById(R.id.right_chat_text);
             rightChatTime = itemView.findViewById(R.id.right_chat_time);
+        }
+    }
+
+    public static class ChatBubbleRightDuplicateViewHolder extends RecyclerView.ViewHolder {
+        TextView chatMessage;
+        TextView leftChatTime;
+
+        public ChatBubbleRightDuplicateViewHolder(@NonNull View itemView) {
+            super(itemView);
+            chatMessage = itemView.findViewById(R.id.right_chat_text);
+            leftChatTime = itemView.findViewById(R.id.right_chat_time);
         }
     }
 }

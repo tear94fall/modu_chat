@@ -24,11 +24,9 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class SearchActivity extends AppCompatActivity {
-    private static SearchActivity instance;
 
     SearchView searchView;
     RecyclerView findFriendRecyclerView;
-    RecyclerView.LayoutManager findFriendLayoutManager;
     SearchFriendsAdapter searchFriendsAdapter;
     List<MemberDto> searchMemberList;
 
@@ -44,7 +42,6 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     private void bindingView() {
-        instance = this;
         setTitle("친구 추가");
 
         findFriendRecyclerView = findViewById(R.id.friend_search_recycler_view);
@@ -87,10 +84,6 @@ public class SearchActivity extends AppCompatActivity {
                 return true;
             }
         });
-    }
-
-    public static SearchActivity getInstance() {
-        return instance;
     }
 
     @SuppressLint("NotifyDataSetChanged")

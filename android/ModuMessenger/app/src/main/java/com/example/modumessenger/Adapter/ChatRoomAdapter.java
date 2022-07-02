@@ -124,7 +124,8 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
                         .map(Member::getUsername)
                         .collect(Collectors.toList());
                 String title = String.join(", ", userIds);
-                title = title.substring(0, Math.min(title.length(), title.endsWith(",") ? 24 : 25));
+                title = title.substring(0, Math.min(title.length(), 25)).trim();
+                title = title.substring(0, Math.min(title.length(), title.endsWith(",") ? title.length() - 1 : title.length()));
                 this.chatRoomName.setText(title);
             } else {
                 this.chatRoomName.setText(chatRoom.getRoomName());

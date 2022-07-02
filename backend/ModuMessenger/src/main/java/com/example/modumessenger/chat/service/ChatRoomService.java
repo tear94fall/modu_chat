@@ -65,7 +65,7 @@ public class ChatRoomService {
     public ChatRoomDto removeChatRoomMember(String roomId, String userId) {
         Member member = memberRepository.findByUserId(userId);
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId);
-        ChatRoomMember chatRoomMember = chatRoomMemberRepository.findByMemberUserId(userId);
+        ChatRoomMember chatRoomMember = chatRoomMemberRepository.findByUserIdAndRoomId(userId, roomId);
 
         member.getChatRoomMemberList().remove(chatRoomMember);
         chatRoom.getChatRoomMemberList().remove(chatRoomMember);

@@ -12,6 +12,16 @@ public class ChatRoomMemberRepositoryImpl implements ChatRoomMemberCustomReposit
     private final JPAQueryFactory queryFactory;
 
     @Override
+    public ChatRoomMember findByUserIdAndRoomId(String userId, String roomId) {
+        return queryFactory
+                .selectFrom(chatRoomMember)
+                .where(chatRoomMember.member.userId.eq(userId)
+                        .and(chatRoomMember.chatRoom.roomId.eq(roomId)))
+                .fetchOne();
+    }
+
+
+    @Override
     public ChatRoomMember findByMemberUserId(String userId) {
         return queryFactory
                 .selectFrom(chatRoomMember)

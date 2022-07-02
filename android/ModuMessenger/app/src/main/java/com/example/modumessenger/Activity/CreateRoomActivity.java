@@ -28,11 +28,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class CreateRoomActivity extends AppCompatActivity {
-    @SuppressLint("StaticFieldLeak")
-    private static CreateRoomActivity instance;
-
     RecyclerView addChatRecyclerView;
-    RecyclerView.LayoutManager addChatLayoutManager;
     CreateRoomAdapter createRoomAdapter;
 
     Button inviteButton;
@@ -55,13 +51,10 @@ public class CreateRoomActivity extends AppCompatActivity {
 
     private void bindingView() {
         setTitle("채팅방 만들기");
-        instance = this;
 
-        addChatRecyclerView = (RecyclerView) findViewById(R.id.create_chatroom_recycler_view);
+        addChatRecyclerView = findViewById(R.id.create_chatroom_recycler_view);
         addChatRecyclerView.setHasFixedSize(true);
-
-        addChatLayoutManager = new LinearLayoutManager(this);
-        addChatRecyclerView.setLayoutManager(addChatLayoutManager);
+        addChatRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         addChatRecyclerView.scrollToPosition(0);
 
         inviteButton = findViewById(R.id.create_chatroom_button);
@@ -88,10 +81,6 @@ public class CreateRoomActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), "추가할 친구가 없습니다.", Toast.LENGTH_SHORT).show();
             }
         });
-    }
-
-    public static CreateRoomActivity getInstance() {
-        return instance;
     }
 
     public void addUserIdOnAddChatList(String userId) {

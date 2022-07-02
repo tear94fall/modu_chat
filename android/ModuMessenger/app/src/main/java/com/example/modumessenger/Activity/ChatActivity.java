@@ -217,6 +217,7 @@ public class ChatActivity extends AppCompatActivity {
                     .setNeutralButton("예", (dialog, which) -> {
                         exitChatRoom(roomId, userId);
                         Toast.makeText(getApplicationContext(), "채팅방에서 나갑니다.", Toast.LENGTH_SHORT).show();
+                        finish();
                     })
                     .setCancelable(false)
                     .create();

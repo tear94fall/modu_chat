@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.AppInfoActivity;
+import com.example.modumessenger.Activity.NotificationActivity;
 import com.example.modumessenger.Activity.SetupActivity;
 import com.example.modumessenger.R;
 
@@ -67,7 +68,7 @@ public class SettingGridAdapter extends BaseAdapter {
 
     public void setGridItems(View view) {
         setGridItem(new SettingGridItem(new Intent(view.getContext(), AppInfoActivity.class), "버전정보", R.drawable.ic_baseline_info_24));
-        setGridItem(new SettingGridItem(null, "공지사항", R.drawable.ic_baseline_celebration_24));
+        setGridItem(new SettingGridItem(new Intent(view.getContext(), NotificationActivity.class), "공지사항", R.drawable.ic_baseline_celebration_24));
         setGridItem(new SettingGridItem(null, "백업", R.drawable.ic_baseline_cloud_download_24));
         setGridItem(new SettingGridItem(new Intent(view.getContext(), SetupActivity.class), "설정", R.drawable.ic_baseline_settings_24_grey));
         setGridItem(new SettingGridItem(null, "테마", R.drawable.ic_baseline_color_lens_24));

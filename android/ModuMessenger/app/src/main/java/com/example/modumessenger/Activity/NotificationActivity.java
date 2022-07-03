@@ -5,11 +5,16 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.modumessenger.Adapter.InviteAdapter;
+import com.example.modumessenger.Adapter.NotificationAdapter;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.entity.CommonData;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,12 +25,14 @@ import retrofit2.Response;
 
 public class NotificationActivity extends AppCompatActivity {
 
-    Map<String, String> notifyMap = new ConcurrentHashMap<>();
+    List<CommonData> notifyList;
+    RecyclerView notificationRecyclerView;
+    NotificationAdapter notificationAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_setup);
+        setContentView(R.layout.activity_notification);
 
         bindingView();
         getData();
@@ -35,6 +42,11 @@ public class NotificationActivity extends AppCompatActivity {
 
     private void bindingView() {
         setTitle("공지사항");
+
+        notificationRecyclerView = findViewById(R.id.notification_recycler_view);
+        notificationRecyclerView.setHasFixedSize(true);
+        notificationRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        notificationRecyclerView.scrollToPosition(0);
     }
 
     private void getData() {
@@ -42,6 +54,7 @@ public class NotificationActivity extends AppCompatActivity {
     }
 
     private void setData() {
+        notifyList = new ArrayList<>();
     }
 
     private void setButtonClickEvent() {
@@ -63,9 +76,9 @@ public class NotificationActivity extends AppCompatActivity {
                     assert response.body() != null;
                     Log.d("공지 사항 가져오기 요청: ", response.body().toString());
 
-                    List<CommonData> commonDataList = response.body();
-
-                    commonDataList.forEach(column -> notifyMap.put(column.getKey(), column.getValue()));
+                    notifyList = response.body();
+                    notificationAdapter = new NotificationAdapter(notifyList);
+                    notificationRecyclerView.setAdapter(notificationAdapter);
 
                 } catch (Exception e) {
                     Log.e("오류 발생 : ", e.getMessage());

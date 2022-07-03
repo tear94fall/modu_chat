@@ -8,7 +8,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.modumessenger.Adapter.InviteAdapter;
 import com.example.modumessenger.Adapter.NotificationAdapter;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
@@ -16,8 +15,6 @@ import com.example.modumessenger.entity.CommonData;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import retrofit2.Call;
 import retrofit2.Callback;

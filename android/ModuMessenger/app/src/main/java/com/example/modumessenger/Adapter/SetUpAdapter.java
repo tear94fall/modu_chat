@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.AppInfoActivity;
+import com.example.modumessenger.Activity.NotificationActivity;
 import com.example.modumessenger.Activity.SetFriendsActivity;
 import com.example.modumessenger.Grid.SettingGridItem;
 import com.example.modumessenger.R;
@@ -76,7 +77,7 @@ public class SetUpAdapter extends RecyclerView.Adapter<SetUpAdapter.SetUpViewHol
 
         public void setSetUpViews(View view) {
             setUpMap.put(SetUp.SET_UP_APP_VERSION_INFO.getSetUpName(), new Intent(view.getContext(), AppInfoActivity.class));
-            setUpMap.put(SetUp.SET_UP_NOTIFICATION.getSetUpName(), null);
+            setUpMap.put(SetUp.SET_UP_NOTIFICATION.getSetUpName(), new Intent(view.getContext(), NotificationActivity.class));
             setUpMap.put(SetUp.SET_UP_FRIENDS_SETTING.getSetUpName(), new Intent(view.getContext(), SetFriendsActivity.class));
         }
 

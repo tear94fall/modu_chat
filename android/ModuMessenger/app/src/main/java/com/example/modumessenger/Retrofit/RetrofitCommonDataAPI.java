@@ -13,6 +13,6 @@ public interface RetrofitCommonDataAPI {
     @GET("common/{key}")
     Call<CommonData> RequestCommonData(@Path("key") String key);
 
-    @GET("common/{key}")
+    @GET("commons/{key}")
     Call<List<CommonData>> RequestCommonDataList(@Path("key") String key);
 }

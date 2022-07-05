@@ -1,8 +1,13 @@
 package com.example.modumessenger.Activity;
 
+import static android.os.SystemClock.sleep;
+
+import android.content.ContentResolver;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
@@ -19,11 +24,13 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Global.PreferenceManager;
+import com.example.modumessenger.Global.ScopedStorageUtil;
 import com.example.modumessenger.R;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.MemberDto;
 
+import java.io.File;
 import java.util.Objects;
 
 import okhttp3.MediaType;
@@ -42,6 +49,8 @@ public class ProfileEditActivity extends AppCompatActivity {
 
     ActivityResultLauncher<Intent> launcher;
 
+    ScopedStorageUtil scopedStorageUtil;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,6 +67,13 @@ public class ProfileEditActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
         getMyProfileInfo(new MemberDto(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        scopedStorageUtil.deleteTempFiles();
     }
 
     private void bindingView() {
@@ -81,7 +97,13 @@ public class ProfileEditActivity extends AppCompatActivity {
                         Intent intent = result.getData();
                         if(intent!=null) {
                             Uri uri = intent.getData();
-                            changeMyProfileImage(uri);
+                            String fileName = getFileName(getContentResolver(), uri);
+                            if(fileName!=null) {
+                                String filePath = scopedStorageUtil.copyFromScopedStorage(this, uri, fileName);
+                                changeMyProfileImage(filePath);
+                            } else {
+                                Log.d("파일명 가져오기 실패 : ", "갤러리 에서 가져오기 실패");
+                            }
                         }
                     }
                 });
@@ -99,6 +121,7 @@ public class ProfileEditActivity extends AppCompatActivity {
     }
 
     private void setData() {
+        scopedStorageUtil = new ScopedStorageUtil();
         setTextOnView(myProfileName, member.getUsername());
         setTextOnView(myStatusMessage, member.getStatusMessage());
         Glide.with(this)
@@ -130,9 +153,10 @@ public class ProfileEditActivity extends AppCompatActivity {
 
                     Intent intent = new Intent();
                     intent.setType("image/*");
+                    String[] mimeTypes = {"image/jpg", "image/jpeg", "image/png"};
+                    intent.putExtra(Intent.EXTRA_MIME_TYPES,mimeTypes);
                     intent.setAction(Intent.ACTION_GET_CONTENT);
                     launcher.launch(intent);
-
                 }else if (menuItem.getItemId() == R.id.action_menu2){
                     Toast.makeText(this, "기본 이미지로 변경합니다", Toast.LENGTH_SHORT).show();
                     member.setProfileImage("");
@@ -150,25 +174,23 @@ public class ProfileEditActivity extends AppCompatActivity {
         profileCloseButton.setOnClickListener(view -> finish());
     }
 
-    private void changeMyProfileImage(Uri uri) {
-        String filename = uri.getLastPathSegment();
-
-        RequestBody fileBody = RequestBody.Companion.create(String.valueOf(uri), MediaType.parse("multipart/form-data"));
-        MultipartBody.Part filePart = MultipartBody.Part.createFormData("file", filename, fileBody);
+    private void changeMyProfileImage(String filePath) {
+        File file = new File(filePath);
+        RequestBody fileBody = RequestBody.Companion.create(file, MediaType.parse("multipart/form-data"));
+        MultipartBody.Part filePart = MultipartBody.Part.createFormData("file", file.getName(), fileBody);
 
         String originProfileImage = member.getProfileImage();
         uploadProfileImage(filePart, originProfileImage);
+    }
 
-        if(!member.getProfileImage().equals(originProfileImage)) {
-            updateMyInfo(new MemberDto(member));
+    private String getFileName(ContentResolver resolver, Uri uri) {
+        Cursor cursor = resolver.query(uri, null, null, null, null);
+        int columnIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+        cursor.moveToFirst();
+        String fileName = cursor.getString(columnIndex);
+        cursor.close();
 
-            Glide.with(this)
-                    .load(!member.getProfileImage().equals("") && member.getProfileImage() != null ? member.getProfileImage() : R.drawable.basic_profile_image)
-                    .error(Glide.with(this)
-                            .load(R.drawable.basic_profile_image)
-                            .into(profileImageView))
-                    .into(profileImageView);
-        }
+        return fileName;
     }
 
     private boolean getIntentExtra(String key) {
@@ -217,6 +239,7 @@ public class ProfileEditActivity extends AppCompatActivity {
 
                     Log.d("내정보 업데이트 요청 : ", response.body().toString());
 
+                    Toast.makeText(getApplicationContext(), "프로필 정보가 업데이트 되었습니다.", Toast.LENGTH_SHORT).show();
                     finish();
                 } catch (Exception e) {
                     Log.e("오류 발생 : ", e.getMessage());
@@ -282,7 +305,24 @@ public class ProfileEditActivity extends AppCompatActivity {
 
                 assert response.body() != null;
                 String filePath = response.body();
-                member.setProfileImage(filePath);
+                member.setProfileImage(RetrofitClient.getBaseUrl() + "modu_chat/images/" + filePath);
+                scopedStorageUtil.deleteTempFiles();
+
+                if(!member.getProfileImage().equals(originProfileImage)) {
+                    member.setUsername(String.valueOf(myProfileName.getText()));
+                    member.setStatusMessage(String.valueOf(myStatusMessage.getText()));
+
+                    sleep(1000);
+
+                    updateMyInfo(new MemberDto(member));
+
+                    Glide.with(getApplicationContext())
+                            .load(!member.getProfileImage().equals("") && member.getProfileImage() != null ? member.getProfileImage() : R.drawable.basic_profile_image)
+                            .error(Glide.with(getApplicationContext())
+                                    .load(R.drawable.basic_profile_image)
+                                    .into(profileImageView))
+                            .into(profileImageView);
+                }
 
                 Log.d("프로필 이미지 업로드 요청 : ", response.body());
             }

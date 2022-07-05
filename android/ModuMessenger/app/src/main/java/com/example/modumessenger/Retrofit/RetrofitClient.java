@@ -18,6 +18,10 @@ public class RetrofitClient {
     public static RetrofitCommonDataAPI getCommonApiService(){ return getInstance().create(RetrofitCommonDataAPI.class); }
     public static RetrofitImageAPI getImageApiService(){ return getInstance().create(RetrofitImageAPI.class); }
 
+    public static String getBaseUrl() {
+        return BASE_URL;
+    }
+
     private static Retrofit getInstance(){
         Gson gson = new GsonBuilder().setLenient().create();
 

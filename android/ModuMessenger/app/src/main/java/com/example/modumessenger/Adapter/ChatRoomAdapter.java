@@ -24,6 +24,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -150,25 +151,16 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
                 if (chatRoom.getRoomImage() != null && !chatRoom.getRoomImage().equals("")) {
                     setGlide(chatRoom.getRoomImage());
                 } else {
-                    for (int i = 0; i < Math.min(4, chatRoom.getMembers().size()); i++) {
-                        chatRoomImage.setVisibility(View.INVISIBLE);
-                        Member member = chatRoom.getMembers().get(i);
-                        ImageView imageView = null;
+                    List<Member> memberList = chatRoom.getMembers().stream()
+                            .filter(m -> !m.getUserId().equals(userId))
+                            .collect(Collectors.toList());
 
-                        if (i == 0) {
-                            imageView = memberImage1;
-                        } else if(i == 1) {
-                            imageView = memberImage2;
-                        } else if(i == 2) {
-                            imageView = memberImage3;
-                        } else {
-                            imageView = memberImage4;
-                        }
+                    chatRoomImage.setVisibility(View.INVISIBLE);
+                    List<ImageView> imageViewList = new ArrayList<>(Arrays.asList(memberImage1, memberImage2, memberImage3, memberImage4));
 
-                        if(imageView!=null) {
-                            imageView.setVisibility(View.VISIBLE);
-                            setGlide(imageView, member.getProfileImage());
-                        }
+                    for(int index=0; index<Math.min(4, memberList.size()); index++) {
+                        imageViewList.get(index).setVisibility(View.VISIBLE);
+                        setGlide(imageViewList.get(index), memberList.get(index).getProfileImage());
                     }
                 }
             } else {

@@ -39,12 +39,17 @@ public class CommonDataService {
     }
 
     public List<CommonDataDto> getNotification() {
+        List<CommonDataDto> commonDataDtoList = new ArrayList<>();
+
         CommonData commonData = new CommonData();
         commonData.setKey("모두의 채팅에 오신걸 환경합니다.");
         commonData.setValue("진심으로 환영합니다. 감사합니다.");
 
-        CommonDataDto defaultNotify = modelMapper.map(commonData, CommonDataDto.class);
+        CommonDataDto commonDataDto = new CommonDataDto(commonData);
 
-        return new ArrayList<>(List.of(defaultNotify));
+        commonDataDtoList.add(commonDataDto);
+        commonDataDtoList.add(commonDataDto);
+
+        return commonDataDtoList;
     }
 }

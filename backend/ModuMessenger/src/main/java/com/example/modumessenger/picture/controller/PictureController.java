@@ -85,23 +85,11 @@ public class PictureController {
     }
 
     @GetMapping(value = "image/{imageName}",  produces = MediaType.IMAGE_JPEG_VALUE)
-    public byte[] userSearch(@PathVariable("imageName") String imageName) throws IOException {
+    public ResponseEntity<byte[]> userSearch(@PathVariable("imageName") String imageName) throws IOException {
         String imageFullPath = "/Users/imjunseob/Desktop/" + imageName;
 
         InputStream imageStream = new FileInputStream(imageFullPath);
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
-        int length;
-        byte[] buffer = new byte[10*1024*1024];
-
-        try {
-            while ((length = imageStream.read(buffer, 0, buffer.length)) != -1) {
-                bos.write(buffer, 0, length);
-            }
-        } catch (IOException e) {
-            log.info("Could not determine file type.");
-        }
-
-        return buffer;
+        return ResponseEntity.ok().body(imageStream.readAllBytes());
     }
 }

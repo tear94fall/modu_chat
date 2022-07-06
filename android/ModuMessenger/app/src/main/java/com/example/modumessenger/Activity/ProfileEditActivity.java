@@ -12,7 +12,6 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,7 +39,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class ProfileEditActivity extends AppCompatActivity {
+public class ProfileEditActivity extends AppCompatActivity implements ProfileEditBottomSheetFragment.ProfileEditBottomSheetListener {
 
     Member member;
     ImageView profileImageView;
@@ -74,6 +73,28 @@ public class ProfileEditActivity extends AppCompatActivity {
         super.onDestroy();
 
         scopedStorageUtil.deleteTempFiles();
+    }
+
+    @Override
+    public void onButtonClicked(int type) {
+        if(type==1) {
+            Toast.makeText(this, "갤러리로 이동합니다", Toast.LENGTH_SHORT).show();
+
+            Intent intent = new Intent();
+
+            intent.setType("image/*");
+            intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/jpg", "image/jpeg", "image/png"});
+            intent.setAction(Intent.ACTION_GET_CONTENT);
+
+            launcher.launch(intent);
+        } else if(type==2) {
+            Toast.makeText(this, "기본 이미지로 변경합니다", Toast.LENGTH_SHORT).show();
+
+            member.setProfileImage("");
+
+            updateMyInfo(new MemberDto(member));
+            setProfileImage(profileImageView, member.getProfileImage());
+        }
     }
 
     private void bindingView() {
@@ -145,30 +166,8 @@ public class ProfileEditActivity extends AppCompatActivity {
         });
 
         changeProfileButton.setOnClickListener(view -> {
-            final PopupMenu popupMenu = new PopupMenu(getApplicationContext(),view);
-            getMenuInflater().inflate(R.menu.profile_image_popup,popupMenu.getMenu());
-            popupMenu.setOnMenuItemClickListener(menuItem -> {
-                if (menuItem.getItemId() == R.id.action_menu1){
-                    Toast.makeText(this, "갤러리로 이동합니다", Toast.LENGTH_SHORT).show();
-
-                    Intent intent = new Intent();
-                    intent.setType("image/*");
-                    String[] mimeTypes = {"image/jpg", "image/jpeg", "image/png"};
-                    intent.putExtra(Intent.EXTRA_MIME_TYPES,mimeTypes);
-                    intent.setAction(Intent.ACTION_GET_CONTENT);
-                    launcher.launch(intent);
-                }else if (menuItem.getItemId() == R.id.action_menu2){
-                    Toast.makeText(this, "기본 이미지로 변경합니다", Toast.LENGTH_SHORT).show();
-                    member.setProfileImage("");
-                    updateMyInfo(new MemberDto(member));
-                    setProfileImage(profileImageView, member.getProfileImage());
-                }else {
-                    Toast.makeText(this, "프로필 이미지 변경", Toast.LENGTH_SHORT).show();
-                }
-
-                return false;
-            });
-            popupMenu.show();
+            ProfileEditBottomSheetFragment bottomSheetDialog = new ProfileEditBottomSheetFragment();
+            bottomSheetDialog.show(getSupportFragmentManager(), bottomSheetDialog.getTag());
         });
 
         profileCloseButton.setOnClickListener(view -> finish());

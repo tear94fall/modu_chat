@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.ChatActivity;
+import com.example.modumessenger.Fragments.FragmentChat;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.entity.ChatRoom;
@@ -34,9 +35,11 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
     public final int NORMAL_CHAT = 1;
     public final int GROUP_CHAT = 2;
 
+    FragmentChat fragmentChat;
     List<ChatRoom> chatRoomList;
 
-    public ChatRoomAdapter(List<ChatRoom> chatRoomList) {
+    public ChatRoomAdapter(List<ChatRoom> chatRoomList, FragmentChat fragmentChat) {
+        this.fragmentChat = fragmentChat;
         this.chatRoomList = (chatRoomList == null || chatRoomList.size() == 0) ? new ArrayList<>() : chatRoomList;
         sortChatRoom();
     }
@@ -46,7 +49,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
     public ChatRoomAdapter.ChatRoomViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.chat_room_row, parent, false);
-        return new ChatRoomAdapter.ChatRoomViewHolder(view);
+        return new ChatRoomAdapter.ChatRoomViewHolder(this.fragmentChat, view);
     }
 
     @Override
@@ -75,6 +78,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
     }
 
     public static class ChatRoomViewHolder extends RecyclerView.ViewHolder {
+        FragmentChat fragmentChat;
 
         String userId;
         ChatRoomDatabase chatRoomDB;
@@ -85,8 +89,10 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
         ConstraintLayout chatRoomCardView;
         ImageView memberImage1, memberImage2, memberImage3, memberImage4;
 
-        public ChatRoomViewHolder(@NonNull View itemView) {
+        public ChatRoomViewHolder(FragmentChat fragmentChat, @NonNull View itemView) {
             super(itemView);
+            this.fragmentChat = fragmentChat;
+
             userId = PreferenceManager.getString("userId");
             chatRoomDB = ChatRoomDatabase.getInstance(this.itemView.getContext());
             chatRoomName = itemView.findViewById(R.id.chat_room_name);
@@ -216,6 +222,11 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
                 Intent intent = new Intent(view.getContext(), ChatActivity.class);
                 intent.putExtra("roomId", chatRoom.getRoomId());
                 view.getContext().startActivity(intent);
+            });
+
+            this.chatRoomCardView.setOnLongClickListener(view -> {
+                this.fragmentChat.showChatRoomPopupMenu(view, chatRoom);
+                return false;
             });
         }
 

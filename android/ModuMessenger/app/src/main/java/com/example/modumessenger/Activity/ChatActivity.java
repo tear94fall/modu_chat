@@ -73,8 +73,6 @@ public class ChatActivity extends AppCompatActivity {
     LinearLayoutManager manager;
     ChatHistoryAdapter chatHistoryAdapter;
 
-    ChatSendOthersActivity chatSendOthersActivity;
-
     TextView inputMsgTextView;
     Button sendMsg, sendOthers;
 
@@ -145,8 +143,6 @@ public class ChatActivity extends AppCompatActivity {
         sendOthers = findViewById(R.id.send_others_button);
         inputMsgTextView = findViewById(R.id.chat_message_edit_text);
         inputMsgTextView.setEnabled(true);
-
-        chatSendOthersActivity = new ChatSendOthersActivity();
     }
 
     private void setEventBus(boolean flag) {
@@ -191,7 +187,10 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
 
-        sendOthers.setOnClickListener(v -> chatSendOthersActivity.show(getSupportFragmentManager(), chatSendOthersActivity.getTag()));
+        sendOthers.setOnClickListener(v -> {
+            ChatSendOthersActivity chatSendOthersActivity = new ChatSendOthersActivity();
+            chatSendOthersActivity.show(getSupportFragmentManager(), chatSendOthersActivity.getTag());
+        });
     }
 
     public void settingSideNavBar() {

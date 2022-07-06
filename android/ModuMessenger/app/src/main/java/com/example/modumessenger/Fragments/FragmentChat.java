@@ -8,6 +8,8 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.PopupMenu;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -109,6 +111,24 @@ public class FragmentChat extends Fragment {
         });
     }
 
+    public void showChatRoomPopupMenu(View view, ChatRoom chatRoom) {
+        PopupMenu popupMenu = new PopupMenu(requireContext(), view);
+        requireActivity().getMenuInflater().inflate(R.menu.menu_chatroom_popup,popupMenu.getMenu());
+        popupMenu.setOnMenuItemClickListener(menuItem -> {
+            if (menuItem.getItemId() == R.id.chat_room_exit_menu){
+                Toast.makeText(requireContext(), "채팅방 나가기 :  " + chatRoom.getRoomId(), Toast.LENGTH_SHORT).show();
+            }else if (menuItem.getItemId() == R.id.chat_room_enter_menu){
+                Toast.makeText(requireContext(), "채팅방에 입장하기", Toast.LENGTH_SHORT).show();
+            }else {
+                Toast.makeText(requireContext(), "채팅방 클릭", Toast.LENGTH_SHORT).show();
+            }
+
+            return false;
+        });
+
+        popupMenu.show();
+    }
+
     // Retrofit function
     public void getChatRoomList(Member member) {
         Call<List<ChatRoomDto>> call = RetrofitClient.getChatRoomApiService().RequestChatRooms(member.getUserId());
@@ -130,7 +150,7 @@ public class FragmentChat extends Fragment {
                     chatRoomList.add(new ChatRoom(c));
                 });
 
-                chatRecyclerView.setAdapter(new ChatRoomAdapter(chatRoomList));
+                chatRecyclerView.setAdapter(new ChatRoomAdapter(chatRoomList, FragmentChat.this));
 
                 Log.d("채팅방 목록 가져오기 요청 : ", response.body().toString());
             }

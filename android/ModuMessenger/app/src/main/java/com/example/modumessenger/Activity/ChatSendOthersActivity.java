@@ -1,12 +1,16 @@
 package com.example.modumessenger.Activity;
 
 import static android.app.Activity.RESULT_OK;
+import static android.os.SystemClock.sleep;
 
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.provider.OpenableColumns;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,25 +22,41 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.bumptech.glide.Glide;
+import com.example.modumessenger.Global.ScopedStorageUtil;
 import com.example.modumessenger.Grid.SendOthersGridAdapter;
 import com.example.modumessenger.Grid.SendOthersGridItem;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.RetrofitClient;
+import com.example.modumessenger.dto.MemberDto;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.nio.file.Files;
 
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class ChatSendOthersActivity extends BottomSheetDialogFragment {
 
     ActivityResultLauncher<Intent> resultLauncher;
+    ScopedStorageUtil scopedStorageUtil;
+
     GridView settingGridView;
     SendOthersGridAdapter sendOthersGridAdapter;
     String roomId;
 
+    private ChatSendOthersBottomSheetListener mListener;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        mListener = (ChatSendOthersBottomSheetListener) getContext();
         return inflater.inflate(R.layout.chat_send_others, container, false);
     }
 
@@ -45,13 +65,29 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
         super.onViewCreated(view, savedInstanceState);
 
         getData();
+        setData();
         bindingView(view);
         setLauncher();
         setButtonClickEvent();
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        scopedStorageUtil.deleteTempFiles();
+    }
+
+    public interface ChatSendOthersBottomSheetListener {
+        void sendImageChat(String chatImageUrl);
+    }
+
     private void getData() {
         roomId = requireActivity().getIntent().getStringExtra("roomId");
+    }
+
+    private void setData() {
+        scopedStorageUtil = new ScopedStorageUtil();
     }
 
     private void bindingView(View view) {
@@ -67,10 +103,17 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
             SendOthersGridItem gridItem = sendOthersGridAdapter.getGridItem(position);
             Toast.makeText(requireActivity().getApplicationContext(), gridItem.getItemName(), Toast.LENGTH_SHORT).show();
 
-            Intent intent = new Intent();
-            intent.setType("image/*");
-            intent.setAction(Intent.ACTION_GET_CONTENT);
-            resultLauncher.launch(intent);
+            if(position==0) {
+                Intent intent = new Intent();
+                intent.setType("image/*");
+                intent.setAction(Intent.ACTION_GET_CONTENT);
+                resultLauncher.launch(intent);
+            } else if(position == 2) {
+                Intent intent = new Intent();
+                intent.setType("image/*");
+                intent.setAction(Intent.ACTION_GET_CONTENT);
+                resultLauncher.launch(intent);
+            }
         });
     }
 
@@ -81,39 +124,59 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
                     if(result.getResultCode() == RESULT_OK){
                         Intent intent = result.getData();
                         Uri uri = intent != null ? intent.getData() : null;
-
-                        if(uri!=null) {
-                            // send image to server
-                            sendPicture(uri);
+                        String fileName = getFileName(requireActivity().getContentResolver(), uri);
+                        if(fileName!=null) {
+                            String filePath = scopedStorageUtil.copyFromScopedStorage(requireActivity(), uri, fileName);
+                            sendImageChat(filePath);
                         } else {
-                            Toast.makeText(getContext(), "선택된 이미지가 없습니다.", Toast.LENGTH_SHORT).show();
+                            Log.d("파일명 가져오기 실패 : ", "갤러리 에서 가져오기 실패");
                         }
                     }
                 }
         );
     }
 
-    private void sendPicture(Uri imgUri) {
-        String imagePath = getRealPathFromURI(imgUri);
-        File file = new File(imagePath);
-
-        try {
-            FileInputStream fileStream = new FileInputStream(imagePath);
-            byte[] imageFile = Files.readAllBytes(file.toPath());
-            // send image file to server
-
-            fileStream.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    private void sendImageChat(String filePath) {
+        File file = new File(filePath);
+        RequestBody fileBody = RequestBody.Companion.create(file, MediaType.parse("multipart/form-data"));
+        MultipartBody.Part filePart = MultipartBody.Part.createFormData("file", file.getName(), fileBody);
+        uploadChatImage(filePart);
     }
 
-    private String getRealPathFromURI(Uri contentUri) {
-        String[] proj = {MediaStore.Images.Media.DATA};
-        Cursor cursor = requireActivity().getContentResolver().query(contentUri, proj, null, null, null);
+    private String getFileName(ContentResolver resolver, Uri uri) {
+        Cursor cursor = resolver.query(uri, null, null, null, null);
+        int columnIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
         cursor.moveToFirst();
-        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+        String fileName = cursor.getString(columnIndex);
+        cursor.close();
 
-        return cursor.getString(column_index);
+        return fileName;
+    }
+
+    // Retrofit function
+    public void uploadChatImage(MultipartBody.Part file) {
+        Call<String> call = RetrofitClient.getImageApiService().RequestUploadImage(file);
+
+        call.enqueue(new Callback<String>() {
+            @Override
+            public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
+                if(!response.isSuccessful()){
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                }
+
+                assert response.body() != null;
+                String filePath = response.body();
+                scopedStorageUtil.deleteTempFiles();
+
+                mListener.sendImageChat(RetrofitClient.getBaseUrl() + "modu_chat/images/" + filePath);
+
+                Log.d("채팅 이미지 업로드 요청 : ", response.body());
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
+                Log.e("연결실패", t.getMessage());
+            }
+        });
     }
 }

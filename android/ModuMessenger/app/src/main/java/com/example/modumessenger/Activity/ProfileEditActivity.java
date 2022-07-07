@@ -116,15 +116,13 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
                 result -> {
                     if (result.getResultCode() == RESULT_OK) {
                         Intent intent = result.getData();
-                        if(intent!=null) {
-                            Uri uri = intent.getData();
-                            String fileName = getFileName(getContentResolver(), uri);
-                            if(fileName!=null) {
-                                String filePath = scopedStorageUtil.copyFromScopedStorage(this, uri, fileName);
-                                changeMyProfileImage(filePath);
-                            } else {
-                                Log.d("파일명 가져오기 실패 : ", "갤러리 에서 가져오기 실패");
-                            }
+                        Uri uri = intent != null ? intent.getData() : null;
+                        String fileName = getFileName(getContentResolver(), uri);
+                        if(fileName!=null) {
+                            String filePath = scopedStorageUtil.copyFromScopedStorage(this, uri, fileName);
+                            changeMyProfileImage(filePath);
+                        } else {
+                            Log.d("파일명 가져오기 실패 : ", "갤러리 에서 가져오기 실패");
                         }
                     }
                 });

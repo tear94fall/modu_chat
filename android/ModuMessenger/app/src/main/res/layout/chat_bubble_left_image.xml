@@ -16,8 +16,8 @@
 
         <TextView
             android:id="@+id/left_chat_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="220dp"
+            android:layout_height="220dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
             android:background="@drawable/chat_message"
@@ -26,19 +26,16 @@
             android:padding="8dp"
             android:textColor="@color/white"
             app:layout_constraintStart_toEndOf="@+id/cardBackgroundView"
-            app:layout_constraintTop_toBottomOf="@+id/message_sender"
-            tools:text="왼쪽 채팅 메시지 입니다." />
+            app:layout_constraintTop_toBottomOf="@+id/message_sender" />
 
         <androidx.cardview.widget.CardView
             android:id="@+id/cardBackgroundView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
             android:layout_marginStart="4dp"
-            android:layout_marginBottom="4dp"
+            android:layout_marginTop="4dp"
             app:cardCornerRadius="30dp"
             app:cardElevation="0dp"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
@@ -57,7 +54,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
-            android:layout_marginBottom="4dp"
             android:text="오전 10:14"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@+id/left_chat_text" />
@@ -70,6 +66,20 @@
             android:text="보낸 사람"
             app:layout_constraintStart_toEndOf="@+id/cardBackgroundView"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/left_chat_image"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:layout_marginEnd="5dp"
+            app:layout_constraintBottom_toBottomOf="@+id/left_chat_text"
+            app:layout_constraintEnd_toEndOf="@+id/left_chat_text"
+            app:layout_constraintStart_toStartOf="@+id/left_chat_text"
+            app:layout_constraintTop_toTopOf="@+id/left_chat_text"
+            app:srcCompat="@drawable/modu_icon" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

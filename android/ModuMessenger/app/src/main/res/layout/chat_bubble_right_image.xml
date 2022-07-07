@@ -14,8 +14,8 @@
 
         <TextView
             android:id="@+id/right_chat_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="220dp"
+            android:layout_height="220dp"
             android:layout_marginTop="4dp"
             android:layout_marginEnd="4dp"
             android:layout_marginBottom="4dp"
@@ -25,8 +25,7 @@
             android:padding="8dp"
             android:textColor="@color/white"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="오른쪽 채팅 메시지 입니다." />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/right_chat_time"
@@ -36,6 +35,22 @@
             android:text="오전 10:14"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/right_chat_text" />
+
+        <ImageView
+            android:id="@+id/right_chat_image"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:maxHeight="200dp"
+            android:maxWidth="200dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:layout_marginEnd="5dp"
+            app:layout_constraintBottom_toBottomOf="@+id/right_chat_text"
+            app:layout_constraintEnd_toEndOf="@+id/right_chat_text"
+            app:layout_constraintStart_toStartOf="@+id/right_chat_text"
+            app:layout_constraintTop_toTopOf="@+id/right_chat_text"
+            app:srcCompat="@drawable/modu_icon" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

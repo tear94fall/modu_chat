@@ -13,46 +13,107 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <ImageView
-            android:id="@+id/chat_room_image"
+        <androidx.cardview.widget.CardView
+            android:id="@+id/chat_room_image_card_view"
             android:layout_width="70dp"
             android:layout_height="70dp"
+            android:layout_marginTop="3dp"
+            android:layout_marginBottom="3dp"
+            android:layout_marginStart="3dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:srcCompat="@tools:sample/avatars" />
+            app:layout_constraintTop_toTopOf="parent">
 
-        <ImageView
-            android:id="@+id/chat_room_image1"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
+            <ImageView
+                android:id="@+id/chat_room_image"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:srcCompat="@tools:sample/avatars" />
+
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/chat_room_image_card_view1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:layout_marginStart="3dp"
+            app:cardCornerRadius="7dp"
+            app:cardElevation="0dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:srcCompat="@tools:sample/avatars" />
+            app:layout_constraintTop_toTopOf="parent">
 
-        <ImageView
-            android:id="@+id/chat_room_image2"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            app:layout_constraintStart_toEndOf="@+id/chat_room_image1"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:srcCompat="@tools:sample/avatars" />
+            <ImageView
+                android:id="@+id/chat_room_image1"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:srcCompat="@tools:sample/avatars" />
 
-        <ImageView
-            android:id="@+id/chat_room_image3"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            app:layout_constraintStart_toStartOf="@+id/chat_room_image1"
-            app:layout_constraintTop_toBottomOf="@+id/chat_room_image1"
-            tools:srcCompat="@tools:sample/avatars" />
+        </androidx.cardview.widget.CardView>
 
-        <ImageView
-            android:id="@+id/chat_room_image4"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            app:layout_constraintStart_toEndOf="@+id/chat_room_image3"
-            app:layout_constraintTop_toBottomOf="@+id/chat_room_image2"
-            tools:srcCompat="@tools:sample/avatars" />
+        <androidx.cardview.widget.CardView
+            android:id="@+id/chat_room_image_card_view2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="7dp"
+            app:cardElevation="0dp"
+            app:layout_constraintStart_toEndOf="@+id/chat_room_image_card_view1"
+            app:layout_constraintTop_toTopOf="@+id/chat_room_image_card_view1">
+
+            <ImageView
+                android:id="@+id/chat_room_image2"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                app:layout_constraintStart_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:srcCompat="@tools:sample/avatars" />
+
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/chat_room_image_card_view3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="7dp"
+            app:cardElevation="0dp"
+            app:layout_constraintStart_toStartOf="@+id/chat_room_image_card_view1"
+            app:layout_constraintTop_toBottomOf="@+id/chat_room_image_card_view1">
+
+            <ImageView
+                android:id="@+id/chat_room_image3"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="parent"
+                tools:srcCompat="@tools:sample/avatars" />
+
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/chat_room_image_card_view4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="7dp"
+            app:cardElevation="0dp"
+            app:layout_constraintStart_toEndOf="@+id/chat_room_image_card_view3"
+            app:layout_constraintTop_toBottomOf="@+id/chat_room_image_card_view2">
+
+            <ImageView
+                android:id="@+id/chat_room_image4"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                app:layout_constraintStart_toEndOf="@+id/chat_room_image3"
+                app:layout_constraintTop_toBottomOf="@+id/chat_room_image2"
+                tools:srcCompat="@tools:sample/avatars" />
+
+        </androidx.cardview.widget.CardView>
 
         <TextView
             android:id="@+id/chat_room_name"
@@ -61,8 +122,8 @@
             android:layout_marginStart="12dp"
             android:layout_marginTop="12dp"
             android:text="채팅방 이름"
-            app:layout_constraintStart_toEndOf="@+id/chat_room_image"
-            app:layout_constraintTop_toTopOf="@+id/chat_room_image" />
+            app:layout_constraintStart_toEndOf="@+id/chat_room_image_card_view"
+            app:layout_constraintTop_toTopOf="@+id/chat_room_image_card_view" />
 
         <TextView
             android:id="@+id/last_chat_message"

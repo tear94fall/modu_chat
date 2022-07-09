@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -27,7 +28,9 @@ import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRoomViewHolder> {
@@ -58,7 +61,8 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
 
         holder.setDatabase(chatRoom);
         holder.setChatRoomTitle(chatRoom);
-        holder.setChatRoomInfo(chatRoom);
+        holder.setChatRoomLastMsg(chatRoom);
+        holder.setChatRoomLastTime(chatRoom);
         holder.setChatRoomImage(chatRoom);
         holder.setChatRoomClickEvent(chatRoom);
     }
@@ -88,6 +92,15 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
         ImageView chatRoomImage;
         ConstraintLayout chatRoomCardView;
         ImageView memberImage1, memberImage2, memberImage3, memberImage4;
+        CardView memberImageCardView1, memberImageCardView2, memberImageCardView3, memberImageCardView4;
+
+        Map<String, String> chatTypeMap = new HashMap<String, String>() {
+            {
+                put("image", "사진");
+                put("file", "파일");
+                put("audio", "음성");
+            }
+        };
 
         public ChatRoomViewHolder(FragmentChat fragmentChat, @NonNull View itemView) {
             super(itemView);
@@ -106,10 +119,20 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
             memberImage3 = itemView.findViewById(R.id.chat_room_image3);
             memberImage4 = itemView.findViewById(R.id.chat_room_image4);
 
+            memberImageCardView1 = itemView.findViewById(R.id.chat_room_image_card_view1);
+            memberImageCardView2 = itemView.findViewById(R.id.chat_room_image_card_view2);
+            memberImageCardView3 = itemView.findViewById(R.id.chat_room_image_card_view3);
+            memberImageCardView4 = itemView.findViewById(R.id.chat_room_image_card_view4);
+
             memberImage1.setVisibility(View.INVISIBLE);
             memberImage2.setVisibility(View.INVISIBLE);
             memberImage3.setVisibility(View.INVISIBLE);
             memberImage4.setVisibility(View.INVISIBLE);
+
+            memberImageCardView1.setVisibility(View.INVISIBLE);
+            memberImageCardView2.setVisibility(View.INVISIBLE);
+            memberImageCardView3.setVisibility(View.INVISIBLE);
+            memberImageCardView4.setVisibility(View.INVISIBLE);
         }
 
         public void setDatabase(ChatRoom chatRoom) {
@@ -139,8 +162,11 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
             }
         }
 
-        public void setChatRoomInfo(ChatRoom chatRoom) {
-            this.lastChatMessage.setText(chatRoom.getLastChatMsg());
+        public void setChatRoomLastMsg(ChatRoom chatRoom) {
+            this.lastChatMessage.setText(chatTypeMap.containsKey(chatRoom.getLastChatMsg()) ? chatTypeMap.get(chatRoom.getLastChatMsg()) : chatRoom.getLastChatMsg());
+        }
+
+        public void setChatRoomLastTime(ChatRoom chatRoom) {
             this.lastChatTime.setText(getShortTime(chatRoom.getLastChatTime()));
         }
 
@@ -163,9 +189,11 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
 
                     chatRoomImage.setVisibility(View.INVISIBLE);
                     List<ImageView> imageViewList = new ArrayList<>(Arrays.asList(memberImage1, memberImage2, memberImage3, memberImage4));
+                    List<CardView> cardViewList = new ArrayList<>(Arrays.asList(memberImageCardView1, memberImageCardView2, memberImageCardView3, memberImageCardView4));
 
                     for(int index=0; index<Math.min(4, memberList.size()); index++) {
                         imageViewList.get(index).setVisibility(View.VISIBLE);
+                        cardViewList.get(index).setVisibility(View.VISIBLE);
                         setGlide(imageViewList.get(index), memberList.get(index).getProfileImage());
                     }
                 }

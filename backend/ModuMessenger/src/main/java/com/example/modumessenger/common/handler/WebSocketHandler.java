@@ -2,16 +2,9 @@ package com.example.modumessenger.common.handler;
 
 import com.example.modumessenger.chat.dto.ChatDto;
 import com.example.modumessenger.chat.dto.ChatRoomDto;
-import com.example.modumessenger.chat.entity.Chat;
-import com.example.modumessenger.chat.entity.ChatRoom;
-import com.example.modumessenger.chat.repository.ChatRepository;
-import com.example.modumessenger.chat.repository.ChatRoomRepository;
 import com.example.modumessenger.chat.service.ChatRoomService;
 import com.example.modumessenger.chat.service.ChatService;
-import com.example.modumessenger.common.parser.JsonParser;
 import com.example.modumessenger.member.dto.MemberDto;
-import com.example.modumessenger.member.entity.Member;
-import com.example.modumessenger.member.repository.MemberRepository;
 import com.example.modumessenger.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONObject;
@@ -31,11 +24,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
-import java.util.LinkedHashMap;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
@@ -69,8 +58,13 @@ public class WebSocketHandler extends TextWebSocketHandler {
         Long chatType = (Long) jsonObject.get("chatType");
 
         ChatRoomDto chatRoomDto = chatRoomService.searchChatRoomByRoomId(roomId);
-        chatRoomDto.setLastChatMsg(msg);
         chatRoomDto.setLastChatTime(sendTime);
+
+        if(chatType == ChatType.TEXT.getChatType()) {
+            chatRoomDto.setLastChatMsg(msg);
+        } else {
+            chatRoomDto.setLastChatMsg(ChatType.fromChatType(chatType.intValue()).getChatTypeStr());
+        }
 
         chatRoomService.updateChatRoom(chatRoomDto.getRoomId(), chatRoomDto);
 
@@ -190,5 +184,36 @@ public class WebSocketHandler extends TextWebSocketHandler {
         byteBuffer.position(0);
 
         return true;
+    }
+
+    enum ChatType {
+        TEXT(1, ""),
+        IMAGE(2, "image"),
+        FILE(3, "file"),
+        AUDIO(4, "audio");
+
+        private final int chatType;
+        private final String chatTypeStr;
+
+        private static final Map<Integer, ChatType> chatTypeMap = new HashMap<>();
+
+        static {
+            for(ChatType chatType : values()) {
+                chatTypeMap.put(chatType.getChatType(), chatType);
+            }
+        }
+
+        ChatType(int chatType, String chatTypeStr) {
+            this.chatType = chatType;
+            this.chatTypeStr = chatTypeStr;
+        }
+
+        public int getChatType() { return this.chatType; }
+        public String getChatTypeStr() { return this.chatTypeStr; }
+
+
+        public static ChatType fromChatType(int type) {
+            return chatTypeMap.get(type);
+        }
     }
 }

@@ -17,7 +17,6 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
-import com.example.modumessenger.Activity.AppInfoActivity;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.Grid.SettingGridAdapter;
@@ -25,8 +24,6 @@ import com.example.modumessenger.Grid.SettingGridItem;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.MemberDto;
-
-import java.util.concurrent.atomic.AtomicReference;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -109,6 +106,7 @@ public class FragmentSetting extends Fragment {
     private void setButtonClickEvent() {
         setting_my_profile_card_view.setOnClickListener(view -> {
             Intent intent = new Intent(view.getContext(), ProfileActivity.class);
+            intent.putExtra("userId", myInfo.getUserId());
             intent.putExtra("username", myInfo.getUsername());
             intent.putExtra("statusMessage", myInfo.getStatusMessage());
             intent.putExtra("profileImage", myInfo.getProfileImage());

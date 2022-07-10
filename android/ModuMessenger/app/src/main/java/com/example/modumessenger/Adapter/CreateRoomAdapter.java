@@ -16,7 +16,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.CreateRoomActivity;
 import com.example.modumessenger.Activity.ProfileActivity;
-import com.example.modumessenger.Activity.SearchActivity;
 import com.example.modumessenger.R;
 import com.example.modumessenger.dto.MemberDto;
 
@@ -84,6 +83,7 @@ public class CreateRoomAdapter extends RecyclerView.Adapter<CreateRoomAdapter.Ad
         public void setUserClickEvent(MemberDto member) {
             this.addChatCardViewLayout.setOnClickListener(v -> {
                 Intent intent = new Intent(v.getContext(), ProfileActivity.class);
+                intent.putExtra("userId", member.getUserId());
                 intent.putExtra("username", member.getUsername());
                 intent.putExtra("statusMessage", member.getStatusMessage());
                 intent.putExtra("profileImage", member.getProfileImage());

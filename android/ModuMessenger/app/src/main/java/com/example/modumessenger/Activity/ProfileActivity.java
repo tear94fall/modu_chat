@@ -21,8 +21,11 @@ import com.example.modumessenger.Global.OnSwipeListener;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
+import com.example.modumessenger.dto.ChatRoomDto;
 import com.example.modumessenger.dto.MemberDto;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import retrofit2.Call;
@@ -34,7 +37,7 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
     ImageView profileImageView;
     TextView usernameTextView, statusMessageTextView;
     Button profileEditButton, profileCloseButton, startChatButton;
-    String username, statusMessage, profileImage;
+    String userId, username, statusMessage, profileImage;
     GestureDetector gestureDetector;
 
     @Override
@@ -89,12 +92,12 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
         startChatButton = findViewById(R.id.start_chat_button);
 
         profileEditButton.setVisibility(View.INVISIBLE);
-        startChatButton.setVisibility(View.INVISIBLE);
     }
 
     private void getData() {
         if(getIntentExtra("profileImage") && getIntentExtra("username") && getIntentExtra("statusMessage"))
         {
+            userId = getIntent().getStringExtra("userId");
             username = getIntent().getStringExtra("username");
             statusMessage = getIntent().getStringExtra("statusMessage");
             profileImage = getIntent().getStringExtra("profileImage");
@@ -111,8 +114,9 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
         if(username!=null && username.length() !=0) {
             if(username.equals(PreferenceManager.getString("username"))) {
                 profileEditButton.setVisibility(View.VISIBLE);
+                startChatButton.setText("나와 채팅하기");
             }else if(!username.equals(PreferenceManager.getString("username"))) {
-                startChatButton.setVisibility(View.VISIBLE);
+                startChatButton.setText("친구와 채팅하기");
             }
         }
     }
@@ -136,6 +140,14 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
         startChatButton.setOnClickListener(view -> {
             // exist chat room
             // if not, create chat room
+            List<String> userIds = new ArrayList<>();
+            userIds.add(PreferenceManager.getString("userId"));
+
+            if(!username.equals(PreferenceManager.getString("username"))) {
+                userIds.add(userId);
+            }
+
+            createChatRoom(userIds);
         });
     }
 
@@ -163,6 +175,7 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
         return true;
     }
 
+    // Retrofit function
     public void getMyProfileInfo(MemberDto memberDto) {
         Call<MemberDto> call = RetrofitClient.getMemberApiService().RequestUserId(memberDto);
 
@@ -198,6 +211,35 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
 
             @Override
             public void onFailure(@NonNull Call<MemberDto> call, @NonNull Throwable t) {
+                Log.e("연결실패", t.getMessage());
+            }
+        });
+    }
+
+    public void createChatRoom(List<String> userIds) {
+        Call<ChatRoomDto> call = RetrofitClient.getChatRoomApiService().RequestCreateChatRoom(userIds);
+
+        call.enqueue(new Callback<ChatRoomDto>() {
+            @Override
+            public void onResponse(@NonNull Call<ChatRoomDto> call, @NonNull Response<ChatRoomDto> response) {
+                if(!response.isSuccessful()){
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code() + ", body : " + response.body());
+                    return;
+                }
+
+                assert response.body() != null;
+                ChatRoomDto chatRoomDto = response.body();
+
+                Intent intent = new Intent(getApplicationContext(), ChatActivity.class);
+                intent.putExtra("roomId", chatRoomDto.getRoomId());
+                startActivity(intent);
+                finish();
+
+                Log.d("채팅방 생성 요청 : ", response.body().toString());
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ChatRoomDto> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
             }
         });

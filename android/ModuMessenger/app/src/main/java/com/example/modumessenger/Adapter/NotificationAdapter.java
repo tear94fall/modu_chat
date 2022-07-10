@@ -1,13 +1,11 @@
 package com.example.modumessenger.Adapter;
 
-import android.animation.ValueAnimator;
-import android.content.Context;
-import android.util.DisplayMetrics;
-import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.view.animation.Animation;
+import android.view.animation.Transformation;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -16,19 +14,20 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.R;
+import com.example.modumessenger.dto.NotificationDto;
 import com.example.modumessenger.entity.CommonData;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapter.NotificationViewHolder> {
 
-    private final SparseBooleanArray selectedItems = new SparseBooleanArray();
-    private final List<CommonData> notificationList;
-    private Context context;
-    private int prePosition = -1;
+    private final List<NotificationDto> notificationList;
 
     public NotificationAdapter(List<CommonData> notificationList) {
-        this.notificationList = notificationList;
+        this.notificationList = notificationList.stream()
+                .map(commonData -> new NotificationDto(commonData.getKey(), commonData.getValue()))
+                .collect(Collectors.toList());
     }
 
     @NonNull
@@ -36,17 +35,16 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     public NotificationAdapter.NotificationViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.notification_row, parent, false);
-        context = parent.getContext();
-        return new NotificationAdapter.NotificationViewHolder(view);
+        return new NotificationViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull NotificationAdapter.NotificationViewHolder holder, int position) {
-        CommonData commonData = this.notificationList.get(position);
+        NotificationDto notificationDto = this.notificationList.get(position);
 
-        holder.setNotification(commonData);
-        holder.changeSpreadContent(position);
-        holder.setClickEvent(commonData);
+        holder.setNotification(notificationDto);
+        holder.setContentHide(notificationDto);
+        holder.setClickEvent(notificationDto);
     }
 
     @Override
@@ -54,19 +52,17 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         return this.notificationList.size();
     }
 
-    void addItem(CommonData commonData) {
-        this.notificationList.add(commonData);
+    void addItem(NotificationDto notificationDto) {
+        this.notificationList.add(notificationDto);
     }
 
-    public class NotificationViewHolder extends RecyclerView.ViewHolder {
-
+    public static class NotificationViewHolder extends RecyclerView.ViewHolder {
         TextView notificationDate;
         TextView notificationTitle;
         TextView notificationContent;
         ImageView notificationImage;
-        Button spreadButton;
+        ImageButton spreadImageButton;
         ConstraintLayout detailLayout;
-        int position;
 
         public NotificationViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -74,51 +70,84 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             notificationTitle = itemView.findViewById(R.id.notification_title);
             notificationContent = itemView.findViewById(R.id.notification_detail_content);
             notificationImage = itemView.findViewById(R.id.notification_detail_image);
-            spreadButton = itemView.findViewById(R.id.notification_spread_button);
+            spreadImageButton = itemView.findViewById(R.id.notification_spread_image_button);
             detailLayout = itemView.findViewById(R.id.notification_detail_layout);
         }
 
-        public void changeSpreadContent(int position) {
-            this.changeVisibility(selectedItems.get(position));
-        }
-
-        public void setNotification(CommonData commonData) {
-            this.notificationDate.setText(commonData.getKey());
-            this.notificationTitle.setText(commonData.getValue());
-            this.notificationContent.setText(commonData.getValue());
+        public void setNotification(NotificationDto notificationDto) {
+            this.notificationDate.setText(notificationDto.getKey());
+            this.notificationTitle.setText(notificationDto.getValue());
+            this.notificationContent.setText(notificationDto.getValue());
             this.notificationImage.setImageResource(R.drawable.modu_banner);
         }
 
-        public void setClickEvent(CommonData commonData) {
-            spreadButton.setOnClickListener(v -> {
-                // spread notification content
-                if (selectedItems.get(position)) {
-                    selectedItems.delete(position);
-                } else {
-                    selectedItems.delete(prePosition);
-                    selectedItems.put(position, true);
-                }
-                if (prePosition != -1) notifyItemChanged(prePosition);
-                notifyItemChanged(position);
-                prePosition = position;
+        public void setContentHide(NotificationDto notificationDto) {
+            ContentAnimation.hideContent(this.detailLayout);
+            notificationDto.setExpanded(false);
+        }
+
+        public void setClickEvent(NotificationDto notificationDto) {
+            spreadImageButton.setOnClickListener(v -> {
+                boolean currentStatus = notificationDto.getExpanded();
+                contentButtonClick(!currentStatus, v, detailLayout);
+                notificationDto.setExpanded(!currentStatus);
             });
         }
 
-        private void changeVisibility(final boolean isExpanded) {
-            int dpValue = 200;
-            DisplayMetrics metrics = context.getResources().getDisplayMetrics();
-            float d = metrics.density;
-            int height = (int) (dpValue * d);
+        public void contentButtonClick(boolean isExpanded, View view, ConstraintLayout constraintLayout) {
+            ContentAnimation.rotateButton(view, isExpanded);
+            ContentAnimation.actionContentAnimation(constraintLayout, isExpanded);
+        }
+    }
 
-            ValueAnimator valueAnimator = isExpanded ? ValueAnimator.ofInt(0, height) : ValueAnimator.ofInt(height, 0);
-            valueAnimator.setDuration(600);
-            valueAnimator.addUpdateListener(animation -> {
-                detailLayout.getLayoutParams().height = (int) animation.getAnimatedValue();
-                detailLayout.requestLayout();
-                detailLayout.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
-            });
+    public static class ContentAnimation {
+        public static void rotateButton(View view, boolean isExpanded) {
+            view.animate().setDuration(200).rotation(isExpanded ? 180f : 0f);
+        }
 
-            valueAnimator.start();
+        public static void actionContentAnimation(ConstraintLayout constraintLayout, boolean isExpanded) {
+            if(isExpanded) {
+                showContent(constraintLayout);
+            } else {
+                hideContent(constraintLayout);
+            }
+        }
+
+        public static void showContent(ConstraintLayout view) {
+            view.measure(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            int actualHeight = view.getMeasuredHeight();
+            view.getLayoutParams().height = 0;
+            view.setVisibility(View.VISIBLE);
+
+            Animation animation = new Animation() {
+                @Override
+                public void applyTransformation(float interpolatedTime, Transformation t) {
+                    view.getLayoutParams().height = (interpolatedTime == 1f) ? ViewGroup.LayoutParams.WRAP_CONTENT : (int) (actualHeight * interpolatedTime);
+                    view.requestLayout();
+                }
+            };
+
+            animation.setDuration((long) (actualHeight / view.getContext().getResources().getDisplayMetrics().density));
+            view.startAnimation(animation);
+        }
+
+        public static void hideContent(ConstraintLayout view) {
+            int actualHeight = view.getMeasuredHeight();
+
+            Animation animation = new Animation() {
+                @Override
+                public void applyTransformation(float interpolatedTime, Transformation t) {
+                    if (interpolatedTime == 1f) {
+                        view.setVisibility(View.GONE);
+                    } else {
+                        view.getLayoutParams().height = (int) (actualHeight - (actualHeight * interpolatedTime));
+                        view.requestLayout();
+                    }
+                }
+            };
+
+            animation.setDuration((long) (actualHeight / view.getContext().getResources().getDisplayMetrics().density));
+            view.startAnimation(animation);
         }
     }
 }

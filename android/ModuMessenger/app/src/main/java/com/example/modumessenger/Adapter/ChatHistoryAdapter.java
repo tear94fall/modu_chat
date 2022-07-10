@@ -14,12 +14,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.example.modumessenger.Activity.ChatActivity;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.dto.ChatType;
-import com.example.modumessenger.entity.ChatRoom;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.RoomDatabase.Database.ChatDatabase;
 import com.example.modumessenger.RoomDatabase.Entity.ChatEntity;
@@ -222,6 +220,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public void startProfileActivity(View view, Member member) {
         Intent intent = new Intent(view.getContext(), ProfileActivity.class);
+        intent.putExtra("userId", member.getUserId());
         intent.putExtra("username", member.getUsername());
         intent.putExtra("statusMessage", member.getStatusMessage());
         intent.putExtra("profileImage", member.getProfileImage());

@@ -87,6 +87,7 @@ public class FragmentFriends extends Fragment {
         view.findViewById(R.id.myProfileCard).setOnClickListener(view1 -> {
             Intent intent = new Intent(view1.getContext(), ProfileActivity.class);
 
+            intent.putExtra("userId", PreferenceManager.getString("userId"));
             intent.putExtra("username", PreferenceManager.getString("username"));
             intent.putExtra("statusMessage", PreferenceManager.getString("statusMessage"));
             intent.putExtra("profileImage", PreferenceManager.getString("profileImage"));

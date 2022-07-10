@@ -172,7 +172,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
 
         public void setChatRoomImage(ChatRoom chatRoom) {
             if (chatRoom.getMembers().size() == 1) {
-                setGlide(R.drawable.basic_chat_room_image);
+                setGlide(chatRoom.getMembers().get(0).getProfileImage());
             } else if(chatRoom.getMembers().size() == 2) {
                 chatRoom.getMembers().forEach(member -> {
                     if(!member.getUserId().equals(userId)) {

@@ -85,6 +85,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
         FragmentChat fragmentChat;
 
         String userId;
+        String username;
         ChatRoomDatabase chatRoomDB;
         TextView chatRoomName;
         TextView lastChatMessage;
@@ -107,6 +108,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
             this.fragmentChat = fragmentChat;
 
             userId = PreferenceManager.getString("userId");
+            username = PreferenceManager.getString("username");
             chatRoomDB = ChatRoomDatabase.getInstance(this.itemView.getContext());
             chatRoomName = itemView.findViewById(R.id.chat_room_name);
             lastChatMessage = itemView.findViewById(R.id.last_chat_message);
@@ -142,7 +144,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
 
         public void setChatRoomTitle(ChatRoom chatRoom) {
             if (chatRoom.getMembers().size() == 1) {
-                this.chatRoomName.setText(chatRoom.getRoomName());
+                this.chatRoomName.setText(chatRoom.getMembers().get(0).getUserId().equals(userId) ? String.format("나와의 채팅 (%s)", username) : chatRoom.getRoomName());
             } else if (chatRoom.getMembers().size() == 2) {
                 chatRoom.getMembers().forEach(member -> {
                     if (!member.getUserId().equals(userId)) {
@@ -167,7 +169,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
         }
 
         public void setChatRoomLastTime(ChatRoom chatRoom) {
-            this.lastChatTime.setText(getShortTime(chatRoom.getLastChatTime()));
+            this.lastChatTime.setText(!chatRoom.getLastChatTime().equals("") ? getShortTime(chatRoom.getLastChatTime()) : "");
         }
 
         public void setChatRoomImage(ChatRoom chatRoom) {

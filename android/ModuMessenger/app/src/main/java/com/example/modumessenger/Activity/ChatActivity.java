@@ -73,6 +73,8 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     LinearLayoutManager manager;
     ChatHistoryAdapter chatHistoryAdapter;
 
+    ChatSendOthersActivity chatSendOthersActivity;
+
     TextView inputMsgTextView;
     Button sendMsg, sendOthers;
 
@@ -132,6 +134,8 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         objectMapper = new ObjectMapper();
         chatMemberList = new ArrayList<>();
         chatBubbleList = new ArrayList<>();
+
+        chatSendOthersActivity = new ChatSendOthersActivity();
     }
 
     private void bindingView() {
@@ -188,7 +192,6 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         });
 
         sendOthers.setOnClickListener(v -> {
-            ChatSendOthersActivity chatSendOthersActivity = new ChatSendOthersActivity();
             chatSendOthersActivity.show(getSupportFragmentManager(), chatSendOthersActivity.getTag());
         });
     }
@@ -337,6 +340,11 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         } else {
             Toast.makeText(getApplicationContext(), "메세지 전송에 실패하였습니다.", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public void sendOthersFinish() {
+        chatSendOthersActivity.dismiss();
     }
 
     // event bus class

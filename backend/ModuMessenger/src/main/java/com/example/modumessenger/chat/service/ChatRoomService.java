@@ -5,7 +5,6 @@ import com.example.modumessenger.chat.entity.ChatRoom;
 import com.example.modumessenger.chat.entity.ChatRoomMember;
 import com.example.modumessenger.chat.repository.ChatRoomMemberRepository;
 import com.example.modumessenger.chat.repository.ChatRoomRepository;
-import com.example.modumessenger.member.dto.MemberDto;
 import com.example.modumessenger.member.entity.Member;
 import com.example.modumessenger.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,10 +12,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -41,6 +36,25 @@ public class ChatRoomService {
     public ChatRoomDto searchChatRoomByRoomId(String roomId) {
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId);
         return new ChatRoomDto(chatRoom);
+    }
+
+    public List<ChatRoomDto> searchOneOnOneChatRoom(String userId, String roomUserId) {
+        List<ChatRoomMember> chatRoomMemberList = chatRoomMemberRepository.findAllByMemberUserId(userId);
+        List<ChatRoom> chatRoomList = chatRoomMemberList.stream()
+//                .filter(ChatRoomMember::isOneOnOne)
+                .map(ChatRoomMember::getChatRoom)
+                .filter(chatRoom -> {
+                    List<String> roomMemberId = chatRoom.getChatRoomMemberList().stream()
+                            .map(chatRoomMember -> chatRoomMember.getMember().getUserId())
+                            .collect(Collectors.toList());
+
+                    return roomMemberId.size() == 2 && roomMemberId.contains(userId) && roomMemberId.contains(roomUserId);
+                })
+                .collect(Collectors.toList());
+
+        return chatRoomList.stream()
+                .map(ChatRoomDto::new)
+                .collect(Collectors.toList());
     }
 
     public ChatRoomDto createChatRoom(List<String> userId) {

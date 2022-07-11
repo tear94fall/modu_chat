@@ -1,8 +1,6 @@
 package com.example.modumessenger.chat.repository;
 
 import com.example.modumessenger.chat.entity.Chat;
-import com.example.modumessenger.chat.entity.QChat;
-import com.example.modumessenger.chat.entity.QChatRoom;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
@@ -23,5 +21,13 @@ public class ChatRepositoryImpl implements ChatCustomRepository {
                 .leftJoin(chat.chatRoom, chatRoom)
                 .fetchJoin()
                 .fetch();
+    }
+
+    @Override
+    public Long countAll() {
+        return queryFactory
+                .select(chat.count())
+                .from(chat)
+                .fetchOne();
     }
 }

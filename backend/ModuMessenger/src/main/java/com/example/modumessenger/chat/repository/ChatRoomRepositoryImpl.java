@@ -1,7 +1,6 @@
 package com.example.modumessenger.chat.repository;
 
 import com.example.modumessenger.chat.entity.ChatRoom;
-import com.example.modumessenger.chat.entity.QChat;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
@@ -21,14 +20,6 @@ public class ChatRoomRepositoryImpl implements ChatRoomCustomRepository {
                 .selectFrom(chatRoom)
                 .leftJoin(chatRoom.chat, chat)
                 .fetchJoin()
-                .fetch();
-    }
-
-    @Override
-    public List<ChatRoom> findByUserId(String userId) {
-        return queryFactory
-                .selectFrom(chatRoom)
-                .where(chatRoom.userIds.contains(userId))
                 .fetch();
     }
 

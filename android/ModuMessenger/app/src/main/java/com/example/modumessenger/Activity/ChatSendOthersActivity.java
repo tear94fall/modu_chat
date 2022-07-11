@@ -1,14 +1,12 @@
 package com.example.modumessenger.Activity;
 
 import static android.app.Activity.RESULT_OK;
-import static android.os.SystemClock.sleep;
 
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -22,18 +20,14 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.bumptech.glide.Glide;
 import com.example.modumessenger.Global.ScopedStorageUtil;
 import com.example.modumessenger.Grid.SendOthersGridAdapter;
 import com.example.modumessenger.Grid.SendOthersGridItem;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
-import com.example.modumessenger.dto.MemberDto;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.nio.file.Files;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -80,6 +74,7 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
 
     public interface ChatSendOthersBottomSheetListener {
         void sendImageChat(String chatImageUrl);
+        void sendOthersFinish();
     }
 
     private void getData() {
@@ -169,6 +164,7 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
                 scopedStorageUtil.deleteTempFiles();
 
                 mListener.sendImageChat(RetrofitClient.getBaseUrl() + "modu_chat/images/" + filePath);
+                mListener.sendOthersFinish();
 
                 Log.d("채팅 이미지 업로드 요청 : ", response.body());
             }

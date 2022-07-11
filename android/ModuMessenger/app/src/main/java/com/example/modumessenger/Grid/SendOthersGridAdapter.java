@@ -8,7 +8,6 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.R;
@@ -58,11 +57,6 @@ public class SendOthersGridAdapter extends BaseAdapter {
                         .load(R.drawable.basic_profile_image)
                         .into(itemImageView))
                 .into(itemImageView);
-
-        itemImageView.setOnClickListener(v -> {
-            String itemName = sendOthersGridItem.getItemName();
-            Toast.makeText(context, itemName, Toast.LENGTH_SHORT).show();
-        });
 
         return convertView;
     }

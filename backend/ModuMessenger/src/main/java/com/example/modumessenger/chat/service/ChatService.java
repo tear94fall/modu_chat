@@ -30,10 +30,18 @@ public class ChatService {
                 .collect(Collectors.toList());
     }
 
-    public void saveChat(ChatDto chatDto) {
+    public ChatDto saveChat(ChatDto chatDto) {
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(chatDto.getRoomId());
         Chat chat = new Chat(chatDto);
         chat.setChatRoom(chatRoom);
-        Chat save = chatRepository.save(chat);
+        Chat saveChat = chatRepository.save(chat);
+
+        return modelMapper.map(saveChat, ChatDto.class);
+    }
+
+    public ChatDto searchChatByRoomIdAndChatId(String roomId, String chatId) {
+        Long id = Long.parseLong(chatId);
+        Chat chat = chatRepository.findByRoomIdAndChatId(roomId, id);
+        return modelMapper.map(chat, ChatDto.class);
     }
 }

@@ -8,5 +8,7 @@ public interface ChatCustomRepository {
 
     List<Chat> findAllQueryDsl();
 
+    Chat findByRoomIdAndChatId(String roomId, Long chatId);
+
     Long countAll();
 }

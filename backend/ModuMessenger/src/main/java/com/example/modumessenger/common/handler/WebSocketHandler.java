@@ -6,10 +6,18 @@ import com.example.modumessenger.chat.service.ChatRoomService;
 import com.example.modumessenger.chat.service.ChatService;
 import com.example.modumessenger.member.dto.MemberDto;
 import com.example.modumessenger.member.service.MemberService;
+import com.example.modumessenger.messaging.entity.ChatMessage;
+import com.example.modumessenger.messaging.entity.SubscribeType;
+import com.example.modumessenger.messaging.service.MessagingPublisher;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.springframework.data.redis.connection.Message;
+import org.springframework.data.redis.connection.MessageListener;
+import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.BinaryMessage;
@@ -27,17 +35,22 @@ import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @Component
 @Transactional
 @RequiredArgsConstructor
-public class WebSocketHandler extends TextWebSocketHandler {
+public class WebSocketHandler extends TextWebSocketHandler implements MessageListener {
 
     private final MemberService memberService;
     private final ChatRoomService chatRoomService;
     private final ChatService chatService;
+    private final MessagingPublisher messagingPublisher;
+
+    private final ObjectMapper objectMapper;
 
     private static final ConcurrentHashMap<String, WebSocketSession> CLIENTS = new ConcurrentHashMap<String, WebSocketSession>();
     private static final String FILE_UPLOAD_PATH = "/modu-chat/images";
+    private static final String CHAT_MESSAGING_TOPIC_NAME = "modu-chat";
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws ParseException, IOException {
@@ -69,21 +82,26 @@ public class WebSocketHandler extends TextWebSocketHandler {
         chatRoomService.updateChatRoom(chatRoomDto.getRoomId(), chatRoomDto);
 
         ChatDto chatDto = new ChatDto(msg, roomId, senderName, sendTime, chatType.intValue(), chatRoomDto);
-        chatService.saveChat(chatDto);
+        Long chatId = chatService.saveChat(chatDto);
 
-        chatRoomDto.getMembers().forEach(member -> {
-            String userId = member.getUserId();
-            if(!sender.getUserId().equals(userId)) {
-                WebSocketSession s = CLIENTS.get(userId);
-                if (s != null) {
-                    try {
-                        s.sendMessage(message);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        });
+        ChatMessage chatMessage = new ChatMessage(SubscribeType.BROAD_CAST, chatRoomDto.getRoomId(), chatId.toString());
+
+        ChannelTopic channel = new ChannelTopic(CHAT_MESSAGING_TOPIC_NAME);
+        messagingPublisher.publish(channel, chatMessage);
+
+//        chatRoomDto.getMembers().forEach(member -> {
+//            String userId = member.getUserId();
+//            if(!sender.getUserId().equals(userId)) {
+//                WebSocketSession s = CLIENTS.get(userId);
+//                if (s != null) {
+//                    try {
+//                        s.sendMessage(message);
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            }
+//        });
     }
 
     @Override
@@ -146,6 +164,35 @@ public class WebSocketHandler extends TextWebSocketHandler {
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
 
+    }
+
+    @Override
+    public void onMessage(Message message, byte[] pattern) {
+        try {
+            String subscribeMessage = new String(message.getBody());
+            ChatMessage chatMessage = objectMapper.readValue(subscribeMessage, ChatMessage.class);
+            log.info("[subscribe][message] {}", chatMessage);
+
+            ChatRoomDto chatRoomDto = chatRoomService.searchChatRoomByRoomId(chatMessage.getRoomId());
+            ChatDto chatDto = chatService.searchChatByRoomIdAndChatId(chatMessage.getRoomId(), chatMessage.getChatId());
+            String payload = objectMapper.writeValueAsString(chatDto);
+
+            TextMessage textMessage = new TextMessage(payload);
+
+            chatRoomDto.getMembers().forEach(member -> {
+                String userId = member.getUserId();
+                WebSocketSession s = CLIENTS.get(userId);
+                if (s != null) {
+                    try {
+                        s.sendMessage(textMessage);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public boolean saveImageFile(ByteBuffer byteBuffer) {

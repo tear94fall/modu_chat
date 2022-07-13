@@ -1,7 +1,6 @@
 package com.example.modumessenger.chat.service;
 
 import com.example.modumessenger.chat.dto.ChatDto;
-import com.example.modumessenger.chat.dto.ChatRoomDto;
 import com.example.modumessenger.chat.entity.Chat;
 import com.example.modumessenger.chat.entity.ChatRoom;
 import com.example.modumessenger.chat.repository.ChatRepository;
@@ -12,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,13 +30,19 @@ public class ChatService {
                 .collect(Collectors.toList());
     }
 
-    public ChatDto saveChat(ChatDto chatDto) {
+    public ChatDto searchChatById(String chatId) {
+        Long id = Long.parseLong(chatId);
+        Optional<Chat> chat = chatRepository.findById(id);
+        return modelMapper.map(chat, ChatDto.class);
+    }
+
+    public Long saveChat(ChatDto chatDto) {
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(chatDto.getRoomId());
         Chat chat = new Chat(chatDto);
         chat.setChatRoom(chatRoom);
         Chat saveChat = chatRepository.save(chat);
 
-        return modelMapper.map(saveChat, ChatDto.class);
+        return saveChat.getId();
     }
 
     public ChatDto searchChatByRoomIdAndChatId(String roomId, String chatId) {

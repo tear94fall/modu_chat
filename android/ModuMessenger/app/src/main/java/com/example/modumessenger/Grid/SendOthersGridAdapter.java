@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.example.modumessenger.Activity.ChatSendOthersActivity;
 import com.example.modumessenger.R;
 
 import java.util.ArrayList;
@@ -61,10 +62,8 @@ public class SendOthersGridAdapter extends BaseAdapter {
         return convertView;
     }
 
-    public void setGridItems(View view) {
-        setGridItem(new SendOthersGridItem("사진 전송", R.drawable.ic_baseline_image_24));
-        setGridItem(new SendOthersGridItem("파일 전송", R.drawable.ic_baseline_attach_file_24));
-        setGridItem(new SendOthersGridItem("음성 전송", R.drawable.ic_baseline_audio_file_24));
+    public void setGridItems(View view, List<ChatSendOthersActivity.SendOthers> sendOthersList) {
+        sendOthersList.forEach(sendOthers -> setGridItem(new SendOthersGridItem(sendOthers.getSendItemName(), sendOthers.getSendItemImage())));
     }
 
     public void setGridItem(SendOthersGridItem sendOthersGridItem) {

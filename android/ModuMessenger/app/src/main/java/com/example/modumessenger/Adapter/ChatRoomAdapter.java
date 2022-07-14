@@ -169,7 +169,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
         }
 
         public void setChatRoomLastTime(ChatRoom chatRoom) {
-            this.lastChatTime.setText(!chatRoom.getLastChatTime().equals("") ? getShortTime(chatRoom.getLastChatTime()) : "");
+            this.lastChatTime.setText(chatRoom.getLastChatTime().equals("") || chatRoom.getLastChatMsg().equals("") ? "" : getShortTime(chatRoom.getLastChatTime()));
         }
 
         public void setChatRoomImage(ChatRoom chatRoom) {

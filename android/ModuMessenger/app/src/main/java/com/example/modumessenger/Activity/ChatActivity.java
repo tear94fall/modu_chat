@@ -179,9 +179,6 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
                 if(message!=null){
                     webSocket.send(message);
-
-                    ChatBubble chatBubble = new ChatBubble(chatDto);
-                    chatHistoryAdapter.addChatMsg(chatBubble);
                     recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
 
                     inputMsgTextView.setText(null);
@@ -333,9 +330,6 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
         if(message!=null){
             webSocket.send(message);
-
-            ChatBubble chatBubble = new ChatBubble(chatDto);
-            chatHistoryAdapter.addChatMsg(chatBubble);
             recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
         } else {
             Toast.makeText(getApplicationContext(), "메세지 전송에 실패하였습니다.", Toast.LENGTH_SHORT).show();

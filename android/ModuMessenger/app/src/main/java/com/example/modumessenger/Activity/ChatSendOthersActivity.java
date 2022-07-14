@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -28,6 +29,9 @@ import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -44,6 +48,8 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
     GridView settingGridView;
     SendOthersGridAdapter sendOthersGridAdapter;
     String roomId;
+
+    List<SendOthers> sendOthersList;
 
     private ChatSendOthersBottomSheetListener mListener;
 
@@ -83,12 +89,13 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
 
     private void setData() {
         scopedStorageUtil = new ScopedStorageUtil();
+        sendOthersList = new ArrayList<>(Arrays.asList(SendOthers.SEND_OTHERS_GALLERY, SendOthers.SEND_OTHERS_CAMERA, SendOthers.SEND_OTHERS_FILE, SendOthers.SEND_OTHERS_AUDIO));
     }
 
     private void bindingView(View view) {
         settingGridView = view.findViewById(R.id.send_others_grid);
         sendOthersGridAdapter = new SendOthersGridAdapter(requireActivity());
-        sendOthersGridAdapter.setGridItems(view);
+        sendOthersGridAdapter.setGridItems(view, sendOthersList);
 
         settingGridView.setAdapter(sendOthersGridAdapter);
     }
@@ -98,17 +105,11 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
             SendOthersGridItem gridItem = sendOthersGridAdapter.getGridItem(position);
             Toast.makeText(requireActivity().getApplicationContext(), gridItem.getItemName(), Toast.LENGTH_SHORT).show();
 
-            if(position==0) {
-                Intent intent = new Intent();
-                intent.setType("image/*");
-                intent.setAction(Intent.ACTION_GET_CONTENT);
-                resultLauncher.launch(intent);
-            } else if(position == 2) {
-                Intent intent = new Intent();
-                intent.setType("image/*");
-                intent.setAction(Intent.ACTION_GET_CONTENT);
-                resultLauncher.launch(intent);
-            }
+            SendOthers sendOthers = this.sendOthersList.get(position);
+            Intent intent = new Intent();
+            intent.setAction(sendOthers.getSendItemAction());
+            intent.setType(sendOthers.getSendItemExtension() == null ? "*/*" : sendOthers.getSendItemExtension());
+            resultLauncher.launch(intent);
         });
     }
 
@@ -146,6 +147,30 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
         cursor.close();
 
         return fileName;
+    }
+
+    public enum SendOthers {
+        SEND_OTHERS_GALLERY("앨범", "image/*", Intent.ACTION_GET_CONTENT, R.drawable.ic_baseline_image_24),
+        SEND_OTHERS_CAMERA("카메라", null, MediaStore.ACTION_IMAGE_CAPTURE, R.drawable.ic_baseline_photo_camera_24),
+        SEND_OTHERS_FILE("파일", "*/*", Intent.ACTION_GET_CONTENT, R.drawable.ic_baseline_attach_file_24),
+        SEND_OTHERS_AUDIO("음성", "audio/*", Intent.ACTION_GET_CONTENT, R.drawable.ic_baseline_audio_file_24);
+
+        private final String sendItemName;
+        private final String sendItemExtension;
+        private final String sendItemAction;
+        private final int sendItemImage;
+
+        SendOthers(String sendItemName, String sendItemExtension, String sendItemAction, int sendItemImage) {
+            this.sendItemName = sendItemName;
+            this.sendItemExtension = sendItemExtension;
+            this.sendItemAction = sendItemAction;
+            this.sendItemImage = sendItemImage;
+        }
+
+        public String getSendItemName() { return sendItemName; }
+        public String getSendItemExtension() { return sendItemExtension; }
+        public String getSendItemAction() { return sendItemAction; }
+        public int getSendItemImage() { return sendItemImage; }
     }
 
     // Retrofit function

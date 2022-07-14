@@ -3,6 +3,7 @@ package com.example.modumessenger.chat.repository;
 import com.example.modumessenger.chat.entity.Chat;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 
 import java.util.List;
 
@@ -31,6 +32,13 @@ public class ChatRepositoryImpl implements ChatCustomRepository {
                 .fetchOne();
     }
 
+    @Override
+    public List<Chat> findByMessage(String roomId, String message) {
+        return queryFactory
+                .selectFrom(chat)
+                .where(chat.roomId.eq(roomId).and(chat.message.contains(message)))
+                .fetch();
+    }
 
     @Override
     public Long countAll() {

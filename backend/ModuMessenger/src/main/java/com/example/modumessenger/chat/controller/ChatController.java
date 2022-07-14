@@ -29,4 +29,10 @@ public class ChatController {
         ChatDto chatDto = chatService.searchChatByRoomIdAndChatId(roomId, chatId);
         return ResponseEntity.ok().body(chatDto);
     }
+
+    @GetMapping("/chat/{roomId}/chat")
+    public ResponseEntity<List<ChatDto>> getChatByMessage(@Valid @PathVariable("roomId") String roomId, @Valid @RequestParam String message) {
+        List<ChatDto> chatDtoList = chatService.searchChatByMessage(roomId, message);
+        return ResponseEntity.ok().body(chatDtoList);
+    }
 }

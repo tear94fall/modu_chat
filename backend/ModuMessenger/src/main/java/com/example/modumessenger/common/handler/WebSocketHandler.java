@@ -88,20 +88,6 @@ public class WebSocketHandler extends TextWebSocketHandler implements MessageLis
 
         ChannelTopic channel = new ChannelTopic(CHAT_MESSAGING_TOPIC_NAME);
         messagingPublisher.publish(channel, chatMessage);
-
-//        chatRoomDto.getMembers().forEach(member -> {
-//            String userId = member.getUserId();
-//            if(!sender.getUserId().equals(userId)) {
-//                WebSocketSession s = CLIENTS.get(userId);
-//                if (s != null) {
-//                    try {
-//                        s.sendMessage(message);
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-//        });
     }
 
     @Override

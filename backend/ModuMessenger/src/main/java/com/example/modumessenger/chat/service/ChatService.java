@@ -30,6 +30,14 @@ public class ChatService {
                 .collect(Collectors.toList());
     }
 
+    public List<ChatDto> searchChatByMessage(String roomId, String message) {
+        List<Chat> chatList = chatRepository.findByMessage(roomId, message);
+        return chatList
+                .stream()
+                .map(c -> modelMapper.map(c, ChatDto.class))
+                .collect(Collectors.toList());
+    }
+
     public ChatDto searchChatById(String chatId) {
         Long id = Long.parseLong(chatId);
         Optional<Chat> chat = chatRepository.findById(id);

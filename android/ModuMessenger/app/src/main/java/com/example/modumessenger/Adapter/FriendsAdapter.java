@@ -100,6 +100,7 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.MyViewHo
         public void setUserClickEvent(MemberDto member) {
             this.cardViewLayout.setOnClickListener(v -> {
                 Intent intent = new Intent(v.getContext(), ProfileActivity.class);
+                intent.putExtra("email", member.getEmail());
                 intent.putExtra("userId", member.getUserId());
                 intent.putExtra("username", member.getUsername());
                 intent.putExtra("statusMessage", member.getStatusMessage());

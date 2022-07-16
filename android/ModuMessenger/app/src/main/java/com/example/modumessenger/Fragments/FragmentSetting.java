@@ -106,6 +106,7 @@ public class FragmentSetting extends Fragment {
     private void setButtonClickEvent() {
         setting_my_profile_card_view.setOnClickListener(view -> {
             Intent intent = new Intent(view.getContext(), ProfileActivity.class);
+            intent.putExtra("email", myInfo.getEmail());
             intent.putExtra("userId", myInfo.getUserId());
             intent.putExtra("username", myInfo.getUsername());
             intent.putExtra("statusMessage", myInfo.getStatusMessage());

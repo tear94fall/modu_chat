@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.GestureDetector;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -32,12 +31,12 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class ProfileActivity extends AppCompatActivity implements View.OnTouchListener{
+public class ProfileActivity extends AppCompatActivity {
 
     ImageView profileImageView;
     TextView usernameTextView, statusMessageTextView;
     Button profileEditButton, profileCloseButton, startChatButton;
-    String userId, username, statusMessage, profileImage;
+    String email, userId, username, statusMessage, profileImage;
     GestureDetector gestureDetector;
 
     @Override
@@ -74,7 +73,8 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
                     Log.d("Swipe Down", "onSwipe: down");
                     finish();
                 }
-                return true;
+
+                return false;
             }
         });
     }
@@ -97,6 +97,7 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
     private void getData() {
         if(getIntentExtra("profileImage") && getIntentExtra("username") && getIntentExtra("statusMessage"))
         {
+            email = getIntent().getStringExtra("email");
             userId = getIntent().getStringExtra("userId");
             username = getIntent().getStringExtra("username");
             statusMessage = getIntent().getStringExtra("statusMessage");
@@ -123,7 +124,17 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
 
     @SuppressLint("ClickableViewAccessibility")
     private void setButtonClickEvent() {
-        profileImageView.setOnTouchListener(this);
+        profileImageView.setOnTouchListener((v, event) -> {
+            gestureDetector.onTouchEvent(event);
+            return false;
+        });
+
+        profileImageView.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
+            intent.putExtra("email", email);
+            intent.putExtra("userId", userId);
+            startActivity(intent);
+        });
 
         profileEditButton.setOnClickListener(v -> {
             Intent intent = new Intent(v.getContext(), ProfileEditActivity.class);
@@ -165,14 +176,6 @@ public class ProfileActivity extends AppCompatActivity implements View.OnTouchLi
 
     private void setImageOnView(ImageView view, int value) {
         view.setImageResource(value);
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    @Override
-    public boolean onTouch(View v, MotionEvent event) {
-        Log.d(event.toString(), "onTouch: ");
-        gestureDetector.onTouchEvent(event);
-        return true;
     }
 
     // Retrofit function

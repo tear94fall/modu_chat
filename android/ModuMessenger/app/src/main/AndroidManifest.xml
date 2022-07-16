@@ -27,6 +27,7 @@
         <activity android:name=".Activity.FindFriendsActivity" />
         <activity android:name=".Activity.SetupActivity" />
         <activity android:name=".Activity.NotificationActivity" />
+        <activity android:name=".Activity.ProfileImageActivity" />
 
         <activity
             android:name=".Activity.SplashActivity"

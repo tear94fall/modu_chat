@@ -1,5 +1,6 @@
 package com.example.modumessenger.Activity;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -48,6 +49,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -69,7 +71,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
     List<Member> chatMemberList;
     List<ChatBubble> chatBubbleList;
-    int chatBubbleCount;
+    int pagingSize = 20;
 
     RecyclerView recyclerView;
     LinearLayoutManager manager;
@@ -203,8 +205,10 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 super.onScrolled(recyclerView, dx, dy);
 
                 if(!recyclerView.canScrollVertically(-1)) {
-                    Toast.makeText(getApplicationContext(), "마지막 채팅 입니다.", Toast.LENGTH_SHORT).show();
-                    // get prev chats;
+                    ChatBubble lastChat = chatBubbleList.get(0);
+                    if(chatBubbleList.size() >= pagingSize) {
+                        getPrevChatList(lastChat.getRoomId(), lastChat.getId().toString(), pagingSize);
+                    }
                 }
             }
         });
@@ -465,7 +469,11 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 client.dispatcher().executorService().shutdown();
 
                 if(roomInfo!=null) {
-                    getChatList(roomInfo);
+                    if(roomInfo.getLastChatId() != null && !roomInfo.getLastChatId().equals("")) {
+                        getLastChatList(roomInfo.getRoomId(), Long.toString(Long.parseLong(roomInfo.getLastChatId()) + 1), pagingSize);
+                    } else {
+                        getChatList(roomInfo);
+                    }
                 }
             }
 
@@ -521,7 +529,6 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 List<ChatDto> chatHistory = response.body();
                 assert chatHistory != null;
                 chatHistory.forEach(c-> chatBubbleList.add(new ChatBubble(c)));
-                chatBubbleCount = chatBubbleList.size();
 
                 chatHistoryAdapter = new ChatHistoryAdapter(chatBubbleList, chatMemberList);
                 recyclerView.setAdapter(chatHistoryAdapter);
@@ -530,6 +537,65 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 setNavMember();
 
                 Log.d("채팅 내역 가져오기 요청 : ", chatRoom.getRoomId());
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<ChatDto>> call, @NonNull Throwable t) {
+                Log.e("연결실패", t.getMessage());
+            }
+        });
+    }
+
+    public void getLastChatList(String roomId, String chatId, int size) {
+        Call<List<ChatDto>> call = RetrofitClient.getChatApiService().RequestPrevChatList(roomId, chatId, Integer.toString(size));
+
+        call.enqueue(new Callback<List<ChatDto>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<ChatDto>> call, @NonNull Response<List<ChatDto>> response) {
+                if(!response.isSuccessful()){
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                    return;
+                }
+
+                List<ChatDto> chatDtoList = response.body();
+                assert chatDtoList != null;
+                chatDtoList.forEach(c -> chatBubbleList.add(0, new ChatBubble(c)));
+
+                chatHistoryAdapter = new ChatHistoryAdapter(chatBubbleList, chatMemberList);
+                recyclerView.setAdapter(chatHistoryAdapter);
+                recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
+
+                Log.d("채팅 내역 가져오기 요청 : ", roomId);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<ChatDto>> call, @NonNull Throwable t) {
+                Log.e("연결실패", t.getMessage());
+            }
+        });
+    }
+
+    public void getPrevChatList(String roomId, String chatId, int size) {
+        Call<List<ChatDto>> call = RetrofitClient.getChatApiService().RequestPrevChatList(roomId, chatId, Integer.toString(size));
+
+        call.enqueue(new Callback<List<ChatDto>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<ChatDto>> call, @NonNull Response<List<ChatDto>> response) {
+                if(!response.isSuccessful()){
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                    return;
+                }
+
+                List<ChatDto> chatDtoList = response.body();
+                assert chatDtoList != null;
+                List<ChatBubble> prevChatList = chatDtoList.stream().map(ChatBubble::new).collect(Collectors.toList());
+                chatHistoryAdapter.addChatMsgFront(prevChatList);
+
+                LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                int lastCompletelyVisibleItemPosition = linearLayoutManager != null ? linearLayoutManager.findLastCompletelyVisibleItemPosition() : prevChatList.size();
+                recyclerView.scrollToPosition(prevChatList.size() + lastCompletelyVisibleItemPosition);
+
+                Log.d("채팅 내역 가져오기 요청 : ", roomId);
             }
 
             @Override

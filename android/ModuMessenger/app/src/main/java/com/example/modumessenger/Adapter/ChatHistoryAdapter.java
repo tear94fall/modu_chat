@@ -48,7 +48,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public ChatHistoryAdapter(List<ChatBubble> chatList, List<Member> memberList) {
         this.memberList = (memberList == null || memberList.size() == 0) ? new ArrayList<>() : memberList;
-        this.chatList = (chatList == null || chatList.size() == 0) ? new ArrayList<>() : chatList;
+        this.chatList = chatList;
         userId = PreferenceManager.getString("userId");
         sortChatBubble();
     }
@@ -209,6 +209,21 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     @SuppressLint("NotifyDataSetChanged")
     public void addChatMsg(ChatBubble chatBubble) {
         this.chatList.add(chatBubble);
+        notifyDataSetChanged();
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    public void addChatMsgBack(List<ChatBubble> chatList) {
+        this.chatList.addAll(chatList);
+        notifyDataSetChanged();
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    public void addChatMsgFront(List<ChatBubble> chatList) {
+        chatList.forEach(chatBubble -> {
+            this.chatList.add(0, chatBubble);
+        });
+
         notifyDataSetChanged();
     }
 

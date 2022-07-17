@@ -3,7 +3,7 @@ package com.example.modumessenger.chat.repository;
 import com.example.modumessenger.chat.entity.Chat;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -41,10 +41,23 @@ public class ChatRepositoryImpl implements ChatCustomRepository {
     }
 
     @Override
-    public Long countAll() {
+    public List<Chat> findByRoomIdPaging(String roomId, Pageable pageable) {
         return queryFactory
-                .select(chat.count())
-                .from(chat)
-                .fetchOne();
+                .selectFrom(chat)
+                .where(chat.roomId.eq(roomId))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .orderBy(chat.chatTime.desc())
+                .fetch();
+    }
+
+    @Override
+    public List<Chat> findByRoomIdAndChatId(String roomId, Long chatId, Long size) {
+        return queryFactory
+                .selectFrom(chat)
+                .where(chat.roomId.eq(roomId).and(chat.id.lt(chatId)))
+                .limit(size)
+                .orderBy(chat.chatTime.desc())
+                .fetch();
     }
 }

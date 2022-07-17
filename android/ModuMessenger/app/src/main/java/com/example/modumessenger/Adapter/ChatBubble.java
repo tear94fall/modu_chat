@@ -4,6 +4,7 @@ import com.example.modumessenger.dto.ChatDto;
 
 // Sample Chat
 public class ChatBubble {
+    private Long id;
     private String roomId;
     private String chatMsg;
     private String chatTime;
@@ -19,6 +20,7 @@ public class ChatBubble {
     }
 
     public ChatBubble(ChatDto chatDto) {
+        id = chatDto.getId();
         roomId = chatDto.getRoomId();
         chatMsg = chatDto.getMessage();
         chatType = chatDto.getChatType();
@@ -26,12 +28,14 @@ public class ChatBubble {
         sender = chatDto.getSender();
     }
 
+    public Long getId() { return this.id; }
     public String getRoomId() { return this.roomId; }
     public String getChatMsg() { return this.chatMsg; }
     public String getChatTime() { return this.chatTime; }
     public String getSender() { return this.sender; }
     public int getChatType() { return this.chatType; }
 
+    public void setId(Long id) { this.id = id; }
     public void setRoomId(String roomId) { this.roomId = roomId; }
     public void setChatMsg(String msg) { this.chatMsg = msg; }
     public void setChatTime(String time) { this.chatTime = time; }

@@ -63,7 +63,7 @@ public class ChatRoomService {
         List<Member> members = memberRepository.findAllByUserIds(userId);
 
         String chatRoomCreateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        ChatRoom chatRoom = new ChatRoom(UUID.randomUUID().toString(), "새로운 채팅방", "", "", chatRoomCreateTime);
+        ChatRoom chatRoom = new ChatRoom(UUID.randomUUID().toString(), "새로운 채팅방", "", "", "", chatRoomCreateTime);
 
         List<ChatRoomMember> chatRoomMemberList = members.stream()
                         .map(member -> {
@@ -100,6 +100,7 @@ public class ChatRoomService {
         findChatRoom.setRoomName(chatRoomDto.getRoomName());
         findChatRoom.setRoomImage(chatRoomDto.getRoomImage());
         findChatRoom.setLastChatMsg(chatRoomDto.getLastChatMsg());
+        findChatRoom.setLastChatId(chatRoomDto.getLastChatId());
         findChatRoom.setLastChatTime(chatRoomDto.getLastChatTime());
 
         ChatRoom updateChatRoom = chatRoomRepository.save(findChatRoom);

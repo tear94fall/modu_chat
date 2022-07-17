@@ -7,6 +7,7 @@ import com.example.modumessenger.chat.repository.ChatRepository;
 import com.example.modumessenger.chat.repository.ChatRoomRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,22 @@ public class ChatService {
 
     public List<ChatDto> searchChatByRoomId(String roomId) {
         List<Chat> chatList = chatRepository.findAllByRoomId(roomId);
+        return chatList
+                .stream()
+                .map(c -> modelMapper.map(c, ChatDto.class))
+                .collect(Collectors.toList());
+    }
+
+    public List<ChatDto> searchPrevChatByRoomId(String roomId, String chatId, String size) {
+        List<Chat> chatList = chatRepository.findByRoomIdAndChatId(roomId, Long.parseLong(chatId), Long.parseLong(size));
+        return chatList
+                .stream()
+                .map(c -> modelMapper.map(c, ChatDto.class))
+                .collect(Collectors.toList());
+    }
+
+    public List<ChatDto> searchChatByRoomIdPaging(String roomId, Pageable pageable) {
+        List<Chat> chatList = chatRepository.findByRoomIdPaging(roomId, pageable);
         return chatList
                 .stream()
                 .map(c -> modelMapper.map(c, ChatDto.class))
@@ -57,5 +74,10 @@ public class ChatService {
         Long id = Long.parseLong(chatId);
         Chat chat = chatRepository.findByRoomIdAndChatId(roomId, id);
         return modelMapper.map(chat, ChatDto.class);
+    }
+
+    public String searchChatCount(String roomId) {
+        Long id = chatRepository.countByRoomId(roomId);
+        return id.toString();
     }
 }

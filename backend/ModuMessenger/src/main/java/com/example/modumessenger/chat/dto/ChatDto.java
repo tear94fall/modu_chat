@@ -1,7 +1,5 @@
 package com.example.modumessenger.chat.dto;
 
-import com.example.modumessenger.chat.entity.Chat;
-import com.example.modumessenger.chat.entity.ChatRoom;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,6 +12,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ChatDto implements Serializable {
+    private Long id;
     private int chatType;
     private String roomId;
     private String sender;

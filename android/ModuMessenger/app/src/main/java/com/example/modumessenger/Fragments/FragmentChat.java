@@ -8,6 +8,8 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.PopupMenu;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -35,10 +37,7 @@ import retrofit2.Response;
 public class FragmentChat extends Fragment {
 
     RecyclerView chatRecyclerView;
-    RecyclerView.LayoutManager chatLayoutManager;
-
     List<ChatRoom> chatRoomList;
-
     FloatingActionButton chatFloatingActionButton;
 
     @Override
@@ -55,21 +54,10 @@ public class FragmentChat extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        chatRoomList = new ArrayList<>();
-
-        chatRecyclerView = view.findViewById(R.id.chat_recycler_view);
-        chatRecyclerView.setHasFixedSize(true);
-
-        chatLayoutManager = new LinearLayoutManager(getActivity());
-        chatRecyclerView.setLayoutManager(chatLayoutManager);
-        chatRecyclerView.scrollToPosition(0);
-
-        chatFloatingActionButton = view.findViewById(R.id.chatFloatingActionButton);
-
-        chatFloatingActionButton.setOnClickListener(v -> {
-            Intent intent = new Intent(v.getContext(), CreateRoomActivity.class);
-            v.getContext().startActivity(intent);
-        });
+        bindingView(view);
+        getData();
+        setData();
+        setButtonClickEvent();
     }
 
     @Override
@@ -78,10 +66,7 @@ public class FragmentChat extends Fragment {
         Log.e("DEBUG", "onResume of FragmentFriends");
 
         requireActivity().invalidateOptionsMenu();
-
-        Member member = new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email"));
-
-        getChatRoomList(member);
+        getChatRoomList(new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
     }
 
     @Override
@@ -100,6 +85,48 @@ public class FragmentChat extends Fragment {
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         inflater.inflate(R.menu.menu_friends_list, menu);
+    }
+
+    private void bindingView(View view) {
+        chatRecyclerView = view.findViewById(R.id.chat_recycler_view);
+        chatRecyclerView.setHasFixedSize(true);
+        chatRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        chatRecyclerView.scrollToPosition(0);
+
+        chatFloatingActionButton = view.findViewById(R.id.chatFloatingActionButton);
+    }
+
+    private void getData() {
+
+    }
+
+    private void setData() {
+        chatRoomList = new ArrayList<>();
+    }
+
+    private void setButtonClickEvent() {
+        chatFloatingActionButton.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), CreateRoomActivity.class);
+            v.getContext().startActivity(intent);
+        });
+    }
+
+    public void showChatRoomPopupMenu(View view, ChatRoom chatRoom) {
+        PopupMenu popupMenu = new PopupMenu(requireContext(), view);
+        requireActivity().getMenuInflater().inflate(R.menu.menu_chatroom_popup,popupMenu.getMenu());
+        popupMenu.setOnMenuItemClickListener(menuItem -> {
+            if (menuItem.getItemId() == R.id.chat_room_exit_menu){
+                Toast.makeText(requireContext(), "채팅방 나가기 :  " + chatRoom.getRoomId(), Toast.LENGTH_SHORT).show();
+            }else if (menuItem.getItemId() == R.id.chat_room_enter_menu){
+                Toast.makeText(requireContext(), "채팅방에 입장하기", Toast.LENGTH_SHORT).show();
+            }else {
+                Toast.makeText(requireContext(), "채팅방 클릭", Toast.LENGTH_SHORT).show();
+            }
+
+            return false;
+        });
+
+        popupMenu.show();
     }
 
     // Retrofit function
@@ -123,7 +150,7 @@ public class FragmentChat extends Fragment {
                     chatRoomList.add(new ChatRoom(c));
                 });
 
-                chatRecyclerView.setAdapter(new ChatRoomAdapter(chatRoomList));
+                chatRecyclerView.setAdapter(new ChatRoomAdapter(chatRoomList, FragmentChat.this));
 
                 Log.d("채팅방 목록 가져오기 요청 : ", response.body().toString());
             }

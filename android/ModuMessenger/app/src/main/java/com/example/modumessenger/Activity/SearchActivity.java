@@ -24,11 +24,9 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class SearchActivity extends AppCompatActivity {
-    private static SearchActivity instance;
 
     SearchView searchView;
     RecyclerView findFriendRecyclerView;
-    RecyclerView.LayoutManager findFriendLayoutManager;
     SearchFriendsAdapter searchFriendsAdapter;
     List<MemberDto> searchMemberList;
 
@@ -37,20 +35,34 @@ public class SearchActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
 
-        instance = this;
+        bindingView();
+        getData();
+        setData();
+        setButtonClickEvent();
+    }
+
+    private void bindingView() {
         setTitle("친구 추가");
 
-        findFriendRecyclerView = (RecyclerView) findViewById(R.id.friend_search_recycler_view);
+        findFriendRecyclerView = findViewById(R.id.friend_search_recycler_view);
         findFriendRecyclerView.setHasFixedSize(true);
-
-        findFriendLayoutManager = new LinearLayoutManager(this);
-        findFriendRecyclerView.setLayoutManager(findFriendLayoutManager);
+        findFriendRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         findFriendRecyclerView.scrollToPosition(0);
 
         searchView = findViewById(R.id.friends_search_view);
         searchView.setMaxWidth(Integer.MAX_VALUE);
         searchView.setSubmitButtonEnabled(true);
+    }
 
+    private void getData() {
+
+    }
+
+    private void setData() {
+
+    }
+
+    private void setButtonClickEvent() {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener(){
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -72,10 +84,6 @@ public class SearchActivity extends AppCompatActivity {
                 return true;
             }
         });
-    }
-
-    public static SearchActivity getInstance() {
-        return instance;
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -103,6 +111,7 @@ public class SearchActivity extends AppCompatActivity {
                 }
 
                 try {
+                    assert response.body() != null;
                     Log.d("친구 검색 요청 : ", response.body().toString());
                     Toast.makeText(getApplicationContext(), email + " 을 검색하였습니다.", Toast.LENGTH_SHORT).show();
 

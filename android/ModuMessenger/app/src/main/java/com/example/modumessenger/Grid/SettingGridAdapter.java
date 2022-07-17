@@ -2,6 +2,7 @@ package com.example.modumessenger.Grid;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +12,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.example.modumessenger.Activity.AppInfoActivity;
+import com.example.modumessenger.Activity.NotificationActivity;
+import com.example.modumessenger.Activity.SetupActivity;
 import com.example.modumessenger.R;
 
 import java.util.ArrayList;
@@ -59,23 +63,18 @@ public class SettingGridAdapter extends BaseAdapter {
                         .into(itemImageView))
                 .into(itemImageView);
 
-        itemImageView.setOnClickListener(v -> {
-            String itemName = settingGridItem.getItemName();
-            Toast.makeText(context, itemName, Toast.LENGTH_SHORT).show();
-        });
-
         return convertView;
     }
 
-    public void setGridItems() {
-        setGridItem(new SettingGridItem("버전정보", R.drawable.ic_baseline_info_24));
-        setGridItem(new SettingGridItem("공지사항", R.drawable.ic_baseline_celebration_24));
-        setGridItem(new SettingGridItem("백업", R.drawable.ic_baseline_cloud_download_24));
-        setGridItem(new SettingGridItem("설정", R.drawable.ic_baseline_settings_24_grey));
-        setGridItem(new SettingGridItem("테마", R.drawable.ic_baseline_color_lens_24));
-        setGridItem(new SettingGridItem("즐겨찾기", R.drawable.ic_baseline_person_24));
-        setGridItem(new SettingGridItem("숨긴친구", R.drawable.ic_baseline_person_outline_24));
-        setGridItem(new SettingGridItem("차단친구", R.drawable.ic_baseline_person_off_24));
+    public void setGridItems(View view) {
+        setGridItem(new SettingGridItem(new Intent(view.getContext(), AppInfoActivity.class), "버전정보", R.drawable.ic_baseline_info_24));
+        setGridItem(new SettingGridItem(new Intent(view.getContext(), NotificationActivity.class), "공지사항", R.drawable.ic_baseline_celebration_24));
+        setGridItem(new SettingGridItem(null, "백업", R.drawable.ic_baseline_cloud_download_24));
+        setGridItem(new SettingGridItem(new Intent(view.getContext(), SetupActivity.class), "설정", R.drawable.ic_baseline_settings_24_grey));
+        setGridItem(new SettingGridItem(null, "테마", R.drawable.ic_baseline_color_lens_24));
+        setGridItem(new SettingGridItem(null, "즐겨찾기", R.drawable.ic_baseline_person_24));
+        setGridItem(new SettingGridItem(null, "숨긴친구", R.drawable.ic_baseline_person_outline_24));
+        setGridItem(new SettingGridItem(null, "차단친구", R.drawable.ic_baseline_person_off_24));
     }
 
     public void setGridItem(SettingGridItem settingGridItem) {

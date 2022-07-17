@@ -1,5 +1,6 @@
 package com.example.modumessenger.Activity;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -27,10 +28,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class CreateRoomActivity extends AppCompatActivity {
-    private static CreateRoomActivity instance;
-
     RecyclerView addChatRecyclerView;
-    RecyclerView.LayoutManager addChatLayoutManager;
     CreateRoomAdapter createRoomAdapter;
 
     Button inviteButton;
@@ -38,41 +36,51 @@ public class CreateRoomActivity extends AppCompatActivity {
     List<String> addChatList;
     List<MemberDto> friendsList;
 
+    Member member;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_room);
 
-        instance = this;
+        bindingView();
+        getData();
+        setData();
+        setButtonClickEvent();
+    }
+
+    private void bindingView() {
         setTitle("채팅방 만들기");
 
-        addChatRecyclerView = (RecyclerView) findViewById(R.id.create_chatroom_recycler_view);
+        addChatRecyclerView = findViewById(R.id.create_chatroom_recycler_view);
         addChatRecyclerView.setHasFixedSize(true);
-
-        addChatLayoutManager = new LinearLayoutManager(this);
-        addChatRecyclerView.setLayoutManager(addChatLayoutManager);
+        addChatRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         addChatRecyclerView.scrollToPosition(0);
 
-        Member member = new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email"));
-
-        getFriendsList(member);
-
-        addChatList = new ArrayList<>();
-
         inviteButton = findViewById(R.id.create_chatroom_button);
+    }
+
+    private void getData() {
+        member = new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email"));
+        getFriendsList(member);
+    }
+
+    private void setData() {
+        addChatList = new ArrayList<>();
+    }
+
+    private void setButtonClickEvent() {
         inviteButton.setOnClickListener(v -> {
             if (addChatList.size()!=0) {
                 Toast.makeText(getApplicationContext(), "채팅방을 생성합니다.", Toast.LENGTH_SHORT).show();
                 addChatList.add(member.getUserId());
+                // exist chat room
+                // if not, create chat room
                 createChatRoom(addChatList);
             } else {
                 Toast.makeText(getApplicationContext(), "추가할 친구가 없습니다.", Toast.LENGTH_SHORT).show();
             }
         });
-    }
-
-    public static CreateRoomActivity getInstance() {
-        return instance;
     }
 
     public void addUserIdOnAddChatList(String userId) {

@@ -1,10 +1,7 @@
 package com.example.modumessenger.chat.controller;
 
-import com.example.modumessenger.chat.dto.ChatDto;
 import com.example.modumessenger.chat.dto.ChatRoomDto;
 import com.example.modumessenger.chat.service.ChatRoomService;
-import com.example.modumessenger.chat.service.ChatService;
-import com.example.modumessenger.member.dto.MemberDto;
 import com.example.modumessenger.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -47,5 +44,17 @@ public class ChatRoomController {
     public ResponseEntity<ChatRoomDto> updateChatRoom(@Valid @PathVariable("roomId") String roomId, @RequestBody ChatRoomDto requestChatRoomDto) {
         ChatRoomDto chatRoomDto = chatRoomService.updateChatRoom(roomId, requestChatRoomDto);
         return ResponseEntity.ok().body(chatRoomDto);
+    }
+
+    @PostMapping("/chat/{roomId}/member")
+    public ResponseEntity<ChatRoomDto> addMemberChatRoom(@Valid @PathVariable String roomId, @RequestBody List<String> userIds) {
+        ChatRoomDto chatRoomDto = chatRoomService.addMemberChatRoom(roomId, userIds);
+        return ResponseEntity.ok().body(chatRoomDto);
+    }
+
+    @PostMapping("/chat/room/{userId}")
+    public ResponseEntity<List<ChatRoomDto>> getOneOnOneChatRoom(@PathVariable("userId") String userId, @Valid @RequestBody String roomUserId) {
+        List<ChatRoomDto> chatRoomDtoList = chatRoomService.searchOneOnOneChatRoom(userId, roomUserId);
+        return ResponseEntity.ok().body(chatRoomDtoList);
     }
 }

@@ -1,5 +1,6 @@
 package com.example.modumessenger.Adapter;
 
+import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,7 +32,7 @@ public class CreateRoomAdapter extends RecyclerView.Adapter<CreateRoomAdapter.Ad
     public CreateRoomAdapter.AddChatViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.friend_invite_row, parent, false);
-        return new CreateRoomAdapter.AddChatViewHolder(view);
+        return new CreateRoomAdapter.AddChatViewHolder(parent.getContext(), view);
     }
 
     @Override
@@ -49,7 +50,7 @@ public class CreateRoomAdapter extends RecyclerView.Adapter<CreateRoomAdapter.Ad
     }
 
     public static class AddChatViewHolder extends RecyclerView.ViewHolder {
-        CreateRoomActivity addChatActivity;
+        Context context;
 
         TextView username;
         TextView statusMessage;
@@ -57,9 +58,9 @@ public class CreateRoomAdapter extends RecyclerView.Adapter<CreateRoomAdapter.Ad
         CheckBox addCHatCheck;
         ConstraintLayout addChatCardViewLayout;
 
-        public AddChatViewHolder(@NonNull View itemView) {
+        public AddChatViewHolder(Context context, @NonNull View itemView) {
             super(itemView);
-            addChatActivity = CreateRoomActivity.getInstance();
+            this.context = context;
 
             username = itemView.findViewById(R.id.add_user_name);
             statusMessage = itemView.findViewById(R.id.add_status_message);
@@ -82,6 +83,8 @@ public class CreateRoomAdapter extends RecyclerView.Adapter<CreateRoomAdapter.Ad
         public void setUserClickEvent(MemberDto member) {
             this.addChatCardViewLayout.setOnClickListener(v -> {
                 Intent intent = new Intent(v.getContext(), ProfileActivity.class);
+                intent.putExtra("email", member.getEmail());
+                intent.putExtra("userId", member.getUserId());
                 intent.putExtra("username", member.getUsername());
                 intent.putExtra("statusMessage", member.getStatusMessage());
                 intent.putExtra("profileImage", member.getProfileImage());
@@ -95,9 +98,9 @@ public class CreateRoomAdapter extends RecyclerView.Adapter<CreateRoomAdapter.Ad
                 boolean checked = ((CheckBox) view).isChecked();
 
                 if(checked) {
-                    addChatActivity.addUserIdOnAddChatList(member.getUserId());
+                    ((CreateRoomActivity) this.context).addUserIdOnAddChatList(member.getUserId());
                 } else {
-                    addChatActivity.removeUserIdOnAddChatList(member.getUserId());
+                    ((CreateRoomActivity) this.context).removeUserIdOnAddChatList(member.getUserId());
                 }
             });
         }

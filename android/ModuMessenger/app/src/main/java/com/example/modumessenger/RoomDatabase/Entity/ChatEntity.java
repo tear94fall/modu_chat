@@ -43,7 +43,7 @@ public class ChatEntity {
         setRoomId(chatBubble.getRoomId());
         setSender(chatBubble.getSender());
         setChatTime(chatBubble.getChatTime());
-        setChatType(chatBubble.getViewType());
+        setChatType(chatBubble.getChatType());
     }
 
     public ChatEntity(ChatDto chatDto) {

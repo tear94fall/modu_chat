@@ -1,5 +1,6 @@
 package com.example.modumessenger.Adapter;
 
+import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,7 +33,7 @@ public class SearchFriendsAdapter extends RecyclerView.Adapter<SearchFriendsAdap
     public SearchFriendsViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.friend_search_row, parent, false);
-        return new SearchFriendsViewHolder(view);
+        return new SearchFriendsViewHolder(parent.getContext(), view);
     }
 
     @Override
@@ -60,7 +61,7 @@ public class SearchFriendsAdapter extends RecyclerView.Adapter<SearchFriendsAdap
     }
 
     public static class SearchFriendsViewHolder extends RecyclerView.ViewHolder {
-        SearchActivity searchActivity;
+        Context context;
 
         TextView username;
         TextView statusMessage;
@@ -68,10 +69,10 @@ public class SearchFriendsAdapter extends RecyclerView.Adapter<SearchFriendsAdap
         Button addFriendsButton;
         ConstraintLayout cardViewLayout;
 
-        public SearchFriendsViewHolder(@NonNull View itemView) {
+        public SearchFriendsViewHolder(Context context, @NonNull View itemView) {
             super(itemView);
-            searchActivity = SearchActivity.getInstance();
 
+            this.context = context;
             username = itemView.findViewById(R.id.search_user_name);
             statusMessage = itemView.findViewById(R.id.search_status_message);
             profileImage = itemView.findViewById(R.id.search_profile_image);
@@ -93,6 +94,8 @@ public class SearchFriendsAdapter extends RecyclerView.Adapter<SearchFriendsAdap
         public void setUserClickEvent(MemberDto member) {
             this.cardViewLayout.setOnClickListener(v -> {
                 Intent intent = new Intent(v.getContext(), ProfileActivity.class);
+                intent.putExtra("email", member.getEmail());
+                intent.putExtra("userId", member.getUserId());
                 intent.putExtra("username", member.getUsername());
                 intent.putExtra("statusMessage", member.getStatusMessage());
                 intent.putExtra("profileImage", member.getProfileImage());
@@ -103,7 +106,7 @@ public class SearchFriendsAdapter extends RecyclerView.Adapter<SearchFriendsAdap
 
         public void setAddFriendsButton(MemberDto member) {
             this.addFriendsButton.setOnClickListener(view -> {
-                searchActivity.addFriendByEmail(member);
+                ((SearchActivity) this.context).addFriendByEmail(member);
                 this.addFriendsButton.setVisibility(View.INVISIBLE);
             });
         }

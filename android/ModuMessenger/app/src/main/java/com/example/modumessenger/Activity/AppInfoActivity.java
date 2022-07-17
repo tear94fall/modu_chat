@@ -1,9 +1,9 @@
 package com.example.modumessenger.Activity;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,9 +19,11 @@ import retrofit2.Response;
 
 public class AppInfoActivity extends AppCompatActivity {
 
-    TextView serverVersionTextView, appVersionTextView;
+    private final static String version = "version";
 
-    String serverVersion, appVersion;
+    TextView serverVersionTextView, appVersionTextView, osVersionTextView;
+
+    String serverVersion, appVersion, osVersion;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,24 +40,27 @@ public class AppInfoActivity extends AppCompatActivity {
         setTitle("버전 정보");
         serverVersionTextView = findViewById(R.id.serverVersionTextView);
         appVersionTextView = findViewById(R.id.appVersionTextView);
+        osVersionTextView = findViewById(R.id.osVersionTextView);
     }
 
     private void getData() {
-        getCommonData("version");
+        getVersion();
         appVersion = AppInfoUtil.getVersion(this);
+        osVersion = Build.VERSION.RELEASE;
     }
 
     private void setData() {
         if(serverVersion != null && !serverVersion.equals("")) { serverVersionTextView.setText("서버 버전 : " + serverVersion); }
         if(appVersion != null && !appVersion.equals("")) { appVersionTextView.setText("앱 버전 : " + appVersion); }
+        if(osVersion != null && !osVersion.equals("")) { osVersionTextView.setText("os 버전 : 안드로이드 " + osVersion); }
     }
 
     private void setButtonClickEvent() {
     }
 
     // Retrofit function
-    public void getCommonData(String dataKey) {
-        Call<CommonData> call = RetrofitClient.getCommonApiService().RequestCommonData(dataKey);
+    public void getVersion() {
+        Call<CommonData> call = RetrofitClient.getCommonApiService().RequestCommonData("version");
 
         call.enqueue(new Callback<CommonData>() {
             @Override
@@ -74,11 +79,10 @@ public class AppInfoActivity extends AppCompatActivity {
                     String key = commonData.getKey();
                     String value = commonData.getValue();
 
-                    if(dataKey.equals(key) && value != null && !value.equals("")) {
+                    if(key.equals(version) && value != null && !value.equals("")) {
                         serverVersion = value;
                         serverVersionTextView.setText("서버 버전 : " + serverVersion);
                     }
-
 
                 } catch (Exception e) {
                     Log.e("오류 발생 : ", e.getMessage());

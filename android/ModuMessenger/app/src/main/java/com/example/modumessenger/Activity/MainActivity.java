@@ -4,22 +4,12 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.fragment.app.FragmentStatePagerAdapter;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.Lifecycle;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.os.Bundle;
-import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewTreeObserver;
-import android.widget.Toast;
 
 import com.example.modumessenger.Fragments.FragmentFriends;
 import com.example.modumessenger.Fragments.FragmentChat;
@@ -28,10 +18,9 @@ import com.example.modumessenger.R;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class MainActivity extends AppCompatActivity {
+
+    BottomNavigationView bottomNavigationView;
     private ViewPager2 viewPager2;
 
     @Override
@@ -39,19 +28,33 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        bindingView();
+        getData();
+        setData();
+        setButtonClickEvent();
+    }
+
+    private void bindingView() {
         setTitle("친구");
 
-        BottomNavigationView bottomNavigationView = findViewById(R.id.navigationView);
-        bottomNavigationView.setOnItemSelectedListener(new ItemSelectedListener());
-
+        bottomNavigationView = findViewById(R.id.navigationView);
         viewPager2 = findViewById(R.id.view_pager);
         viewPager2.setAdapter(new ViewPagerAdapter(this));
+    }
+
+    private void getData() {
+    }
+
+    private void setData() {
+    }
+
+    private void setButtonClickEvent() {
+        bottomNavigationView.setOnItemSelectedListener(new ItemSelectedListener());
 
         viewPager2.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
                 super.onPageScrolled(position, positionOffset, positionOffsetPixels);
-
             }
 
             @Override
@@ -69,16 +72,18 @@ public class MainActivity extends AppCompatActivity {
                         setTitle("설정");
                         bottomNavigationView.getMenu().findItem(R.id.settingItem).setChecked(true);
                         break;
+                    default:
+                        break;
                 }
             }
         });
     }
 
-    class ItemSelectedListener implements NavigationBarView.OnItemSelectedListener{
+    class ItemSelectedListener implements NavigationBarView.OnItemSelectedListener {
         @SuppressLint("NonConstantResourceId")
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
-            switch(menuItem.getItemId()) {
+            switch (menuItem.getItemId()) {
                 case R.id.friendsItem:
                     setTitle("친구");
                     viewPager2.setCurrentItem(0);
@@ -96,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    class ViewPagerAdapter extends FragmentStateAdapter {
+    static class ViewPagerAdapter extends FragmentStateAdapter {
         public ViewPagerAdapter(@NonNull FragmentActivity fragmentActivity) {
             super(fragmentActivity);
         }

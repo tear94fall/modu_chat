@@ -96,6 +96,7 @@ public class FindFriendsActivity extends AppCompatActivity {
                 }
 
                 try {
+                    assert response.body() != null;
                     Log.d("친구 검색 요청 : ", response.body().toString());
                     Toast.makeText(getApplicationContext(), email + " 을 검색하였습니다.", Toast.LENGTH_SHORT).show();
 

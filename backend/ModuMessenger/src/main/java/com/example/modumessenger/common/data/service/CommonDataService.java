@@ -6,6 +6,9 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class CommonDataService {
@@ -33,5 +36,20 @@ public class CommonDataService {
         commonData.setValue("");
 
         return modelMapper.map(commonData, CommonDataDto.class);
+    }
+
+    public List<CommonDataDto> getNotification() {
+        List<CommonDataDto> commonDataDtoList = new ArrayList<>();
+
+        CommonData commonData = new CommonData();
+        commonData.setKey("모두의 채팅에 오신걸 환경합니다.");
+        commonData.setValue("진심으로 환영합니다. 감사합니다.");
+
+        CommonDataDto commonDataDto = new CommonDataDto(commonData);
+
+        commonDataDtoList.add(commonDataDto);
+        commonDataDtoList.add(commonDataDto);
+
+        return commonDataDtoList;
     }
 }

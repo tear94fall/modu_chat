@@ -1,16 +1,23 @@
 package com.example.modumessenger.common.handler;
 
-import com.example.modumessenger.chat.entity.Chat;
-import com.example.modumessenger.chat.entity.ChatRoom;
-import com.example.modumessenger.chat.repository.ChatRepository;
-import com.example.modumessenger.chat.repository.ChatRoomRepository;
-import com.example.modumessenger.common.parser.JsonParser;
-import com.example.modumessenger.member.entity.Member;
-import com.example.modumessenger.member.repository.MemberRepository;
+import com.example.modumessenger.chat.dto.ChatDto;
+import com.example.modumessenger.chat.dto.ChatRoomDto;
+import com.example.modumessenger.chat.service.ChatRoomService;
+import com.example.modumessenger.chat.service.ChatService;
+import com.example.modumessenger.member.dto.MemberDto;
+import com.example.modumessenger.member.service.MemberService;
+import com.example.modumessenger.messaging.entity.ChatMessage;
+import com.example.modumessenger.messaging.entity.SubscribeType;
+import com.example.modumessenger.messaging.service.MessagingPublisher;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.springframework.data.redis.connection.Message;
+import org.springframework.data.redis.connection.MessageListener;
+import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.BinaryMessage;
@@ -25,24 +32,25 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
-import java.util.LinkedHashMap;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @Component
 @Transactional
 @RequiredArgsConstructor
-public class WebSocketHandler extends TextWebSocketHandler {
+public class WebSocketHandler extends TextWebSocketHandler implements MessageListener {
 
-    private final MemberRepository memberRepository;
-    private final ChatRoomRepository chatRoomRepository;
-    private final ChatRepository chatRepository;
+    private final MemberService memberService;
+    private final ChatRoomService chatRoomService;
+    private final ChatService chatService;
+    private final MessagingPublisher messagingPublisher;
+
+    private final ObjectMapper objectMapper;
 
     private static final ConcurrentHashMap<String, WebSocketSession> CLIENTS = new ConcurrentHashMap<String, WebSocketSession>();
     private static final String FILE_UPLOAD_PATH = "/modu-chat/images";
+    private static final String CHAT_MESSAGING_TOPIC_NAME = "modu-chat";
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws ParseException, IOException {
@@ -53,36 +61,33 @@ public class WebSocketHandler extends TextWebSocketHandler {
         JSONObject jsonObject = (JSONObject) jsonParser.parse(new StringReader(payload));
 
         String senderId = Objects.requireNonNull(session.getHandshakeHeaders().get("userId")).get(0);
-        Member sender = memberRepository.findByUserId(senderId);
+
+        MemberDto sender = memberService.getUserById(senderId);
 
         String roomId = (String) jsonObject.get("roomId");
         String msg = (String) jsonObject.get("message");
         String senderName = sender.getUserId();
-        String sendTime = LocalDateTime.now().format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT));
+        String sendTime = (String) jsonObject.get("chatTime");
         Long chatType = (Long) jsonObject.get("chatType");
 
-        ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId);
-        chatRoom.setLastChatMsg(msg);
-        chatRoom.setLastChatTime(sendTime);
+        ChatRoomDto chatRoomDto = chatRoomService.searchChatRoomByRoomId(roomId);
+        chatRoomDto.setLastChatTime(sendTime);
 
-        chatRoomRepository.save(chatRoom);
+        if(chatType == ChatType.TEXT.getChatType()) {
+            chatRoomDto.setLastChatMsg(msg);
+        } else {
+            chatRoomDto.setLastChatMsg(ChatType.fromChatType(chatType.intValue()).getChatTypeStr());
+        }
 
-        Chat chat = new Chat(msg, roomId, chatRoom, senderName, sendTime, chatType.intValue());
-        chatRepository.save(chat);
+        chatRoomService.updateChatRoom(chatRoomDto.getRoomId(), chatRoomDto);
 
-        chatRoom.getChatRoomMemberList().forEach(chatRoomMember -> {
-            String userId = chatRoomMember.getMember().getUserId();
-            if(sender.getUserId().equals(userId)) {
-                WebSocketSession s = CLIENTS.get(userId);
-                if (s != null) {
-                    try {
-                        s.sendMessage(message);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        });
+        ChatDto chatDto = new ChatDto(msg, roomId, senderName, sendTime, chatType.intValue(), chatRoomDto);
+        Long chatId = chatService.saveChat(chatDto);
+
+        ChatMessage chatMessage = new ChatMessage(SubscribeType.BROAD_CAST, chatRoomDto.getRoomId(), chatId.toString());
+
+        ChannelTopic channel = new ChannelTopic(CHAT_MESSAGING_TOPIC_NAME);
+        messagingPublisher.publish(channel, chatMessage);
     }
 
     @Override
@@ -91,15 +96,15 @@ public class WebSocketHandler extends TextWebSocketHandler {
         String roomId = url.split("/modu-chat/")[1];
         String sender = Objects.requireNonNull(session.getHandshakeHeaders().get("userId")).get(0);
 
-        ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId);
+        ChatRoomDto chatRoomDto = chatRoomService.searchChatRoomByRoomId(roomId);
 
         ByteBuffer byteBuffer = message.getPayload();
         boolean save = saveImageFile(byteBuffer);
         byteBuffer.position(0);
 
         if(save) {
-            chatRoom.getChatRoomMemberList().forEach(chatRoomMember -> {
-                String userId = chatRoomMember.getMember().getUserId();
+            chatRoomDto.getMembers().forEach(memberDto -> {
+                String userId = memberDto.getUserId();
                 if (!sender.equals(userId)) {
                     WebSocketSession s = CLIENTS.get(userId);
                     if (s != null) {
@@ -122,9 +127,10 @@ public class WebSocketHandler extends TextWebSocketHandler {
         String roomId = url.split("/modu-chat/")[1];
         String userId = Objects.requireNonNull(session.getHandshakeHeaders().get("userId")).get(0);
 
-        ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId);
-        if(chatRoom!=null) {
-            CLIENTS.put("userId", session);
+        ChatRoomDto chatRoomDto = chatRoomService.searchChatRoomByRoomId(roomId);
+
+        if(chatRoomDto!=null) {
+            CLIENTS.put(userId, session);
         }
     }
 
@@ -144,6 +150,35 @@ public class WebSocketHandler extends TextWebSocketHandler {
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
 
+    }
+
+    @Override
+    public void onMessage(Message message, byte[] pattern) {
+        try {
+            String subscribeMessage = new String(message.getBody());
+            ChatMessage chatMessage = objectMapper.readValue(subscribeMessage, ChatMessage.class);
+            log.info("[subscribe][message] {}", chatMessage);
+
+            ChatRoomDto chatRoomDto = chatRoomService.searchChatRoomByRoomId(chatMessage.getRoomId());
+            ChatDto chatDto = chatService.searchChatByRoomIdAndChatId(chatMessage.getRoomId(), chatMessage.getChatId());
+            String payload = objectMapper.writeValueAsString(chatDto);
+
+            TextMessage textMessage = new TextMessage(payload);
+
+            chatRoomDto.getMembers().forEach(member -> {
+                String userId = member.getUserId();
+                WebSocketSession s = CLIENTS.get(userId);
+                if (s != null) {
+                    try {
+                        s.sendMessage(textMessage);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public boolean saveImageFile(ByteBuffer byteBuffer) {
@@ -182,5 +217,36 @@ public class WebSocketHandler extends TextWebSocketHandler {
         byteBuffer.position(0);
 
         return true;
+    }
+
+    enum ChatType {
+        TEXT(1, ""),
+        IMAGE(2, "image"),
+        FILE(3, "file"),
+        AUDIO(4, "audio");
+
+        private final int chatType;
+        private final String chatTypeStr;
+
+        private static final Map<Integer, ChatType> chatTypeMap = new HashMap<>();
+
+        static {
+            for(ChatType chatType : values()) {
+                chatTypeMap.put(chatType.getChatType(), chatType);
+            }
+        }
+
+        ChatType(int chatType, String chatTypeStr) {
+            this.chatType = chatType;
+            this.chatTypeStr = chatTypeStr;
+        }
+
+        public int getChatType() { return this.chatType; }
+        public String getChatTypeStr() { return this.chatTypeStr; }
+
+
+        public static ChatType fromChatType(int type) {
+            return chatTypeMap.get(type);
+        }
     }
 }

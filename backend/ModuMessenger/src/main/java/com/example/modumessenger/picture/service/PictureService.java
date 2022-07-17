@@ -10,11 +10,19 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.Objects;
 
 @Service
 @Transactional
@@ -24,26 +32,33 @@ public class PictureService {
     private final PictureRepository pictureRepository;
     private final ModelMapper modelMapper;
 
-    private String uploadPath  = "modu_chat/images";
+    private final int maxFileSize = 1024 * 1024 * 10; // 10mb
+    private final String uploadPath = "modu_chat/images";
 
-    public PictureDto savePicture(PictureDto pictureDto) {
-        Picture picture = new Picture(pictureDto);
-        Picture save = pictureRepository.save(picture);
-        return modelMapper.map(save, PictureDto.class);
+    public String saveImage(MultipartFile file) throws IOException {
+        if(file.getSize() > maxFileSize) {
+            return null;
+        }
+
+        String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+
+        Path uploadPath = Paths.get(this.uploadPath);
+        if(!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+
+        try (InputStream inputStream = file.getInputStream()) {
+            Path filePath = uploadPath.resolve(fileName);
+            Files.copy(inputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
+            return fileName;
+        } catch (IOException ioe) {
+            throw new IOException("Could not save image file: " + fileName, ioe);
+        }
     }
 
-    public Resource loadFileAsResource(String uploader, String filename) {
-        Path uploadPath = Paths.get(this.uploadPath+"/"+uploader);
-        try {
-            Path filePath = uploadPath.resolve(filename).normalize();
-            Resource resource = new UrlResource(filePath.toUri());
-            if(resource.exists()) {
-                return resource;
-            } else {
-                throw new PictureException("File not found " + filename);
-            }
-        } catch (MalformedURLException ex) {
-            throw new PictureException("File not found " + filename, ex);
-        }
+    public byte[] searchImage(String imageName) throws IOException {
+        String imageFullPath = uploadPath + "/" + imageName;
+        InputStream imageStream = new FileInputStream(imageFullPath);
+        return imageStream.readAllBytes();
     }
 }

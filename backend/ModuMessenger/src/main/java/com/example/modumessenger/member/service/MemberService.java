@@ -21,6 +21,11 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final ModelMapper modelMapper;
 
+    public MemberDto getUserById(String userId) {
+        Member member = memberRepository.findByUserId(userId);
+        return modelMapper.map(member, MemberDto.class);
+    }
+
     public MemberDto registerMember(MemberDto memberDto) {
         if(memberRepository.existsByEmail(memberDto.getEmail())) {
             Member findMember = memberRepository.findByEmail(memberDto.getEmail());

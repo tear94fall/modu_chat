@@ -19,6 +19,7 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView.OnScrollListener;
 
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Adapter.ChatBubble;
@@ -32,11 +33,9 @@ import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatDto;
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.example.modumessenger.dto.ChatType;
-import com.example.modumessenger.dto.MemberDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.android.material.navigation.NavigationView;
-import com.google.gson.JsonParser;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -46,10 +45,9 @@ import org.json.JSONObject;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -60,7 +58,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class ChatActivity extends AppCompatActivity {
+public class ChatActivity extends AppCompatActivity implements ChatSendOthersActivity.ChatSendOthersBottomSheetListener {
     ChatRoom roomInfo;
 
     OkHttpClient client;
@@ -71,6 +69,7 @@ public class ChatActivity extends AppCompatActivity {
 
     List<Member> chatMemberList;
     List<ChatBubble> chatBubbleList;
+    int chatBubbleCount;
 
     RecyclerView recyclerView;
     LinearLayoutManager manager;
@@ -81,7 +80,7 @@ public class ChatActivity extends AppCompatActivity {
     TextView inputMsgTextView;
     Button sendMsg, sendOthers;
 
-    String jwtToken,userId, roomId;
+    String jwtToken, userId, roomId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,12 +92,14 @@ public class ChatActivity extends AppCompatActivity {
         setData();
         setEventBus(true);
         setButtonClickEvent();
+        setScrollEvent();
         settingSideNavBar();
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        updateRoomInfo(roomId);
     }
 
     @Override
@@ -136,6 +137,8 @@ public class ChatActivity extends AppCompatActivity {
         objectMapper = new ObjectMapper();
         chatMemberList = new ArrayList<>();
         chatBubbleList = new ArrayList<>();
+
+        chatSendOthersActivity = new ChatSendOthersActivity();
     }
 
     private void bindingView() {
@@ -147,8 +150,6 @@ public class ChatActivity extends AppCompatActivity {
         sendOthers = findViewById(R.id.send_others_button);
         inputMsgTextView = findViewById(R.id.chat_message_edit_text);
         inputMsgTextView.setEnabled(true);
-
-        chatSendOthersActivity = new ChatSendOthersActivity();
     }
 
     private void setEventBus(boolean flag) {
@@ -167,7 +168,7 @@ public class ChatActivity extends AppCompatActivity {
                 chatDto.setRoomId(roomId);
                 chatDto.setMessage(msg);
                 chatDto.setSender(userId);
-                chatDto.setChatTime(LocalDateTime.now().format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)));
+                chatDto.setChatTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                 chatDto.setChatType(ChatType.CHAT_TYPE_TEXT);
 
                 String message = null;
@@ -181,9 +182,6 @@ public class ChatActivity extends AppCompatActivity {
 
                 if(message!=null){
                     webSocket.send(message);
-
-                    ChatBubble chatBubble = new ChatBubble(chatDto);
-                    chatHistoryAdapter.addChatMsg(chatBubble);
                     recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
 
                     inputMsgTextView.setText(null);
@@ -198,6 +196,20 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
+    private void setScrollEvent() {
+        recyclerView.addOnScrollListener(new OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                if(!recyclerView.canScrollVertically(-1)) {
+                    Toast.makeText(getApplicationContext(), "마지막 채팅 입니다.", Toast.LENGTH_SHORT).show();
+                    // get prev chats;
+                }
+            }
+        });
+    }
+
     public void settingSideNavBar() {
         View headerView = findViewById(R.id.nav_header);
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -205,7 +217,7 @@ public class ChatActivity extends AppCompatActivity {
         toolbar.setTitleTextColor(getResources().getColor(android.R.color.white, getTheme()));
         setSupportActionBar(toolbar);
 
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_baseline_dehaze_24);
 
         DrawerLayout drawLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -217,12 +229,11 @@ public class ChatActivity extends AppCompatActivity {
 
             AlertDialog alertDialog = builder.setMessage("채팅방을 나가시겠습니까?")
                     .setTitle("나가기")
-                    .setPositiveButton("아니오", (dialog, which) -> {
-                        Toast.makeText(getApplicationContext(), "취소", Toast.LENGTH_LONG).show();
-                    })
+                    .setPositiveButton("아니오", (dialog, which) -> Toast.makeText(getApplicationContext(), "취소", Toast.LENGTH_LONG).show())
                     .setNeutralButton("예", (dialog, which) -> {
                         exitChatRoom(roomId, userId);
                         Toast.makeText(getApplicationContext(), "채팅방에서 나갑니다.", Toast.LENGTH_SHORT).show();
+                        finish();
                     })
                     .setCancelable(false)
                     .create();
@@ -236,10 +247,9 @@ public class ChatActivity extends AppCompatActivity {
             Intent intent = new Intent(getApplicationContext(), InviteActivity.class);
 
             ArrayList<String> currentMembers = new ArrayList<>();
-            chatMemberList.forEach(m -> {
-                currentMembers.add(m.getUserId());
-            });
+            chatMemberList.forEach(m -> currentMembers.add(m.getUserId()));
 
+            intent.putExtra("roomId", roomId);
             intent.putStringArrayListExtra("currentMember", currentMembers);
 
             startActivity(intent);
@@ -312,16 +322,52 @@ public class ChatActivity extends AppCompatActivity {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEvent(MessageEvent messageEvent) {
-        Log.e("event bus call", "Chat Event " + messageEvent.message);
-        // update room database
+        Log.e("event bus call", "Chat Event " + messageEvent.getChatBubble().getChatMsg());
+        this.chatBubbleList.add(messageEvent.getChatBubble());
+        recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
+    }
+
+    @Override
+    public void sendImageChat(String chatImageUrl) {
+        ChatDto chatDto = new ChatDto();
+        chatDto.setRoomId(roomId);
+        chatDto.setMessage(chatImageUrl);
+        chatDto.setSender(userId);
+        chatDto.setChatTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        chatDto.setChatType(ChatType.CHAT_TYPE_IMAGE);
+
+        String message = null;
+        try {
+            message = objectMapper.writeValueAsString(chatDto);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println(message);
+
+        if(message!=null){
+            webSocket.send(message);
+            recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
+        } else {
+            Toast.makeText(getApplicationContext(), "메세지 전송에 실패하였습니다.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void sendOthersFinish() {
+        chatSendOthersActivity.dismiss();
     }
 
     // event bus class
     public static class MessageEvent {
-        public final String message;
+        private final ChatBubble chatBubble;
 
-        public MessageEvent(String message) {
-            this.message = message;
+        public MessageEvent(ChatBubble chatBubble) {
+            this.chatBubble = chatBubble;
+        }
+
+        public ChatBubble getChatBubble() {
+            return this.chatBubble;
         }
     }
 
@@ -331,21 +377,26 @@ public class ChatActivity extends AppCompatActivity {
 
         @Override
         public void onOpen(@NonNull WebSocket webSocket, @NonNull okhttp3.Response response) {
-//        webSocket.close(NORMAL_CLOSURE_STATUS, "close");
+            Log.d("onOpen", "WebSocket connection success");
         }
 
         @Override
         public void onMessage(@NonNull WebSocket webSocket, @NonNull String text) {
+            Log.d("onMessage", "WebSocket receive text message");
             System.out.println(text);
 
-            JsonParser jsonParser = new JsonParser();
-            Object object = jsonParser.parse(text);
-            JSONObject jsonObject = (JSONObject) object;
-            String msg = null;
-
             try {
-                msg = (String) jsonObject.get("message");
-                EventBus.getDefault().post(new MessageEvent(msg));
+                JSONObject jsonObject = new JSONObject(text);
+
+                String roomId = (String) jsonObject.get("roomId");
+                String message = (String) jsonObject.get("message");
+                String chatTime = (String) jsonObject.get("chatTime");
+                String sender = (String) jsonObject.get("sender");
+                int chatType = (int) jsonObject.get("chatType");
+
+                ChatBubble chatBubble = new ChatBubble(roomId, message, chatTime, sender, chatType);
+
+                EventBus.getDefault().post(new MessageEvent(chatBubble));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -353,15 +404,24 @@ public class ChatActivity extends AppCompatActivity {
 
         @Override
         public void onMessage(@NonNull WebSocket webSocket, @NonNull ByteString bytes) {
+            Log.d("onMessage", "WebSocket receive binary message");
+        }
+
+        @Override
+        public void onClosed(@NonNull WebSocket webSocket, int code, @NonNull String reason) {
+            Log.d("onClosed", "WebSocket connection closed. code : " + code + " message : " + reason);
         }
 
         @Override
         public void onClosing(WebSocket webSocket, int code, @NonNull String reason) {
+            Log.d("onClosing", "WebSocket connection closing. code : " + code + " message : " + reason);
             webSocket.close(NORMAL_CLOSURE_STATUS, null);
+            webSocket.cancel();
         }
 
         @Override
         public void onFailure(@NonNull WebSocket webSocket, Throwable t, okhttp3.Response response) {
+            Log.d("onClosing", "WebSocket connection fail " + t.getMessage());
             t.printStackTrace();
         }
     }
@@ -382,9 +442,8 @@ public class ChatActivity extends AppCompatActivity {
                 ChatRoomDto chatRoomDto = response.body();
                 roomInfo = new ChatRoom(chatRoomDto);
 
-                chatRoomDto.getMembers().forEach(m -> {
-                    chatMemberList.add(new Member(m));
-                });
+                chatMemberList.clear();
+                chatRoomDto.getMembers().forEach(m -> chatMemberList.add(new Member(m)));
 
                 setTitle(roomInfo.getRoomName());
                 setNavInfo(roomInfo);
@@ -417,6 +476,37 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
+    public void updateRoomInfo(String roomId) {
+        Call<ChatRoomDto> call = RetrofitClient.getChatRoomApiService().RequestChatRoom(roomId);
+
+        call.enqueue(new Callback<ChatRoomDto>() {
+            @Override
+            public void onResponse(@NonNull Call<ChatRoomDto> call, @NonNull Response<ChatRoomDto> response) {
+                if(!response.isSuccessful()){
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                    return;
+                }
+
+                assert response.body() != null;
+                ChatRoomDto chatRoomDto = response.body();
+                roomInfo = new ChatRoom(chatRoomDto);
+
+                chatMemberList.clear();
+                chatRoomDto.getMembers().forEach(m -> chatMemberList.add(new Member(m)));
+
+                setTitle(roomInfo.getRoomName());
+                setNavInfo(roomInfo);
+
+                Log.d("채팅방 정보 가져오기 요청 : ", response.body().toString());
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ChatRoomDto> call, @NonNull Throwable t) {
+                Log.e("채팅방 정보 가져오기 요청 실패", t.getMessage());
+            }
+        });
+    }
+
     public void getChatList(ChatRoom chatRoom) {
         Call<List<ChatDto>> call = RetrofitClient.getChatApiService().RequestChatHistory(chatRoom.getRoomId());
 
@@ -430,9 +520,8 @@ public class ChatActivity extends AppCompatActivity {
 
                 List<ChatDto> chatHistory = response.body();
                 assert chatHistory != null;
-                chatHistory.forEach(c->{
-                    chatBubbleList.add(new ChatBubble(c));
-                });
+                chatHistory.forEach(c-> chatBubbleList.add(new ChatBubble(c)));
+                chatBubbleCount = chatBubbleList.size();
 
                 chatHistoryAdapter = new ChatHistoryAdapter(chatBubbleList, chatMemberList);
                 recyclerView.setAdapter(chatHistoryAdapter);
@@ -464,8 +553,12 @@ public class ChatActivity extends AppCompatActivity {
                 assert response.body() != null;
                 ChatRoomDto chatRoomDto = response.body();
 
-                if(chatRoomDto.getRoomId().equals(roomId) && chatRoomDto.getMembers().contains(userId)) {
-                    finish();
+                if(chatRoomDto.getRoomId().equals(roomId)) {
+                    chatRoomDto.getMembers().forEach(memberDto -> {
+                        if(memberDto.getUserId().equals(userId)){
+                            finish();
+                        }
+                    });
                 }
 
                 Log.d("채팅방 나가기 요청 : ", response.body().toString());

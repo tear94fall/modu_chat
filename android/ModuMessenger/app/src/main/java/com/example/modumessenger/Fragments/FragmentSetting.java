@@ -17,10 +17,10 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
-import com.example.modumessenger.Activity.AppInfoActivity;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.Grid.SettingGridAdapter;
+import com.example.modumessenger.Grid.SettingGridItem;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.MemberDto;
@@ -86,18 +86,18 @@ public class FragmentSetting extends Fragment {
 
         setting_my_profile_card_view = view.findViewById(R.id.setting_my_profile_card_view);
 
-        GridView settingGridView = view.findViewById(R.id.grid_test);
+        GridView settingGridView = view.findViewById(R.id.setting_grid);
         SettingGridAdapter settingGridAdapter = new SettingGridAdapter(requireActivity());
         settingGridView.setAdapter(settingGridAdapter);
 
-        settingGridAdapter.setGridItems();
+        settingGridAdapter.setGridItems(view);
 
         settingGridView.setOnItemClickListener((parent, view1, position, id) -> {
-            String itemName = settingGridAdapter.getGridItem(position).getItemName();
-            Toast.makeText(requireActivity().getApplicationContext(), itemName, Toast.LENGTH_SHORT).show();
+            SettingGridItem gridItem = settingGridAdapter.getGridItem(position);
+            Toast.makeText(requireActivity().getApplicationContext(), gridItem.getItemName(), Toast.LENGTH_SHORT).show();
 
-            if(position==0){
-                Intent intent = new Intent(view.getContext(), AppInfoActivity.class);
+            Intent intent = gridItem.getIntent();
+            if(intent != null) {
                 view.getContext().startActivity(intent);
             }
         });
@@ -106,6 +106,8 @@ public class FragmentSetting extends Fragment {
     private void setButtonClickEvent() {
         setting_my_profile_card_view.setOnClickListener(view -> {
             Intent intent = new Intent(view.getContext(), ProfileActivity.class);
+            intent.putExtra("email", myInfo.getEmail());
+            intent.putExtra("userId", myInfo.getUserId());
             intent.putExtra("username", myInfo.getUsername());
             intent.putExtra("statusMessage", myInfo.getStatusMessage());
             intent.putExtra("profileImage", myInfo.getProfileImage());

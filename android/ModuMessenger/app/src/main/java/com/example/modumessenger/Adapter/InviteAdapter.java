@@ -6,7 +6,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ImageView;
-import android.widget.RadioButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -14,29 +13,33 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.modumessenger.Activity.InviteActivity;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.R;
 import com.example.modumessenger.dto.MemberDto;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class inviteAdapter extends RecyclerView.Adapter<inviteAdapter.AddChatViewHolder> {
+public class InviteAdapter extends RecyclerView.Adapter<InviteAdapter.AddChatViewHolder> {
 
     List<MemberDto> addFriendsList;
+    List<String> inviteMemberList;
 
-    public inviteAdapter(List<MemberDto> addFriendsList) { this.addFriendsList = addFriendsList; }
+    public InviteAdapter(List<MemberDto> addFriendsList) {
+        this.addFriendsList = addFriendsList;
+        this.inviteMemberList = new ArrayList<>();
+    }
 
     @NonNull
     @Override
-    public inviteAdapter.AddChatViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public InviteAdapter.AddChatViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.friend_invite_row, parent, false);
-        return new inviteAdapter.AddChatViewHolder(view);
+        return new InviteAdapter.AddChatViewHolder(this, view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull inviteAdapter.AddChatViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull InviteAdapter.AddChatViewHolder holder, int position) {
         MemberDto member = this.addFriendsList.get(position);
 
         holder.setUserInfo(member);
@@ -49,8 +52,12 @@ public class inviteAdapter extends RecyclerView.Adapter<inviteAdapter.AddChatVie
         return addFriendsList.size();
     }
 
+    public List<String> getInviteMemberList() {
+        return this.inviteMemberList;
+    }
+
     public static class AddChatViewHolder extends RecyclerView.ViewHolder {
-        InviteActivity addChatActivity;
+        InviteAdapter inviteAdapter;
 
         TextView username;
         TextView statusMessage;
@@ -58,9 +65,10 @@ public class inviteAdapter extends RecyclerView.Adapter<inviteAdapter.AddChatVie
         CheckBox addCHatCheck;
         ConstraintLayout addChatCardViewLayout;
 
-        public AddChatViewHolder(@NonNull View itemView) {
+        public AddChatViewHolder(InviteAdapter adapter, @NonNull View itemView) {
             super(itemView);
-            addChatActivity = InviteActivity.getInstance();
+
+            this.inviteAdapter = adapter;
 
             username = itemView.findViewById(R.id.add_user_name);
             statusMessage = itemView.findViewById(R.id.add_status_message);
@@ -83,6 +91,7 @@ public class inviteAdapter extends RecyclerView.Adapter<inviteAdapter.AddChatVie
         public void setUserClickEvent(MemberDto member) {
             this.addChatCardViewLayout.setOnClickListener(v -> {
                 Intent intent = new Intent(v.getContext(), ProfileActivity.class);
+                intent.putExtra("userId", member.getUserId());
                 intent.putExtra("username", member.getUsername());
                 intent.putExtra("statusMessage", member.getStatusMessage());
                 intent.putExtra("profileImage", member.getProfileImage());
@@ -96,9 +105,9 @@ public class inviteAdapter extends RecyclerView.Adapter<inviteAdapter.AddChatVie
                 boolean checked = ((CheckBox) view).isChecked();
 
                 if(checked) {
-                    addChatActivity.addUserIdOnAddChatList(member.getUserId());
+                    inviteAdapter.inviteMemberList.add(member.getUserId());
                 } else {
-                    addChatActivity.removeUserIdOnAddChatList(member.getUserId());
+                    inviteAdapter.inviteMemberList.remove(member.getUserId());
                 }
             });
         }

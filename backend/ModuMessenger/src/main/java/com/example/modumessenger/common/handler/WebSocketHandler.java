@@ -79,10 +79,11 @@ public class WebSocketHandler extends TextWebSocketHandler implements MessageLis
             chatRoomDto.setLastChatMsg(ChatType.fromChatType(chatType.intValue()).getChatTypeStr());
         }
 
-        chatRoomService.updateChatRoom(chatRoomDto.getRoomId(), chatRoomDto);
-
         ChatDto chatDto = new ChatDto(msg, roomId, senderName, sendTime, chatType.intValue(), chatRoomDto);
         Long chatId = chatService.saveChat(chatDto);
+
+        chatRoomDto.setLastChatId(chatId.toString());
+        chatRoomService.updateChatRoom(chatRoomDto.getRoomId(), chatRoomDto);
 
         ChatMessage chatMessage = new ChatMessage(SubscribeType.BROAD_CAST, chatRoomDto.getRoomId(), chatId.toString());
 

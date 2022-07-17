@@ -21,6 +21,7 @@ public class ChatRoomDto implements Serializable{
     private String roomName;
     private String roomImage;
     private String lastChatMsg;
+    private String lastChatId;
     private String lastChatTime;
     private List<MemberDto> members = new ArrayList<>();
 
@@ -29,6 +30,7 @@ public class ChatRoomDto implements Serializable{
         setRoomName(chatRoom.getRoomName());
         setRoomImage(chatRoom.getRoomImage());
         setLastChatMsg(chatRoom.getLastChatMsg());
+        setLastChatId(chatRoom.getLastChatId());
         setLastChatTime(chatRoom.getLastChatTime());
 
         chatRoom.getChatRoomMemberList().forEach(chatRoomMember -> {

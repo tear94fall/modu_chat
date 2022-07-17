@@ -32,8 +32,10 @@ public class ChatController {
         return ResponseEntity.ok().body(chatDtoList);
     }
 
-    @GetMapping("/chat/{roomId}/{chatId}/chats")
-    public ResponseEntity<List<ChatDto>> getPrevChatList(@Valid @PathVariable("roomId") String roomId, @Valid @PathVariable("chatId") String chatId, String size) {
+    @GetMapping("/chat/{roomId}/{chatId}/{size}")
+    public ResponseEntity<List<ChatDto>> getPrevChatList(@Valid @PathVariable("roomId") String roomId,
+                                                         @Valid @PathVariable("chatId") String chatId,
+                                                         @Valid @PathVariable("size") String size) {
         List<ChatDto> chatDtoList = chatService.searchPrevChatByRoomId(roomId, chatId, size);
         return ResponseEntity.ok().body(chatDtoList);
     }

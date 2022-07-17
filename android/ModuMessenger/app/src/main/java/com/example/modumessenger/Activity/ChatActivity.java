@@ -19,6 +19,7 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView.OnScrollListener;
 
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Adapter.ChatBubble;
@@ -68,6 +69,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
     List<Member> chatMemberList;
     List<ChatBubble> chatBubbleList;
+    int chatBubbleCount;
 
     RecyclerView recyclerView;
     LinearLayoutManager manager;
@@ -90,6 +92,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         setData();
         setEventBus(true);
         setButtonClickEvent();
+        setScrollEvent();
         settingSideNavBar();
     }
 
@@ -190,6 +193,20 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
         sendOthers.setOnClickListener(v -> {
             chatSendOthersActivity.show(getSupportFragmentManager(), chatSendOthersActivity.getTag());
+        });
+    }
+
+    private void setScrollEvent() {
+        recyclerView.addOnScrollListener(new OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                if(!recyclerView.canScrollVertically(-1)) {
+                    Toast.makeText(getApplicationContext(), "마지막 채팅 입니다.", Toast.LENGTH_SHORT).show();
+                    // get prev chats;
+                }
+            }
         });
     }
 
@@ -504,6 +521,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 List<ChatDto> chatHistory = response.body();
                 assert chatHistory != null;
                 chatHistory.forEach(c-> chatBubbleList.add(new ChatBubble(c)));
+                chatBubbleCount = chatBubbleList.size();
 
                 chatHistoryAdapter = new ChatHistoryAdapter(chatBubbleList, chatMemberList);
                 recyclerView.setAdapter(chatHistoryAdapter);

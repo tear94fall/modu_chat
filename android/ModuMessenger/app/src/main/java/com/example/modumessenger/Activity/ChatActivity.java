@@ -469,11 +469,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 client.dispatcher().executorService().shutdown();
 
                 if(roomInfo!=null) {
-                    if(roomInfo.getLastChatId() != null && !roomInfo.getLastChatId().equals("")) {
-                        getLastChatList(roomInfo.getRoomId(), Long.toString(Long.parseLong(roomInfo.getLastChatId()) + 1), pagingSize);
-                    } else {
-                        getChatList(roomInfo);
-                    }
+                    getChatList(roomInfo, pagingSize);
                 }
             }
 
@@ -515,8 +511,8 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         });
     }
 
-    public void getChatList(ChatRoom chatRoom) {
-        Call<List<ChatDto>> call = RetrofitClient.getChatApiService().RequestChatHistory(chatRoom.getRoomId());
+    public void getChatList(ChatRoom chatRoom, int size) {
+        Call<List<ChatDto>> call = RetrofitClient.getChatApiService().RequestChatListSize(chatRoom.getRoomId(), Integer.toString(size));
 
         call.enqueue(new Callback<List<ChatDto>>() {
             @Override
@@ -537,35 +533,6 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 setNavMember();
 
                 Log.d("채팅 내역 가져오기 요청 : ", chatRoom.getRoomId());
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<List<ChatDto>> call, @NonNull Throwable t) {
-                Log.e("연결실패", t.getMessage());
-            }
-        });
-    }
-
-    public void getLastChatList(String roomId, String chatId, int size) {
-        Call<List<ChatDto>> call = RetrofitClient.getChatApiService().RequestPrevChatList(roomId, chatId, Integer.toString(size));
-
-        call.enqueue(new Callback<List<ChatDto>>() {
-            @Override
-            public void onResponse(@NonNull Call<List<ChatDto>> call, @NonNull Response<List<ChatDto>> response) {
-                if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
-                }
-
-                List<ChatDto> chatDtoList = response.body();
-                assert chatDtoList != null;
-                chatDtoList.forEach(c -> chatBubbleList.add(0, new ChatBubble(c)));
-
-                chatHistoryAdapter = new ChatHistoryAdapter(chatBubbleList, chatMemberList);
-                recyclerView.setAdapter(chatHistoryAdapter);
-                recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
-
-                Log.d("채팅 내역 가져오기 요청 : ", roomId);
             }
 
             @Override

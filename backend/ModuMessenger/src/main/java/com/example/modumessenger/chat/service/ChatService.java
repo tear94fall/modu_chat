@@ -31,6 +31,14 @@ public class ChatService {
                 .collect(Collectors.toList());
     }
 
+    public List<ChatDto> searchChatByRoomIdSize(String roomId, String size) {
+        List<Chat> chatList = chatRepository.findByRoomIdSize(roomId, Long.parseLong(size));
+        return chatList
+                .stream()
+                .map(c -> modelMapper.map(c, ChatDto.class))
+                .collect(Collectors.toList());
+    }
+
     public List<ChatDto> searchPrevChatByRoomId(String roomId, String chatId, String size) {
         List<Chat> chatList = chatRepository.findByRoomIdAndChatId(roomId, Long.parseLong(chatId), Long.parseLong(size));
         return chatList

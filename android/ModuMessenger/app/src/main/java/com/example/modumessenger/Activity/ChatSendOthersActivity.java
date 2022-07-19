@@ -3,6 +3,7 @@ package com.example.modumessenger.Activity;
 import static android.app.Activity.RESULT_OK;
 
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -16,10 +17,13 @@ import android.view.ViewGroup;
 import android.widget.GridView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.FileProvider;
 
 import com.example.modumessenger.Global.ScopedStorageUtil;
 import com.example.modumessenger.Grid.SendOthersGridAdapter;
@@ -43,6 +47,7 @@ import retrofit2.Response;
 public class ChatSendOthersActivity extends BottomSheetDialogFragment {
 
     ActivityResultLauncher<Intent> resultLauncher;
+    ActivityResultLauncher<Uri> startCamera;
     ScopedStorageUtil scopedStorageUtil;
 
     GridView settingGridView;
@@ -50,6 +55,8 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
     String roomId;
 
     List<SendOthers> sendOthersList;
+
+    Uri tempImageUri;
 
     private ChatSendOthersBottomSheetListener mListener;
 
@@ -68,6 +75,7 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
         setData();
         bindingView(view);
         setLauncher();
+        setTakePictureLauncher(tempImageUri);
         setButtonClickEvent();
     }
 
@@ -90,6 +98,7 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
     private void setData() {
         scopedStorageUtil = new ScopedStorageUtil();
         sendOthersList = new ArrayList<>(Arrays.asList(SendOthers.SEND_OTHERS_GALLERY, SendOthers.SEND_OTHERS_CAMERA, SendOthers.SEND_OTHERS_FILE, SendOthers.SEND_OTHERS_AUDIO));
+        tempImageUri = initTempUri();
     }
 
     private void bindingView(View view) {
@@ -106,11 +115,23 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
             Toast.makeText(requireActivity().getApplicationContext(), gridItem.getItemName(), Toast.LENGTH_SHORT).show();
 
             SendOthers sendOthers = this.sendOthersList.get(position);
-            Intent intent = new Intent();
-            intent.setAction(sendOthers.getSendItemAction());
-            intent.setType(sendOthers.getSendItemExtension() == null ? "*/*" : sendOthers.getSendItemExtension());
-            resultLauncher.launch(intent);
+
+            if(sendOthers == SendOthers.SEND_OTHERS_CAMERA) {
+                startCamera.launch(tempImageUri);
+            } else {
+                Intent intent = new Intent();
+                intent.setAction(sendOthers.getSendItemAction());
+                intent.setType(sendOthers.getSendItemExtension() == null ? "*/*" : sendOthers.getSendItemExtension());
+                resultLauncher.launch(intent);
+            }
         });
+    }
+
+    public Uri initTempUri() {
+        File tempImagesDir = new File(requireActivity().getApplicationContext().getFilesDir(), getString(R.string.temp_images_dir));
+        tempImagesDir.mkdir();
+        File tempImage = new File(tempImagesDir, getString(R.string.temp_image));
+        return FileProvider.getUriForFile(requireActivity().getApplicationContext(), getString(R.string.authorities), tempImage);
     }
 
     private void setLauncher() {
@@ -130,6 +151,20 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
                     }
                 }
         );
+    }
+
+    private void setTakePictureLauncher(Uri tempImagePath) {
+        startCamera = registerForActivityResult(
+                new ActivityResultContracts.TakePicture(),
+                isSuccess -> {
+                    String fileName = getFileName(requireActivity().getContentResolver(), tempImagePath);
+                    if(fileName!=null) {
+                        String filePath = scopedStorageUtil.copyFromScopedStorage(requireActivity(), tempImagePath, fileName);
+                        sendImageChat(filePath);
+                    } else {
+                        Log.d("파일명 가져오기 실패 : ", "카메라에서 찍고 가져오기 실패");
+                    }
+                });
     }
 
     private void sendImageChat(String filePath) {

@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
@@ -33,6 +34,7 @@ public class ProfileImageActivity  extends AppCompatActivity {
     LinearLayout profileImageLayout;
     ViewPager2 profileImageSliderViewPager;
     Button profileCloseButton;
+    ImageButton profileDownloadButton;
     List<String> profileImageList;
     String userId, email;
 
@@ -54,6 +56,7 @@ public class ProfileImageActivity  extends AppCompatActivity {
         profileImageSliderViewPager = findViewById(R.id.sliderViewPager);
         profileImageLayout = findViewById(R.id.profile_image_index_layout);
         profileCloseButton = findViewById(R.id.profile_image_close_button);
+        profileDownloadButton = findViewById(R.id.profile_image_download_button);
     }
 
     private void setData() {
@@ -64,11 +67,23 @@ public class ProfileImageActivity  extends AppCompatActivity {
         userId = getIntent().getStringExtra("userId");
         email = getIntent().getStringExtra("email");
 
-        getMyProfileInfo(new MemberDto(userId, email));
+        ArrayList<String> imageUrlList = getIntent().getStringArrayListExtra("imageUrlList");
+
+        if(imageUrlList == null || imageUrlList.size() == 0) {
+            getMyProfileInfo(new MemberDto(userId, email));
+        } else {
+            showImageLists(imageUrlList);
+        }
     }
 
     private void setEvents() {
         profileCloseButton.setOnClickListener(v -> finish());
+
+        profileDownloadButton.setOnClickListener(v -> {
+            int currentItem = profileImageSliderViewPager.getCurrentItem();
+            String imageUrl = this.profileImageList.get(currentItem);
+        });
+
         profileImageSliderViewPager.registerOnPageChangeCallback(new OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
@@ -99,6 +114,15 @@ public class ProfileImageActivity  extends AppCompatActivity {
             ImageView imageView = (ImageView) profileImageLayout.getChildAt(i);
             imageView.setImageDrawable(ContextCompat.getDrawable(this, i == position ? R.drawable.profile_image_indicator_active : R.drawable.profile_image_indicator_inactive));
         }
+    }
+
+    private void showImageLists(ArrayList<String> imageUrlList) {
+        profileImageList.addAll(imageUrlList);
+
+        profileImageSliderViewPager.setOffscreenPageLimit(1);
+        profileImageSliderViewPager.setAdapter(new ProfileImageSliderAdapter(profileImageList));
+
+        setupProfileImageIndex(profileImageList.size());
     }
 
     // Retrofit function

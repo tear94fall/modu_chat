@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.modumessenger.Activity.ProfileActivity;
+import com.example.modumessenger.Activity.ProfileImageActivity;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.dto.ChatType;
@@ -145,6 +146,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
 
             ((ChatBubbleLeftImageViewHolder) holder).setUserClickEvent(member);
+            ((ChatBubbleLeftImageViewHolder) holder).setChatImageClickEvent(chat);
 
             leftImageViewHolder.chatSender.setText(chat.getSender());
             Glide.with(leftImageViewHolder.chatImage)
@@ -165,6 +167,8 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             Glide.with(rightImageViewHolder.chatImage)
                     .load(chat.getChatMsg())
                     .into(rightImageViewHolder.chatImage);
+
+            ((ChatBubbleRightImageViewHolder) holder).setChatImageClickEvent(chat);
 
             rightImageViewHolder.rightChatTime.setText(getShortTime(chat.getChatTime()));
         } else if (holder instanceof ChatBubbleRightDuplicateViewHolder) {
@@ -284,6 +288,18 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 startProfileActivity(v, member);
             });
         }
+
+        public void setChatImageClickEvent(ChatBubble chat) {
+            this.chatImage.setOnClickListener(v -> {
+                Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
+
+                ArrayList<String> imageUrlList = new ArrayList<>();
+                imageUrlList.add(chat.getChatMsg());
+                intent.putStringArrayListExtra("imageUrlList", imageUrlList);
+
+                v.getContext().startActivity(intent);
+            });
+        }
     }
 
     public static class ChatBubbleLeftDuplicateViewHolder extends RecyclerView.ViewHolder {
@@ -316,6 +332,18 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             super(itemView);
             chatImage = itemView.findViewById(R.id.right_chat_image);
             rightChatTime = itemView.findViewById(R.id.right_chat_time);
+        }
+
+        public void setChatImageClickEvent(ChatBubble chat) {
+            this.chatImage.setOnClickListener(v -> {
+                Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
+
+                ArrayList<String> imageUrlList = new ArrayList<>();
+                imageUrlList.add(chat.getChatMsg());
+                intent.putStringArrayListExtra("imageUrlList", imageUrlList);
+
+                v.getContext().startActivity(intent);
+            });
         }
     }
 

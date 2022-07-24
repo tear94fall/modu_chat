@@ -9,16 +9,25 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.example.modumessenger.Fragments.FragmentFriends;
 import com.example.modumessenger.Fragments.FragmentChat;
 import com.example.modumessenger.Fragments.FragmentSetting;
+import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.RetrofitClient;
+import com.example.modumessenger.dto.SignUpDto;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
 import com.google.firebase.messaging.FirebaseMessaging;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -41,6 +50,9 @@ public class MainActivity extends AppCompatActivity {
         FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 System.out.println(task.getResult());
+
+                PreferenceManager.setString("fcm-token", task.getResult());
+                SendFcmToken(PreferenceManager.getString("userId"), PreferenceManager.getString("fcm-token"));
             } else {
                 System.out.println("fcm get token error");
             }
@@ -143,5 +155,32 @@ public class MainActivity extends AppCompatActivity {
         public int getItemCount() {
             return 3;
         }
+    }
+
+    // Retrofit function
+    public void SendFcmToken(String userId, String token) {
+        Call<String> call = RetrofitClient.getChatApiService().RequestFcmToken(userId, token);
+
+        call.enqueue(new Callback<String>() {
+            @Override
+            public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
+                if(!response.isSuccessful()){
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                    return;
+                }
+
+                String result = response.body();
+                assert result != null;
+
+                if(!result.equals(token)) {
+                    Toast.makeText(getApplicationContext(), "메시지 알림 서버와의 연결이 불안정합니다.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
+                Log.e("연결실패", t.getMessage());
+            }
+        });
     }
 }

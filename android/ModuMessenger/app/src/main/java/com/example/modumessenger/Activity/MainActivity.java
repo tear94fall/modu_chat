@@ -19,11 +19,13 @@ import com.example.modumessenger.Fragments.FragmentSetting;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
-import com.example.modumessenger.dto.SignUpDto;
-import com.google.android.gms.tasks.OnSuccessListener;
+import com.example.modumessenger.dto.ChatRoomDto;
+import com.example.modumessenger.entity.Member;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
 import com.google.firebase.messaging.FirebaseMessaging;
+
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -53,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
 
                 PreferenceManager.setString("fcm-token", task.getResult());
                 SendFcmToken(PreferenceManager.getString("userId"), PreferenceManager.getString("fcm-token"));
+                getChatRoomList(new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
             } else {
                 System.out.println("fcm get token error");
             }
@@ -179,6 +182,33 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
+                Log.e("연결실패", t.getMessage());
+            }
+        });
+    }
+
+    public void getChatRoomList(Member member) {
+        Call<List<ChatRoomDto>> call = RetrofitClient.getChatRoomApiService().RequestChatRooms(member.getUserId());
+
+        call.enqueue(new Callback<List<ChatRoomDto>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<ChatRoomDto>> call, @NonNull Response<List<ChatRoomDto>> response) {
+                if (!response.isSuccessful()) {
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                    return;
+                }
+
+                assert response.body() != null;
+                List<ChatRoomDto> chatRoomDtoList = response.body();
+                chatRoomDtoList.forEach(chatRoomDto -> {
+                    FirebaseMessaging.getInstance().subscribeToTopic(chatRoomDto.getRoomId());
+                });
+
+                Log.d("채팅방 fcm 토픽 설정 : ", response.body().toString());
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<ChatRoomDto>> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
             }
         });

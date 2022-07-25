@@ -39,6 +39,5 @@ security:
 
 project:
   properties:
-    firebas-sdk-path: "firebase/modu_chat_firebase_service_key.json"
-    firebase-create-scoped: "https://www.googleapis.com/auth/firebase.messaging"
-    firebase-topic: "modu_chat_notification"
+    firebase-sdk-path: "firebase/modu_chat_firebase_service_key.json"
+    firebase-multicast-message-size: 500

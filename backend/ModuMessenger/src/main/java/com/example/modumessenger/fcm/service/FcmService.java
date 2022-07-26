@@ -2,6 +2,7 @@ package com.example.modumessenger.fcm.service;
 
 import com.example.modumessenger.fcm.entity.FcmToken;
 import com.example.modumessenger.fcm.repository.FcmRepository;
+import com.google.api.core.ApiFuture;
 import com.google.firebase.messaging.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +51,11 @@ public class FcmService {
 
     public void sendMessage(Message message) throws FirebaseMessagingException {
         FirebaseMessaging.getInstance().send(message);
+    }
+
+    public void sendAsyncMessage(Message message) throws FirebaseMessagingException {
+        ApiFuture<String> stringApiFuture = FirebaseMessaging.getInstance().sendAsync(message, false);
+        log.info(stringApiFuture.toString());
     }
 
     public void sendMessage(MulticastMessage message) throws FirebaseMessagingException {

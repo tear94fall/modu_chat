@@ -4,12 +4,14 @@ import com.example.modumessenger.chat.dto.ChatDto;
 import com.example.modumessenger.chat.dto.ChatRoomDto;
 import com.example.modumessenger.chat.service.ChatRoomService;
 import com.example.modumessenger.chat.service.ChatService;
+import com.example.modumessenger.fcm.service.FcmService;
 import com.example.modumessenger.member.dto.MemberDto;
 import com.example.modumessenger.member.service.MemberService;
 import com.example.modumessenger.messaging.entity.ChatMessage;
 import com.example.modumessenger.messaging.entity.SubscribeType;
 import com.example.modumessenger.messaging.service.MessagingPublisher;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.firebase.messaging.FirebaseMessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -34,6 +36,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -44,6 +47,7 @@ public class WebSocketHandler extends TextWebSocketHandler implements MessageLis
     private final MemberService memberService;
     private final ChatRoomService chatRoomService;
     private final ChatService chatService;
+    private final FcmService fcmService;
     private final MessagingPublisher messagingPublisher;
 
     private final ObjectMapper objectMapper;
@@ -53,7 +57,7 @@ public class WebSocketHandler extends TextWebSocketHandler implements MessageLis
     private static final String CHAT_MESSAGING_TOPIC_NAME = "modu-chat";
 
     @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws ParseException, IOException {
+    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws ParseException, IOException, FirebaseMessagingException {
         String payload = message.getPayload();
         System.out.println(payload);
 
@@ -71,6 +75,10 @@ public class WebSocketHandler extends TextWebSocketHandler implements MessageLis
         Long chatType = (Long) jsonObject.get("chatType");
 
         ChatRoomDto chatRoomDto = chatRoomService.searchChatRoomByRoomId(roomId);
+
+        List<MemberDto> members = chatRoomDto.getMembers().stream().filter(memberDto -> memberDto.getUserId().equals(senderName)).collect(Collectors.toList());
+        if(members.size()==0) return;
+
         chatRoomDto.setLastChatTime(sendTime);
 
         if(chatType == ChatType.TEXT.getChatType()) {
@@ -89,6 +97,8 @@ public class WebSocketHandler extends TextWebSocketHandler implements MessageLis
 
         ChannelTopic channel = new ChannelTopic(CHAT_MESSAGING_TOPIC_NAME);
         messagingPublisher.publish(channel, chatMessage);
+
+        fcmService.sendTopicMessage(chatRoomDto.getRoomId(), chatRoomDto.getRoomName(), chatDto.getMessage());
     }
 
     @Override

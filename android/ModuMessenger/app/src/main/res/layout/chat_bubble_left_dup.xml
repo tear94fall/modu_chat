@@ -19,13 +19,11 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="68dp"
             android:layout_marginTop="4dp"
-            android:layout_marginBottom="4dp"
             android:background="@drawable/chat_message"
             android:maxWidth="250sp"
             android:minWidth="25sp"
             android:padding="8dp"
             android:textColor="@color/white"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="왼쪽 채팅 메시지 입니다." />
@@ -36,8 +34,8 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
             android:text="오전 10:14"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/left_chat_text" />
+            app:layout_constraintStart_toEndOf="@+id/left_chat_text"
+            tools:layout_editor_absoluteY="20dp" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

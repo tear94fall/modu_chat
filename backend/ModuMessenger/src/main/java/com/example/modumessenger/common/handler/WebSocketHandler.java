@@ -98,7 +98,13 @@ public class WebSocketHandler extends TextWebSocketHandler implements MessageLis
         ChannelTopic channel = new ChannelTopic(CHAT_MESSAGING_TOPIC_NAME);
         messagingPublisher.publish(channel, chatMessage);
 
-        fcmService.sendTopicMessage(chatRoomDto.getRoomId(), chatRoomDto.getRoomName(), chatDto.getMessage());
+        Map<String, String> data = new HashMap<>() {
+            {
+                put("roomId", chatRoomDto.getRoomId());
+            }
+        };
+
+        fcmService.sendTopicMessageWithData(chatRoomDto.getRoomId(), chatRoomDto.getRoomName(), chatDto.getMessage(), null, data);
     }
 
     @Override

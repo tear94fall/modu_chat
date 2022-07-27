@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -47,6 +48,18 @@ public class FcmService {
         Notification notification = Notification.builder().setTitle(title).setBody(body).setImage(image).build();
         Message msg = Message.builder().setTopic(topic).setNotification(notification).build();
         sendMessage(msg);
+    }
+
+    public void sendTopicMessageWithData(String topic, String title, String body, String image, Map<String, String> data) throws FirebaseMessagingException {
+        Notification notification = Notification.builder().setTitle(title).setBody(body).setImage(image).build();
+        Message message = Message.builder()
+                .setTopic(topic)
+                .putData("title", title)
+                .putData("message", body)
+                .putAllData(data)
+                .build();
+        Message msg = Message.builder().setTopic(topic).setNotification(notification).build();
+        sendMessage(message);
     }
 
     public void sendMessage(Message message) throws FirebaseMessagingException {

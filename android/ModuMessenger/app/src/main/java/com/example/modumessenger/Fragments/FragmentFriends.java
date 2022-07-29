@@ -15,6 +15,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -41,12 +42,8 @@ public class FragmentFriends extends Fragment {
     RecyclerView recyclerView;
     RecyclerView.LayoutManager layoutManager;
 
-    // friend count
-    TextView friendsCount;
-
-    // my profile
-    TextView myName;
-    TextView myStatusMessage;
+    ConstraintLayout myProfileCard;
+    TextView friendsCount, myName, myStatusMessage;
     ImageView myProfileImage;
 
     List<MemberDto> friendsList;
@@ -62,14 +59,6 @@ public class FragmentFriends extends Fragment {
         View view = inflater.inflate(R.layout.fragment_friends, container, false);
         setHasOptionsMenu(true);
 
-        // my profile
-        myProfileImage = view.findViewById(R.id.myProfileImage);
-        myName = view.findViewById(R.id.myName);
-        myStatusMessage = view.findViewById(R.id.myStatusMessage);
-
-        // friend count
-        friendsCount = view.findViewById(R.id.friendCount);
-
         return view;
     }
 
@@ -77,24 +66,10 @@ public class FragmentFriends extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        recyclerView = (RecyclerView) view.findViewById(R.id.friend_recycler_view);
-        recyclerView.setHasFixedSize(true);
-
-        layoutManager = new LinearLayoutManager(getActivity());
-        recyclerView.setLayoutManager(layoutManager);
-        recyclerView.scrollToPosition(0);
-
-        view.findViewById(R.id.myProfileCard).setOnClickListener(view1 -> {
-            Intent intent = new Intent(view1.getContext(), ProfileActivity.class);
-
-            intent.putExtra("email", PreferenceManager.getString("email"));
-            intent.putExtra("userId", PreferenceManager.getString("userId"));
-            intent.putExtra("username", PreferenceManager.getString("username"));
-            intent.putExtra("statusMessage", PreferenceManager.getString("statusMessage"));
-            intent.putExtra("profileImage", PreferenceManager.getString("profileImage"));
-
-            view1.getContext().startActivity(intent);
-        });
+        bindingView(view);
+        getData();
+        setData();
+        setButtonClickEvent();
     }
 
     @Override
@@ -151,6 +126,43 @@ public class FragmentFriends extends Fragment {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void bindingView(View view) {
+        myProfileCard = view.findViewById(R.id.myProfileCard);
+        myProfileImage = view.findViewById(R.id.myProfileImage);
+        myName = view.findViewById(R.id.myName);
+        myStatusMessage = view.findViewById(R.id.myStatusMessage);
+        friendsCount = view.findViewById(R.id.friendCount);
+
+        recyclerView = (RecyclerView) view.findViewById(R.id.friend_recycler_view);
+        recyclerView.setHasFixedSize(true);
+
+        layoutManager = new LinearLayoutManager(getActivity());
+        recyclerView.setLayoutManager(layoutManager);
+        recyclerView.scrollToPosition(0);
+    }
+
+    private void getData() {
+
+    }
+
+    private void setData() {
+
+    }
+
+    private void setButtonClickEvent() {
+        myProfileCard.setOnClickListener(view -> {
+            Intent intent = new Intent(view.getContext(), ProfileActivity.class);
+
+            intent.putExtra("email", PreferenceManager.getString("email"));
+            intent.putExtra("userId", PreferenceManager.getString("userId"));
+            intent.putExtra("username", PreferenceManager.getString("username"));
+            intent.putExtra("statusMessage", PreferenceManager.getString("statusMessage"));
+            intent.putExtra("profileImage", PreferenceManager.getString("profileImage"));
+
+            view.getContext().startActivity(intent);
+        });
     }
 
     // Retrofit function

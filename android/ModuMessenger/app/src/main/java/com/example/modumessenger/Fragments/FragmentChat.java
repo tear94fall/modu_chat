@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.PopupMenu;
@@ -18,6 +19,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.Activity.CreateRoomActivity;
+import com.example.modumessenger.Activity.FindFriendsActivity;
+import com.example.modumessenger.Activity.SearchActivity;
 import com.example.modumessenger.Adapter.ChatRoomAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
@@ -47,7 +50,10 @@ public class FragmentChat extends Fragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_chat, container, false);
+        View view = inflater.inflate(R.layout.fragment_chat, container, false);
+        setHasOptionsMenu(true);
+
+        return view;
     }
 
     @Override
@@ -84,7 +90,23 @@ public class FragmentChat extends Fragment {
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.menu_friends_list, menu);
+        inflater.inflate(R.menu.menu_chatroom_list, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int itemId = item.getItemId();
+        String clickMessage = "";
+
+        if(itemId == R.id.chatroom_search) {
+            clickMessage = "채팅방 찾기";
+        } else if(itemId == R.id.chatroom_settings) {
+            clickMessage = "채팅방 설정";
+        }
+
+        Toast.makeText(requireContext(), clickMessage, Toast.LENGTH_SHORT).show();
+
+        return super.onOptionsItemSelected(item);
     }
 
     private void bindingView(View view) {

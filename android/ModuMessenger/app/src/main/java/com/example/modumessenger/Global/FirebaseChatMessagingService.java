@@ -8,7 +8,10 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
@@ -17,6 +20,8 @@ import com.example.modumessenger.Activity.ChatActivity;
 import com.example.modumessenger.R;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+
+import java.util.Objects;
 
 public class FirebaseChatMessagingService extends FirebaseMessagingService {
 
@@ -31,7 +36,13 @@ public class FirebaseChatMessagingService extends FirebaseMessagingService {
         super.onMessageReceived(remoteMessage);
 
         if (remoteMessage.getData().size() > 0) {
-            sendNotification(remoteMessage);
+            String userId = PreferenceManager.getString("userId");
+            if(userId == null || userId.equals("") || !Objects.requireNonNull(remoteMessage.getData().get("sender")).equals(userId)) {
+                sendNotification(remoteMessage);
+
+                Handler handler = new Handler(Looper.getMainLooper());
+                handler.post(() -> Toast.makeText(getApplicationContext(), "새로운 메시지가 도착하였습니다.", Toast.LENGTH_LONG).show());
+            }
         }
     }
 

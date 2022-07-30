@@ -179,7 +179,31 @@ public class FragmentChat extends Fragment {
 
             @Override
             public void onFailure(@NonNull Call<List<ChatRoomDto>> call, @NonNull Throwable t) {
-                Log.e("-->연결실패", t.getMessage());
+                Log.e("연결실패", t.getMessage());
+            }s
+        });
+    }
+
+    public void searchChatRoomName(String roomName) {
+        Call<List<ChatRoomDto>> call = RetrofitClient.getChatRoomApiService().RequestSearchChatRooms(roomName);
+
+        call.enqueue(new Callback<List<ChatRoomDto>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<ChatRoomDto>> call, @NonNull Response<List<ChatRoomDto>> response) {
+                if (!response.isSuccessful()) {
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                    return;
+                }
+
+                assert response.body() != null;
+                List<ChatRoomDto> chatRoomDtoList = response.body();
+
+                Log.d("채팅방 검색 : ", response.body().toString());
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<ChatRoomDto>> call, @NonNull Throwable t) {
+                Log.e("연결실패", t.getMessage());
             }
         });
     }

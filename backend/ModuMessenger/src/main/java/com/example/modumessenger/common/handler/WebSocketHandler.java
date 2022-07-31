@@ -101,6 +101,7 @@ public class WebSocketHandler extends TextWebSocketHandler implements MessageLis
         Map<String, String> data = new HashMap<>() {
             {
                 put("roomId", chatRoomDto.getRoomId());
+                put("sender", chatDto.getSender());
             }
         };
 

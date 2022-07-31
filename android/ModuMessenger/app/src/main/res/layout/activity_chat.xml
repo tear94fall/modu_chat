@@ -15,7 +15,7 @@
         android:fitsSystemWindows="true"
         tools:layout_editor_absoluteX="103dp"
         tools:layout_editor_absoluteY="54dp"
-        tools:openDrawer="start">
+        tools:openDrawer="end">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/constraintLayout"
@@ -97,7 +97,7 @@
             android:id="@+id/nav_view"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_gravity="start"
+            android:layout_gravity="end"
             android:fitsSystemWindows="true" >
 
             <androidx.constraintlayout.widget.ConstraintLayout
@@ -134,12 +134,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="right"
-                    android:layout_marginBottom="0dp"
                     android:text="나가기"
                     android:textColor="@color/white"
                     android:theme="@style/AppTheme.Button"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent" />
+                    app:layout_constraintStart_toEndOf="@+id/nav_invite_button"
+                    app:layout_constraintTop_toBottomOf="@+id/chat_room_member_recycler_view" />
 
                 <android.widget.Button
                     android:id="@+id/nav_invite_button"
@@ -150,7 +150,8 @@
                     android:textColor="@color/white"
                     android:theme="@style/AppTheme.Button"
                     app:layout_constraintBottom_toBottomOf="@+id/nav_exit_button"
-                    app:layout_constraintEnd_toStartOf="@+id/nav_exit_button" />
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/chat_room_member_recycler_view" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </com.google.android.material.navigation.NavigationView>

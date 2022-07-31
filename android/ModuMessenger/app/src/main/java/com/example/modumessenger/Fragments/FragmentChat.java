@@ -180,7 +180,7 @@ public class FragmentChat extends Fragment {
             @Override
             public void onFailure(@NonNull Call<List<ChatRoomDto>> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
-            }s
+            }
         });
     }
 

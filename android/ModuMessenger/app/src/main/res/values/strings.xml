@@ -6,54 +6,7 @@
     <string name="open">열기</string>
     <string name="closed">닫기</string>
 
-    <string-array name="friend_name">
-        <item>A</item>
-        <item>B</item>
-        <item>C</item>
-        <item>D</item>
-        <item>E</item>
-        <item>F</item>
-        <item>G</item>
-        <item>H</item>
-        <item>I</item>
-        <item>J</item>
-        <item>K</item>
-        <item>L</item>
-        <item>M</item>
-        <item>N</item>
-    </string-array>
-
-    <string-array name="description">
-        <item>Hello world!!</item>
-        <item>Hello world!!</item>
-        <item>Hello world!!</item>
-        <item>Hello world!!</item>
-        <item>Hello world!!</item>
-        <item>Hello world!!</item>
-        <item>Hello world!!</item>
-        <item>Hello world!!</item>
-        <item>Hello world!!</item>
-        <item>Hello world!!</item>
-        <item>Hello world!!</item>
-        <item>Hello world!!</item>
-        <item>Hello world!!</item>
-        <item>Hello world!!</item>
-    </string-array>
-
-    <string-array name="images" >
-        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
-        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
-        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
-        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
-        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
-        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
-        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
-        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
-        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
-        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
-        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
-        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
-        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
-        <item>https://i1.sndcdn.com/avatars-000155511100-6durf2-t500x500.jpg</item>
-    </string-array>
+    <string name="temp_images_dir">temp_images</string>
+    <string name="temp_image">temp_image.jpg</string>
+    <string name="authorities">com.example.modumessenger</string>
 </resources>

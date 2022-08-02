@@ -17,6 +17,8 @@ public class ChatRoom {
     private String roomImage;
     @SerializedName("lastChatMsg")
     private String lastChatMsg;
+    @SerializedName("lastChatId")
+    private String lastChatId;
     @SerializedName("lastChatTime")
     private String lastChatTime;
     @SerializedName("chatMember")
@@ -26,6 +28,7 @@ public class ChatRoom {
     public String getRoomName() { return this.roomName; }
     public String getRoomImage() { return this.roomImage; }
     public String getLastChatMsg() { return this.lastChatMsg; }
+    public String getLastChatId() { return this.lastChatId; }
     public String getLastChatTime() { return this.lastChatTime; }
     public List<Member> getMembers() { return this.members; }
 
@@ -33,6 +36,7 @@ public class ChatRoom {
     public void setRoomName(String roomName) { this.roomName = roomName; }
     public void setRoomImage(String roomImage) { this.roomImage = roomImage; }
     public void setLastChatMsg(String lastChatMsg) { this.lastChatMsg = lastChatMsg; }
+    public void setLastChatId(String lastChatId) { this.lastChatId = lastChatId; }
     public void setLastChatTime(String lastChatTime) { this.lastChatTime = lastChatTime; }
     public void setMembers(List<Member> members) { this.members = members; }
 
@@ -41,6 +45,7 @@ public class ChatRoom {
         setRoomName(chatRoomDto.getRoomName());
         setRoomImage(chatRoomDto.getRoomImage());
         setLastChatMsg(chatRoomDto.getLastChatMsg());
+        setLastChatId(chatRoomDto.getLastChatId());
         setLastChatTime(chatRoomDto.getLastChatTime());
         chatRoomDto.getMembers().forEach(member -> {
             members.add(new Member(member));

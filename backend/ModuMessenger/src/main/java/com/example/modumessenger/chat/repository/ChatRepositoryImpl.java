@@ -52,6 +52,17 @@ public class ChatRepositoryImpl implements ChatCustomRepository {
     }
 
     @Override
+    public List<Chat> findByRoomIdSize(String roomId, Long size) {
+        return queryFactory
+                .selectFrom(chat)
+                .where(chat.roomId.eq(roomId))
+                .limit(size)
+                .orderBy(chat.chatTime.desc())
+                .orderBy(chat.id.asc())
+                .fetch();
+    }
+
+    @Override
     public List<Chat> findByRoomIdAndChatId(String roomId, Long chatId, Long size) {
         return queryFactory
                 .selectFrom(chat)

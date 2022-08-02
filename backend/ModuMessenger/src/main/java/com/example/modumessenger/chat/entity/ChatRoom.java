@@ -36,6 +36,9 @@ public class ChatRoom extends BaseTimeEntity {
     private String lastChatMsg;
 
     @Column(nullable = false)
+    private String lastChatId;
+
+    @Column(nullable = false)
     private String lastChatTime;
 
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL)
@@ -47,11 +50,12 @@ public class ChatRoom extends BaseTimeEntity {
 
     public ChatRoom(String roomName) { this.roomName = roomName; }
 
-    public ChatRoom(String roomId, String roomName, String roomImage, String lastChatMsg, String lastChatTime) {
+    public ChatRoom(String roomId, String roomName, String roomImage, String lastChatMsg, String lastChatId, String lastChatTime) {
         this.roomId = roomId;
         this.roomName = roomName;
         this.roomImage = roomImage;
         this.lastChatMsg = lastChatMsg;
+        this.lastChatId = lastChatId;
         this.lastChatTime = lastChatTime;
     }
 
@@ -60,6 +64,7 @@ public class ChatRoom extends BaseTimeEntity {
         setRoomName(chatRoomDto.getRoomName());
         setRoomImage(chatRoomDto.getRoomImage());
         setLastChatMsg(chatRoomDto.getLastChatMsg());
+        setLastChatId(chatRoomDto.getLastChatId());
         setLastChatTime(chatRoomDto.getLastChatTime());
     }
 }

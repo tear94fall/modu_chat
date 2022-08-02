@@ -16,5 +16,7 @@ public interface ChatCustomRepository {
 
     List<Chat> findByRoomIdPaging(String roomId, Pageable pageable);
 
+    List<Chat> findByRoomIdSize(String roomId, Long size);
+
     List<Chat> findByRoomIdAndChatId(String roomId, Long chatId, Long size);
 }

@@ -1,0 +1,11 @@
+server:
+  port: 8081
+
+spring:
+  config:
+    activate:
+      on-profile: create
+
+  jpa:
+    hibernate:
+      ddl-auto: create

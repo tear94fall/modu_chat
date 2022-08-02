@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -48,6 +50,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -69,7 +72,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
     List<Member> chatMemberList;
     List<ChatBubble> chatBubbleList;
-    int chatBubbleCount;
+    int pagingSize = 20;
 
     RecyclerView recyclerView;
     LinearLayoutManager manager;
@@ -81,6 +84,8 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     Button sendMsg, sendOthers;
 
     String jwtToken, userId, roomId;
+
+    ActionBarDrawerToggle actionBarDrawerToggle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,8 +110,8 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
+        if (drawer.isDrawerOpen(GravityCompat.END)) {
+            drawer.closeDrawer(GravityCompat.END);
         } else {
             super.onBackPressed();
         }
@@ -122,6 +127,21 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     public void finish() {
         super.finish();
         webSocket.close(1000, null);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (actionBarDrawerToggle.onOptionsItemSelected(item)) {
+            return false;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_chatroom, menu);
+        return true;
     }
 
     private void getData() {
@@ -203,8 +223,10 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 super.onScrolled(recyclerView, dx, dy);
 
                 if(!recyclerView.canScrollVertically(-1)) {
-                    Toast.makeText(getApplicationContext(), "마지막 채팅 입니다.", Toast.LENGTH_SHORT).show();
-                    // get prev chats;
+                    ChatBubble lastChat = chatBubbleList.get(0);
+                    if(chatBubbleList.size() >= pagingSize) {
+                        getPrevChatList(lastChat.getRoomId(), lastChat.getId().toString(), pagingSize);
+                    }
                 }
             }
         });
@@ -218,7 +240,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         setSupportActionBar(toolbar);
 
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_baseline_dehaze_24);
+        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_baseline_arrow_back_24);
 
         DrawerLayout drawLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
@@ -264,28 +286,35 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
             Toast.makeText(getApplicationContext(), "채팅방 설정으로 이동", Toast.LENGTH_SHORT).show();
         });
 
-        ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(
+        actionBarDrawerToggle = new ActionBarDrawerToggle(
                 ChatActivity.this,
                 drawLayout,
-                toolbar,
                 R.string.open,
                 R.string.closed
-        );
+        ) {
+            @Override
+            public boolean onOptionsItemSelected(MenuItem item) {
+                int id = item.getItemId();
+
+                if (id == android.R.id.home) {
+                    finish();
+                } else if (id == R.id.chat_search_button) {
+                    Toast.makeText(getApplicationContext(), "채팅 검색", Toast.LENGTH_SHORT).show();
+                } else if(id == R.id.chat_room_info_button) {
+                    if (drawLayout.isDrawerOpen(GravityCompat.END)) {
+                        drawLayout.closeDrawer(GravityCompat.END);
+                    } else {
+                        drawLayout.openDrawer(GravityCompat.END);
+                    }
+                }
+
+                return false;
+            }
+        };
 
         drawLayout.addDrawerListener(actionBarDrawerToggle);
 
-        navigationView.setNavigationItemSelectedListener(menuItem -> {
-            int id = menuItem.getItemId();
-
-            if (id == R.id.menu_item1){
-                Toast.makeText(getApplicationContext(), "메뉴아이템 1 선택", Toast.LENGTH_SHORT).show();
-            }else if(id == R.id.menu_item2){
-                Toast.makeText(getApplicationContext(), "메뉴아이템 2 선택", Toast.LENGTH_SHORT).show();
-            }else if(id == R.id.menu_item3){
-                Toast.makeText(getApplicationContext(), "메뉴아이템 3 선택", Toast.LENGTH_SHORT).show();
-            }
-
-            drawLayout.closeDrawer(GravityCompat.START);
+        navigationView.setNavigationItemSelectedListener(item -> {
             return true;
         });
     }
@@ -465,7 +494,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 client.dispatcher().executorService().shutdown();
 
                 if(roomInfo!=null) {
-                    getChatList(roomInfo);
+                    getChatList(roomInfo, pagingSize);
                 }
             }
 
@@ -507,8 +536,8 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         });
     }
 
-    public void getChatList(ChatRoom chatRoom) {
-        Call<List<ChatDto>> call = RetrofitClient.getChatApiService().RequestChatHistory(chatRoom.getRoomId());
+    public void getChatList(ChatRoom chatRoom, int size) {
+        Call<List<ChatDto>> call = RetrofitClient.getChatApiService().RequestChatListSize(chatRoom.getRoomId(), Integer.toString(size));
 
         call.enqueue(new Callback<List<ChatDto>>() {
             @Override
@@ -521,7 +550,6 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 List<ChatDto> chatHistory = response.body();
                 assert chatHistory != null;
                 chatHistory.forEach(c-> chatBubbleList.add(new ChatBubble(c)));
-                chatBubbleCount = chatBubbleList.size();
 
                 chatHistoryAdapter = new ChatHistoryAdapter(chatBubbleList, chatMemberList);
                 recyclerView.setAdapter(chatHistoryAdapter);
@@ -530,6 +558,36 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 setNavMember();
 
                 Log.d("채팅 내역 가져오기 요청 : ", chatRoom.getRoomId());
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<ChatDto>> call, @NonNull Throwable t) {
+                Log.e("연결실패", t.getMessage());
+            }
+        });
+    }
+
+    public void getPrevChatList(String roomId, String chatId, int size) {
+        Call<List<ChatDto>> call = RetrofitClient.getChatApiService().RequestPrevChatList(roomId, chatId, Integer.toString(size));
+
+        call.enqueue(new Callback<List<ChatDto>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<ChatDto>> call, @NonNull Response<List<ChatDto>> response) {
+                if(!response.isSuccessful()){
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                    return;
+                }
+
+                List<ChatDto> chatDtoList = response.body();
+                assert chatDtoList != null;
+                List<ChatBubble> prevChatList = chatDtoList.stream().map(ChatBubble::new).collect(Collectors.toList());
+                chatHistoryAdapter.addChatMsgFront(prevChatList);
+
+                LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                int lastCompletelyVisibleItemPosition = linearLayoutManager != null ? linearLayoutManager.findLastCompletelyVisibleItemPosition() : prevChatList.size();
+                recyclerView.scrollToPosition(prevChatList.size() + lastCompletelyVisibleItemPosition);
+
+                Log.d("채팅 내역 가져오기 요청 : ", roomId);
             }
 
             @Override

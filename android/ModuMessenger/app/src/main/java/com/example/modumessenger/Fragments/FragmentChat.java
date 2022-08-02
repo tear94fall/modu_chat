@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.PopupMenu;
@@ -18,6 +19,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.Activity.CreateRoomActivity;
+import com.example.modumessenger.Activity.FindFriendsActivity;
+import com.example.modumessenger.Activity.SearchActivity;
 import com.example.modumessenger.Adapter.ChatRoomAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
@@ -47,7 +50,10 @@ public class FragmentChat extends Fragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_chat, container, false);
+        View view = inflater.inflate(R.layout.fragment_chat, container, false);
+        setHasOptionsMenu(true);
+
+        return view;
     }
 
     @Override
@@ -84,7 +90,23 @@ public class FragmentChat extends Fragment {
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.menu_friends_list, menu);
+        inflater.inflate(R.menu.menu_chatroom_list, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int itemId = item.getItemId();
+        String clickMessage = "";
+
+        if(itemId == R.id.chatroom_search) {
+            clickMessage = "채팅방 찾기";
+        } else if(itemId == R.id.chatroom_settings) {
+            clickMessage = "채팅방 설정";
+        }
+
+        Toast.makeText(requireContext(), clickMessage, Toast.LENGTH_SHORT).show();
+
+        return super.onOptionsItemSelected(item);
     }
 
     private void bindingView(View view) {
@@ -157,7 +179,31 @@ public class FragmentChat extends Fragment {
 
             @Override
             public void onFailure(@NonNull Call<List<ChatRoomDto>> call, @NonNull Throwable t) {
-                Log.e("-->연결실패", t.getMessage());
+                Log.e("연결실패", t.getMessage());
+            }
+        });
+    }
+
+    public void searchChatRoomName(String roomName) {
+        Call<List<ChatRoomDto>> call = RetrofitClient.getChatRoomApiService().RequestSearchChatRooms(roomName);
+
+        call.enqueue(new Callback<List<ChatRoomDto>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<ChatRoomDto>> call, @NonNull Response<List<ChatRoomDto>> response) {
+                if (!response.isSuccessful()) {
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                    return;
+                }
+
+                assert response.body() != null;
+                List<ChatRoomDto> chatRoomDtoList = response.body();
+
+                Log.d("채팅방 검색 : ", response.body().toString());
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<ChatRoomDto>> call, @NonNull Throwable t) {
+                Log.e("연결실패", t.getMessage());
             }
         });
     }

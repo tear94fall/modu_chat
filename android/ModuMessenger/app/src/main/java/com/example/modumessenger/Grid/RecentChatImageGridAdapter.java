@@ -13,6 +13,7 @@ import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.ChatSendOthersActivity;
 import com.example.modumessenger.Adapter.ChatBubble;
 import com.example.modumessenger.R;
+import com.example.modumessenger.dto.ChatDto;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,8 +61,8 @@ public class RecentChatImageGridAdapter extends BaseAdapter {
         return convertView;
     }
 
-    public void setGridItems(List<ChatBubble> chatBubbleList) {
-        chatBubbleList.forEach(chatBubble -> setGridItem(new RecentChatImageGridItem(chatBubble.getChatMsg())));
+    public void setGridItems(List<ChatDto> chatDtoList) {
+        chatDtoList.forEach(chatDto -> setGridItem(new RecentChatImageGridItem(chatDto.getMessage())));
     }
 
     public void setGridItem(RecentChatImageGridItem recentChatImageGridItem) {

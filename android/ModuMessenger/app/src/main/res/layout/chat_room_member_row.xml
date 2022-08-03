@@ -15,8 +15,8 @@
 
         <ImageView
             android:id="@+id/chat_room_member_image"
-            android:layout_width="70dp"
-            android:layout_height="70dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -26,9 +26,9 @@
         <TextView
             android:id="@+id/chat_room_member_name"
             android:layout_width="71dp"
-            android:layout_height="22dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:layout_marginTop="5dp"
             android:gravity="left"
             android:text="Title"
             app:layout_constraintStart_toEndOf="@+id/chat_room_member_image"

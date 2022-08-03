@@ -8,6 +8,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -28,6 +29,9 @@ import com.example.modumessenger.Adapter.ChatBubble;
 import com.example.modumessenger.Adapter.ChatHistoryAdapter;
 import com.example.modumessenger.Adapter.ChatRoomMemberAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
+import com.example.modumessenger.Grid.RecentChatImageGridAdapter;
+import com.example.modumessenger.Grid.SendOthersGridAdapter;
+import com.example.modumessenger.Grid.SettingGridAdapter;
 import com.example.modumessenger.R;
 import com.example.modumessenger.entity.ChatRoom;
 import com.example.modumessenger.entity.Member;
@@ -51,6 +55,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -337,6 +342,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     public void setNavMember() {
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
 
+        // set chat member
         RecyclerView chatRecyclerView;
         RecyclerView.LayoutManager chatLayoutManager;
 
@@ -347,6 +353,14 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         chatRecyclerView.setLayoutManager(chatLayoutManager);
 
         chatRecyclerView.setAdapter(new ChatRoomMemberAdapter(chatMemberList));
+
+        // set recent chat image
+        GridView recent_chat_images = navigationView.findViewById(R.id.chat_room_chat_image_grid_layout);
+        RecentChatImageGridAdapter recentChatImageGridAdapter = new RecentChatImageGridAdapter(this);
+        recent_chat_images.setAdapter(recentChatImageGridAdapter);
+
+        List<ChatBubble> imageChatBubbleList = this.chatBubbleList.stream().filter(chatBubble -> chatBubble.getChatType() == ChatType.CHAT_TYPE_IMAGE).collect(Collectors.toList());
+        recentChatImageGridAdapter.setGridItems(imageChatBubbleList);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

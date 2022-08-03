@@ -355,12 +355,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         chatRecyclerView.setAdapter(new ChatRoomMemberAdapter(chatMemberList));
 
         // set recent chat image
-        GridView recent_chat_images = navigationView.findViewById(R.id.chat_room_chat_image_grid_layout);
-        RecentChatImageGridAdapter recentChatImageGridAdapter = new RecentChatImageGridAdapter(this);
-        recent_chat_images.setAdapter(recentChatImageGridAdapter);
-
-        List<ChatBubble> imageChatBubbleList = this.chatBubbleList.stream().filter(chatBubble -> chatBubble.getChatType() == ChatType.CHAT_TYPE_IMAGE).collect(Collectors.toList());
-        recentChatImageGridAdapter.setGridItems(imageChatBubbleList);
+        getImageChatList(navigationView, roomInfo, pagingSize);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -602,6 +597,38 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 recyclerView.scrollToPosition(prevChatList.size() + lastCompletelyVisibleItemPosition);
 
                 Log.d("채팅 내역 가져오기 요청 : ", roomId);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<ChatDto>> call, @NonNull Throwable t) {
+                Log.e("연결실패", t.getMessage());
+            }
+        });
+    }
+
+    public void getImageChatList(View view, ChatRoom chatRoom, int size) {
+        Call<List<ChatDto>> call = RetrofitClient.getChatApiService().RequestImageChatListSize(chatRoom.getRoomId(), Integer.toString(size));
+
+        call.enqueue(new Callback<List<ChatDto>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<ChatDto>> call, @NonNull Response<List<ChatDto>> response) {
+                if(!response.isSuccessful()){
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                    return;
+                }
+
+                List<ChatDto> imageChatList = response.body();
+                assert imageChatList != null;
+
+                GridView recent_chat_images = view.findViewById(R.id.chat_room_chat_image_grid_layout);
+                RecentChatImageGridAdapter recentChatImageGridAdapter = new RecentChatImageGridAdapter(getApplicationContext());
+                recent_chat_images.setAdapter(recentChatImageGridAdapter);
+
+                recentChatImageGridAdapter.setGridItems(imageChatList);
+
+                setNavMember();
+
+                Log.d("채팅 내역 가져오기 요청 : ", chatRoom.getRoomId());
             }
 
             @Override

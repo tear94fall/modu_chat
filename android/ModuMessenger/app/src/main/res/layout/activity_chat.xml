@@ -157,7 +157,7 @@
                     android:id="@+id/chat_room_chat_image_grid_layout"
                     android:layout_width="match_parent"
                     android:layout_height="90dp"
-                    android:numColumns="4"
+                    android:numColumns="3"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/nav_header" />

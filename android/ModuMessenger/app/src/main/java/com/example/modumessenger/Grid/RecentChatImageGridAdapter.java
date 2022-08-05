@@ -17,6 +17,7 @@ import com.example.modumessenger.dto.ChatDto;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class RecentChatImageGridAdapter extends BaseAdapter {
     private final Context context;
@@ -62,7 +63,8 @@ public class RecentChatImageGridAdapter extends BaseAdapter {
     }
 
     public void setGridItems(List<ChatDto> chatDtoList) {
-        chatDtoList.forEach(chatDto -> setGridItem(new RecentChatImageGridItem(chatDto.getMessage())));
+        List<ChatDto> displayChats = chatDtoList.stream().limit(3).collect(Collectors.toList());
+        displayChats.forEach(chatDto -> setGridItem(new RecentChatImageGridItem(chatDto.getMessage())));
     }
 
     public void setGridItem(RecentChatImageGridItem recentChatImageGridItem) {

@@ -19,4 +19,6 @@ public interface ChatCustomRepository {
     List<Chat> findByRoomIdSize(String roomId, Long size);
 
     List<Chat> findByRoomIdAndChatId(String roomId, Long chatId, Long size);
+
+    List<Chat> findByImageChatSize(String roomId, Long size);
 }

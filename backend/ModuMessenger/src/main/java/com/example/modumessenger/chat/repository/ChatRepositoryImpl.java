@@ -1,6 +1,7 @@
 package com.example.modumessenger.chat.repository;
 
 import com.example.modumessenger.chat.entity.Chat;
+import com.example.modumessenger.common.data.type.ChatType;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -67,6 +68,16 @@ public class ChatRepositoryImpl implements ChatCustomRepository {
         return queryFactory
                 .selectFrom(chat)
                 .where(chat.roomId.eq(roomId).and(chat.id.lt(chatId)))
+                .limit(size)
+                .orderBy(chat.chatTime.desc())
+                .fetch();
+    }
+
+    @Override
+    public List<Chat> findByImageChatSize(String roomId, Long size) {
+        return queryFactory
+                .selectFrom(chat)
+                .where(chat.roomId.eq(roomId).and(chat.chatType.eq(ChatType.CHAT_TYPE_IMAGE)))
                 .limit(size)
                 .orderBy(chat.chatTime.desc())
                 .fetch();

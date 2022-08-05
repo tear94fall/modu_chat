@@ -44,6 +44,12 @@ public class ChatController {
         return ResponseEntity.ok().body(chatDtoList);
     }
 
+    @GetMapping("/chat/{roomId}/images/{size}")
+    public ResponseEntity<List<ChatDto>> getImageChatListSize(@Valid @PathVariable("roomId") String roomId, @Valid @PathVariable("size") String size) {
+        List<ChatDto> chatDtoList = chatService.searchImageChatByRoomIdSize(roomId, size);
+        return ResponseEntity.ok().body(chatDtoList);
+    }
+
     @GetMapping("/chat/{roomId}/count")
     public ResponseEntity<String> getChatRoomCount(@Valid @PathVariable("roomId") String roomId) {
         String count = chatService.searchChatCount(roomId);

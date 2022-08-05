@@ -337,6 +337,12 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                         .load(R.drawable.basic_profile_image)
                         .into((ImageView) headerView.findViewById(R.id.chat_room_profile_image)))
                 .into((ImageView) headerView.findViewById(R.id.chat_room_profile_image));
+
+
+        // set recent chat image
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+
+        getImageChatList(navigationView, roomInfo, pagingSize);
     }
 
     public void setNavMember() {
@@ -353,9 +359,6 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         chatRecyclerView.setLayoutManager(chatLayoutManager);
 
         chatRecyclerView.setAdapter(new ChatRoomMemberAdapter(chatMemberList));
-
-        // set recent chat image
-        getImageChatList(navigationView, roomInfo, pagingSize);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -625,8 +628,6 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 recent_chat_images.setAdapter(recentChatImageGridAdapter);
 
                 recentChatImageGridAdapter.setGridItems(imageChatList);
-
-                setNavMember();
 
                 Log.d("채팅 내역 가져오기 요청 : ", chatRoom.getRoomId());
             }

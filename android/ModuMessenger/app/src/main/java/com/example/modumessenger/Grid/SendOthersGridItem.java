@@ -1,7 +1,5 @@
 package com.example.modumessenger.Grid;
 
-import android.content.Intent;
-
 public class SendOthersGridItem {
     private String itemName;
     private int itemImage;

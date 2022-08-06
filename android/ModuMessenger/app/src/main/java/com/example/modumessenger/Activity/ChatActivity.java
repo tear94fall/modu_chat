@@ -30,8 +30,6 @@ import com.example.modumessenger.Adapter.ChatHistoryAdapter;
 import com.example.modumessenger.Adapter.ChatRoomMemberAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.Grid.RecentChatImageGridAdapter;
-import com.example.modumessenger.Grid.SendOthersGridAdapter;
-import com.example.modumessenger.Grid.SettingGridAdapter;
 import com.example.modumessenger.R;
 import com.example.modumessenger.entity.ChatRoom;
 import com.example.modumessenger.entity.Member;
@@ -55,7 +53,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -628,6 +625,10 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 recent_chat_images.setAdapter(recentChatImageGridAdapter);
 
                 recentChatImageGridAdapter.setGridItems(imageChatList);
+
+                if(imageChatList.size() == 0) {
+                    recent_chat_images.setVisibility(View.GONE);
+                }
 
                 Log.d("채팅 내역 가져오기 요청 : ", chatRoom.getRoomId());
             }

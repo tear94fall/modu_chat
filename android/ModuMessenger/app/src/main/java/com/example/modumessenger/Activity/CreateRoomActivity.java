@@ -1,6 +1,5 @@
 package com.example.modumessenger.Activity;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;

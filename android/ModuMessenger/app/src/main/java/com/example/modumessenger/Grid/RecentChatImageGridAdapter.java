@@ -7,11 +7,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-import com.example.modumessenger.Activity.ChatSendOthersActivity;
-import com.example.modumessenger.Adapter.ChatBubble;
 import com.example.modumessenger.R;
 import com.example.modumessenger.dto.ChatDto;
 

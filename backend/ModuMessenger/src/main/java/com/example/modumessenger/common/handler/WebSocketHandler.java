@@ -34,9 +34,15 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import static com.example.modumessenger.common.time.TimeCalculator.calculateTime;
 
 @Slf4j
 @Component
@@ -79,6 +85,7 @@ public class WebSocketHandler extends TextWebSocketHandler implements MessageLis
         List<MemberDto> members = chatRoomDto.getMembers().stream().filter(memberDto -> memberDto.getUserId().equals(senderName)).collect(Collectors.toList());
         if(members.size()==0) return;
 
+        sendTime = calculateTime(sendTime);
         chatRoomDto.setLastChatTime(sendTime);
 
         if(chatType == ChatType.TEXT.getChatType()) {

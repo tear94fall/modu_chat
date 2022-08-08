@@ -25,15 +25,25 @@ class ChatRepositoryTest {
 
     @BeforeEach
     void init() {
-        ChatRoom chatRoomA = new ChatRoom("A", "Room A", "Image A", "Msg A");
-        ChatRoom chatRoomB = new ChatRoom("B", "Room B", "Image B", "Msg B");
+        ChatRoom chatRoomA = new ChatRoom("A", "Room A", "Image A", "Msg A", "", LocalDateTime.now().toString());
+        ChatRoom chatRoomB = new ChatRoom("B", "Room B", "Image B", "Msg B", "", LocalDateTime.now().toString());
+
         chatRoomRepository.save(chatRoomA);
         chatRoomRepository.save(chatRoomB);
 
         Chat chatA = new Chat("Hello ABB!!", chatRoomA);
         Chat chatB = new Chat("Hello BBB!!", chatRoomB);
-        chatRepository.save(chatA);
-        chatRepository.save(chatB);
+        Chat saveA = chatRepository.save(chatA);
+        Chat saveB = chatRepository.save(chatB);
+
+        chatRoomA.getChat().add(saveA);
+        chatRoomB.getChat().add(saveB);
+
+        chatRoomA.setLastChatId(saveA.getId().toString());
+        chatRoomB.setLastChatId(saveB.getId().toString());
+
+        chatRoomRepository.save(chatRoomA);
+        chatRoomRepository.save(chatRoomB);
 
         em.flush();
         em.clear();

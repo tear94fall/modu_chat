@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 
+import java.time.LocalDateTime;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @RunWith(SpringRunner.class)
@@ -32,10 +34,10 @@ class ChatRoomServiceTest {
 
     @Test
     public void initialize() {
-        ChatRoom roomA = new ChatRoom("roomA", "roomA", "roomA", "roomA", "roomA");
-        ChatRoom roomB = new ChatRoom("roomB", "roomB", "roomB", "roomB", "roomA");
-        ChatRoom roomC = new ChatRoom("roomC", "roomC", "roomC", "roomC", "roomA");
-        ChatRoom roomD = new ChatRoom("roomD", "roomD", "roomD", "roomD", "roomA");
+        ChatRoom roomA = new ChatRoom("roomA", "roomA", "roomA", "roomA", "", LocalDateTime.now().toString());
+        ChatRoom roomB = new ChatRoom("roomB", "roomB", "roomB", "roomB", "", LocalDateTime.now().toString());
+        ChatRoom roomC = new ChatRoom("roomC", "roomC", "roomC", "roomC", "", LocalDateTime.now().toString());
+        ChatRoom roomD = new ChatRoom("roomD", "roomD", "roomD", "roomD", "", LocalDateTime.now().toString());
 
         Member memberA = new Member("memberA", "memberA@test.com");
         Member memberB = new Member("memberB", "memberB@test.com");

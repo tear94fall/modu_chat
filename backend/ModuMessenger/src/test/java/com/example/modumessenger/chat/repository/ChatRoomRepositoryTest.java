@@ -25,8 +25,8 @@ class ChatRoomRepositoryTest {
 
     @BeforeEach
     void init() {
-        ChatRoom chatRoomA = new ChatRoom("A", "Room A", "Image A", "Msg A");
-        ChatRoom chatRoomB = new ChatRoom("B", "Room B", "Image B", "Msg B");
+        ChatRoom chatRoomA = new ChatRoom("A", "Room A", "Image A", "Msg A", "", LocalDateTime.now().toString());
+        ChatRoom chatRoomB = new ChatRoom("B", "Room B", "Image B", "Msg B", "", LocalDateTime.now().toString());
         chatRoomRepository.save(chatRoomA);
         chatRoomRepository.save(chatRoomB);
 
@@ -34,10 +34,21 @@ class ChatRoomRepositoryTest {
         Chat chatB = new Chat("Hello BBB!!", chatRoomA);
         Chat chatC = new Chat("Hello CCC!!", chatRoomB);
         Chat chatD = new Chat("Hello DDD!!", chatRoomB);
-        chatRepository.save(chatA);
-        chatRepository.save(chatB);
-        chatRepository.save(chatC);
-        chatRepository.save(chatD);
+        Chat saveA = chatRepository.save(chatA);
+        Chat saveB = chatRepository.save(chatB);
+        Chat saveC = chatRepository.save(chatC);
+        Chat saveD = chatRepository.save(chatD);
+
+        chatRoomA.getChat().add(saveA);
+        chatRoomA.getChat().add(saveB);
+        chatRoomA.setLastChatId(saveB.getId().toString());
+
+        chatRoomB.getChat().add(saveC);
+        chatRoomB.getChat().add(saveD);
+        chatRoomB.setLastChatId(saveD.getId().toString());
+
+        chatRoomRepository.save(chatRoomA);
+        chatRoomRepository.save(chatRoomB);
 
         em.flush();
         em.clear();

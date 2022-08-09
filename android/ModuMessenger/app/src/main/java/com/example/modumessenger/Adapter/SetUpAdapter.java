@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.AppInfoActivity;
 import com.example.modumessenger.Activity.NotificationActivity;
+import com.example.modumessenger.Activity.SetAccountActivity;
 import com.example.modumessenger.Activity.SetFriendsActivity;
 import com.example.modumessenger.R;
 
@@ -52,6 +53,7 @@ public class SetUpAdapter extends RecyclerView.Adapter<SetUpAdapter.SetUpViewHol
     }
 
     public void setSetUpItems() {
+        setUpList.add(SetUp.SET_UP_ACCOUNT);
         setUpList.add(SetUp.SET_UP_APP_VERSION_INFO);
         setUpList.add(SetUp.SET_UP_NOTIFICATION);
         setUpList.add(SetUp.SET_UP_FRIENDS_SETTING);
@@ -75,6 +77,7 @@ public class SetUpAdapter extends RecyclerView.Adapter<SetUpAdapter.SetUpViewHol
         }
 
         public void setSetUpViews(View view) {
+            setUpMap.put(SetUp.SET_UP_ACCOUNT.getSetUpName(), new Intent(view.getContext(), SetAccountActivity.class));
             setUpMap.put(SetUp.SET_UP_APP_VERSION_INFO.getSetUpName(), new Intent(view.getContext(), AppInfoActivity.class));
             setUpMap.put(SetUp.SET_UP_NOTIFICATION.getSetUpName(), new Intent(view.getContext(), NotificationActivity.class));
             setUpMap.put(SetUp.SET_UP_FRIENDS_SETTING.getSetUpName(), new Intent(view.getContext(), SetFriendsActivity.class));
@@ -102,6 +105,7 @@ public class SetUpAdapter extends RecyclerView.Adapter<SetUpAdapter.SetUpViewHol
     }
 
     public enum SetUp {
+        SET_UP_ACCOUNT("계정설정", R.drawable.ic_baseline_account_circle_24),
         SET_UP_APP_VERSION_INFO("버전정보", R.drawable.ic_baseline_info_24),
         SET_UP_NOTIFICATION("공지사항", R.drawable.ic_baseline_celebration_24),
         SET_UP_FRIENDS_SETTING("친구설정", R.drawable.ic_baseline_person_24);

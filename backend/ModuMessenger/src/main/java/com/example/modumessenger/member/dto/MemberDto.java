@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @Builder
@@ -21,6 +24,7 @@ public class MemberDto implements Serializable {
     private String username;
     private String statusMessage;
     private String profileImage;
+    private List<ProfileDto> profileDtoList = new ArrayList<>();
 
     public MemberDto(Member member) {
         setUserId(member.getUserId());
@@ -29,5 +33,6 @@ public class MemberDto implements Serializable {
         setUsername(member.getUsername());
         setStatusMessage(member.getStatusMessage());
         setProfileImage(member.getProfileImage());
+        setProfileDtoList(member.getProfileList().stream().map(ProfileDto::new).collect(Collectors.toList()));
     }
 }

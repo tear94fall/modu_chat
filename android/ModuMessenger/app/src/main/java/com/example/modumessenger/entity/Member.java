@@ -9,6 +9,9 @@ import com.example.modumessenger.dto.MemberDto;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.gson.annotations.SerializedName;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class Member implements Parcelable {
     @SerializedName("userId")
     private String userId;
@@ -22,6 +25,8 @@ public class Member implements Parcelable {
     private String statusMessage;
     @SerializedName("profileImage")
     private String profileImage;
+    @SerializedName("profile")
+    private List<Profile> profileList;
 
     public Member(String userId, Member member) {
 
@@ -34,6 +39,7 @@ public class Member implements Parcelable {
         setUsername(memberDto.getUsername());
         setStatusMessage(memberDto.getStatusMessage());
         setProfileImage(memberDto.getProfileImage() == null ? null : memberDto.getProfileImage().toString());
+        setProfileList(memberDto.getProfileDtoList().stream().map(Profile::new).collect(Collectors.toList()));
     }
 
     public Member(GoogleSignInAccount account) {
@@ -70,6 +76,7 @@ public class Member implements Parcelable {
     public String getUsername() { return this.username; }
     public String getStatusMessage() { return this.statusMessage; }
     public String getProfileImage() { return this.profileImage; }
+    public List<Profile> getProfileList() { return this.profileList; }
 
     public void setUserId(String userId) { this.userId = userId; }
     public void setEmail(String email) { this.email = email; }
@@ -77,7 +84,7 @@ public class Member implements Parcelable {
     public void setAuth(String auth) { this.auth = auth; }
     public void setStatusMessage(String statusMessage) { this.statusMessage = statusMessage; }
     public void setProfileImage(String profileImage) { this.profileImage = profileImage == null || profileImage.equals("") ? "" : profileImage; }
-
+    public void setProfileList(List<Profile> profileList) { this.profileList = profileList; }
 
     @NonNull
     @Override

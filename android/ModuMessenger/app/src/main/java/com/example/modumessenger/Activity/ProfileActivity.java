@@ -33,7 +33,7 @@ import retrofit2.Response;
 
 public class ProfileActivity extends AppCompatActivity {
 
-    ImageView profileImageView;
+    ImageView profileImageView, wallpaperImageView;
     TextView usernameTextView, statusMessageTextView;
     Button profileEditButton, profileCloseButton, startChatButton;
     String email, userId, username, statusMessage, profileImage;
@@ -60,7 +60,7 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void setGestureDetector() {
-        gestureDetector = new GestureDetector(this,new OnSwipeListener(){
+        gestureDetector = new GestureDetector(this, new OnSwipeListener(){
             @Override
             public boolean onSwipe(Direction direction) {
                 if (direction==Direction.up){
@@ -83,6 +83,7 @@ public class ProfileActivity extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         Objects.requireNonNull(actionBar).hide();
 
+        wallpaperImageView = findViewById(R.id.profile_wallpaper_image);
         profileImageView = findViewById(R.id.profile_activity_image);
         usernameTextView = findViewById(R.id.profile_activity_username);
         statusMessageTextView = findViewById(R.id.profile_activity_status_message);
@@ -110,7 +111,10 @@ public class ProfileActivity extends AppCompatActivity {
     private void setData() {
         setTextOnView(usernameTextView, username);
         setTextOnView(statusMessageTextView, statusMessage);
+        Glide.with(this).load(R.drawable.basic_profile_image).into(wallpaperImageView);
         Glide.with(this).load(profileImage).into(profileImageView);
+
+        profileImageView.bringToFront();
 
         if(username!=null && username.length() !=0) {
             if(username.equals(PreferenceManager.getString("username"))) {
@@ -124,6 +128,14 @@ public class ProfileActivity extends AppCompatActivity {
 
     @SuppressLint("ClickableViewAccessibility")
     private void setButtonClickEvent() {
+        wallpaperImageView.setOnTouchListener((v, event) -> {
+            gestureDetector.onTouchEvent(event);
+            return false;
+        });
+
+        wallpaperImageView.setOnClickListener(v -> {
+        });
+
         profileImageView.setOnTouchListener((v, event) -> {
             gestureDetector.onTouchEvent(event);
             return false;

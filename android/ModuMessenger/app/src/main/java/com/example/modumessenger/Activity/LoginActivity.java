@@ -199,6 +199,7 @@ public class LoginActivity extends AppCompatActivity {
                 PreferenceManager.setString("email", result.getEmail());
                 PreferenceManager.setString("username", result.getUsername());
                 PreferenceManager.setString("profileImage", result.getProfileImage());
+                PreferenceManager.setString("wallpaperImage", result.getWallpaperImage());
                 PreferenceManager.setString("statusMessage", result.getStatusMessage());
 
                 Log.d("내정보 가져오기 요청 : ", result.toString());

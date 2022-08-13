@@ -99,6 +99,7 @@ public class SearchFriendsAdapter extends RecyclerView.Adapter<SearchFriendsAdap
                 intent.putExtra("username", member.getUsername());
                 intent.putExtra("statusMessage", member.getStatusMessage());
                 intent.putExtra("profileImage", member.getProfileImage());
+                intent.putExtra("wallpaperImage", member.getWallpaperImage());
 
                 v.getContext().startActivity(intent);
             });

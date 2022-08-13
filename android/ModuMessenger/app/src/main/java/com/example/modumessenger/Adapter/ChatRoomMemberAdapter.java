@@ -82,6 +82,7 @@ public class ChatRoomMemberAdapter extends RecyclerView.Adapter<ChatRoomMemberAd
                 intent.putExtra("username", member.getUsername());
                 intent.putExtra("statusMessage", member.getStatusMessage());
                 intent.putExtra("profileImage", member.getProfileImage());
+                intent.putExtra("wallpaperImage", member.getWallpaperImage());
 
                 v.getContext().startActivity(intent);
             });

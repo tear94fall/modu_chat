@@ -36,7 +36,7 @@ public class ProfileActivity extends AppCompatActivity {
     ImageView profileImageView, wallpaperImageView;
     TextView usernameTextView, statusMessageTextView;
     Button profileEditButton, profileCloseButton, startChatButton;
-    String email, userId, username, statusMessage, profileImage;
+    String email, userId, username, statusMessage, profileImage, wallpaperImage;
     GestureDetector gestureDetector;
 
     @Override
@@ -103,6 +103,7 @@ public class ProfileActivity extends AppCompatActivity {
             username = getIntent().getStringExtra("username");
             statusMessage = getIntent().getStringExtra("statusMessage");
             profileImage = getIntent().getStringExtra("profileImage");
+            wallpaperImage = getIntent().getStringExtra("wallpaperImage");
         } else {
             Toast.makeText(this, "No Data", Toast.LENGTH_SHORT).show();
         }
@@ -111,7 +112,7 @@ public class ProfileActivity extends AppCompatActivity {
     private void setData() {
         setTextOnView(usernameTextView, username);
         setTextOnView(statusMessageTextView, statusMessage);
-        Glide.with(this).load(R.drawable.basic_profile_image).into(wallpaperImageView);
+        Glide.with(this).load(wallpaperImage == null || wallpaperImage.equals("") ? R.drawable.basic_profile_image : wallpaperImage).into(wallpaperImageView);
         Glide.with(this).load(profileImage).into(profileImageView);
 
         profileImageView.bringToFront();

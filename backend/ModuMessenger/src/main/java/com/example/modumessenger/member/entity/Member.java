@@ -37,6 +37,7 @@ public class Member extends BaseTimeEntity {
 
     private String statusMessage;
     private String profileImage;
+    private String wallpaperImage;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     private List<Profile> profileList = new ArrayList<>();
@@ -61,6 +62,7 @@ public class Member extends BaseTimeEntity {
         setUsername(memberDto.getUsername());
         setStatusMessage(memberDto.getStatusMessage());
         setProfileImage(memberDto.getProfileImage());
+        setWallpaperImage(memberDto.getWallpaperImage());
         setProfileList(memberDto.getProfileDtoList().stream().map(Profile::new).collect(Collectors.toList()));
         this.Friends = new ArrayList<>();
     }

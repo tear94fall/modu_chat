@@ -20,4 +20,5 @@ public class ResponseMemberDto implements Serializable {
     private String username;
     private String statusMessage;
     private String profileImage;
+    private String wallpaperImage;
 }

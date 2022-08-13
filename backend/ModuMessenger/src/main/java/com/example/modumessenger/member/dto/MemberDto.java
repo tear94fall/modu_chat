@@ -24,6 +24,7 @@ public class MemberDto implements Serializable {
     private String username;
     private String statusMessage;
     private String profileImage;
+    private String wallpaperImage;
     private List<ProfileDto> profileDtoList = new ArrayList<>();
 
     public MemberDto(Member member) {
@@ -33,6 +34,7 @@ public class MemberDto implements Serializable {
         setUsername(member.getUsername());
         setStatusMessage(member.getStatusMessage());
         setProfileImage(member.getProfileImage());
+        setWallpaperImage(member.getWallpaperImage());
         setProfileDtoList(member.getProfileList().stream().map(ProfileDto::new).collect(Collectors.toList()));
     }
 }

@@ -7,6 +7,7 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.GridView;
 import android.widget.ImageView;
@@ -30,6 +31,7 @@ import com.example.modumessenger.Adapter.ChatHistoryAdapter;
 import com.example.modumessenger.Adapter.ChatRoomMemberAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.Grid.RecentChatImageGridAdapter;
+import com.example.modumessenger.Grid.RecentChatImageGridItem;
 import com.example.modumessenger.R;
 import com.example.modumessenger.entity.ChatRoom;
 import com.example.modumessenger.entity.Member;
@@ -625,6 +627,15 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 recent_chat_images.setAdapter(recentChatImageGridAdapter);
 
                 recentChatImageGridAdapter.setGridItems(imageChatList);
+
+                recent_chat_images.setOnItemClickListener((parent, v, position, id) -> {
+                    Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
+                    ArrayList<String> imageUrlList = imageChatList.stream().skip(position).map(ChatDto::getMessage).collect(Collectors.toCollection(ArrayList::new));
+                    intent.putStringArrayListExtra("imageUrlList", imageUrlList);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                    v.getContext().startActivity(intent);
+                });
 
                 if(imageChatList.size() == 0) {
                     recent_chat_images.setVisibility(View.GONE);

@@ -12,6 +12,7 @@ public class MemberDto {
     private String username;
     private String statusMessage;
     private String profileImage;
+    private String wallpaperImage;
     private List<ProfileDto> profileDtoList;
 
     public String getUserId() { return this.userId; }
@@ -20,6 +21,7 @@ public class MemberDto {
     public String getUsername() { return this.username; }
     public String getStatusMessage() { return this.statusMessage; }
     public String getProfileImage() { return this.profileImage; }
+    public String getWallpaperImage() { return this.wallpaperImage; }
     public List<ProfileDto> getProfileDtoList() { return this.profileDtoList; }
 
     public void setUserId(String userId) { this.userId = userId; }
@@ -28,6 +30,7 @@ public class MemberDto {
     public void setUsername(String username) { this.username = username; }
     public void setStatusMessage(String statusMessage) { this.statusMessage = statusMessage; }
     public void setProfileImage(String profileImage) { this.profileImage = profileImage; }
+    public void setWallpaperImage(String wallpaperImage) { this.wallpaperImage = wallpaperImage; }
     public void setProfileDtoList(List<ProfileDto> profileDtoList) { this.profileDtoList = profileDtoList; }
 
     public MemberDto() {
@@ -50,6 +53,7 @@ public class MemberDto {
         setUsername(member.getUsername());
         setStatusMessage(member.getStatusMessage());
         setProfileImage(member.getProfileImage());
+        setWallpaperImage(member.getWallpaperImage());
         setProfileDtoList(member.getProfileList().stream().map(ProfileDto::new).collect(Collectors.toList()));
     }
 }

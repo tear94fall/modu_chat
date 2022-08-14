@@ -9,8 +9,10 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,9 +44,10 @@ import retrofit2.Response;
 public class ProfileEditActivity extends AppCompatActivity implements ProfileEditBottomSheetFragment.ProfileEditBottomSheetListener {
 
     Member member;
-    ImageView profileImageView;
+    ImageView profileImageView, wallpaperImageView;
     EditText myProfileName, myStatusMessage;
     Button profileCloseButton, changeProfileButton, myProfileSaveButton;
+    ImageButton changeWallpaperButton;
 
     ActivityResultLauncher<Intent> launcher;
 
@@ -101,6 +104,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
         ActionBar actionBar = getSupportActionBar();
         Objects.requireNonNull(actionBar).hide();
 
+        wallpaperImageView = findViewById(R.id.profile_wallpaper_image);
         profileImageView = findViewById(R.id.my_profile_activity_image);
         myProfileName = findViewById(R.id.my_profile_name);
         myStatusMessage = findViewById(R.id.my_status_message);
@@ -108,6 +112,8 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
         profileCloseButton = findViewById(R.id.profile_close_button);
         changeProfileButton = findViewById(R.id.my_profile_image_change_button);
         myProfileSaveButton = findViewById(R.id.my_profile_save_button);
+
+        changeWallpaperButton = findViewById(R.id.my_wallpaper_image_change_button);
     }
 
     private void setLauncher() {
@@ -143,12 +149,22 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
         scopedStorageUtil = new ScopedStorageUtil();
         setTextOnView(myProfileName, member.getUsername());
         setTextOnView(myStatusMessage, member.getStatusMessage());
+
+        profileImageView.bringToFront();
+
         Glide.with(this)
-                .load(member.getProfileImage())
+                .load(member.getProfileImage() == null || member.getProfileImage().equals("") ? R.drawable.basic_profile_image : member.getProfileImage())
                 .error(Glide.with(this)
                         .load(R.drawable.basic_profile_image)
                         .into(profileImageView))
                 .into(profileImageView);
+
+        Glide.with(this)
+                .load(member.getWallpaperImage() == null || member.getWallpaperImage().equals("") ? R.drawable.basic_profile_image : member.getWallpaperImage())
+                .error(Glide.with(this)
+                        .load(R.drawable.basic_profile_image)
+                        .into(wallpaperImageView))
+                .into(wallpaperImageView);
     }
 
     private void setButtonClickEvent() {
@@ -166,6 +182,10 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
         changeProfileButton.setOnClickListener(view -> {
             ProfileEditBottomSheetFragment bottomSheetDialog = new ProfileEditBottomSheetFragment();
             bottomSheetDialog.show(getSupportFragmentManager(), bottomSheetDialog.getTag());
+        });
+
+        changeWallpaperButton.setOnClickListener(v -> {
+            Toast.makeText(getApplicationContext(), "배경화면 변경 버튼", Toast.LENGTH_SHORT).show();
         });
 
         profileCloseButton.setOnClickListener(view -> finish());

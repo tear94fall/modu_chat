@@ -49,6 +49,7 @@ public class MemberService {
         findMember.setUsername(memberDto.getUsername());
         findMember.setStatusMessage(memberDto.getStatusMessage());
         findMember.setProfileImage(memberDto.getProfileImage());
+        findMember.setWallpaperImage(memberDto.getWallpaperImage());
 
         Member updateMember = memberRepository.save(findMember);
         return modelMapper.map(updateMember, MemberDto.class);

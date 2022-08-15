@@ -160,6 +160,7 @@ public class FragmentFriends extends Fragment {
             intent.putExtra("username", PreferenceManager.getString("username"));
             intent.putExtra("statusMessage", PreferenceManager.getString("statusMessage"));
             intent.putExtra("profileImage", PreferenceManager.getString("profileImage"));
+            intent.putExtra("wallpaperImage", PreferenceManager.getString("wallpaperImage"));
 
             view.getContext().startActivity(intent);
         });

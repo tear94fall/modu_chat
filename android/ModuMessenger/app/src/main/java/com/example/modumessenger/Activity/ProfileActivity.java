@@ -112,8 +112,9 @@ public class ProfileActivity extends AppCompatActivity {
     private void setData() {
         setTextOnView(usernameTextView, username);
         setTextOnView(statusMessageTextView, statusMessage);
-        Glide.with(this).load(wallpaperImage == null || wallpaperImage.equals("") ? R.drawable.basic_profile_image : wallpaperImage).into(wallpaperImageView);
-        Glide.with(this).load(profileImage).into(profileImageView);
+
+        setProfileImage(profileImageView, profileImage);
+        setProfileImage(wallpaperImageView, wallpaperImage);
 
         profileImageView.bringToFront();
 
@@ -135,6 +136,13 @@ public class ProfileActivity extends AppCompatActivity {
         });
 
         wallpaperImageView.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
+            intent.putExtra("email", email);
+            intent.putExtra("userId", userId);
+            ArrayList<String> imageUrlList = new ArrayList<>();
+            imageUrlList.add(wallpaperImage);
+            intent.putStringArrayListExtra("imageUrlList", imageUrlList);
+            startActivity(intent);
         });
 
         profileImageView.setOnTouchListener((v, event) -> {
@@ -179,6 +187,15 @@ public class ProfileActivity extends AppCompatActivity {
         return getIntent().hasExtra(key);
     }
 
+    private void setProfileImage(ImageView imageView, String imageUrl) {
+        Glide.with(this)
+                .load(imageUrl==null || imageUrl.equals("") ? R.drawable.basic_profile_image : imageUrl)
+                .error(Glide.with(this)
+                        .load(R.drawable.basic_profile_image)
+                        .into(imageView))
+                .into(imageView);
+    }
+
     private void setTextOnView(TextView view, String value) {
         if(value != null && !value.equals("")) {
             view.setText(value);
@@ -211,12 +228,9 @@ public class ProfileActivity extends AppCompatActivity {
                 // get my Profile Info
                 usernameTextView.setText(result.getUsername());
                 statusMessageTextView.setText(result.getStatusMessage());
-                Glide.with(getApplicationContext())
-                        .load(result.getProfileImage())
-                        .error(Glide.with(getApplicationContext())
-                                .load(R.drawable.basic_profile_image)
-                                .into(profileImageView))
-                        .into(profileImageView);
+
+                setProfileImage(profileImageView, result.getProfileImage());
+                setProfileImage(wallpaperImageView, result.getWallpaperImage());
 
                 if(memberDto.getEmail().equals(result.getEmail())){
                     Log.d("중복검사: ", "중복된 번호가 아닙니다");

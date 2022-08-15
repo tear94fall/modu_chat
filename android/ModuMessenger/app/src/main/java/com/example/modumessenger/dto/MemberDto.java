@@ -54,6 +54,6 @@ public class MemberDto {
         setStatusMessage(member.getStatusMessage());
         setProfileImage(member.getProfileImage());
         setWallpaperImage(member.getWallpaperImage());
-        setProfileDtoList(member.getProfileList().stream().map(ProfileDto::new).collect(Collectors.toList()));
+        setProfileDtoList(member.getProfileList() != null ? member.getProfileList().stream().map(ProfileDto::new).collect(Collectors.toList()) : null);
     }
 }

@@ -42,7 +42,7 @@ public class Member implements Parcelable {
         setStatusMessage(memberDto.getStatusMessage());
         setProfileImage(memberDto.getProfileImage() == null ? null : memberDto.getProfileImage().toString());
         setWallpaperImage(memberDto.getWallpaperImage());
-        setProfileList(memberDto.getProfileDtoList().stream().map(Profile::new).collect(Collectors.toList()));
+        setProfileList(memberDto.getProfileDtoList() != null ? memberDto.getProfileDtoList().stream().map(Profile::new).collect(Collectors.toList()) : null);
     }
 
     public Member(GoogleSignInAccount account) {

@@ -22,6 +22,7 @@ import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.example.modumessenger.dto.MemberDto;
+import com.example.modumessenger.entity.Member;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,10 +34,10 @@ import retrofit2.Response;
 
 public class ProfileActivity extends AppCompatActivity {
 
+    Member member;
     ImageView profileImageView, wallpaperImageView;
     TextView usernameTextView, statusMessageTextView;
     Button profileEditButton, profileCloseButton, startChatButton;
-    String email, userId, username, statusMessage, profileImage, wallpaperImage;
     GestureDetector gestureDetector;
 
     @Override
@@ -54,7 +55,7 @@ public class ProfileActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        if(username.equals(PreferenceManager.getString("username"))){
+        if(member.getUsername().equals(PreferenceManager.getString("username"))){
             getMyProfileInfo(new MemberDto(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
         }
     }
@@ -96,33 +97,32 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void getData() {
-        if(getIntentExtra("profileImage") && getIntentExtra("username") && getIntentExtra("statusMessage"))
-        {
-            email = getIntent().getStringExtra("email");
-            userId = getIntent().getStringExtra("userId");
-            username = getIntent().getStringExtra("username");
-            statusMessage = getIntent().getStringExtra("statusMessage");
-            profileImage = getIntent().getStringExtra("profileImage");
-            wallpaperImage = getIntent().getStringExtra("wallpaperImage");
+        if(getIntentExtra("profileImage") && getIntentExtra("username") && getIntentExtra("statusMessage")) {
+            member = new Member(getIntent().getStringExtra("userId"),
+                    getIntent().getStringExtra("email"),
+                    getIntent().getStringExtra("username"),
+                    getIntent().getStringExtra("statusMessage"),
+                    getIntent().getStringExtra("profileImage"),
+                    getIntent().getStringExtra("wallpaperImage"));
         } else {
             Toast.makeText(this, "No Data", Toast.LENGTH_SHORT).show();
         }
     }
 
     private void setData() {
-        setTextOnView(usernameTextView, username);
-        setTextOnView(statusMessageTextView, statusMessage);
+        setTextOnView(usernameTextView, member.getUsername());
+        setTextOnView(statusMessageTextView, member.getStatusMessage());
 
-        setProfileImage(profileImageView, profileImage);
-        setProfileImage(wallpaperImageView, wallpaperImage);
+        setProfileImage(profileImageView, member.getProfileImage());
+        setProfileImage(wallpaperImageView, member.getWallpaperImage());
 
         profileImageView.bringToFront();
 
-        if(username!=null && username.length() !=0) {
-            if(username.equals(PreferenceManager.getString("username"))) {
+        if(member.getUserId() != null && member.getUsername().length() !=0) {
+            if(member.getUsername().equals(PreferenceManager.getString("username"))) {
                 profileEditButton.setVisibility(View.VISIBLE);
                 startChatButton.setText("나와 채팅하기");
-            }else if(!username.equals(PreferenceManager.getString("username"))) {
+            }else if(!member.getUsername().equals(PreferenceManager.getString("username"))) {
                 startChatButton.setText("친구와 채팅하기");
             }
         }
@@ -137,10 +137,10 @@ public class ProfileActivity extends AppCompatActivity {
 
         wallpaperImageView.setOnClickListener(v -> {
             Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
-            intent.putExtra("email", email);
-            intent.putExtra("userId", userId);
+            intent.putExtra("email", member.getEmail());
+            intent.putExtra("userId", member.getUserId());
             ArrayList<String> imageUrlList = new ArrayList<>();
-            imageUrlList.add(wallpaperImage);
+            imageUrlList.add(member.getWallpaperImage());
             intent.putStringArrayListExtra("imageUrlList", imageUrlList);
             startActivity(intent);
         });
@@ -152,8 +152,8 @@ public class ProfileActivity extends AppCompatActivity {
 
         profileImageView.setOnClickListener(v -> {
             Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
-            intent.putExtra("email", email);
-            intent.putExtra("userId", userId);
+            intent.putExtra("email", member.getEmail());
+            intent.putExtra("userId", member.getUserId());
             startActivity(intent);
         });
 
@@ -175,8 +175,8 @@ public class ProfileActivity extends AppCompatActivity {
             List<String> userIds = new ArrayList<>();
             userIds.add(PreferenceManager.getString("userId"));
 
-            if(!username.equals(PreferenceManager.getString("username"))) {
-                userIds.add(userId);
+            if(!member.getUsername().equals(PreferenceManager.getString("username"))) {
+                userIds.add(member.getUserId());
             }
 
             createChatRoom(userIds);

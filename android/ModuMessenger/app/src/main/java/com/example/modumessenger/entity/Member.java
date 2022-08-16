@@ -5,6 +5,7 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
+import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.dto.MemberDto;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.gson.annotations.SerializedName;
@@ -52,6 +53,15 @@ public class Member implements Parcelable {
         setUsername(account.getDisplayName());
         setStatusMessage("");
         setProfileImage(account.getPhotoUrl() == null ? null : account.getPhotoUrl().toString());
+    }
+
+    public Member(String userId, String email, String username, String statusMessage, String profileImage, String wallpaperImage) {
+        setUserId(userId);
+        setEmail(email);
+        setUsername(username);
+        setStatusMessage(statusMessage);
+        setProfileImage(profileImage);
+        setWallpaperImage(wallpaperImage);
     }
 
     public Member(String email) {

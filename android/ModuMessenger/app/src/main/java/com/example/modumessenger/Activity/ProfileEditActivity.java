@@ -286,6 +286,10 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
                     Log.d("내정보 업데이트 요청 : ", response.body().toString());
 
                     Toast.makeText(getApplicationContext(), "프로필 정보가 업데이트 되었습니다.", Toast.LENGTH_SHORT).show();
+
+                    PreferenceManager.setString("profileImage", member.getProfileImage());
+                    PreferenceManager.setString("wallpaperImage", member.getWallpaperImage());
+
                     finish();
                 } catch (Exception e) {
                     Log.e("오류 발생 : ", e.getMessage());

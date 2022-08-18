@@ -1,5 +1,6 @@
 package com.example.modumessenger.entity;
 
+import com.example.modumessenger.RoomDatabase.Entity.ChatRoomEntity;
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.example.modumessenger.dto.MemberDto;
 import com.google.gson.annotations.SerializedName;
@@ -50,5 +51,14 @@ public class ChatRoom {
         chatRoomDto.getMembers().forEach(member -> {
             members.add(new Member(member));
         });
+    }
+
+    public ChatRoom(ChatRoomEntity chatRoomEntity) {
+        setRoomId(chatRoomEntity.getRoomId());
+        setRoomName(chatRoomEntity.getRoomName());
+        setRoomImage(chatRoomEntity.getRoomImage());
+        setLastChatMsg(chatRoomEntity.getLastChatMsg());
+        setLastChatId("");
+        setLastChatTime(chatRoomEntity.getLastChatTime());
     }
 }

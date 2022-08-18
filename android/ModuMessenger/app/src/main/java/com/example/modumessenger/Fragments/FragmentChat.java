@@ -15,6 +15,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -24,6 +26,8 @@ import com.example.modumessenger.Activity.SearchActivity;
 import com.example.modumessenger.Adapter.ChatRoomAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
+import com.example.modumessenger.RoomDatabase.Database.ChatRoomDatabase;
+import com.example.modumessenger.RoomDatabase.Entity.ChatRoomEntity;
 import com.example.modumessenger.entity.ChatRoom;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
@@ -31,7 +35,9 @@ import com.example.modumessenger.dto.ChatRoomDto;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -43,9 +49,13 @@ public class FragmentChat extends Fragment {
     List<ChatRoom> chatRoomList;
     FloatingActionButton chatFloatingActionButton;
 
+    ChatRoomDatabase chatRoomDatabase;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        chatRoomDatabase = ChatRoomDatabase.getInstance(getActivity());
     }
 
     @Override
@@ -180,6 +190,13 @@ public class FragmentChat extends Fragment {
             @Override
             public void onFailure(@NonNull Call<List<ChatRoomDto>> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
+
+                LiveData<List<ChatRoomEntity>> all = chatRoomDatabase.chatRoomDao().getAll();
+
+                all.observe(requireActivity(), chatRoomEntities -> {
+                    List<ChatRoom> collect = chatRoomEntities.stream().map(ChatRoom::new).collect(Collectors.toList());
+                    chatRecyclerView.setAdapter(new ChatRoomAdapter(collect, FragmentChat.this));
+                });
             }
         });
     }

@@ -176,13 +176,15 @@ public class FragmentChat extends Fragment {
                 assert response.body() != null;
                 List<ChatRoomDto> chatRoomDtoList = response.body();
 
-                chatRoomList.clear();
+                if(chatRoomList.size() != chatRoomDtoList.size()) {
+                    chatRoomList.clear();
 
-                chatRoomDtoList.forEach(c -> {
-                    chatRoomList.add(new ChatRoom(c));
-                });
+                    chatRoomDtoList.forEach(c -> {
+                        chatRoomList.add(new ChatRoom(c));
+                    });
 
-                chatRecyclerView.setAdapter(new ChatRoomAdapter(chatRoomList, FragmentChat.this));
+                    chatRecyclerView.setAdapter(new ChatRoomAdapter(chatRoomList, FragmentChat.this));
+                }
 
                 Log.d("채팅방 목록 가져오기 요청 : ", response.body().toString());
             }

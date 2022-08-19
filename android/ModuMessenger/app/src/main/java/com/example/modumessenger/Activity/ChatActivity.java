@@ -76,6 +76,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
     List<Member> chatMemberList;
     List<ChatBubble> chatBubbleList;
+    ArrayList<String> recentImageList;
     int pagingSize = 20;
 
     RecyclerView recyclerView;
@@ -248,6 +249,15 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
         DrawerLayout drawLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+
+        Button recentImageButton = navigationView.findViewById(R.id.recent_image_button);
+        recentImageButton.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
+            intent.putStringArrayListExtra("imageUrlList", recentImageList);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+            v.getContext().startActivity(intent);
+        });
 
         Button ExitButton = navigationView.findViewById(R.id.nav_exit_button);
         ExitButton.setOnClickListener(v -> {
@@ -621,6 +631,8 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
                 List<ChatDto> imageChatList = response.body();
                 assert imageChatList != null;
+
+                recentImageList = imageChatList.stream().map(ChatDto::getMessage).collect(Collectors.toCollection(ArrayList::new));
 
                 GridView recent_chat_images = view.findViewById(R.id.chat_room_chat_image_grid_layout);
                 RecentChatImageGridAdapter recentChatImageGridAdapter = new RecentChatImageGridAdapter(getApplicationContext());

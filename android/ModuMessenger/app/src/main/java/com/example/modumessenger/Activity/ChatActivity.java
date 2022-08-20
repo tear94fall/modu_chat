@@ -10,6 +10,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.GridView;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,6 +20,7 @@ import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -250,8 +252,9 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         DrawerLayout drawLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
 
-        Button recentImageButton = navigationView.findViewById(R.id.recent_image_button);
-        recentImageButton.setOnClickListener(v -> {
+        ConstraintLayout recentImageView = navigationView.findViewById(R.id.recentImageConstraintLayout);
+
+        recentImageView.setOnClickListener(v -> {
             Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
             intent.putStringArrayListExtra("imageUrlList", recentImageList);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

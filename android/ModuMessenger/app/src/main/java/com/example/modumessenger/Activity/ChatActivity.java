@@ -255,11 +255,15 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         ConstraintLayout recentImageView = navigationView.findViewById(R.id.recentImageConstraintLayout);
 
         recentImageView.setOnClickListener(v -> {
-            Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
-            intent.putStringArrayListExtra("imageUrlList", recentImageList);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            if(recentImageList.size() != 0) {
+                Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
+                intent.putStringArrayListExtra("imageUrlList", recentImageList);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-            v.getContext().startActivity(intent);
+                v.getContext().startActivity(intent);
+            } else {
+                Toast.makeText(this.getApplicationContext(),"채팅방에 전송된 사진이 없습니다.", Toast.LENGTH_SHORT).show();
+            }
         });
 
         Button ExitButton = navigationView.findViewById(R.id.nav_exit_button);
@@ -638,6 +642,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 recentImageList = imageChatList.stream().map(ChatDto::getMessage).collect(Collectors.toCollection(ArrayList::new));
 
                 GridView recent_chat_images = view.findViewById(R.id.chat_room_chat_image_grid_layout);
+                View recent_chat_images_view = view.findViewById(R.id.view2);
                 RecentChatImageGridAdapter recentChatImageGridAdapter = new RecentChatImageGridAdapter(getApplicationContext());
                 recent_chat_images.setAdapter(recentChatImageGridAdapter);
 
@@ -654,6 +659,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
                 if(imageChatList.size() == 0) {
                     recent_chat_images.setVisibility(View.GONE);
+                    recent_chat_images_view.setVisibility(View.GONE);
                 }
 
                 Log.d("채팅 내역 가져오기 요청 : ", chatRoom.getRoomId());

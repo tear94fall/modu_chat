@@ -193,13 +193,15 @@
                         android:text="사진, 동영상"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toEndOf="@+id/recent_chat_image_image_view"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintVertical_bias="0.6" />
+                        app:layout_constraintTop_toTopOf="parent" />
 
                     <ImageView
                         android:id="@+id/recent_chat_image_image_view"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:minWidth="30dp"
+                        android:minHeight="30dp"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
@@ -210,7 +212,12 @@
                         android:id="@+id/recent_chat_image_arrow_image_view"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginEnd="2dp"
+                        android:minWidth="30dp"
+                        android:minHeight="30dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
                         app:srcCompat="@drawable/ic_baseline_keyboard_arrow_right_24" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
@@ -264,13 +271,15 @@
                         android:text="대화 상대"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toEndOf="@+id/chat_room_member_image_view"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintVertical_bias="0.6" />
+                        app:layout_constraintTop_toTopOf="parent" />
 
                     <ImageView
                         android:id="@+id/chat_room_member_image_view"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:minWidth="30dp"
+                        android:minHeight="30dp"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
@@ -280,7 +289,12 @@
                         android:id="@+id/chat_room_member_arrow_image_view"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginEnd="2dp"
+                        android:minWidth="30dp"
+                        android:minHeight="30dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
                         app:srcCompat="@drawable/ic_baseline_keyboard_arrow_right_24" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>

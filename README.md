@@ -35,13 +35,17 @@
 
 ## 모두의 채팅 어플리케이션
 
-| 로그인 화면 | 친구 목록 | 프로필 보기 | 친구 찾기 |
+| 로그인 화면 | 소셜 로그인 | 내 프로필 | 프로필 수정 |
 | :--------: | :--------: | :--------: | :--------: |
-|![start](./images/start.jpg)|![friends_list](./images/friends_list.jpg)|![profile_edit](./images/profile_edit.jpg)|![friends_search](./images/friends_search.jpg)|
+|![start](./images/start.jpg)|![google_login](./images/google_login.jpg)|![profile](./images/profile.jpg)|![profile_edit](./images/profile_edit.jpg)
 
-| 채팅방 목록 | 채팅 방 화면 | 채팅방 메뉴 | 설정 메뉴 |
+| 친구 목록 | 채팅방 목록 | 채팅 방 | 채팅방 메뉴 |
 | :--------: | :--------: | :--------: | :--------: |
-|![chat_room_list](./images/chat_room_list.jpg)|![chat_room](./images/chat_room.jpg)|![chat_side_menu](./images/chat_side_menu.jpg)|![setting_menu](./images/setting_menu.jpg)|
+|![friends_list](./images/friends_list.jpg)|![chat_room_list](./images/chat_room_list.jpg)|![chat_room](./images/chat_room.jpg)|![chat_side_menu](./images/chat_side_menu.jpg)
+
+| 설정 메뉴 | 채팅방 만들기 | 친구 찾기 | 메시지 알림 |
+| :--------: | :--------: | :--------: | :--------: |
+|![setting_menu](./images/setting_menu.jpg)|![create_chat_room](./images/create_chat_room.jpg)|![friends_search](./images/friends_search.jpg)|![chat_alarm](./images/chat_alarm.jpg)|
 
 ---
 

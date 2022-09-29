@@ -12,9 +12,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.modumessenger.Activity.AppInfoActivity;
 import com.example.modumessenger.Activity.SetFriendsActivity;
-import com.example.modumessenger.Grid.SettingGridItem;
 import com.example.modumessenger.R;
 
 import java.util.ArrayList;

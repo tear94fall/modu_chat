@@ -55,6 +55,14 @@ public class ChatService {
                 .collect(Collectors.toList());
     }
 
+    public List<ChatDto> searchImageChatByRoomIdSize(String roomId, String size) {
+        List<Chat> chatList = chatRepository.findByImageChatSize(roomId, Long.parseLong(size));
+        return chatList
+                .stream()
+                .map(c -> modelMapper.map(c, ChatDto.class))
+                .collect(Collectors.toList());
+    }
+
     public List<ChatDto> searchChatByMessage(String roomId, String message) {
         List<Chat> chatList = chatRepository.findByMessage(roomId, message);
         return chatList

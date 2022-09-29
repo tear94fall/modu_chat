@@ -3,6 +3,7 @@ package com.example.modumessenger.member.entity;
 import com.example.modumessenger.chat.entity.ChatRoomMember;
 import com.example.modumessenger.common.domain.BaseTimeEntity;
 import com.example.modumessenger.member.dto.MemberDto;
+import com.example.modumessenger.member.entity.profile.Profile;
 import lombok.*;
 
 import javax.persistence.*;
@@ -10,6 +11,7 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Getter
@@ -35,6 +37,10 @@ public class Member extends BaseTimeEntity {
 
     private String statusMessage;
     private String profileImage;
+    private String wallpaperImage;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
+    private List<Profile> profileList = new ArrayList<>();
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     private List<ChatRoomMember> chatRoomMemberList = new ArrayList<>();
@@ -56,6 +62,8 @@ public class Member extends BaseTimeEntity {
         setUsername(memberDto.getUsername());
         setStatusMessage(memberDto.getStatusMessage());
         setProfileImage(memberDto.getProfileImage());
+        setWallpaperImage(memberDto.getWallpaperImage());
+        setProfileList(memberDto.getProfileDtoList().stream().map(Profile::new).collect(Collectors.toList()));
         this.Friends = new ArrayList<>();
     }
 

@@ -5,9 +5,13 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
+import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.dto.MemberDto;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.gson.annotations.SerializedName;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class Member implements Parcelable {
     @SerializedName("userId")
@@ -22,6 +26,10 @@ public class Member implements Parcelable {
     private String statusMessage;
     @SerializedName("profileImage")
     private String profileImage;
+    @SerializedName("wallpaperImage")
+    private String wallpaperImage;
+    @SerializedName("profile")
+    private List<Profile> profileList;
 
     public Member(String userId, Member member) {
 
@@ -34,6 +42,8 @@ public class Member implements Parcelable {
         setUsername(memberDto.getUsername());
         setStatusMessage(memberDto.getStatusMessage());
         setProfileImage(memberDto.getProfileImage() == null ? null : memberDto.getProfileImage().toString());
+        setWallpaperImage(memberDto.getWallpaperImage());
+        setProfileList(memberDto.getProfileDtoList() != null ? memberDto.getProfileDtoList().stream().map(Profile::new).collect(Collectors.toList()) : null);
     }
 
     public Member(GoogleSignInAccount account) {
@@ -43,6 +53,15 @@ public class Member implements Parcelable {
         setUsername(account.getDisplayName());
         setStatusMessage("");
         setProfileImage(account.getPhotoUrl() == null ? null : account.getPhotoUrl().toString());
+    }
+
+    public Member(String userId, String email, String username, String statusMessage, String profileImage, String wallpaperImage) {
+        setUserId(userId);
+        setEmail(email);
+        setUsername(username);
+        setStatusMessage(statusMessage);
+        setProfileImage(profileImage);
+        setWallpaperImage(wallpaperImage);
     }
 
     public Member(String email) {
@@ -70,14 +89,17 @@ public class Member implements Parcelable {
     public String getUsername() { return this.username; }
     public String getStatusMessage() { return this.statusMessage; }
     public String getProfileImage() { return this.profileImage; }
+    public String getWallpaperImage() { return this.wallpaperImage; }
+    public List<Profile> getProfileList() { return this.profileList; }
 
     public void setUserId(String userId) { this.userId = userId; }
     public void setEmail(String email) { this.email = email; }
     public void setUsername(String username) { this.username = username; }
     public void setAuth(String auth) { this.auth = auth; }
     public void setStatusMessage(String statusMessage) { this.statusMessage = statusMessage; }
-    public void setProfileImage(String profileImage) { this.profileImage = profileImage == null || profileImage.equals("") ? "" : profileImage; }
-
+    public void setProfileImage(String profileImage) { this.profileImage = (profileImage == null || profileImage.equals("") ? "" : profileImage); }
+    public void setWallpaperImage(String wallpaperImage) { this.wallpaperImage = (wallpaperImage == null || wallpaperImage.equals("") ? "" : wallpaperImage); }
+    public void setProfileList(List<Profile> profileList) { this.profileList = profileList; }
 
     @NonNull
     @Override

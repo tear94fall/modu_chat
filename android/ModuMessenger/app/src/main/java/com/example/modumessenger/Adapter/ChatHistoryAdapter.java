@@ -244,6 +244,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         intent.putExtra("username", member.getUsername());
         intent.putExtra("statusMessage", member.getStatusMessage());
         intent.putExtra("profileImage", member.getProfileImage());
+        intent.putExtra("wallpaperImage", member.getWallpaperImage());
 
         view.getContext().startActivity(intent);
     }

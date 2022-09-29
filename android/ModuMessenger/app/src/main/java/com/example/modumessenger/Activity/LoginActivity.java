@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -68,6 +69,8 @@ public class LoginActivity extends AppCompatActivity {
     private void bindingView() {
         setTitle("로그인");
         LoginButton = findViewById(R.id.googleButton);
+        TextView textView = (TextView)LoginButton.getChildAt(0);
+        textView.setText("Google 계정으로 로그인");
     }
 
     private void setLauncher() {
@@ -199,6 +202,7 @@ public class LoginActivity extends AppCompatActivity {
                 PreferenceManager.setString("email", result.getEmail());
                 PreferenceManager.setString("username", result.getUsername());
                 PreferenceManager.setString("profileImage", result.getProfileImage());
+                PreferenceManager.setString("wallpaperImage", result.getWallpaperImage());
                 PreferenceManager.setString("statusMessage", result.getStatusMessage());
 
                 Log.d("내정보 가져오기 요청 : ", result.toString());

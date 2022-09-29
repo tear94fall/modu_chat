@@ -2,6 +2,8 @@ package com.example.modumessenger.Activity;
 
 import static android.os.SystemClock.sleep;
 
+import static com.example.modumessenger.Activity.ProfileEditBottomSheetFragment.*;
+
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
@@ -11,10 +13,12 @@ import android.provider.OpenableColumns;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -39,14 +43,15 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class ProfileEditActivity extends AppCompatActivity implements ProfileEditBottomSheetFragment.ProfileEditBottomSheetListener {
+public class ProfileEditActivity extends AppCompatActivity implements ProfileEditBottomSheetListener {
 
     Member member;
-    ImageView profileImageView;
+    ImageView profileImageView, wallpaperImageView;
     EditText myProfileName, myStatusMessage;
-    Button profileCloseButton, changeProfileButton, myProfileSaveButton;
+    Button profileCloseButton, myProfileSaveButton;
+    ImageButton profileEditButton, wallpaperEditButton;
 
-    ActivityResultLauncher<Intent> launcher;
+    ActivityResultLauncher<Intent> profileLauncher, wallpaperLauncher;
 
     ScopedStorageUtil scopedStorageUtil;
 
@@ -76,8 +81,8 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
     }
 
     @Override
-    public void onButtonClicked(int type) {
-        if(type==1) {
+    public void onButtonClicked(int event) {
+        if(event == PROFILE_EVENT.PROFILE_CHANGE.getEvent() || event == PROFILE_EVENT.WALLPAPER_CHANGE.getEvent()) {
             Toast.makeText(this, "갤러리로 이동합니다", Toast.LENGTH_SHORT).show();
 
             Intent intent = new Intent();
@@ -86,14 +91,27 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
             intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/jpg", "image/jpeg", "image/png"});
             intent.setAction(Intent.ACTION_GET_CONTENT);
 
-            launcher.launch(intent);
-        } else if(type==2) {
+            if(event == PROFILE_EVENT.PROFILE_CHANGE.getEvent()) {
+                profileLauncher.launch(intent);
+            } else {
+                wallpaperLauncher.launch(intent);
+            }
+        } else if(event == PROFILE_EVENT.PROFILE_DEFAULT.getEvent() || event == PROFILE_EVENT.WALLPAPER_DEFAULT.getEvent()) {
             Toast.makeText(this, "기본 이미지로 변경합니다", Toast.LENGTH_SHORT).show();
 
-            member.setProfileImage("");
+            if(event == PROFILE_EVENT.PROFILE_DEFAULT.getEvent()) {
+                member.setProfileImage("");
+            } else {
+                member.setWallpaperImage("");
+            }
 
             updateMyInfo(new MemberDto(member));
-            setProfileImage(profileImageView, member.getProfileImage());
+
+            if(event == PROFILE_EVENT.PROFILE_DEFAULT.getEvent()) {
+                setProfileImage(profileImageView, member.getProfileImage());
+            } else {
+                setProfileImage(wallpaperImageView, member.getWallpaperImage());
+            }
         }
     }
 
@@ -101,31 +119,49 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
         ActionBar actionBar = getSupportActionBar();
         Objects.requireNonNull(actionBar).hide();
 
+        wallpaperImageView = findViewById(R.id.profile_wallpaper_image);
         profileImageView = findViewById(R.id.my_profile_activity_image);
         myProfileName = findViewById(R.id.my_profile_name);
         myStatusMessage = findViewById(R.id.my_status_message);
 
         profileCloseButton = findViewById(R.id.profile_close_button);
-        changeProfileButton = findViewById(R.id.my_profile_image_change_button);
         myProfileSaveButton = findViewById(R.id.my_profile_save_button);
+
+        profileEditButton = findViewById(R.id.my_profile_image_edit_button);
+        wallpaperEditButton = findViewById(R.id.my_wallpaper_edit_button);
+
+        profileImageView.bringToFront();
+        profileEditButton.bringToFront();
     }
 
     private void setLauncher() {
-        launcher = registerForActivityResult(
+        profileLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK) {
-                        Intent intent = result.getData();
-                        Uri uri = intent != null ? intent.getData() : null;
-                        String fileName = getFileName(getContentResolver(), uri);
-                        if(fileName!=null) {
-                            String filePath = scopedStorageUtil.copyFromScopedStorage(this, uri, fileName);
-                            changeMyProfileImage(filePath);
-                        } else {
-                            Log.d("파일명 가져오기 실패 : ", "갤러리 에서 가져오기 실패");
-                        }
+                        updateProfileInfo(result, PROFILE_EVENT.PROFILE_CHANGE.getEvent());
                     }
                 });
+
+        wallpaperLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK) {
+                        updateProfileInfo(result, PROFILE_EVENT.WALLPAPER_CHANGE.getEvent());
+                    }
+                });
+    }
+
+    public void updateProfileInfo(ActivityResult result, int event) {
+        Intent intent = result.getData();
+        Uri uri = intent != null ? intent.getData() : null;
+        String fileName = getFileName(getContentResolver(), uri);
+        if(fileName!=null) {
+            String filePath = scopedStorageUtil.copyFromScopedStorage(this, uri, fileName);
+            changeMyProfileImage(filePath, event);
+        } else {
+            Log.d("파일명 가져오기 실패 : ", "갤러리 에서 가져오기 실패");
+        }
     }
 
     private void getData() {
@@ -134,6 +170,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
             member.setUsername(getIntent().getStringExtra("username"));
             member.setStatusMessage(getIntent().getStringExtra("statusMessage"));
             member.setProfileImage(getIntent().getStringExtra("profileImage"));
+            member.setWallpaperImage(getIntent().getStringExtra("wallpaperImage"));
         } else {
             Toast.makeText(this, "No Data", Toast.LENGTH_SHORT).show();
         }
@@ -143,12 +180,9 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
         scopedStorageUtil = new ScopedStorageUtil();
         setTextOnView(myProfileName, member.getUsername());
         setTextOnView(myStatusMessage, member.getStatusMessage());
-        Glide.with(this)
-                .load(member.getProfileImage())
-                .error(Glide.with(this)
-                        .load(R.drawable.basic_profile_image)
-                        .into(profileImageView))
-                .into(profileImageView);
+
+        setProfileImage(profileImageView, member.getProfileImage());
+        setProfileImage(wallpaperImageView, member.getWallpaperImage());
     }
 
     private void setButtonClickEvent() {
@@ -163,21 +197,33 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
             }
         });
 
-        changeProfileButton.setOnClickListener(view -> {
-            ProfileEditBottomSheetFragment bottomSheetDialog = new ProfileEditBottomSheetFragment();
+        profileEditButton.setOnClickListener(view -> {
+            ProfileEditBottomSheetFragment bottomSheetDialog = new ProfileEditBottomSheetFragment(PROFILE_IMAGE_TYPE.PROFILE_IMAGE.getType());
+            bottomSheetDialog.show(getSupportFragmentManager(), bottomSheetDialog.getTag());
+        });
+
+        wallpaperEditButton.setOnClickListener(view -> {
+            ProfileEditBottomSheetFragment bottomSheetDialog = new ProfileEditBottomSheetFragment(PROFILE_IMAGE_TYPE.PROFILE_WALLPAPER.getType());
             bottomSheetDialog.show(getSupportFragmentManager(), bottomSheetDialog.getTag());
         });
 
         profileCloseButton.setOnClickListener(view -> finish());
     }
 
-    private void changeMyProfileImage(String filePath) {
+    private void changeMyProfileImage(String filePath, int event) {
         File file = new File(filePath);
         RequestBody fileBody = RequestBody.Companion.create(file, MediaType.parse("multipart/form-data"));
         MultipartBody.Part filePart = MultipartBody.Part.createFormData("file", file.getName(), fileBody);
 
-        String originProfileImage = member.getProfileImage();
-        uploadProfileImage(filePart, originProfileImage);
+        String originProfileImage;
+
+        if(event == PROFILE_EVENT.PROFILE_CHANGE.getEvent()) {
+            originProfileImage = member.getProfileImage();
+        } else {
+            originProfileImage = member.getWallpaperImage();
+        }
+
+        uploadProfileImage(filePart, originProfileImage, event);
     }
 
     private String getFileName(ContentResolver resolver, Uri uri) {
@@ -234,9 +280,16 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
                     MemberDto myInfo = response.body();
                     member = new Member(myInfo);
 
+                    setProfileImage(profileImageView, member.getProfileImage());
+                    setProfileImage(wallpaperImageView, member.getWallpaperImage());
+
                     Log.d("내정보 업데이트 요청 : ", response.body().toString());
 
                     Toast.makeText(getApplicationContext(), "프로필 정보가 업데이트 되었습니다.", Toast.LENGTH_SHORT).show();
+
+                    PreferenceManager.setString("profileImage", member.getProfileImage());
+                    PreferenceManager.setString("wallpaperImage", member.getWallpaperImage());
+
                     finish();
                 } catch (Exception e) {
                     Log.e("오류 발생 : ", e.getMessage());
@@ -269,12 +322,12 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
                 // get my Profile Info
                 myProfileName.setText(result.getUsername());
                 myStatusMessage.setText(result.getStatusMessage());
-                Glide.with(getApplicationContext())
-                        .load(result.getProfileImage())
-                        .error(Glide.with(getApplicationContext())
-                                .load(R.drawable.basic_profile_image)
-                                .into(profileImageView))
-                        .into(profileImageView);
+
+                setProfileImage(profileImageView, result.getProfileImage());
+                setProfileImage(wallpaperImageView, result.getWallpaperImage());
+
+                member.setProfileImage(result.getProfileImage());
+                member.setWallpaperImage(result.getWallpaperImage());
 
                 if(member.getEmail().equals(result.getEmail())){
                     Log.d("중복검사: ", "중복된 번호가 아닙니다");
@@ -290,7 +343,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
         });
     }
 
-    public void uploadProfileImage(MultipartBody.Part file, String originProfileImage) {
+    public void uploadProfileImage(MultipartBody.Part file, String originProfileImage, int event) {
         Call<String> call = RetrofitClient.getImageApiService().RequestUploadImage(file);
 
         call.enqueue(new Callback<String>() {
@@ -302,23 +355,22 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
 
                 assert response.body() != null;
                 String filePath = response.body();
-                member.setProfileImage(RetrofitClient.getBaseUrl() + "modu_chat/images/" + filePath);
+
+                if(event == PROFILE_EVENT.PROFILE_CHANGE.getEvent()) {
+                    member.setProfileImage(RetrofitClient.getBaseUrl() + "modu_chat/images/" + filePath);
+                } else {
+                    member.setWallpaperImage(RetrofitClient.getBaseUrl() + "modu_chat/images/" + filePath);
+                }
+
                 scopedStorageUtil.deleteTempFiles();
 
-                if(!member.getProfileImage().equals(originProfileImage)) {
+                if(!member.getProfileImage().equals(originProfileImage) || !member.getWallpaperImage().equals(originProfileImage)) {
                     member.setUsername(String.valueOf(myProfileName.getText()));
                     member.setStatusMessage(String.valueOf(myStatusMessage.getText()));
 
                     sleep(1000);
 
                     updateMyInfo(new MemberDto(member));
-
-                    Glide.with(getApplicationContext())
-                            .load(!member.getProfileImage().equals("") && member.getProfileImage() != null ? member.getProfileImage() : R.drawable.basic_profile_image)
-                            .error(Glide.with(getApplicationContext())
-                                    .load(R.drawable.basic_profile_image)
-                                    .into(profileImageView))
-                            .into(profileImageView);
                 }
 
                 Log.d("프로필 이미지 업로드 요청 : ", response.body());

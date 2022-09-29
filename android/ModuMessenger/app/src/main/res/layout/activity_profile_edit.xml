@@ -6,14 +6,23 @@
     android:layout_height="match_parent">
 
     <ImageView
-        android:id="@+id/my_profile_activity_image"
+        android:id="@+id/profile_wallpaper_image"
         android:layout_width="0dp"
         android:layout_height="410dp"
-        android:layout_marginTop="0dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        tools:srcCompat="@tools:sample/avatars" />
+
+    <ImageView
+        android:id="@+id/my_profile_activity_image"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="-50dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/view"
         tools:srcCompat="@tools:sample/avatars" />
 
     <Button
@@ -25,16 +34,6 @@
         android:text="X"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/my_profile_image_change_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:text="프로필 사진 변경"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/view" />
 
     <Button
         android:id="@+id/my_profile_save_button"
@@ -51,18 +50,18 @@
         android:id="@+id/my_profile_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:inputType="textPersonName"
-        android:text="사용자 이름"
-        android:maxWidth="200sp"
-        android:autoSizeTextType="uniform"
-        android:autoSizeMinTextSize="12sp"
+        android:layout_marginTop="30dp"
         android:autoSizeMaxTextSize="100sp"
+        android:autoSizeMinTextSize="12sp"
         android:autoSizeStepGranularity="2sp"
+        android:autoSizeTextType="uniform"
+        android:inputType="textPersonName"
+        android:maxWidth="200sp"
+        android:text="사용자 이름"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.502"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/my_profile_image_change_button" />
+        app:layout_constraintTop_toBottomOf="@+id/my_profile_activity_image" />
 
     <EditText
         android:id="@+id/my_status_message"
@@ -90,6 +89,40 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/my_profile_activity_image" />
+        app:layout_constraintTop_toBottomOf="@+id/profile_wallpaper_image" />
+
+    <ImageButton
+        android:id="@+id/my_profile_image_edit_button"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_marginStart="-20dp"
+        android:layout_marginTop="-20dp"
+        android:adjustViewBounds="true"
+        android:background="@drawable/circle_icon_button"
+        android:bottomLeftRadius="20dp"
+        android:bottomRightRadius="20dp"
+        android:padding="15dp"
+        android:topLeftRadius="20dp"
+        android:topRightRadius="20dp"
+        app:layout_constraintStart_toEndOf="@+id/my_profile_activity_image"
+        app:layout_constraintTop_toBottomOf="@+id/my_profile_activity_image"
+        app:srcCompat="@drawable/ic_baseline_photo_camera_24" />
+
+    <ImageButton
+        android:id="@+id/my_wallpaper_edit_button"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_marginEnd="7dp"
+        android:layout_marginBottom="7dp"
+        android:adjustViewBounds="true"
+        android:background="@drawable/circle_icon_button"
+        android:bottomLeftRadius="20dp"
+        android:bottomRightRadius="20dp"
+        android:padding="15dp"
+        android:topLeftRadius="20dp"
+        android:topRightRadius="20dp"
+        app:layout_constraintBottom_toBottomOf="@+id/profile_wallpaper_image"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/ic_baseline_photo_camera_24" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

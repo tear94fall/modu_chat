@@ -7,7 +7,10 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.GridView;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -17,6 +20,7 @@ import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -28,6 +32,8 @@ import com.example.modumessenger.Adapter.ChatBubble;
 import com.example.modumessenger.Adapter.ChatHistoryAdapter;
 import com.example.modumessenger.Adapter.ChatRoomMemberAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
+import com.example.modumessenger.Grid.RecentChatImageGridAdapter;
+import com.example.modumessenger.Grid.RecentChatImageGridItem;
 import com.example.modumessenger.R;
 import com.example.modumessenger.entity.ChatRoom;
 import com.example.modumessenger.entity.Member;
@@ -72,6 +78,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
     List<Member> chatMemberList;
     List<ChatBubble> chatBubbleList;
+    ArrayList<String> recentImageList;
     int pagingSize = 20;
 
     RecyclerView recyclerView;
@@ -245,6 +252,20 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         DrawerLayout drawLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
 
+        ConstraintLayout recentImageView = navigationView.findViewById(R.id.recentImageConstraintLayout);
+
+        recentImageView.setOnClickListener(v -> {
+            if(recentImageList.size() != 0) {
+                Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
+                intent.putStringArrayListExtra("imageUrlList", recentImageList);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                v.getContext().startActivity(intent);
+            } else {
+                Toast.makeText(this.getApplicationContext(),"채팅방에 전송된 사진이 없습니다.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
         Button ExitButton = navigationView.findViewById(R.id.nav_exit_button);
         ExitButton.setOnClickListener(v -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog);
@@ -332,11 +353,18 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                         .load(R.drawable.basic_profile_image)
                         .into((ImageView) headerView.findViewById(R.id.chat_room_profile_image)))
                 .into((ImageView) headerView.findViewById(R.id.chat_room_profile_image));
+
+
+        // set recent chat image
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+
+        getImageChatList(navigationView, roomInfo, pagingSize);
     }
 
     public void setNavMember() {
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
 
+        // set chat member
         RecyclerView chatRecyclerView;
         RecyclerView.LayoutManager chatLayoutManager;
 
@@ -588,6 +616,53 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 recyclerView.scrollToPosition(prevChatList.size() + lastCompletelyVisibleItemPosition);
 
                 Log.d("채팅 내역 가져오기 요청 : ", roomId);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<ChatDto>> call, @NonNull Throwable t) {
+                Log.e("연결실패", t.getMessage());
+            }
+        });
+    }
+
+    public void getImageChatList(View view, ChatRoom chatRoom, int size) {
+        Call<List<ChatDto>> call = RetrofitClient.getChatApiService().RequestImageChatListSize(chatRoom.getRoomId(), Integer.toString(size));
+
+        call.enqueue(new Callback<List<ChatDto>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<ChatDto>> call, @NonNull Response<List<ChatDto>> response) {
+                if(!response.isSuccessful()){
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                    return;
+                }
+
+                List<ChatDto> imageChatList = response.body();
+                assert imageChatList != null;
+
+                recentImageList = imageChatList.stream().map(ChatDto::getMessage).collect(Collectors.toCollection(ArrayList::new));
+
+                GridView recent_chat_images = view.findViewById(R.id.chat_room_chat_image_grid_layout);
+                View recent_chat_images_view = view.findViewById(R.id.view2);
+                RecentChatImageGridAdapter recentChatImageGridAdapter = new RecentChatImageGridAdapter(getApplicationContext());
+                recent_chat_images.setAdapter(recentChatImageGridAdapter);
+
+                recentChatImageGridAdapter.setGridItems(imageChatList);
+
+                recent_chat_images.setOnItemClickListener((parent, v, position, id) -> {
+                    Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
+                    ArrayList<String> imageUrlList = imageChatList.stream().skip(position).map(ChatDto::getMessage).collect(Collectors.toCollection(ArrayList::new));
+                    intent.putStringArrayListExtra("imageUrlList", imageUrlList);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                    v.getContext().startActivity(intent);
+                });
+
+                if(imageChatList.size() == 0) {
+                    recent_chat_images.setVisibility(View.GONE);
+                    recent_chat_images_view.setVisibility(View.GONE);
+                }
+
+                Log.d("채팅 내역 가져오기 요청 : ", chatRoom.getRoomId());
             }
 
             @Override

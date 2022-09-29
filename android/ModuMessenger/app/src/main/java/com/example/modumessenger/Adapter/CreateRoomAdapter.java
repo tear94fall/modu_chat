@@ -88,6 +88,7 @@ public class CreateRoomAdapter extends RecyclerView.Adapter<CreateRoomAdapter.Ad
                 intent.putExtra("username", member.getUsername());
                 intent.putExtra("statusMessage", member.getStatusMessage());
                 intent.putExtra("profileImage", member.getProfileImage());
+                intent.putExtra("wallpaperImage", member.getWallpaperImage());
 
                 v.getContext().startActivity(intent);
             });

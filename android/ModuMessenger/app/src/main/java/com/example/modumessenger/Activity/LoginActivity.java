@@ -2,6 +2,7 @@ package com.example.modumessenger.Activity;
 
 import static com.google.android.gms.auth.api.signin.GoogleSignIn.*;
 
+import android.accounts.Account;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -17,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
+import com.example.modumessenger.dto.GoogleLoginRequest;
 import com.example.modumessenger.dto.MemberDto;
 import com.example.modumessenger.dto.SignUpDto;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -62,7 +64,7 @@ public class LoginActivity extends AppCompatActivity {
             Toast.makeText(this.getApplicationContext(),"로그인을 시도 합니다.", Toast.LENGTH_SHORT).show();
 
             LoginButton.setVisibility(View.INVISIBLE);
-            GetUserIdByLogin(account.getEmail());
+            GetUserInfo("google", account.getEmail());
         }
     }
 
@@ -83,7 +85,7 @@ public class LoginActivity extends AppCompatActivity {
                         Intent intent = result.getData();
                         Task<GoogleSignInAccount> task = getSignedInAccountFromIntent(intent);
 
-                        SignupToBackend(task);
+                        SignupToBackend(task, "google");
                     }
                 });
     }
@@ -93,6 +95,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private void setData() {
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build();
 
@@ -107,10 +110,10 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    private void SignupToBackend(Task<GoogleSignInAccount> completedTask) {
+    private void SignupToBackend(Task<GoogleSignInAccount> completedTask, String auth_type) {
         try {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
-            SignupMember(new SignUpDto(account));
+            SignupMember(new GoogleLoginRequest(account.getIdToken(), "google"));
         } catch (ApiException e) {
             Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
         }
@@ -122,8 +125,8 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     // Retrofit function
-    public void SignupMember(SignUpDto signUpDto) {
-        Call<SignUpDto> call = RetrofitClient.getMemberApiService().RequestSignup(signUpDto);
+    public void SignupMember(GoogleLoginRequest googleLoginRequest) {
+        Call<SignUpDto> call = RetrofitClient.getMemberApiService().RequestSignup(googleLoginRequest);
 
         call.enqueue(new Callback<SignUpDto>() {
             @Override
@@ -136,12 +139,8 @@ public class LoginActivity extends AppCompatActivity {
                 SignUpDto result = response.body();
                 assert result != null;
 
-                if(signUpDto.getEmail().equals(result.getEmail())){
-                    Log.d("중복검사: ", "중복된 번호가 아닙니다");
-                }
-
-                Log.d("회원가입 요청 : ", result.toString());
-                GetUserIdByLogin(result.getEmail());
+                Log.d("회원가입 완료 : ", result.toString());
+                GetUserInfo(result.getEmail(), googleLoginRequest.getAuthType());
             }
 
             @Override
@@ -182,10 +181,12 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    public void GetUserIdByLogin(String email) {
+    public void GetUserInfo(String email, String auth_type) {
         MemberDto memberDto = new MemberDto();
+        memberDto.setAuth(auth_type);
         memberDto.setEmail(email);
-        Call<MemberDto> call = RetrofitClient.getMemberApiService().RequestUserId(memberDto);
+
+        Call<MemberDto> call = RetrofitClient.getMemberApiService().RequestUserInfo(memberDto);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override

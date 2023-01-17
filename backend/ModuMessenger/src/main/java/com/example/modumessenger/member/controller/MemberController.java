@@ -1,5 +1,6 @@
 package com.example.modumessenger.member.controller;
 
+import com.example.modumessenger.member.dto.GoogleLoginRequest;
 import com.example.modumessenger.member.dto.MemberDto;
 import com.example.modumessenger.member.dto.RequestMemberDto;
 import com.example.modumessenger.member.dto.ResponseMemberDto;
@@ -27,8 +28,8 @@ public class MemberController {
     }
 
     @PostMapping("/member/signup")
-    public ResponseEntity<ResponseMemberDto> signupMember(@Valid @RequestBody RequestMemberDto requestMemberDto) {
-        MemberDto memberDto = memberService.registerMember(modelMapper.map(requestMemberDto, MemberDto.class));
+    public ResponseEntity<ResponseMemberDto> signupMember(@Valid @RequestBody GoogleLoginRequest googleLoginRequest) {
+        MemberDto memberDto = memberService.registerMember(googleLoginRequest);
         return ResponseEntity.ok().body(modelMapper.map(memberDto, ResponseMemberDto.class));
     }
 

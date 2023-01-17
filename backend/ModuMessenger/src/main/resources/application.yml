@@ -4,6 +4,7 @@ server:
 spring:
   profiles:
     default: local
+    include: oauth
 
   config:
     use-legacy-processing: true

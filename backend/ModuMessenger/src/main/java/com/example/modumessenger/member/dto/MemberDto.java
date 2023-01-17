@@ -6,8 +6,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
+
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -36,5 +37,15 @@ public class MemberDto implements Serializable {
         setProfileImage(member.getProfileImage());
         setWallpaperImage(member.getWallpaperImage());
         setProfileDtoList(member.getProfileList().stream().map(ProfileDto::new).collect(Collectors.toList()));
+    }
+
+    public MemberDto(Payload payload) {
+        setUserId(payload.getSubject());
+        setEmail(payload.getEmail());
+        setAuth("google");
+        setUsername((String) payload.get("name"));
+        setStatusMessage("");
+        setProfileImage((String) payload.get("picture"));
+        setWallpaperImage("");
     }
 }

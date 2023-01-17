@@ -1,5 +1,6 @@
 package com.example.modumessenger.Retrofit;
 
+import com.example.modumessenger.dto.GoogleLoginRequest;
 import com.example.modumessenger.dto.MemberDto;
 import com.example.modumessenger.dto.SignUpDto;
 
@@ -14,13 +15,13 @@ import retrofit2.http.Path;
 public interface RetrofitMemberAPI {
 
     @POST("member/signup")
-    Call<SignUpDto> RequestSignup(@Body SignUpDto signUpDto);
+    Call<SignUpDto> RequestSignup(@Body GoogleLoginRequest googleLoginRequest);
 
     @POST("login")
     Call<Void> RequestLogin(@Body MemberDto MemberDto);
 
     @POST("member")
-    Call<MemberDto> RequestUserId(@Body MemberDto MemberDto);
+    Call<MemberDto> RequestUserInfo(@Body MemberDto MemberDto);
 
     @POST("member/{userId}")
     Call<MemberDto> RequestUpdate(@Path("userId") String userId, @Body MemberDto memberDto);

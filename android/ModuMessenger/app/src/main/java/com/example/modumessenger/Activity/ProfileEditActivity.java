@@ -304,7 +304,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
     }
 
     public void getMyProfileInfo(MemberDto memberDto) {
-        Call<MemberDto> call = RetrofitClient.getMemberApiService().RequestUserId(memberDto);
+        Call<MemberDto> call = RetrofitClient.getMemberApiService().RequestUserInfo(memberDto);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override

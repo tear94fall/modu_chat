@@ -1,14 +1,14 @@
 package com.example.modumessenger.auth;
 
+import com.example.modumessenger.common.exception.CustomException;
+import com.example.modumessenger.common.exception.ErrorCode;
 import com.example.modumessenger.member.entity.Member;
 import com.example.modumessenger.member.repository.MemberRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
 
 import java.util.NoSuchElementException;
 
@@ -26,10 +26,10 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         Member member = memberRepository.searchMemberByUserId(userId).orElseThrow(() -> new NoSuchElementException("일치하는 계정이 없습니다."));
 
         if(!email.equals(member.getEmail())) {
-            throw new NoSuchElementException("이메일이 일치하지 않습니다.");
+            throw new CustomException(ErrorCode.EMAIL_NOT_FOUND, email);
         }
 
-        return CustomAuthenticationToken.getTokenFromAccountContext(member);
+        return CustomAuthenticationToken.getCustomAuthTokenFromMember(member);
     }
 
     @Override

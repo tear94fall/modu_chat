@@ -1,6 +1,6 @@
 package com.example.modumessenger.auth;
 
-import com.example.modumessenger.member.dto.RequestMemberDto;
+import com.example.modumessenger.member.dto.RequestLoginDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -15,14 +15,14 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
 
 public class CustomAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
 
     private final AuthenticationSuccessHandler authenticationSuccessHandler;
     private final AuthenticationFailureHandler authenticationFailureHandler;
 
-    public CustomAuthenticationFilter(AuthenticationManager authenticationManager, AuthenticationSuccessHandler authenticationSuccessHandler, AuthenticationFailureHandler authenticationFailureHandler) {
+    public CustomAuthenticationFilter(AuthenticationManager authenticationManager,
+                                      AuthenticationSuccessHandler authenticationSuccessHandler,AuthenticationFailureHandler authenticationFailureHandler) {
         super("/login", authenticationManager);
         this.authenticationSuccessHandler = authenticationSuccessHandler;
         this.authenticationFailureHandler = authenticationFailureHandler;
@@ -30,12 +30,11 @@ public class CustomAuthenticationFilter extends AbstractAuthenticationProcessing
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException, ServletException {
-
         try {
-            RequestMemberDto dto = new ObjectMapper().readValue(request.getReader(), RequestMemberDto.class);
-            return getAuthenticationManager().authenticate(
-                    new CustomAuthenticationToken(dto.getUserId(), dto.getEmail(), new ArrayList<>())
-            );
+            RequestLoginDto requestLoginDto = new ObjectMapper().readValue(request.getReader(), RequestLoginDto.class);
+            CustomAuthenticationToken customAuthenticationToken = new CustomAuthenticationToken(requestLoginDto);
+
+            return super.getAuthenticationManager().authenticate(customAuthenticationToken);
         } catch (IOException e) {
             throw new BadCredentialsException(e.getMessage());
         }

@@ -8,7 +8,6 @@ import lombok.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -55,6 +54,13 @@ public class Member extends BaseTimeEntity {
         return getUserId() + ", " + getUsername() + "," + getEmail() + "," + getAuth() + "," + getStatusMessage() + "," + getProfileImage();
     }
 
+    public Member update(String name, String picture) {
+        this.username = name;
+        this.profileImage = picture;
+
+        return this;
+    }
+
     public Member(MemberDto memberDto) {
         setUserId(memberDto.getUserId());
         setAuth(memberDto.getAuth());
@@ -74,5 +80,11 @@ public class Member extends BaseTimeEntity {
     public Member(String userId, String email) {
         this.userId = userId;
         this.email = email;
+    }
+
+    public Member(String email, String name, String picture) {
+        setEmail(email);
+        setUsername(name);
+        setProfileImage(picture);
     }
 }

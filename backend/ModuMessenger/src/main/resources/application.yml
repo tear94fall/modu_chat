@@ -43,6 +43,8 @@ logging:
 security:
   jwt:
     token:
+      access-expired: 3600000
+      refresh-expired: 604800000
       secret-key: modu_secret_key
       expire-length: 3600000
 

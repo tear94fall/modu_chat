@@ -1,6 +1,8 @@
 package com.example.modumessenger.member.service;
 
 import com.example.modumessenger.common.Properties.GoogleOauthProperties;
+import com.example.modumessenger.common.exception.CustomException;
+import com.example.modumessenger.common.exception.ErrorCode;
 import com.example.modumessenger.member.dto.GoogleLoginRequest;
 import com.example.modumessenger.member.dto.MemberDto;
 import com.example.modumessenger.member.entity.Member;
@@ -8,6 +10,10 @@ import com.example.modumessenger.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +25,7 @@ import com.google.api.client.json.gson.GsonFactory;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,7 +33,16 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class MemberService {
+public class MemberService implements UserDetailsService {
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND, email));
+
+        return new User(member.getEmail(), member.getUserId(),
+                true, true, true, true, new ArrayList<>());
+    }
 
     private final MemberRepository memberRepository;
     private final ModelMapper modelMapper;
@@ -47,7 +63,9 @@ public class MemberService {
             String email = payload.getEmail();
 
             if(memberRepository.existsByEmail(email)){
-                Member findMember = memberRepository.findByEmail(email);
+                Member findMember = memberRepository.findByEmail(email)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND, email));
+
                 return modelMapper.map(findMember, MemberDto.class);
             }
 
@@ -94,7 +112,8 @@ public class MemberService {
         }
 
         Member member = memberRepository.findByUserId(userId);
-        Member friend = memberRepository.findByEmail(memberDto.getEmail());
+        Member friend = memberRepository.findByEmail(memberDto.getEmail())
+                .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND, memberDto.getEmail()));
 
         memberRepository.findByUserId(userId).getFriends().add(friend.getId());
         memberRepository.save(member);

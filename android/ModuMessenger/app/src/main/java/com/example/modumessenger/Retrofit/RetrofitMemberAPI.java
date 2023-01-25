@@ -2,6 +2,7 @@ package com.example.modumessenger.Retrofit;
 
 import com.example.modumessenger.dto.GoogleLoginRequest;
 import com.example.modumessenger.dto.MemberDto;
+import com.example.modumessenger.dto.RequestLoginDto;
 import com.example.modumessenger.dto.SignUpDto;
 
 import java.util.List;
@@ -18,7 +19,7 @@ public interface RetrofitMemberAPI {
     Call<SignUpDto> RequestSignup(@Body GoogleLoginRequest googleLoginRequest);
 
     @POST("login")
-    Call<Void> RequestLogin(@Body MemberDto MemberDto);
+    Call<Void> RequestLogin(@Body RequestLoginDto requestLoginDto);
 
     @POST("member")
     Call<MemberDto> RequestUserInfo(@Body MemberDto MemberDto);

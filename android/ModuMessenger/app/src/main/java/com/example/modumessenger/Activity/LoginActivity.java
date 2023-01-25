@@ -2,7 +2,6 @@ package com.example.modumessenger.Activity;
 
 import static com.google.android.gms.auth.api.signin.GoogleSignIn.*;
 
-import android.accounts.Account;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -20,6 +19,7 @@ import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.dto.GoogleLoginRequest;
 import com.example.modumessenger.dto.MemberDto;
+import com.example.modumessenger.dto.RequestLoginDto;
 import com.example.modumessenger.dto.SignUpDto;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -64,7 +64,7 @@ public class LoginActivity extends AppCompatActivity {
             Toast.makeText(this.getApplicationContext(),"로그인을 시도 합니다.", Toast.LENGTH_SHORT).show();
 
             LoginButton.setVisibility(View.INVISIBLE);
-            GetUserInfo("google", account.getEmail());
+            GetUserInfo(account.getEmail(), "google");
         }
     }
 
@@ -150,9 +150,8 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    public void LoginMember(String userId, String email){
-        MemberDto memberDto = new MemberDto(userId, email);
-        Call<Void> call = RetrofitClient.getMemberApiService().RequestLogin(memberDto);
+    public void LoginMember(RequestLoginDto requestLoginDto){
+        Call<Void> call = RetrofitClient.getMemberApiService().RequestLogin(requestLoginDto);
 
         call.enqueue(new Callback<Void>() {
             @Override
@@ -162,9 +161,14 @@ public class LoginActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(),"연결이 원활하지 않습니다.", Toast.LENGTH_SHORT).show();
                 }
 
-                String jwtToken = response.headers().get("token");
-                Log.e("jwt 토큰 발급 완료 : ", jwtToken);
-                PreferenceManager.setString("token", "Bearer" + " " + jwtToken);
+                String refreshToken = response.headers().get("refresh-token");
+                String accessToken = response.headers().get("access-token");
+
+                Log.e("refresh jwt 토큰 발급 완료 : ", refreshToken);
+                Log.e("access jwt 토큰 발급 완료 : ", accessToken);
+
+                PreferenceManager.setString("refresh-token", "Bearer" + " " + refreshToken);
+                PreferenceManager.setString("access-token", "Bearer" + " " + accessToken);
 
                 Toast.makeText(getApplicationContext(),"로그인에 성공 하였습니다. 반갑습니다.", Toast.LENGTH_SHORT).show();
 
@@ -207,7 +211,9 @@ public class LoginActivity extends AppCompatActivity {
                 PreferenceManager.setString("statusMessage", result.getStatusMessage());
 
                 Log.d("내정보 가져오기 요청 : ", result.toString());
-                LoginMember(result.getUserId(), result.getEmail());
+
+                RequestLoginDto requestLoginDto = new RequestLoginDto(result.getUserId(), result.getEmail());
+                LoginMember(requestLoginDto);
             }
 
             @Override

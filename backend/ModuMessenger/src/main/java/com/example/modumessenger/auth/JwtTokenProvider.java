@@ -8,10 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.Base64;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Component
 @RequiredArgsConstructor
@@ -49,9 +46,10 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public String createJwtRefreshToken() {
+    public String createJwtRefreshToken(List<String> roles) {
         Claims claims = Jwts.claims();
         claims.put("uuid", UUID.randomUUID());
+        claims.put("roles", roles);
         Date now = new Date();
         Date expiration = new Date(now.getTime() + REFRESH_TOKEN_EXPIRED_TIME);
 
@@ -75,12 +73,11 @@ public class JwtTokenProvider {
     }
 
     public String findUserIdByJwt(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(secretKey)
-                .parseClaimsJws(token)
-                .getBody();
+        return getClaimsFromJwtToken(token).getSubject();
+    }
 
-        return claims.getSubject();
+    public List<String> getAuthentication(String token) {
+        return (List<String>) getClaimsFromJwtToken(token).get("roles");
     }
 
     public boolean validateToken(String token) {

@@ -41,11 +41,15 @@ public class LoginActivity extends AppCompatActivity {
     GoogleSignInClient mGoogleSignInClient;
     SignInButton LoginButton;
     ActivityResultLauncher<Intent> startActivityResult;
+    RetrofitMemberAPI service;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        String accessToken = PreferenceManager.getString("access-token");
+        service = RetrofitClient.createMemberApiService(accessToken);
 
         bindingView();
         setLauncher();
@@ -140,6 +144,8 @@ public class LoginActivity extends AppCompatActivity {
                 assert result != null;
 
                 Log.d("회원가입 완료 : ", result.toString());
+
+                // need to login before GetUserInfo because access token need.
                 GetUserInfo(result.getEmail(), googleLoginRequest.getAuthType());
             }
 

@@ -77,6 +77,12 @@ public class MemberService implements UserDetailsService {
         return new MemberDto(save);
     }
 
+    public MemberDto getMemberByEmail(String email) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND, email));
+        return modelMapper.map(member, MemberDto.class);
+    }
+
     public MemberDto getUserIdByEmail(String email) {
         Member findMember = memberRepository.searchMemberByUserId(email).orElseGet(Member::new);
         return modelMapper.map(findMember, MemberDto.class);

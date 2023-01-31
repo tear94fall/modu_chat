@@ -1,0 +1,45 @@
+server:
+  port: 8000
+
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+security:
+  jwt:
+    token:
+      access-expired: 3600000
+      refresh-expired: 604800000
+      secret-key: modu_secret_key
+
+spring:
+  application:
+    name: gateway-service
+
+  cloud:
+    gateway:
+      routes:
+        - id: chat-service
+          uri: lb://CHAT-SERVICE
+          predicates:
+            - Path=/chat-service/login
+            - Method=POST
+          filters:
+            - RewritePath=/chat-service/(?<segment>.*), /$\{segment}
+        - id: chat-service
+          uri: lb://CHAT-SERVICE
+          predicates:
+            - Path=/chat-service/member/signup
+            - Method=POST
+          filters:
+            - RewritePath=/chat-service/(?<segment>.*), /$\{segment}
+        - id: chat-service
+          uri: lb://CHAT-SERVICE
+          predicates:
+            - Path=/chat-service/**
+          filters:
+            - AuthorizationHeaderFilter
+            - RewritePath=/chat-service/(?<segment>.*), /$\{segment}

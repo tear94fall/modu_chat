@@ -13,7 +13,7 @@ security:
     token:
       access-expired: 3600000
       refresh-expired: 604800000
-      secret-key: modu_secret_key
+      secret-key: 98FB6A50D8BE83F0521F6EDA48903D718DE1C41BF09D4D3671A5E3A6E4E0910A
 
 spring:
   application:
@@ -33,6 +33,13 @@ spring:
           uri: lb://CHAT-SERVICE
           predicates:
             - Path=/chat-service/member/signup
+            - Method=POST
+          filters:
+            - RewritePath=/chat-service/(?<segment>.*), /$\{segment}
+        - id: chat-service
+          uri: lb://CHAT-SERVICE
+          predicates:
+            - Path=/chat-service/member
             - Method=POST
           filters:
             - RewritePath=/chat-service/(?<segment>.*), /$\{segment}

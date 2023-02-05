@@ -1,6 +1,7 @@
 package com.example.gatewayservice.filter;
 
 import com.example.gatewayservice.jwt.JwtTokenProvider;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
@@ -38,13 +39,13 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
             }
 
             String authorizationHeader = request.getHeaders().get(AUTHORIZATION).get(0);
-            String jwt = authorizationHeader.replace("Bearer", "");
+            String jwt = authorizationHeader.replace("Bearer ", "");
 
             jwtTokenProvider.validateToken(jwt);
 
-            if(!jwtTokenProvider.getRolesToken(jwt).contains("USER")) {
-                return onError(exchange, "JWT token is not valid", UNAUTHORIZED);
-            }
+//            if(!jwtTokenProvider.getRolesToken(jwt).contains("USER")) {
+//                return onError(exchange, "JWT token is not valid", UNAUTHORIZED);
+//            }
 
             return chain.filter(exchange);
         };

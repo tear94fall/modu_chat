@@ -11,8 +11,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.Adapter.FindFriendsAdapter;
+import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
+import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.dto.MemberDto;
 
 import java.util.List;
@@ -27,10 +29,15 @@ public class FindFriendsActivity extends AppCompatActivity {
     RecyclerView findFriendRecyclerView;
     List<MemberDto> findFriendList;
 
+    RetrofitMemberAPI retrofitMemberAPI;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_find_friends);
+
+        String accessToken = PreferenceManager.getString("access-token");
+        retrofitMemberAPI = RetrofitClient.createMemberApiService(accessToken);
 
         bindingView();
         getData();
@@ -83,7 +90,7 @@ public class FindFriendsActivity extends AppCompatActivity {
 
     // Retrofit function
     public void searchFriend(String email) {
-        Call<List<MemberDto>> call = RetrofitClient.getMemberApiService().RequestFriend(email);
+        Call<List<MemberDto>> call = retrofitMemberAPI.RequestFriend(email);
         // get member list by email
         // need to add, find from my friends by email
 

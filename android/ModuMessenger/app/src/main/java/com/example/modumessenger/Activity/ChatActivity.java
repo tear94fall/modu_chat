@@ -35,6 +35,8 @@ import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.Grid.RecentChatImageGridAdapter;
 import com.example.modumessenger.Grid.RecentChatImageGridItem;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.RetrofitChatAPI;
+import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
 import com.example.modumessenger.entity.ChatRoom;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
@@ -94,6 +96,9 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
     ActionBarDrawerToggle actionBarDrawerToggle;
 
+    RetrofitChatAPI retrofitChatAPI;
+    RetrofitChatRoomAPI retrofitChatRoomAPI;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -152,6 +157,10 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     }
 
     private void getData() {
+        String accessToken = PreferenceManager.getString("access-token");
+        retrofitChatAPI = RetrofitClient.createChatApiService(accessToken);
+        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService(accessToken);
+
         jwtToken = PreferenceManager.getString("token");
         userId = PreferenceManager.getString("userId");
         roomId = getIntent().getStringExtra("roomId");
@@ -162,8 +171,8 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
     private void setData() {
         objectMapper = new ObjectMapper();
-        chatMemberList = new ArrayList<>();
         chatBubbleList = new ArrayList<>();
+        chatMemberList = new ArrayList<>();
 
         chatSendOthersActivity = new ChatSendOthersActivity();
     }
@@ -485,7 +494,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
     // Retrofit function
     public void getRoomInfo(String roomId) {
-        Call<ChatRoomDto> call = RetrofitClient.getChatRoomApiService().RequestChatRoom(roomId);
+        Call<ChatRoomDto> call = retrofitChatRoomAPI.RequestChatRoom(roomId);
 
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override
@@ -534,7 +543,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     }
 
     public void updateRoomInfo(String roomId) {
-        Call<ChatRoomDto> call = RetrofitClient.getChatRoomApiService().RequestChatRoom(roomId);
+        Call<ChatRoomDto> call = retrofitChatRoomAPI.RequestChatRoom(roomId);
 
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override
@@ -565,7 +574,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     }
 
     public void getChatList(ChatRoom chatRoom, int size) {
-        Call<List<ChatDto>> call = RetrofitClient.getChatApiService().RequestChatListSize(chatRoom.getRoomId(), Integer.toString(size));
+        Call<List<ChatDto>> call = retrofitChatAPI.RequestChatListSize(chatRoom.getRoomId(), Integer.toString(size));
 
         call.enqueue(new Callback<List<ChatDto>>() {
             @Override
@@ -596,7 +605,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     }
 
     public void getPrevChatList(String roomId, String chatId, int size) {
-        Call<List<ChatDto>> call = RetrofitClient.getChatApiService().RequestPrevChatList(roomId, chatId, Integer.toString(size));
+        Call<List<ChatDto>> call = retrofitChatAPI.RequestPrevChatList(roomId, chatId, Integer.toString(size));
 
         call.enqueue(new Callback<List<ChatDto>>() {
             @Override
@@ -626,7 +635,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     }
 
     public void getImageChatList(View view, ChatRoom chatRoom, int size) {
-        Call<List<ChatDto>> call = RetrofitClient.getChatApiService().RequestImageChatListSize(chatRoom.getRoomId(), Integer.toString(size));
+        Call<List<ChatDto>> call = retrofitChatAPI.RequestImageChatListSize(chatRoom.getRoomId(), Integer.toString(size));
 
         call.enqueue(new Callback<List<ChatDto>>() {
             @Override
@@ -673,7 +682,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     }
 
     public void exitChatRoom(String roomId, String userId) {
-        Call<ChatRoomDto> call = RetrofitClient.getChatRoomApiService().RequestExitChatRoom(roomId, userId);
+        Call<ChatRoomDto> call = retrofitChatRoomAPI.RequestExitChatRoom(roomId, userId);
 
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override

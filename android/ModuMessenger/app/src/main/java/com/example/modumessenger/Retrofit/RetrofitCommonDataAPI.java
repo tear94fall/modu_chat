@@ -10,9 +10,9 @@ import retrofit2.http.Path;
 
 public interface RetrofitCommonDataAPI {
 
-    @GET("common/{key}")
+    @GET("chat-service/common/{key}")
     Call<CommonData> RequestCommonData(@Path("key") String key);
 
-    @GET("commons/{key}")
+    @GET("chat-service/commons/{key}")
     Call<List<CommonData>> RequestCommonDataList(@Path("key") String key);
 }

@@ -30,15 +30,12 @@ public class SearchActivity extends AppCompatActivity {
     RecyclerView findFriendRecyclerView;
     SearchFriendsAdapter searchFriendsAdapter;
     List<MemberDto> searchMemberList;
-    RetrofitMemberAPI service;
+    RetrofitMemberAPI retrofitMemberAPI;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
-
-        String accessToken = PreferenceManager.getString("access-token");
-        service = RetrofitClient.createMemberApiService(accessToken);
 
         bindingView();
         getData();
@@ -64,7 +61,8 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     private void setData() {
-
+        String accessToken = PreferenceManager.getString("access-token");
+        retrofitMemberAPI = RetrofitClient.createMemberApiService(accessToken);
     }
 
     private void setButtonClickEvent() {
@@ -105,7 +103,7 @@ public class SearchActivity extends AppCompatActivity {
 
     // Retrofit function
     public void searchFriend(String email) {
-        Call<List<MemberDto>> call = service.RequestFriend(email);
+        Call<List<MemberDto>> call = retrofitMemberAPI.RequestFriend(email);
 
         call.enqueue(new Callback<List<MemberDto>>() {
             @Override
@@ -138,7 +136,7 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     public void addFriend(MemberDto member, MemberDto friend) {
-        Call<MemberDto> call = service.RequestAddFriends(member.getUserId(), friend);
+        Call<MemberDto> call = retrofitMemberAPI.RequestAddFriends(member.getUserId(), friend);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override

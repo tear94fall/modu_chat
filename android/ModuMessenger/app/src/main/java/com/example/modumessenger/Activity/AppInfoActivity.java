@@ -9,8 +9,10 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.modumessenger.Global.AppInfoUtil;
+import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
+import com.example.modumessenger.Retrofit.RetrofitCommonDataAPI;
 import com.example.modumessenger.entity.CommonData;
 
 import retrofit2.Call;
@@ -24,6 +26,7 @@ public class AppInfoActivity extends AppCompatActivity {
     TextView serverVersionTextView, appVersionTextView, osVersionTextView;
 
     String serverVersion, appVersion, osVersion;
+    RetrofitCommonDataAPI retrofitCommonDataAPI;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +53,9 @@ public class AppInfoActivity extends AppCompatActivity {
     }
 
     private void setData() {
+        String accessToken = PreferenceManager.getString("access-token");
+        retrofitCommonDataAPI = RetrofitClient.createCommonApiService(accessToken);
+
         if(serverVersion != null && !serverVersion.equals("")) { serverVersionTextView.setText("서버 버전 : " + serverVersion); }
         if(appVersion != null && !appVersion.equals("")) { appVersionTextView.setText("앱 버전 : " + appVersion); }
         if(osVersion != null && !osVersion.equals("")) { osVersionTextView.setText("os 버전 : 안드로이드 " + osVersion); }
@@ -60,7 +66,7 @@ public class AppInfoActivity extends AppCompatActivity {
 
     // Retrofit function
     public void getVersion() {
-        Call<CommonData> call = RetrofitClient.getCommonApiService().RequestCommonData("version");
+        Call<CommonData> call = retrofitCommonDataAPI.RequestCommonData("version");
 
         call.enqueue(new Callback<CommonData>() {
             @Override

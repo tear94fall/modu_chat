@@ -23,7 +23,7 @@ public class MemberController {
 
     @PostMapping("/member")
     public ResponseEntity<ResponseMemberDto> userId(@Valid @RequestBody RequestMemberDto requestMemberDto) {
-        MemberDto memberDto = memberService.getUserIdByEmail(requestMemberDto.getEmail());
+        MemberDto memberDto = memberService.getMemberByEmail(requestMemberDto.getEmail());
         return ResponseEntity.ok().body(modelMapper.map(memberDto, ResponseMemberDto.class));
     }
 

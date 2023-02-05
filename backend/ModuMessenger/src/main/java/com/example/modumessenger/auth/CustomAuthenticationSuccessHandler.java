@@ -1,5 +1,6 @@
 package com.example.modumessenger.auth;
 
+import com.example.modumessenger.auth.entity.RefreshToken;
 import com.example.modumessenger.auth.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -23,18 +24,20 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-        CustomAuthenticationToken token = (CustomAuthenticationToken) authentication;
+        CustomAuthenticationToken customAuthenticationToken = (CustomAuthenticationToken) authentication;
 
-        String userId = token.getUserId();
-        String email = token.getEmail();
-        List<String> roles = token.getAuthorities().stream()
+        String userId = customAuthenticationToken.getUserId();
+        String email = customAuthenticationToken.getEmail();
+        List<String> roles = customAuthenticationToken.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
 
-        String accessToken = jwtTokenProvider.createJwtAccessToken(email, roles);
-        String refreshToken = jwtTokenProvider.createJwtRefreshToken();
+        String accessToken = jwtTokenProvider.createJwtAccessToken(userId, roles);
+        String refreshToken = jwtTokenProvider.createJwtRefreshToken(roles);
 
-        refreshTokenService.updateRefreshToken(userId, jwtTokenProvider.getRefreshToKenUUID(refreshToken));
+        RefreshToken token = RefreshToken.createToken(userId, refreshToken);
+
+        refreshTokenService.updateRefreshToken(token);
 
         response.addHeader("refresh-token", refreshToken);
         response.addHeader("access-token", accessToken);

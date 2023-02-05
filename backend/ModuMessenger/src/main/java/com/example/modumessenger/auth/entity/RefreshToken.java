@@ -12,10 +12,18 @@ public class RefreshToken {
 
     @Id
     private String userId;
-    private String refreshTokenUUID;
+    private String token;
 
-    public RefreshToken(String userId, String refreshTokenUUID) {
+    public RefreshToken(String userId, String token) {
         this.userId = userId;
-        this.refreshTokenUUID = refreshTokenUUID;
+        this.token = token;
+    }
+
+    static public RefreshToken createToken(String userId, String token) {
+        return new RefreshToken(userId, token);
+    }
+
+    public void reissue(String token) {
+        this.token = token;
     }
 }

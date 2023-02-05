@@ -20,6 +20,10 @@ repositories {
     mavenCentral()
 }
 
+ext {
+    set('springCloudVersion', "2021.0.5")
+}
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -28,6 +32,8 @@ dependencies {
     implementation 'org.springframework.security:spring-security-test'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
     implementation group: 'org.javassist', name: 'javassist', version: '3.15.0-GA'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-validation', version: '2.5.2'
@@ -57,6 +63,12 @@ dependencies {
     runtimeOnly 'com.h2database:h2'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
 }
 
 tasks.named('test') {

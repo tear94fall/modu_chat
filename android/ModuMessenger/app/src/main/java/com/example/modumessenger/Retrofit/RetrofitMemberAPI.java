@@ -15,24 +15,24 @@ import retrofit2.http.Path;
 
 public interface RetrofitMemberAPI {
 
-    @POST("member/signup")
+    @POST("chat-service/member/signup")
     Call<SignUpDto> RequestSignup(@Body GoogleLoginRequest googleLoginRequest);
 
-    @POST("login")
+    @POST("chat-service/login")
     Call<Void> RequestLogin(@Body RequestLoginDto requestLoginDto);
 
-    @POST("member")
+    @POST("chat-service/member")
     Call<MemberDto> RequestUserInfo(@Body MemberDto MemberDto);
 
-    @POST("member/{userId}")
+    @POST("chat-service/member/{userId}")
     Call<MemberDto> RequestUpdate(@Path("userId") String userId, @Body MemberDto memberDto);
 
-    @GET("member/{userId}/friends")
+    @GET("chat-service/member/{userId}/friends")
     Call<List<MemberDto>> RequestFriends(@Path("userId") String userId);
 
-    @POST("member/{userId}/friends")
+    @POST("chat-service/member/{userId}/friends")
     Call<MemberDto> RequestAddFriends(@Path("userId") String userId, @Body MemberDto memberDto);
 
-    @GET("member/friends/{email}")
+    @GET("chat-service/member/friends/{email}")
     Call<List<MemberDto>> RequestFriend(@Path("email") String email);
 }

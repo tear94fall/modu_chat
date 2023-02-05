@@ -2,6 +2,9 @@ server:
   port: 8080
 
 spring:
+  application:
+    name: chat-service
+
   profiles:
     default: local
     include: oauth
@@ -45,8 +48,18 @@ security:
     token:
       access-expired: 3600000
       refresh-expired: 604800000
-      secret-key: modu_secret_key
+      secret-key: 98FB6A50D8BE83F0521F6EDA48903D718DE1C41BF09D4D3671A5E3A6E4E0910A
       expire-length: 3600000
+
+eureka:
+  instance:
+    instance-id: chat-service
+
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
 
 project:
   properties:

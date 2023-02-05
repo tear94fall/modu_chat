@@ -15,6 +15,7 @@ import com.example.modumessenger.Adapter.SearchFriendsAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
+import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.dto.MemberDto;
 
 import java.util.List;
@@ -29,11 +30,15 @@ public class SearchActivity extends AppCompatActivity {
     RecyclerView findFriendRecyclerView;
     SearchFriendsAdapter searchFriendsAdapter;
     List<MemberDto> searchMemberList;
+    RetrofitMemberAPI service;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
+
+        String accessToken = PreferenceManager.getString("access-token");
+        service = RetrofitClient.createMemberApiService(accessToken);
 
         bindingView();
         getData();
@@ -100,7 +105,7 @@ public class SearchActivity extends AppCompatActivity {
 
     // Retrofit function
     public void searchFriend(String email) {
-        Call<List<MemberDto>> call = RetrofitClient.getMemberApiService().RequestFriend(email);
+        Call<List<MemberDto>> call = service.RequestFriend(email);
 
         call.enqueue(new Callback<List<MemberDto>>() {
             @Override
@@ -133,7 +138,7 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     public void addFriend(MemberDto member, MemberDto friend) {
-        Call<MemberDto> call = RetrofitClient.getMemberApiService().RequestAddFriends(member.getUserId(), friend);
+        Call<MemberDto> call = service.RequestAddFriends(member.getUserId(), friend);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override

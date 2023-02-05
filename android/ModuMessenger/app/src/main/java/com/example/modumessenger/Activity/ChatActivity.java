@@ -521,9 +521,10 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
                 Request request = new Request
                         .Builder()
-                        .url("ws://192.168.0.3:8080/modu-chat/" + roomId)
+                        .url("ws://192.168.0.3:8000/chat-service/modu-chat/" + roomId)
                         .addHeader("token", jwtToken)
                         .addHeader("userId", userId)
+                        .addHeader("Authorization", PreferenceManager.getString("access-token"))
                         .build();
                 listener = new ChatWebSocketListener();
                 webSocket = client.newWebSocket(request, listener);

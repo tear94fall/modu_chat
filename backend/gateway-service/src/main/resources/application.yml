@@ -50,3 +50,10 @@ spring:
           filters:
             - AuthorizationHeaderFilter
             - RewritePath=/chat-service/(?<segment>.*), /$\{segment}
+        - id: chat-service
+          uri: lb:ws://CHAT-SERVICE
+          predicates:
+            - Path=/chat-service/modu-chat/**
+          filters:
+            - AuthorizationHeaderFilter
+            - RewritePath=/chat-service/(?<segment>.*), /$\{segment}

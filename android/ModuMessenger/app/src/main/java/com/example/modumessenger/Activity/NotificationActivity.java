@@ -9,8 +9,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.Adapter.NotificationAdapter;
+import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
+import com.example.modumessenger.Retrofit.RetrofitCommonDataAPI;
 import com.example.modumessenger.entity.CommonData;
 
 import java.util.ArrayList;
@@ -25,6 +27,7 @@ public class NotificationActivity extends AppCompatActivity {
     List<CommonData> notifyList;
     RecyclerView notificationRecyclerView;
     NotificationAdapter notificationAdapter;
+    RetrofitCommonDataAPI retrofitCommonDataAPI;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +54,9 @@ public class NotificationActivity extends AppCompatActivity {
     }
 
     private void setData() {
+        String accessToken = PreferenceManager.getString("access-token");
+        retrofitCommonDataAPI = RetrofitClient.createCommonApiService(accessToken);
+
         notifyList = new ArrayList<>();
     }
 
@@ -59,7 +65,7 @@ public class NotificationActivity extends AppCompatActivity {
 
     // Retrofit function
     public void getNotification() {
-        Call<List<CommonData>> call = RetrofitClient.getCommonApiService().RequestCommonDataList("notification");
+        Call<List<CommonData>> call = retrofitCommonDataAPI.RequestCommonDataList("notification");
 
         call.enqueue(new Callback<List<CommonData>>() {
             @Override

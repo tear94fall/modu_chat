@@ -41,15 +41,12 @@ public class LoginActivity extends AppCompatActivity {
     GoogleSignInClient mGoogleSignInClient;
     SignInButton LoginButton;
     ActivityResultLauncher<Intent> startActivityResult;
-    RetrofitMemberAPI service;
+    RetrofitMemberAPI retrofitMemberAPI;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-
-        String accessToken = PreferenceManager.getString("access-token");
-        service = RetrofitClient.createMemberApiService(accessToken);
 
         bindingView();
         setLauncher();
@@ -98,6 +95,9 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void setData() {
+        String accessToken = PreferenceManager.getString("access-token");
+        retrofitMemberAPI = RetrofitClient.createMemberApiService(accessToken);
+
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
@@ -130,7 +130,7 @@ public class LoginActivity extends AppCompatActivity {
 
     // Retrofit function
     public void SignupMember(GoogleLoginRequest googleLoginRequest) {
-        Call<SignUpDto> call = RetrofitClient.getMemberApiService().RequestSignup(googleLoginRequest);
+        Call<SignUpDto> call = retrofitMemberAPI.RequestSignup(googleLoginRequest);
 
         call.enqueue(new Callback<SignUpDto>() {
             @Override
@@ -157,7 +157,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public void LoginMember(RequestLoginDto requestLoginDto){
-        Call<Void> call = RetrofitClient.getMemberApiService().RequestLogin(requestLoginDto);
+        Call<Void> call = retrofitMemberAPI.RequestLogin(requestLoginDto);
 
         call.enqueue(new Callback<Void>() {
             @Override
@@ -196,7 +196,7 @@ public class LoginActivity extends AppCompatActivity {
         memberDto.setAuth(auth_type);
         memberDto.setEmail(email);
 
-        Call<MemberDto> call = RetrofitClient.getMemberApiService().RequestUserInfo(memberDto);
+        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override

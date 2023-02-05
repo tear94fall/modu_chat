@@ -23,8 +23,10 @@ import androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback;
 
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Adapter.ProfileImageSliderAdapter;
+import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
+import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.dto.MemberDto;
 
 import java.io.File;
@@ -55,6 +57,8 @@ public class ProfileImageActivity  extends AppCompatActivity {
 
     Disposable backgroundTask;
 
+    RetrofitMemberAPI retrofitMemberAPI;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,6 +81,9 @@ public class ProfileImageActivity  extends AppCompatActivity {
     }
 
     private void setData() {
+        String accessToken = PreferenceManager.getString("access-token");
+        retrofitMemberAPI = RetrofitClient.createMemberApiService(accessToken);
+
         profileImageList = new ArrayList<>();
     }
 
@@ -224,7 +231,7 @@ public class ProfileImageActivity  extends AppCompatActivity {
 
     // Retrofit function
     public void getMyProfileInfo(MemberDto memberDto) {
-        Call<MemberDto> call = RetrofitClient.getMemberApiService().RequestUserInfo(memberDto);
+        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override

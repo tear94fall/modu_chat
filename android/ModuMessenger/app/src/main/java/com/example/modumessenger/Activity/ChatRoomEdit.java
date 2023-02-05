@@ -21,7 +21,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Global.OnSwipeListener;
+import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
 import com.example.modumessenger.entity.ChatRoom;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatRoomDto;
@@ -45,12 +47,15 @@ public class ChatRoomEdit extends AppCompatActivity implements View.OnTouchListe
 
     ActivityResultLauncher<Intent> launcher;
 
+    RetrofitChatRoomAPI retrofitChatRoomAPI;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat_room_edit);
 
         getData();
+        setData();
         bindingView();
         setLauncher();
         setButtonClickEvent();
@@ -74,6 +79,11 @@ public class ChatRoomEdit extends AppCompatActivity implements View.OnTouchListe
         if(roomId != null && !roomId.equals("")) {
             getRoomInfo(roomId);
         }
+    }
+
+    private void setData() {
+        String accessToken = PreferenceManager.getString("access-token");
+        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService(accessToken);
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -168,7 +178,7 @@ public class ChatRoomEdit extends AppCompatActivity implements View.OnTouchListe
 
     // Retrofit function
     public void getRoomInfo(String roomId) {
-        Call<ChatRoomDto> call = RetrofitClient.getChatRoomApiService().RequestChatRoom(roomId);
+        Call<ChatRoomDto> call = retrofitChatRoomAPI.RequestChatRoom(roomId);
 
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override
@@ -204,7 +214,7 @@ public class ChatRoomEdit extends AppCompatActivity implements View.OnTouchListe
     }
 
     public void updateChatRoomInfo(ChatRoomDto chatRoomDto) {
-        Call<ChatRoomDto> call = RetrofitClient.getChatRoomApiService().RequestUpdateChatRoom(roomId, chatRoomDto);
+        Call<ChatRoomDto> call = retrofitChatRoomAPI.RequestUpdateChatRoom(roomId, chatRoomDto);
 
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override

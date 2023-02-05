@@ -19,7 +19,9 @@ import com.bumptech.glide.Glide;
 import com.example.modumessenger.Global.OnSwipeListener;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
 import com.example.modumessenger.Retrofit.RetrofitClient;
+import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.example.modumessenger.dto.MemberDto;
 import com.example.modumessenger.entity.Member;
@@ -39,6 +41,9 @@ public class ProfileActivity extends AppCompatActivity {
     TextView usernameTextView, statusMessageTextView;
     Button profileEditButton, profileCloseButton, startChatButton;
     GestureDetector gestureDetector;
+
+    RetrofitMemberAPI retrofitMemberAPI;
+    RetrofitChatRoomAPI retrofitChatRoomAPI;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,6 +115,10 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void setData() {
+        String accessToken = PreferenceManager.getString("access-token");
+        retrofitMemberAPI = RetrofitClient.createMemberApiService(accessToken);
+        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService(accessToken);
+
         setTextOnView(usernameTextView, member.getUsername());
         setTextOnView(statusMessageTextView, member.getStatusMessage());
 
@@ -210,7 +219,7 @@ public class ProfileActivity extends AppCompatActivity {
 
     // Retrofit function
     public void getMyProfileInfo(MemberDto memberDto) {
-        Call<MemberDto> call = RetrofitClient.getMemberApiService().RequestUserInfo(memberDto);
+        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override
@@ -247,7 +256,7 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     public void createChatRoom(List<String> userIds) {
-        Call<ChatRoomDto> call = RetrofitClient.getChatRoomApiService().RequestCreateChatRoom(userIds);
+        Call<ChatRoomDto> call = retrofitChatRoomAPI.RequestCreateChatRoom(userIds);
 
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override

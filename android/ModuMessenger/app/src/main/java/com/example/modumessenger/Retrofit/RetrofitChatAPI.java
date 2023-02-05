@@ -12,18 +12,18 @@ import retrofit2.http.Path;
 
 public interface RetrofitChatAPI {
 
-    @PUT("chat/{userId}/token")
+    @PUT("chat-service/chat/{userId}/token")
     Call<String> RequestFcmToken(@Path("userId") String userId, @Body String fcmToken);
 
-    @GET("chat/{roomId}/chats")
+    @GET("chat-service/chat/{roomId}/chats")
     Call<List<ChatDto>> RequestChatHistory(@Path("roomId") String roomId);
 
-    @GET("chat/{roomId}/page/{size}")
+    @GET("chat-service/chat/{roomId}/page/{size}")
     Call<List<ChatDto>> RequestChatListSize(@Path("roomId") String roomId, @Path("size") String size);
 
-    @GET("chat/{roomId}/{chatId}/{size}")
+    @GET("chat-service/chat/{roomId}/{chatId}/{size}")
     Call<List<ChatDto>> RequestPrevChatList(@Path("roomId") String roomId, @Path("chatId") String chatId, @Path("size") String size);
 
-    @GET("chat/{roomId}/images/{size}")
+    @GET("chat-service/chat/{roomId}/images/{size}")
     Call<List<ChatDto>> RequestImageChatListSize(@Path("roomId") String roomId, @Path("size") String size);
 }

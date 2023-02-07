@@ -55,6 +55,8 @@ public class TokenAuthenticator implements Authenticator {
                         .header("Authorization", accessToken1)
                         .build();
             }
+        }else if(response.code() == 500) {
+            String refreshToken = PreferenceManager.getString("refresh-token");
         }
 
         return null;

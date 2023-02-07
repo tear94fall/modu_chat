@@ -1,6 +1,7 @@
 package com.example.modumessenger.member.dto;
 
 import com.example.modumessenger.member.entity.Member;
+import com.example.modumessenger.member.entity.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +22,7 @@ public class MemberDto implements Serializable {
 
     private String userId;
     private String auth;
+    private Role role;
     private String email;
     private String username;
     private String statusMessage;
@@ -31,6 +33,7 @@ public class MemberDto implements Serializable {
     public MemberDto(Member member) {
         setUserId(member.getUserId());
         setAuth(member.getAuth());
+        setRole(member.getRole());
         setEmail(member.getEmail());
         setUsername(member.getUsername());
         setStatusMessage(member.getStatusMessage());
@@ -43,6 +46,7 @@ public class MemberDto implements Serializable {
         setUserId(payload.getSubject());
         setEmail(payload.getEmail());
         setAuth("google");
+        setRole(Role.ROLE_MEMBER);
         setUsername((String) payload.get("name"));
         setStatusMessage("");
         setProfileImage((String) payload.get("picture"));

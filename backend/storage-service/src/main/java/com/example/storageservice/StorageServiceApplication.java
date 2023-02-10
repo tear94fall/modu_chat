@@ -15,9 +15,4 @@ public class StorageServiceApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(StorageServiceApplication.class, args);
 	}
-
-	@GetMapping("/config")
-	public String string(@Value("${message.owner}") String messageOwner, @Value("${message.content}") String messageContent) {
-		return messageOwner + ", " + messageContent;
-	}
 }

@@ -5,6 +5,12 @@ spring:
   application:
     name: storage-service
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+      location: d:\\temp\\spring_uploaded_files
+
 eureka:
   instance:
     instance-id: storage-service

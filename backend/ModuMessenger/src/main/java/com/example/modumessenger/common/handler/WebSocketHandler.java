@@ -7,9 +7,11 @@ import com.example.modumessenger.chat.service.ChatService;
 import com.example.modumessenger.fcm.service.FcmService;
 import com.example.modumessenger.member.dto.MemberDto;
 import com.example.modumessenger.member.service.MemberService;
+import com.example.modumessenger.message.service.MessageService;
 import com.example.modumessenger.messaging.entity.ChatMessage;
 import com.example.modumessenger.messaging.entity.SubscribeType;
 import com.example.modumessenger.messaging.service.MessagingPublisher;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.listener.ChannelTopic;
@@ -50,6 +53,7 @@ import static com.example.modumessenger.common.time.TimeCalculator.calculateTime
 @RequiredArgsConstructor
 public class WebSocketHandler extends TextWebSocketHandler implements MessageListener {
 
+    private final MessageService messageService;
     private final MemberService memberService;
     private final ChatRoomService chatRoomService;
     private final ChatService chatService;
@@ -67,35 +71,21 @@ public class WebSocketHandler extends TextWebSocketHandler implements MessageLis
         String payload = message.getPayload();
         System.out.println(payload);
 
-        JSONParser jsonParser = new JSONParser();
-        JSONObject jsonObject = (JSONObject) jsonParser.parse(new StringReader(payload));
+        ChatDto recvChatDto = objectMapper.readValue(payload, ChatDto.class);
 
-        String senderId = Objects.requireNonNull(session.getHandshakeHeaders().get("userId")).get(0);
+        MemberDto sender = memberService.getUserById(recvChatDto.getSender());
+        ChatRoomDto chatRoomDto = chatRoomService.searchChatRoomByRoomId(recvChatDto.getRoomId());
 
-        MemberDto sender = memberService.getUserById(senderId);
-
-        String roomId = (String) jsonObject.get("roomId");
-        String msg = (String) jsonObject.get("message");
-        String senderName = sender.getUserId();
-        String sendTime = (String) jsonObject.get("chatTime");
-        Long chatType = (Long) jsonObject.get("chatType");
-
-        ChatRoomDto chatRoomDto = chatRoomService.searchChatRoomByRoomId(roomId);
-
-        List<MemberDto> members = chatRoomDto.getMembers().stream().filter(memberDto -> memberDto.getUserId().equals(senderName)).collect(Collectors.toList());
+        List<MemberDto> members = chatRoomDto.getMembers().stream().filter(memberDto -> memberDto.getUserId().equals(sender.getUserId())).collect(Collectors.toList());
         if(members.size()==0) return;
 
-        sendTime = calculateTime(sendTime);
-        chatRoomDto.setLastChatTime(sendTime);
+        recvChatDto.setChatTime(calculateTime(recvChatDto.getChatTime()));
+        chatRoomDto.setLastChatTime(recvChatDto.getChatTime());
 
-        if(chatType == ChatType.TEXT.getChatType()) {
-            chatRoomDto.setLastChatMsg(msg);
-        } else {
-            chatRoomDto.setLastChatMsg(ChatType.fromChatType(chatType.intValue()).getChatTypeStr());
-        }
+        chatRoomDto.setLastChatMsg((recvChatDto.getChatType() == ChatType.TEXT.getChatType()) ?
+                recvChatDto.getMessage() : ChatType.fromChatType(recvChatDto.getChatType()).getChatTypeStr());
 
-        ChatDto chatDto = new ChatDto(msg, roomId, senderName, sendTime, chatType.intValue(), chatRoomDto);
-        Long chatId = chatService.saveChat(chatDto);
+        Long chatId = chatService.saveChat(recvChatDto);
 
         chatRoomDto.setLastChatId(chatId.toString());
         chatRoomService.updateChatRoom(chatRoomDto.getRoomId(), chatRoomDto);
@@ -108,11 +98,14 @@ public class WebSocketHandler extends TextWebSocketHandler implements MessageLis
         Map<String, String> data = new HashMap<>() {
             {
                 put("roomId", chatRoomDto.getRoomId());
-                put("sender", chatDto.getSender());
+                put("sender", recvChatDto.getSender());
             }
         };
 
-        fcmService.sendTopicMessageWithData(chatRoomDto.getRoomId(), chatRoomDto.getRoomName(), chatDto.getMessage(), null, data);
+        // send to rabbitmq
+        messageService.sendMsgToRabbitMq(recvChatDto);
+
+        fcmService.sendTopicMessageWithData(chatRoomDto.getRoomId(), chatRoomDto.getRoomName(), recvChatDto.getMessage(), null, data);
     }
 
     @Override
@@ -175,6 +168,13 @@ public class WebSocketHandler extends TextWebSocketHandler implements MessageLis
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
 
+    }
+
+    // recv from rabbitmq
+    @RabbitListener(queues = "modu-chat.queue")
+    public void consume(ChatDto chatDto) {
+        log.info("message: {}", chatDto.toString());
+        log.info(chatDto.toString());
     }
 
     @Override

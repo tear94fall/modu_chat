@@ -9,6 +9,6 @@ import retrofit2.http.Part;
 public interface RetrofitImageAPI {
 
     @Multipart
-    @POST("image")
+    @POST("chat-service/image")
     Call<String> RequestUploadImage(@Part MultipartBody.Part file);
 }

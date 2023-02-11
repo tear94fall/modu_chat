@@ -29,6 +29,9 @@ import com.bumptech.glide.Glide;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.Global.ScopedStorageUtil;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
+import com.example.modumessenger.Retrofit.RetrofitImageAPI;
+import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.MemberDto;
@@ -54,6 +57,9 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
     ActivityResultLauncher<Intent> profileLauncher, wallpaperLauncher;
 
     ScopedStorageUtil scopedStorageUtil;
+
+    RetrofitMemberAPI retrofitMemberAPI;
+    RetrofitImageAPI retrofitImageAPI;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -177,6 +183,10 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
     }
 
     private void setData() {
+        String accessToken = PreferenceManager.getString("access-token");
+        retrofitMemberAPI = RetrofitClient.createMemberApiService(accessToken);
+        retrofitImageAPI = RetrofitClient.createImageApiService(accessToken);
+
         scopedStorageUtil = new ScopedStorageUtil();
         setTextOnView(myProfileName, member.getUsername());
         setTextOnView(myStatusMessage, member.getStatusMessage());
@@ -265,7 +275,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
 
     // Retrofit function
     public void updateMyInfo(MemberDto memberDto) {
-        Call<MemberDto> call = RetrofitClient.getMemberApiService().RequestUpdate(member.getUserId(), memberDto);
+        Call<MemberDto> call = retrofitMemberAPI.RequestUpdate(member.getUserId(), memberDto);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override
@@ -304,7 +314,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
     }
 
     public void getMyProfileInfo(MemberDto memberDto) {
-        Call<MemberDto> call = RetrofitClient.getMemberApiService().RequestUserInfo(memberDto);
+        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override
@@ -344,7 +354,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
     }
 
     public void uploadProfileImage(MultipartBody.Part file, String originProfileImage, int event) {
-        Call<String> call = RetrofitClient.getImageApiService().RequestUploadImage(file);
+        Call<String> call = retrofitImageAPI.RequestUploadImage(file);
 
         call.enqueue(new Callback<String>() {
             @Override

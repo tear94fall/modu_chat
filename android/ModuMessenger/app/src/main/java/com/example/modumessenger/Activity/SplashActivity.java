@@ -9,6 +9,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.modumessenger.Global.PreferenceManager;
+import com.example.modumessenger.Retrofit.RetrofitCommonDataAPI;
 import com.example.modumessenger.entity.CommonData;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 
@@ -20,10 +22,14 @@ import retrofit2.Response;
 public class SplashActivity extends AppCompatActivity {
 
     private final static String version = "version";
+    RetrofitCommonDataAPI retrofitCommonDataAPI;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        String accessToken = PreferenceManager.getString("access-token");
+        retrofitCommonDataAPI = RetrofitClient.createCommonApiService(accessToken);
 
         getVersion();
 
@@ -34,7 +40,7 @@ public class SplashActivity extends AppCompatActivity {
 
     // Retrofit function
     public void getVersion() {
-        Call<CommonData> call = RetrofitClient.getCommonApiService().RequestCommonData("version");
+        Call<CommonData> call = retrofitCommonDataAPI.RequestCommonData("version");
 
         call.enqueue(new Callback<CommonData>() {
             @Override

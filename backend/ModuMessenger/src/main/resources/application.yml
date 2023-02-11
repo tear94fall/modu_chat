@@ -20,6 +20,12 @@ spring:
     username: root
     password: root1234
 
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
   redis:
     host: localhost
     port: 6379

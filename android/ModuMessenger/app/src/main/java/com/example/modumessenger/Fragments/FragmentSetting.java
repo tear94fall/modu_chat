@@ -23,6 +23,7 @@ import com.example.modumessenger.Grid.SettingGridAdapter;
 import com.example.modumessenger.Grid.SettingGridItem;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
+import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.dto.MemberDto;
 
 import retrofit2.Call;
@@ -35,6 +36,7 @@ public class FragmentSetting extends Fragment {
     ConstraintLayout setting_my_profile_card_view;
     ImageView myProfileImage;
     TextView myProfileName, myProfileEmail;
+    RetrofitMemberAPI retrofitMemberAPI;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -77,6 +79,8 @@ public class FragmentSetting extends Fragment {
     }
 
     private void setData() {
+        String accessToken = PreferenceManager.getString("access-token");
+        retrofitMemberAPI = RetrofitClient.createMemberApiService(accessToken);
     }
 
     private void bindingView(View view) {
@@ -118,7 +122,7 @@ public class FragmentSetting extends Fragment {
 
     // Retrofit function
     public void getMyProfileInfo(MemberDto memberDto) {
-        Call<MemberDto> call = RetrofitClient.getMemberApiService().RequestUserInfo(memberDto);
+        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override

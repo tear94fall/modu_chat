@@ -26,12 +26,6 @@ public class RetrofitClient {
 
     private static Retrofit retrofit = builder.build();
 
-    public static RetrofitMemberAPI getMemberApiService(){return getInstance().create(RetrofitMemberAPI.class);}
-    public static RetrofitChatRoomAPI getChatRoomApiService(){ return getInstance().create(RetrofitChatRoomAPI.class); }
-    public static RetrofitChatAPI getChatApiService(){ return getInstance().create(RetrofitChatAPI.class); }
-    public static RetrofitCommonDataAPI getCommonApiService(){ return getInstance().create(RetrofitCommonDataAPI.class); }
-    public static RetrofitImageAPI getImageApiService(){ return getInstance().create(RetrofitImageAPI.class); }
-
     // token
     public static RetrofitMemberAPI createMemberApiService(String token){ return createService(RetrofitMemberAPI.class, token); }
     public static RetrofitChatRoomAPI createChatRoomApiService(String token){ return createService(RetrofitChatRoomAPI.class, token); }
@@ -41,21 +35,6 @@ public class RetrofitClient {
 
     public static String getBaseUrl() {
         return BASE_URL;
-    }
-
-    private static Retrofit getInstance(){
-        OkHttpClient okHttpClient = new OkHttpClient().newBuilder()
-                .connectTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(10, TimeUnit.SECONDS)
-                .writeTimeout(10, TimeUnit.SECONDS)
-                .build();
-
-        Retrofit.Builder builder = new Retrofit.Builder()
-                .baseUrl(BASE_URL)
-                .client(okHttpClient)
-                .addConverterFactory(GsonConverterFactory.create(new GsonBuilder().setLenient().create()));
-
-        return builder.build();
     }
 
     public static <S> S createService(Class<S> serviceClass) {

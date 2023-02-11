@@ -18,6 +18,8 @@ import com.example.modumessenger.Fragments.FragmentChat;
 import com.example.modumessenger.Fragments.FragmentSetting;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.RetrofitChatAPI;
+import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.example.modumessenger.entity.Member;
@@ -35,6 +37,9 @@ public class MainActivity extends AppCompatActivity {
 
     BottomNavigationView bottomNavigationView;
     private ViewPager2 viewPager2;
+
+    RetrofitChatAPI retrofitChatAPI;
+    RetrofitChatRoomAPI retrofitChatRoomAPI;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +79,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setData() {
+        String accessToken = PreferenceManager.getString("access-token");
+        retrofitChatAPI = RetrofitClient.createChatApiService(accessToken);
+        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService(accessToken);
     }
 
     private void setButtonClickEvent() {
@@ -162,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Retrofit function
     public void SendFcmToken(String userId, String token) {
-        Call<String> call = RetrofitClient.getChatApiService().RequestFcmToken(userId, token);
+        Call<String> call = retrofitChatAPI.RequestFcmToken(userId, token);
 
         call.enqueue(new Callback<String>() {
             @Override
@@ -188,7 +196,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void getChatRoomList(Member member) {
-        Call<List<ChatRoomDto>> call = RetrofitClient.getChatRoomApiService().RequestChatRooms(member.getUserId());
+        Call<List<ChatRoomDto>> call = retrofitChatRoomAPI.RequestChatRooms(member.getUserId());
 
         call.enqueue(new Callback<List<ChatRoomDto>>() {
             @Override

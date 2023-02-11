@@ -26,6 +26,7 @@ import com.example.modumessenger.Activity.SearchActivity;
 import com.example.modumessenger.Adapter.ChatRoomAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
 import com.example.modumessenger.RoomDatabase.Database.ChatRoomDatabase;
 import com.example.modumessenger.RoomDatabase.Entity.ChatRoomEntity;
 import com.example.modumessenger.entity.ChatRoom;
@@ -50,6 +51,7 @@ public class FragmentChat extends Fragment {
     FloatingActionButton chatFloatingActionButton;
 
     ChatRoomDatabase chatRoomDatabase;
+    RetrofitChatRoomAPI retrofitChatRoomAPI;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -133,6 +135,9 @@ public class FragmentChat extends Fragment {
     }
 
     private void setData() {
+        String accessToken = PreferenceManager.getString("access-token");
+        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService(accessToken);
+
         chatRoomList = new ArrayList<>();
     }
 
@@ -163,7 +168,7 @@ public class FragmentChat extends Fragment {
 
     // Retrofit function
     public void getChatRoomList(Member member) {
-        Call<List<ChatRoomDto>> call = RetrofitClient.getChatRoomApiService().RequestChatRooms(member.getUserId());
+        Call<List<ChatRoomDto>> call = retrofitChatRoomAPI.RequestChatRooms(member.getUserId());
 
         call.enqueue(new Callback<List<ChatRoomDto>>() {
             @Override
@@ -204,7 +209,7 @@ public class FragmentChat extends Fragment {
     }
 
     public void searchChatRoomName(String roomName) {
-        Call<List<ChatRoomDto>> call = RetrofitClient.getChatRoomApiService().RequestSearchChatRooms(roomName);
+        Call<List<ChatRoomDto>> call = retrofitChatRoomAPI.RequestSearchChatRooms(roomName);
 
         call.enqueue(new Callback<List<ChatRoomDto>>() {
             @Override

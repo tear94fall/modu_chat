@@ -14,27 +14,27 @@ import retrofit2.http.Path;
 
 public interface RetrofitChatRoomAPI {
 
-    @GET("chat/{userId}/rooms")
+    @GET("chat-service/chat/{userId}/rooms")
     Call<List<ChatRoomDto>> RequestChatRooms(@Path("userId") String userId);
 
-    @GET("chat/{roomId}/room")
+    @GET("chat-service/chat/{roomId}/room")
     Call<ChatRoomDto> RequestChatRoom(@Path("roomId") String roomId);
 
-    @GET("chat/search/{roomName}")
+    @GET("chat-service/chat/search/{roomName}")
     Call<List<ChatRoomDto>> RequestSearchChatRooms(@Path("roomName") String roomName);
 
-    @POST("chat/room/member")
+    @POST("chat-service/chat/room/member")
     Call<ChatRoomDto> RequestCheckChatRoom(@Body List<String> userIds);
 
-    @POST("chat/chat/room")
+    @POST("chat-service/chat/chat/room")
     Call<ChatRoomDto> RequestCreateChatRoom(@Body List<String> userIds);
 
-    @DELETE("chat/{roomId}/{userId}")
+    @DELETE("chat-service/chat/{roomId}/{userId}")
     Call<ChatRoomDto> RequestExitChatRoom(@Path("roomId") String roomId, @Path("userId") String userId);
 
-    @POST("chat/{roomId}/room")
+    @POST("chat-service/chat/{roomId}/room")
     Call<ChatRoomDto> RequestUpdateChatRoom(@Path("roomId") String roomId, @Body ChatRoomDto chatRoomDto);
 
-    @POST("chat/{roomId}/member")
+    @POST("chat-service/chat/{roomId}/member")
     Call<ChatRoomDto> RequestAddMemberChatRoom(@Path("roomId") String roomId, @Body List<String> userIds);
 }

@@ -29,6 +29,7 @@ import com.example.modumessenger.Adapter.FriendsAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
+import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.dto.MemberDto;
 
 import java.util.List;
@@ -47,6 +48,8 @@ public class FragmentFriends extends Fragment {
     ImageView myProfileImage;
 
     List<MemberDto> friendsList;
+
+    RetrofitMemberAPI retrofitMemberAPI;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -148,7 +151,8 @@ public class FragmentFriends extends Fragment {
     }
 
     private void setData() {
-
+        String accessToken = PreferenceManager.getString("access-token");
+        retrofitMemberAPI = RetrofitClient.createMemberApiService(accessToken);
     }
 
     private void setButtonClickEvent() {
@@ -168,7 +172,7 @@ public class FragmentFriends extends Fragment {
 
     // Retrofit function
     public void getFriendsList(MemberDto memberDto) {
-        Call<List<MemberDto>> call = RetrofitClient.getMemberApiService().RequestFriends(memberDto.getUserId());
+        Call<List<MemberDto>> call = retrofitMemberAPI.RequestFriends(memberDto.getUserId());
 
         call.enqueue(new Callback<List<MemberDto>>() {
             @Override
@@ -198,7 +202,7 @@ public class FragmentFriends extends Fragment {
     }
 
     public void getMyProfileInfo(MemberDto memberDto) {
-        Call<MemberDto> call = RetrofitClient.getMemberApiService().RequestUserInfo(memberDto);
+        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override

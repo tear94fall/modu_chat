@@ -20,6 +20,8 @@ public class Member implements Parcelable {
     private String email;
     @SerializedName("auth")
     private String auth;
+    @SerializedName("role")
+    private Role role;
     @SerializedName("username")
     private String username;
     @SerializedName("statusMessage")
@@ -86,6 +88,7 @@ public class Member implements Parcelable {
     public String getUserId() { return this.userId; }
     public String getEmail() { return this.email; }
     public String getAuth() { return this.auth; }
+    public Role getRole() { return this.role; }
     public String getUsername() { return this.username; }
     public String getStatusMessage() { return this.statusMessage; }
     public String getProfileImage() { return this.profileImage; }
@@ -96,6 +99,7 @@ public class Member implements Parcelable {
     public void setEmail(String email) { this.email = email; }
     public void setUsername(String username) { this.username = username; }
     public void setAuth(String auth) { this.auth = auth; }
+    public void setRole(Role role) { this.role = role; }
     public void setStatusMessage(String statusMessage) { this.statusMessage = statusMessage; }
     public void setProfileImage(String profileImage) { this.profileImage = (profileImage == null || profileImage.equals("") ? "" : profileImage); }
     public void setWallpaperImage(String wallpaperImage) { this.wallpaperImage = (wallpaperImage == null || wallpaperImage.equals("") ? "" : wallpaperImage); }

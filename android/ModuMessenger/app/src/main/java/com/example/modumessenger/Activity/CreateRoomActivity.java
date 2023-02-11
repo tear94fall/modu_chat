@@ -14,6 +14,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.modumessenger.Adapter.CreateRoomAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
+import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatRoomDto;
@@ -36,6 +38,9 @@ public class CreateRoomActivity extends AppCompatActivity {
     List<MemberDto> friendsList;
 
     Member member;
+
+    RetrofitMemberAPI retrofitMemberAPI;
+    RetrofitChatRoomAPI retrofitChatRoomAPI;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,11 +65,16 @@ public class CreateRoomActivity extends AppCompatActivity {
     }
 
     private void getData() {
-        member = new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email"));
-        getFriendsList(member);
     }
 
     private void setData() {
+        String accessToken = PreferenceManager.getString("access-token");
+        retrofitMemberAPI = RetrofitClient.createMemberApiService(accessToken);
+        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService(accessToken);
+
+        member = new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email"));
+        getFriendsList(member);
+
         addChatList = new ArrayList<>();
     }
 
@@ -96,7 +106,7 @@ public class CreateRoomActivity extends AppCompatActivity {
 
     // Retrofit function
     public void getFriendsList(Member member) {
-        Call<List<MemberDto>> call = RetrofitClient.getMemberApiService().RequestFriends(member.getUserId());
+        Call<List<MemberDto>> call = retrofitMemberAPI.RequestFriends(member.getUserId());
 
         call.enqueue(new Callback<List<MemberDto>>() {
             @Override
@@ -122,7 +132,7 @@ public class CreateRoomActivity extends AppCompatActivity {
     }
 
     public void createChatRoom(List<String> userIds) {
-        Call<ChatRoomDto> call = RetrofitClient.getChatRoomApiService().RequestCreateChatRoom(userIds);
+        Call<ChatRoomDto> call = retrofitChatRoomAPI.RequestCreateChatRoom(userIds);
 
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override

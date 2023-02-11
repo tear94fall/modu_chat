@@ -22,11 +22,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 
+import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.Global.ScopedStorageUtil;
 import com.example.modumessenger.Grid.SendOthersGridAdapter;
 import com.example.modumessenger.Grid.SendOthersGridItem;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
+import com.example.modumessenger.Retrofit.RetrofitImageAPI;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import java.io.File;
@@ -54,6 +56,8 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
     List<SendOthers> sendOthersList;
 
     Uri tempImageUri;
+
+    RetrofitImageAPI retrofitImageAPI;
 
     private ChatSendOthersBottomSheetListener mListener;
 
@@ -93,6 +97,9 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
     }
 
     private void setData() {
+        String accessToken = PreferenceManager.getString("access-token");
+        retrofitImageAPI = RetrofitClient.createImageApiService(accessToken);
+
         scopedStorageUtil = new ScopedStorageUtil();
         sendOthersList = new ArrayList<>(Arrays.asList(SendOthers.SEND_OTHERS_GALLERY, SendOthers.SEND_OTHERS_CAMERA, SendOthers.SEND_OTHERS_FILE, SendOthers.SEND_OTHERS_AUDIO));
         tempImageUri = initTempUri();
@@ -207,7 +214,7 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
 
     // Retrofit function
     public void uploadChatImage(MultipartBody.Part file) {
-        Call<String> call = RetrofitClient.getImageApiService().RequestUploadImage(file);
+        Call<String> call = retrofitImageAPI.RequestUploadImage(file);
 
         call.enqueue(new Callback<String>() {
             @Override

@@ -43,9 +43,9 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
 
             jwtTokenProvider.validateToken(jwt);
 
-//            if(!jwtTokenProvider.getRolesToken(jwt).contains("USER")) {
-//                return onError(exchange, "JWT token is not valid", UNAUTHORIZED);
-//            }
+            if(!jwtTokenProvider.getRolesToken(jwt).contains("ROLE_USER")) {
+                return onError(exchange, "JWT token is not valid", UNAUTHORIZED);
+            }
 
             return chain.filter(exchange);
         };

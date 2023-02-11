@@ -1,0 +1,22 @@
+server:
+  port: 9999
+
+spring:
+  application:
+    name: storage-service
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+      location: d:\\temp\\spring_uploaded_files
+
+eureka:
+  instance:
+    instance-id: storage-service
+
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka

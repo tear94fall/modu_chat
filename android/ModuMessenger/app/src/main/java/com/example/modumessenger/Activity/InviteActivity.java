@@ -13,6 +13,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.modumessenger.Adapter.InviteAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
+import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatRoomDto;
@@ -37,6 +39,9 @@ public class InviteActivity extends AppCompatActivity {
     ArrayList<String> currentMember;
     Member member;
     String roomId;
+
+    RetrofitMemberAPI retrofitMemberAPI;
+    RetrofitChatRoomAPI retrofitChatRoomAPI;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +76,10 @@ public class InviteActivity extends AppCompatActivity {
     }
 
     private void setData() {
+        String accessToken = PreferenceManager.getString("access-token");
+        retrofitMemberAPI = RetrofitClient.createMemberApiService(accessToken);
+        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService(accessToken);
+
         friendsList = new ArrayList<>();
     }
 
@@ -89,7 +98,7 @@ public class InviteActivity extends AppCompatActivity {
 
     // Retrofit function
     public void getFriendsList(Member member) {
-        Call<List<MemberDto>> call = RetrofitClient.getMemberApiService().RequestFriends(member.getUserId());
+        Call<List<MemberDto>> call = retrofitMemberAPI.RequestFriends(member.getUserId());
 
         call.enqueue(new Callback<List<MemberDto>>() {
             @Override
@@ -122,7 +131,7 @@ public class InviteActivity extends AppCompatActivity {
     }
 
     public void inviteChatRoom(List<String> userIds) {
-        Call<ChatRoomDto> call = RetrofitClient.getChatRoomApiService().RequestAddMemberChatRoom(roomId, userIds);
+        Call<ChatRoomDto> call = retrofitChatRoomAPI.RequestAddMemberChatRoom(roomId, userIds);
 
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override

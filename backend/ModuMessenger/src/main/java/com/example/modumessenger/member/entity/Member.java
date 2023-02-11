@@ -29,6 +29,9 @@ public class Member extends BaseTimeEntity {
 
     private String auth;
 
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
     @NotNull
     private String email;
 
@@ -64,6 +67,7 @@ public class Member extends BaseTimeEntity {
     public Member(MemberDto memberDto) {
         setUserId(memberDto.getUserId());
         setAuth(memberDto.getAuth());
+        setRole(memberDto.getRole());
         setEmail(memberDto.getEmail());
         setUsername(memberDto.getUsername());
         setStatusMessage(memberDto.getStatusMessage());

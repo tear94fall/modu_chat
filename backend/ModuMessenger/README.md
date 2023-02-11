@@ -3,10 +3,12 @@
 # Backend
 
 - [Spring Boot](https://spring.io/projects/spring-boot)
+- [Spring Cloud](https://spring.io/projects/spring-cloud)
 - [Spring Security](https://spring.io/projects/spring-security)
 - [Spring Data JPA](https://spring.io/projects/spring-data-jpa)
 - [Querydsl](http://querydsl.com/)
 - [Spring WebSocket](https://spring.io/guides/gs/messaging-stomp-websocket/)
+- [Spring AMQP](https://spring.io/projects/spring-amqp)
 - [Springfox Swagger UI](http://springfox.github.io/springfox/docs/current/)
 - [JSON Web Tokens](https://jwt.io/)
 
@@ -23,10 +25,15 @@
 
 # 연관 관계
 
-### 프록시
-서버 가장 앞단에 nginx를 프록시로 구동  
-컨테이너의의 서버들은 내부에서는 통신이 가능  
-다만 외부에서의 직접 접근이 불가능 하도록 설정  
+### Spring API Gateway
+스프링 api gateway 를 통해 jwt 토큰 인증 과정을 가장 앞단에서 처리  
+jwt 검증을 통해 인가된 사용자는 resource로의 접근이 가능  
+
+### Spring Eureka
+
+### Spring config-server
+
+### rabbit-mq 를 이용한 메시징 처리
 
 ### 채팅 서버
 채팅 기능은 메인 기능 이므로, 가장 많은 부하가 걸린다. 이를 개선하기 위해 여러 컨테이너를 띄워 문제를 해결하려고 했다.  

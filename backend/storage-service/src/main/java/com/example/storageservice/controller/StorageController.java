@@ -1,18 +1,18 @@
 package com.example.storageservice.controller;
 
 import com.example.storageservice.service.StorageService;
+import io.minio.StatObjectResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
+import java.io.InputStream;
 import java.util.List;
-import java.util.Objects;
 
 @RestController
 @RequiredArgsConstructor
@@ -39,6 +39,22 @@ public class StorageController {
         storageService.deleteFile(filePath);
 
         return ResponseEntity.ok().body("");
+    }
+
+
+    @SneakyThrows
+    @GetMapping("download")
+    public ResponseEntity<InputStreamResource> download(@RequestParam("file") String file ) {
+
+        InputStreamResource inputStreamResource = storageService.get(file);
+        StatObjectResponse metadata = storageService.getMetadata(file);
+
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .contentLength(metadata.size())
+                .header("Content-disposition", "attachment; filename=" + metadata.object())
+                .body(inputStreamResource);
     }
 
     @SneakyThrows

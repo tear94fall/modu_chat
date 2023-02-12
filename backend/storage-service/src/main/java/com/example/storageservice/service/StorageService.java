@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -13,6 +14,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Objects;
+
+import static java.util.Objects.*;
 
 @Slf4j
 @Service
@@ -25,7 +28,7 @@ public class StorageService {
     String bucket;
 
     public void upload(MultipartFile file) {
-        Path path = Path.of(Objects.requireNonNull(file.getOriginalFilename()));
+        Path path = Path.of(requireNonNull(file.getOriginalFilename()));
 
         try {
             InputStream inputStream = file.getInputStream();
@@ -42,7 +45,7 @@ public class StorageService {
     }
 
     public void upload(String filePath) {
-        Path path = Path.of(Objects.requireNonNull(filePath));
+        Path path = Path.of(requireNonNull(filePath));
 
         try {
             InputStream inputStream = new FileInputStream(filePath);
@@ -52,6 +55,22 @@ public class StorageService {
                     .stream(inputStream, inputStream.available(), -1)
                     .build();
             minioClient.putObject(args);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public InputStreamResource get(String name) {
+        Path path = Path.of(requireNonNull(name));
+
+        try {
+            GetObjectArgs args = GetObjectArgs.builder()
+                    .bucket(bucket)
+                    .object(path.toString())
+                    .build();
+
+            InputStream inputStream = minioClient.getObject(args);
+            return new InputStreamResource(inputStream);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -77,6 +96,19 @@ public class StorageService {
                     .object(path.toString())
                     .build();
             minioClient.removeObject(args);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public StatObjectResponse getMetadata(String name) {
+        try {
+            Path path = Path.of(name);
+            StatObjectArgs args = StatObjectArgs.builder()
+                    .bucket(bucket)
+                    .object(path.toString())
+                    .build();
+            return minioClient.statObject(args);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }

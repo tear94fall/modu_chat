@@ -266,7 +266,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         recentImageView.setOnClickListener(v -> {
             if(recentImageList.size() != 0) {
                 Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
-                intent.putStringArrayListExtra("imageUrlList", recentImageList);
+                intent.putStringArrayListExtra("imageFileList", recentImageList);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
                 v.getContext().startActivity(intent);
@@ -658,8 +658,8 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
                 recent_chat_images.setOnItemClickListener((parent, v, position, id) -> {
                     Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
-                    ArrayList<String> imageUrlList = imageChatList.stream().skip(position).map(ChatDto::getMessage).collect(Collectors.toCollection(ArrayList::new));
-                    intent.putStringArrayListExtra("imageUrlList", imageUrlList);
+                    ArrayList<String> imageFileList = imageChatList.stream().skip(position).map(ChatDto::getMessage).collect(Collectors.toCollection(ArrayList::new));
+                    intent.putStringArrayListExtra("imageFileList", imageFileList);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
                     v.getContext().startActivity(intent);

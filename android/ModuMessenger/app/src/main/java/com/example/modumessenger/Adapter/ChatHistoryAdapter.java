@@ -14,10 +14,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.model.GlideUrl;
+import com.bumptech.glide.load.model.LazyHeaders;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Activity.ProfileImageActivity;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatType;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.RoomDatabase.Database.ChatDatabase;
@@ -164,8 +167,16 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         } else if (holder instanceof ChatBubbleRightImageViewHolder) {
             ChatBubbleRightImageViewHolder rightImageViewHolder = ((ChatBubbleRightImageViewHolder) holder);
 
+            String accessToken = PreferenceManager.getString("access-token");
+            String url = RetrofitClient.getBaseUrl() + "storage-service/view/"+ chat.getChatMsg();
+
+            GlideUrl glideUrl = new GlideUrl(url,
+                    new LazyHeaders.Builder()
+                            .addHeader("Authorization", accessToken)
+                            .build());
+
             Glide.with(rightImageViewHolder.chatImage)
-                    .load(chat.getChatMsg())
+                    .load(glideUrl)
                     .into(rightImageViewHolder.chatImage);
 
             ((ChatBubbleRightImageViewHolder) holder).setChatImageClickEvent(chat);

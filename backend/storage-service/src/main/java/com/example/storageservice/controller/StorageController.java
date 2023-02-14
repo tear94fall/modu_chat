@@ -22,8 +22,7 @@ public class StorageController {
 
     @PostMapping("/upload")
     public ResponseEntity<String> upload(@RequestParam("file") MultipartFile file) throws IOException {
-        storageService.upload(file);
-        return ResponseEntity.ok().body("");
+        return ResponseEntity.ok().body(storageService.upload(file));
     }
 
     @PostMapping("/uploads")

@@ -1,5 +1,6 @@
 package com.example.storageservice.service;
 
+import com.example.storageservice.util.Sha256;
 import io.minio.*;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -13,7 +14,8 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.Objects;
+import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 
 import static java.util.Objects.*;
 
@@ -27,18 +29,19 @@ public class StorageService {
     @Value("${minio.bucketImageName}")
     String bucket;
 
-    public void upload(MultipartFile file) {
-        Path path = Path.of(requireNonNull(file.getOriginalFilename()));
-
+    public String upload(MultipartFile file) {
         try {
+            String fileName = createFileName(requireNonNull(file.getOriginalFilename()));
             InputStream inputStream = file.getInputStream();
 
             PutObjectArgs args = PutObjectArgs.builder()
                     .bucket(bucket)
-                    .object(path.toString())
+                    .object(fileName)
                     .stream(inputStream, inputStream.available(), -1)
                     .build();
             minioClient.putObject(args);
+
+            return fileName;
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -148,5 +151,16 @@ public class StorageService {
         if(file.exists()){
             file.delete();
         }
+    }
+
+    public String createFileName(String filename) throws NoSuchAlgorithmException {
+        Path path = Path.of(filename);
+
+        String name = path.toString();
+        String ext = name.substring(name.lastIndexOf("."));
+
+        name = Sha256.encrypt(name + LocalDateTime.now()) + ext;
+
+        return name;
     }
 }

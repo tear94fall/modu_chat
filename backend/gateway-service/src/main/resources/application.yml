@@ -57,3 +57,10 @@ spring:
           filters:
             - AuthorizationHeaderFilter
             - RewritePath=/chat-service/(?<segment>.*), /$\{segment}
+        - id: storage-service
+          uri: lb://STORAGE-SERVICE
+          predicates:
+            - Path=/storage-service/**
+          filters:
+            - AuthorizationHeaderFilter
+            - RewritePath=/storage-service/(?<segment>.*), /$\{segment}

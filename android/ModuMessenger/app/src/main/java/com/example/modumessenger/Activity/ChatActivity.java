@@ -394,10 +394,10 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     }
 
     @Override
-    public void sendImageChat(String chatImageUrl) {
+    public void sendImageChat(String filename) {
         ChatDto chatDto = new ChatDto();
         chatDto.setRoomId(roomId);
-        chatDto.setMessage(chatImageUrl);
+        chatDto.setMessage(filename);
         chatDto.setSender(userId);
         chatDto.setChatTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         chatDto.setChatType(ChatType.CHAT_TYPE_IMAGE);
@@ -408,8 +408,6 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-
-        System.out.println(message);
 
         if(message!=null){
             webSocket.send(message);

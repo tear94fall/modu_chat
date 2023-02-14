@@ -9,7 +9,11 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.model.GlideUrl;
+import com.bumptech.glide.load.model.LazyHeaders;
+import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatDto;
 
 import java.util.ArrayList;
@@ -49,8 +53,17 @@ public class RecentChatImageGridAdapter extends BaseAdapter {
         RecentChatImageGridItem recentChatImageGridItem = recentChatImageGridItems.get(position);
 
         ImageView itemImageView = convertView.findViewById(R.id.recent_chat_image_view);
+
+        String accessToken = PreferenceManager.getString("access-token");
+        String url = RetrofitClient.getBaseUrl() + "storage-service/view/"+ recentChatImageGridItem.getImageUrl();
+
+        GlideUrl glideUrl = new GlideUrl(url,
+                new LazyHeaders.Builder()
+                        .addHeader("Authorization", accessToken)
+                        .build());
+
         Glide.with(this.context)
-                .load(recentChatImageGridItem.getImageUrl())
+                .load(glideUrl)
                 .error(Glide.with(this.context)
                         .load(R.drawable.basic_profile_image)
                         .into(itemImageView))

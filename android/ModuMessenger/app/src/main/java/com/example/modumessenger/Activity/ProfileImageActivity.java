@@ -22,6 +22,8 @@ import androidx.viewpager2.widget.ViewPager2;
 import androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.model.GlideUrl;
+import com.bumptech.glide.load.model.LazyHeaders;
 import com.example.modumessenger.Adapter.ProfileImageSliderAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
@@ -91,12 +93,12 @@ public class ProfileImageActivity  extends AppCompatActivity {
         userId = getIntent().getStringExtra("userId");
         email = getIntent().getStringExtra("email");
 
-        ArrayList<String> imageUrlList = getIntent().getStringArrayListExtra("imageUrlList");
+        ArrayList<String> imageFileList = getIntent().getStringArrayListExtra("imageFileList");
 
-        if(imageUrlList == null || imageUrlList.size() == 0) {
+        if(imageFileList == null || imageFileList.size() == 0) {
             getMyProfileInfo(new MemberDto(userId, email));
         } else {
-            showImageLists(imageUrlList);
+            showImageLists(imageFileList);
         }
     }
 
@@ -105,8 +107,8 @@ public class ProfileImageActivity  extends AppCompatActivity {
 
         profileDownloadButton.setOnClickListener(v -> {
             int currentItem = profileImageSliderViewPager.getCurrentItem();
-            String imageUrl = this.profileImageList.get(currentItem);
-            saveImageFromUrl(imageUrl);
+            String imageFile = this.profileImageList.get(currentItem);
+            saveImageFromUrl(imageFile);
         });
 
         profileImageSliderViewPager.registerOnPageChangeCallback(new OnPageChangeCallback() {
@@ -141,8 +143,8 @@ public class ProfileImageActivity  extends AppCompatActivity {
         }
     }
 
-    private void showImageLists(ArrayList<String> imageUrlList) {
-        profileImageList.addAll(imageUrlList);
+    private void showImageLists(ArrayList<String> imageFileList) {
+        profileImageList.addAll(imageFileList);
 
         profileImageSliderViewPager.setOffscreenPageLimit(1);
         profileImageSliderViewPager.setAdapter(new ProfileImageSliderAdapter(profileImageList));
@@ -212,12 +214,20 @@ public class ProfileImageActivity  extends AppCompatActivity {
         return buffer;
     }
 
-    private void saveImageFromUrl(String imageUrl) {
+    private void saveImageFromUrl(String imageFile) {
+        String accessToken = PreferenceManager.getString("access-token");
+        String url = RetrofitClient.getBaseUrl() + "storage-service/view/"+ imageFile;
+
+        GlideUrl glideUrl = new GlideUrl(url,
+                new LazyHeaders.Builder()
+                        .addHeader("Authorization", accessToken)
+                        .build());
+
         backgroundTask = Observable.fromCallable(() ->
-                Glide.with(this).asFile().load(imageUrl).submit().get())
+                Glide.with(this).asFile().load(glideUrl).submit().get())
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(file -> saveFile(file, extractImageExtType(imageUrl), extractImageFileName(imageUrl)));
+                .subscribe(file -> saveFile(file, imageFile, imageFile));
     }
 
     private String extractImageFileName(String imageUrl) {

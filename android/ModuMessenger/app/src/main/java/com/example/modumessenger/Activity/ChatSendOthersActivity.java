@@ -88,7 +88,7 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
     }
 
     public interface ChatSendOthersBottomSheetListener {
-        void sendImageChat(String chatImageUrl);
+        void sendImageChat(String filename);
         void sendOthersFinish();
     }
 
@@ -227,7 +227,7 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
                 String filePath = response.body();
                 scopedStorageUtil.deleteTempFiles();
 
-                mListener.sendImageChat(RetrofitClient.getBaseUrl() + "modu_chat/images/" + filePath);
+                mListener.sendImageChat(filePath);
                 mListener.sendOthersFinish();
 
                 Log.d("채팅 이미지 업로드 요청 : ", response.body());

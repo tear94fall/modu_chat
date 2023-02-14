@@ -266,7 +266,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         recentImageView.setOnClickListener(v -> {
             if(recentImageList.size() != 0) {
                 Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
-                intent.putStringArrayListExtra("imageUrlList", recentImageList);
+                intent.putStringArrayListExtra("imageFileList", recentImageList);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
                 v.getContext().startActivity(intent);
@@ -394,10 +394,10 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     }
 
     @Override
-    public void sendImageChat(String chatImageUrl) {
+    public void sendImageChat(String filename) {
         ChatDto chatDto = new ChatDto();
         chatDto.setRoomId(roomId);
-        chatDto.setMessage(chatImageUrl);
+        chatDto.setMessage(filename);
         chatDto.setSender(userId);
         chatDto.setChatTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         chatDto.setChatType(ChatType.CHAT_TYPE_IMAGE);
@@ -408,8 +408,6 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-
-        System.out.println(message);
 
         if(message!=null){
             webSocket.send(message);
@@ -660,8 +658,8 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
                 recent_chat_images.setOnItemClickListener((parent, v, position, id) -> {
                     Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
-                    ArrayList<String> imageUrlList = imageChatList.stream().skip(position).map(ChatDto::getMessage).collect(Collectors.toCollection(ArrayList::new));
-                    intent.putStringArrayListExtra("imageUrlList", imageUrlList);
+                    ArrayList<String> imageFileList = imageChatList.stream().skip(position).map(ChatDto::getMessage).collect(Collectors.toCollection(ArrayList::new));
+                    intent.putStringArrayListExtra("imageFileList", imageFileList);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
                     v.getContext().startActivity(intent);

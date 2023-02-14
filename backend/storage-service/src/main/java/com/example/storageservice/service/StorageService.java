@@ -47,17 +47,18 @@ public class StorageService {
         }
     }
 
-    public void upload(String filePath) {
-        Path path = Path.of(requireNonNull(filePath));
-
+    public String upload(String filePath) {
         try {
+            String fileName = createFileName(filePath);
             InputStream inputStream = new FileInputStream(filePath);
             PutObjectArgs args = PutObjectArgs.builder()
                     .bucket(bucket)
-                    .object(path.toString())
+                    .object(fileName)
                     .stream(inputStream, inputStream.available(), -1)
                     .build();
             minioClient.putObject(args);
+
+            return fileName;
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -157,7 +158,7 @@ public class StorageService {
         Path path = Path.of(filename);
 
         String name = path.toString();
-        String ext = name.substring(name.lastIndexOf("."));
+        String ext = name.contains(".") ? name.substring(name.lastIndexOf(".")) : "";
 
         name = Sha256.encrypt(name + LocalDateTime.now()) + ext;
 

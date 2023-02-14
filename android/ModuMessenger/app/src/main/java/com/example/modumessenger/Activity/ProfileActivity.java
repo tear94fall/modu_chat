@@ -148,9 +148,9 @@ public class ProfileActivity extends AppCompatActivity {
             Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
             intent.putExtra("email", member.getEmail());
             intent.putExtra("userId", member.getUserId());
-            ArrayList<String> imageUrlList = new ArrayList<>();
-            imageUrlList.add(member.getWallpaperImage());
-            intent.putStringArrayListExtra("imageUrlList", imageUrlList);
+            ArrayList<String> imageFileList = new ArrayList<>();
+            imageFileList.add(member.getWallpaperImage());
+            intent.putStringArrayListExtra("imageFileList", imageFileList);
             startActivity(intent);
         });
 
@@ -197,6 +197,7 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void setProfileImage(ImageView imageView, String imageUrl) {
+        // need to fix
         Glide.with(this)
                 .load(imageUrl==null || imageUrl.equals("") ? R.drawable.basic_profile_image : imageUrl)
                 .error(Glide.with(this)

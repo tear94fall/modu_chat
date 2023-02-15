@@ -64,7 +64,7 @@ public class ProfileImageSliderAdapter extends RecyclerView.Adapter<ProfileImage
                             .build());
 
             Glide.with(context)
-                    .load(glideUrl)
+                    .load(imageFile.equals("") ? R.drawable.basic_profile_image : glideUrl)
                     .error(Glide.with(context)
                             .load(R.drawable.basic_profile_image)
                             .into(profileImage))

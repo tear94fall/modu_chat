@@ -1,7 +1,7 @@
 package com.example.modumessenger.message.service;
 
 import com.example.modumessenger.chat.dto.ChatDto;
-import com.example.modumessenger.message.client.MessageFeignClient;
+import com.example.modumessenger.client.MessageFeignClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;

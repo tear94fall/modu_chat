@@ -1,5 +1,6 @@
 package com.example.modumessenger.member.service;
 
+import com.example.modumessenger.client.StorageFeignClient;
 import com.example.modumessenger.common.Properties.GoogleOauthProperties;
 import com.example.modumessenger.common.exception.CustomException;
 import com.example.modumessenger.common.exception.ErrorCode;
@@ -10,6 +11,7 @@ import com.example.modumessenger.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -47,6 +49,7 @@ public class MemberService implements UserDetailsService {
     private final MemberRepository memberRepository;
     private final ModelMapper modelMapper;
     private final GoogleOauthProperties googleOauthProperties;
+    private final StorageFeignClient storageFeignClient;
 
     public MemberDto getUserById(String userId) {
         Member member = memberRepository.findByUserId(userId);
@@ -70,6 +73,10 @@ public class MemberService implements UserDetailsService {
             }
 
             memberDto = new MemberDto(payload);
+
+            ResponseEntity<String> upload = storageFeignClient.upload(memberDto.getProfileImage());
+            String filename = upload.getBody();
+            memberDto.setProfileImage(filename);
         }
 
         Member save = memberRepository.save(new Member(memberDto));

@@ -38,7 +38,7 @@ public class Member implements Parcelable {
     }
 
     public Member(MemberDto memberDto) {
-        setUserId(memberDto.getEmail());
+        setUserId(memberDto.getUserId());
         setEmail(memberDto.getEmail());
         setAuth("google");
         setUsername(memberDto.getUsername());
@@ -49,7 +49,7 @@ public class Member implements Parcelable {
     }
 
     public Member(GoogleSignInAccount account) {
-        setUserId(account.getEmail());
+        setUserId(account.getId());
         setEmail(account.getEmail());
         setAuth("google");
         setUsername(account.getDisplayName());

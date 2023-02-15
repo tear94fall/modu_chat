@@ -3,19 +3,31 @@ package com.example.modumessenger.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.RetrofitAuthAPI;
+import com.example.modumessenger.Retrofit.RetrofitClient;
+import com.example.modumessenger.dto.GoogleLoginRequest;
+import com.example.modumessenger.dto.SignUpDto;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class SetAccountActivity extends AppCompatActivity {
 
     GoogleSignInOptions googleSignInOptions;
     GoogleSignInClient googleSignInClient;
+    RetrofitAuthAPI retrofitAuthAPI;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +56,8 @@ public class SetAccountActivity extends AppCompatActivity {
     }
 
     private void setData() {
+        String accessToken = PreferenceManager.getString("access-token");
+        retrofitAuthAPI = RetrofitClient.createAuthApiService(accessToken);
     }
 
     private void setButtonClickEvent() {
@@ -52,16 +66,7 @@ public class SetAccountActivity extends AppCompatActivity {
         logoutButton.setOnClickListener(v -> new AlertDialog.Builder(this)
                 .setTitle("로그아웃").setMessage("로그아웃 하시겠습니까?")
                 .setPositiveButton("로그아웃", (dialog, whichButton) -> {
-                    Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-                    googleSignInClient.signOut()
-                            .addOnCompleteListener(this, task -> {
-                                startActivity(intent);
-                                finish();
-                            });
+                    RequestLogout();
                 })
                 .setNegativeButton("취소", (dialog, whichButton) -> {
 
@@ -70,5 +75,45 @@ public class SetAccountActivity extends AppCompatActivity {
     }
 
     private void settingSideNavBar() {
+    }
+
+    private void logoutGoogle(Intent intent) {
+        if(intent != null) {
+            googleSignInClient.signOut()
+                    .addOnCompleteListener(this, task -> {
+                        PreferenceManager.clear();
+
+                        startActivity(intent);
+                        finish();
+                    });
+        }
+    }
+
+    // Retrofit function
+    public void RequestLogout() {
+        Call<Void> call = retrofitAuthAPI.logout();
+
+        // execute synchronous
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                if(!response.isSuccessful()){
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                    return;
+                }
+
+                Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                logoutGoogle(intent);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                Log.e("연결실패", t.getMessage());
+            }
+        });
     }
 }

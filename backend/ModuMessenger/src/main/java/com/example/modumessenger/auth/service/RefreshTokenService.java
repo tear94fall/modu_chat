@@ -25,17 +25,19 @@ public class RefreshTokenService {
     }
 
     public TokenResponseDto reissueToken(String token) {
-        jwtTokenProvider.validateToken(token);
+        String jwt = token.replace("Bearer ", "");
 
-        String userId = jwtTokenProvider.findUserIdByJwt(token);
+        jwtTokenProvider.validateToken(jwt);
+
+        String userId = jwtTokenProvider.findUserIdByJwt(jwt);
 
         RefreshToken findToken = refreshTokenRedisRepository.findById(userId).orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND, userId));
 
-        if(!token.equals(findToken.getToken())) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED_TOKEN_ERROR, token);
+        if(!jwt.equals(findToken.getToken())) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED_TOKEN_ERROR, jwt);
         }
 
-        List<String> roles = jwtTokenProvider.getAuthentication(token);
+        List<String> roles = jwtTokenProvider.getAuthentication(jwt);
 
         String refreshToken = jwtTokenProvider.createJwtRefreshToken(roles);
         RefreshToken newRefreshToken = RefreshToken.createToken(userId, refreshToken);
@@ -47,11 +49,13 @@ public class RefreshTokenService {
     }
 
     public void logoutToken(String accessToken) {
-        if(!jwtTokenProvider.validateToken(accessToken)) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED_TOKEN_ERROR, accessToken);
+        String jwt = accessToken.replace("Bearer ", "");
+
+        if(!jwtTokenProvider.validateToken(jwt)) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED_TOKEN_ERROR, jwt);
         }
 
-        String userId = jwtTokenProvider.findUserIdByJwt(accessToken);
+        String userId = jwtTokenProvider.findUserIdByJwt(jwt);
         refreshTokenRedisRepository.delete(refreshTokenRedisRepository.findById(userId).orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND, userId)));
     }
 }

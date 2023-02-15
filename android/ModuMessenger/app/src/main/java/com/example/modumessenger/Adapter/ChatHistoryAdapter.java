@@ -123,7 +123,9 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 ((ChatBubbleLeftViewHolder) holder).setUserClickEvent(member);
             }
 
-            leftHolder.chatSender.setText(chat.getSender());
+            Member chatSendMember = getChatSendMember(chat.getSender());
+            leftHolder.chatSender.setText(chatSendMember.getEmail());
+
             leftHolder.chatMessage.setText(chat.getChatMsg());
             leftHolder.leftChatTime.setText(getShortTime(chat.getChatTime()));
         } else if (holder instanceof ChatBubbleLeftImageViewHolder) {
@@ -151,10 +153,21 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             ((ChatBubbleLeftImageViewHolder) holder).setUserClickEvent(member);
             ((ChatBubbleLeftImageViewHolder) holder).setChatImageClickEvent(chat);
 
-            leftImageViewHolder.chatSender.setText(chat.getSender());
+            Member chatSendMember = getChatSendMember(chat.getSender());
+            leftImageViewHolder.chatSender.setText(chatSendMember.getEmail());
+
+            String accessToken = PreferenceManager.getString("access-token");
+            String url = RetrofitClient.getBaseUrl() + "storage-service/view/"+ chat.getChatMsg();
+
+            GlideUrl glideUrl = new GlideUrl(url,
+                    new LazyHeaders.Builder()
+                            .addHeader("Authorization", accessToken)
+                            .build());
+
             Glide.with(leftImageViewHolder.chatImage)
-                    .load(chat.getChatMsg())
+                    .load(glideUrl)
                     .into(leftImageViewHolder.chatImage);
+
             leftImageViewHolder.leftChatTime.setText(getShortTime(chat.getChatTime()));
         } else if (holder instanceof ChatBubbleLeftDuplicateViewHolder) {
             ChatBubbleLeftDuplicateViewHolder leftDupHolder = ((ChatBubbleLeftDuplicateViewHolder) holder);
@@ -219,6 +232,13 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public void sortChatBubble() {
         this.chatList.sort(Comparator.comparing(ChatBubble::getChatTime, Comparator.naturalOrder()));
+    }
+
+    public Member getChatSendMember(String sender) {
+        return memberList.stream()
+                .filter(chatRoomMember -> chatRoomMember.getUserId().equals(sender))
+                .findFirst()
+                .orElseThrow(IllegalArgumentException::new);
     }
 
     @SuppressLint("NotifyDataSetChanged")

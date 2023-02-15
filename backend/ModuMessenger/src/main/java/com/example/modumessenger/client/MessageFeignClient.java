@@ -1,4 +1,4 @@
-package com.example.modumessenger.message.client;
+package com.example.modumessenger.client;
 
 import com.example.modumessenger.chat.dto.ChatDto;
 import org.springframework.cloud.openfeign.FeignClient;

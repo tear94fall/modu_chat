@@ -4,3 +4,9 @@ spring:
       uri: http://localhost:8888
       name: message
       profile: native
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh

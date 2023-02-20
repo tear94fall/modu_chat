@@ -21,9 +21,9 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@RequestHeader("Authorization") String accessToken) {
+    public ResponseEntity<Void> logout(@RequestHeader("Authorization") String accessToken) {
         refreshTokenService.logoutToken(accessToken);
-        return ResponseEntity.ok("");
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/check")

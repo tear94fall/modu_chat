@@ -32,6 +32,7 @@ public class RetrofitClient {
     public static RetrofitChatAPI createChatApiService(String token){ return createService(RetrofitChatAPI.class, token); }
     public static RetrofitCommonDataAPI createCommonApiService(String token){ return createService(RetrofitCommonDataAPI.class, token); }
     public static RetrofitImageAPI createImageApiService(String token){ return createService(RetrofitImageAPI.class, token); }
+    public static RetrofitAuthAPI createAuthApiService(String token){ return createService(RetrofitAuthAPI.class, token); }
 
     public static String getBaseUrl() {
         return BASE_URL;

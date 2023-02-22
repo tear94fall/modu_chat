@@ -1,6 +1,7 @@
 package com.example.modumessenger.chat.dto;
 
 import com.example.modumessenger.chat.entity.ChatRoom;
+import com.example.modumessenger.common.handler.WebSocketHandler;
 import com.example.modumessenger.member.dto.MemberDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,5 +37,12 @@ public class ChatRoomDto implements Serializable{
         chatRoom.getChatRoomMemberList().forEach(chatRoomMember -> {
             members.add(new MemberDto(chatRoomMember.getMember()));
         });
+    }
+
+    public void updateLastChat(String chatId, ChatDto chatDto) {
+        setLastChatId(chatId);
+        setLastChatMsg((chatDto.getChatType() == ChatType.TEXT.getChatType()) ?
+                chatDto.getMessage() : ChatType.fromChatType(chatDto.getChatType()).getChatTypeStr());
+        setLastChatTime(chatDto.getChatTime());
     }
 }

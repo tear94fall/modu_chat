@@ -1,5 +1,6 @@
 package com.example.modumessenger.fcm.service;
 
+import com.example.modumessenger.fcm.dto.FcmMessageDto;
 import com.example.modumessenger.fcm.entity.FcmToken;
 import com.example.modumessenger.fcm.repository.FcmRepository;
 import com.google.api.core.ApiFuture;
@@ -50,15 +51,15 @@ public class FcmService {
         sendMessage(msg);
     }
 
-    public void sendTopicMessageWithData(String topic, String title, String body, String image, Map<String, String> data) throws FirebaseMessagingException {
-        Notification notification = Notification.builder().setTitle(title).setBody(body).setImage(image).build();
+    public void sendTopicMessageWithData(FcmMessageDto fcmMessageDto) throws FirebaseMessagingException {
+        Notification notification = Notification.builder().setTitle(fcmMessageDto.getTitle()).setBody(fcmMessageDto.getBody()).setImage(fcmMessageDto.getImage()).build();
         Message message = Message.builder()
-                .setTopic(topic)
-                .putData("title", title)
-                .putData("message", body)
-                .putAllData(data)
+                .setTopic(fcmMessageDto.getTopic())
+                .putData("title", fcmMessageDto.getTitle())
+                .putData("message", fcmMessageDto.getBody())
+                .putAllData(fcmMessageDto.getData())
                 .build();
-        Message msg = Message.builder().setTopic(topic).setNotification(notification).build();
+        Message msg = Message.builder().setTopic(fcmMessageDto.getTopic()).setNotification(notification).build();
         sendMessage(message);
     }
 

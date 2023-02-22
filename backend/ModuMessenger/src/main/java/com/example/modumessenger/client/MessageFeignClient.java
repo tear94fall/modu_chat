@@ -5,7 +5,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "message-api", url = "localhost:8080")
+@FeignClient("chat-service")
 public interface MessageFeignClient {
 
     @PostMapping("send")

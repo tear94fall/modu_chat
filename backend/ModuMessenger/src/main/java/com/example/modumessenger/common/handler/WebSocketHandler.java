@@ -2,24 +2,18 @@ package com.example.modumessenger.common.handler;
 
 import com.example.modumessenger.chat.dto.ChatDto;
 import com.example.modumessenger.chat.dto.ChatRoomDto;
-import com.example.modumessenger.chat.dto.ChatType;
 import com.example.modumessenger.chat.service.ChatRoomService;
 import com.example.modumessenger.chat.service.ChatService;
 import com.example.modumessenger.fcm.dto.FcmMessageDto;
 import com.example.modumessenger.fcm.service.FcmService;
-import com.example.modumessenger.member.dto.MemberDto;
-import com.example.modumessenger.member.service.MemberService;
 import com.example.modumessenger.message.service.MessageService;
 import com.example.modumessenger.messaging.entity.ChatMessage;
 import com.example.modumessenger.messaging.entity.SubscribeType;
 import com.example.modumessenger.messaging.service.MessagingPublisher;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.data.redis.connection.Message;
@@ -36,16 +30,10 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.StringReader;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import static com.example.modumessenger.common.time.TimeCalculator.calculateTime;
 
@@ -56,7 +44,6 @@ import static com.example.modumessenger.common.time.TimeCalculator.calculateTime
 public class WebSocketHandler extends TextWebSocketHandler implements MessageListener {
 
     private final MessageService messageService;
-    private final MemberService memberService;
     private final ChatRoomService chatRoomService;
     private final ChatService chatService;
     private final FcmService fcmService;
@@ -69,13 +56,11 @@ public class WebSocketHandler extends TextWebSocketHandler implements MessageLis
     private static final String CHAT_MESSAGING_TOPIC_NAME = "modu-chat";
 
     @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws ParseException, IOException, FirebaseMessagingException {
+    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException, FirebaseMessagingException {
         ChatDto recvChatDto = objectMapper.readValue(message.getPayload(), ChatDto.class);
-        MemberDto sender = memberService.getUserById(recvChatDto.getSender());
         ChatRoomDto chatRoomDto = chatRoomService.searchChatRoomByRoomId(recvChatDto.getRoomId());
 
-        List<MemberDto> members = chatRoomDto.getMembers().stream().filter(memberDto -> memberDto.getUserId().equals(sender.getUserId())).collect(Collectors.toList());
-        if(members.size()==0) return;
+        if(chatRoomDto.checkChatRoomMember(recvChatDto.getSender())) return;
 
         recvChatDto.setChatTime(calculateTime(recvChatDto.getChatTime()));
         Long chatId = chatService.saveChat(recvChatDto);

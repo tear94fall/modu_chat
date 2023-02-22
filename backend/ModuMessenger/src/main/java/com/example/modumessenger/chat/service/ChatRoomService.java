@@ -5,6 +5,8 @@ import com.example.modumessenger.chat.entity.ChatRoom;
 import com.example.modumessenger.chat.entity.ChatRoomMember;
 import com.example.modumessenger.chat.repository.ChatRoomMemberRepository;
 import com.example.modumessenger.chat.repository.ChatRoomRepository;
+import com.example.modumessenger.common.exception.CustomException;
+import com.example.modumessenger.common.exception.ErrorCode;
 import com.example.modumessenger.member.entity.Member;
 import com.example.modumessenger.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +38,8 @@ public class ChatRoomService {
     }
 
     public ChatRoomDto searchChatRoomByRoomId(String roomId) {
-        ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId);
+        ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND_ERROR, roomId));
         return new ChatRoomDto(chatRoom);
     }
 
@@ -60,7 +63,8 @@ public class ChatRoomService {
     }
 
     public ChatRoomDto createChatRoom(List<String> userId) {
-        List<Member> members = memberRepository.findAllByUserIds(userId);
+        List<Member> members = memberRepository.findAllByUserIds(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userId.toString()));
 
         String chatRoomCreateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         ChatRoom chatRoom = new ChatRoom(UUID.randomUUID().toString(), "새로운 채팅방", "", "", "", chatRoomCreateTime);
@@ -81,7 +85,8 @@ public class ChatRoomService {
 
     public ChatRoomDto removeChatRoomMember(String roomId, String userId) {
         Member member = memberRepository.findByUserId(userId);
-        ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId);
+        ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND_ERROR, roomId));
         ChatRoomMember chatRoomMember = chatRoomMemberRepository.findByUserIdAndRoomId(userId, roomId);
 
         member.getChatRoomMemberList().remove(chatRoomMember);
@@ -95,7 +100,8 @@ public class ChatRoomService {
     }
 
     public ChatRoomDto updateChatRoom(String roomId, ChatRoomDto chatRoomDto) {
-        ChatRoom findChatRoom = chatRoomRepository.findByRoomId(roomId);
+        ChatRoom findChatRoom = chatRoomRepository.findByRoomId(roomId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND_ERROR, roomId));
 
         findChatRoom.setRoomName(chatRoomDto.getRoomName());
         findChatRoom.setRoomImage(chatRoomDto.getRoomImage());
@@ -108,8 +114,10 @@ public class ChatRoomService {
     }
 
     public ChatRoomDto addMemberChatRoom(String roomId, List<String> userIds) {
-        ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId);
-        List<Member> members = memberRepository.findAllByUserIds(userIds);
+        ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND_ERROR, roomId));
+        List<Member> members = memberRepository.findAllByUserIds(userIds)
+                .orElseThrow(() -> new CustomException(ErrorCode.USERID_FRIENDS_NOT_FOUND_ERROR, userIds.toString()));
 
         chatRoom.getChatRoomMemberList().forEach(chatRoomMember -> members.remove(chatRoomMember.getMember()));
 

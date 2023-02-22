@@ -9,9 +9,9 @@ public interface MemberCustomRepository {
 
     Optional<Member> searchMemberByUserId(String userId);
 
-    List<Member> findAllFriends(List<Long> friendsIds);
+    Optional<List<Member>> findAllFriends(List<Long> friendsIds);
 
-    List<Member> findAllByUserIds(List<String> userIds);
+    Optional<List<Member>> findAllByUserIds(List<String> userIds);
 
-    List<Member> findFriendsByEmail(String email);
+    Optional<List<Member>> findFriendsByEmail(String email);
 }

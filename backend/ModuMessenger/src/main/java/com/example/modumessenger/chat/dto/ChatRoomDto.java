@@ -12,6 +12,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @Builder
@@ -44,5 +45,13 @@ public class ChatRoomDto implements Serializable{
         setLastChatMsg((chatDto.getChatType() == ChatType.TEXT.getChatType()) ?
                 chatDto.getMessage() : ChatType.fromChatType(chatDto.getChatType()).getChatTypeStr());
         setLastChatTime(chatDto.getChatTime());
+    }
+
+    public boolean checkChatRoomMember(String userId) {
+        List<MemberDto> chatRoomMembers = members.stream()
+                .filter(memberDto -> memberDto.getUserId().equals(userId))
+                .collect(Collectors.toList());
+
+        return chatRoomMembers.size() == 0;
     }
 }

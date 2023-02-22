@@ -5,6 +5,8 @@ import com.example.modumessenger.chat.entity.Chat;
 import com.example.modumessenger.chat.entity.ChatRoom;
 import com.example.modumessenger.chat.repository.ChatRepository;
 import com.example.modumessenger.chat.repository.ChatRoomRepository;
+import com.example.modumessenger.common.exception.CustomException;
+import com.example.modumessenger.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Pageable;
@@ -78,7 +80,8 @@ public class ChatService {
     }
 
     public Long saveChat(ChatDto chatDto) {
-        ChatRoom chatRoom = chatRoomRepository.findByRoomId(chatDto.getRoomId());
+        ChatRoom chatRoom = chatRoomRepository.findByRoomId(chatDto.getRoomId())
+                .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND_ERROR, chatDto.getRoomId()));
         Chat chat = new Chat(chatDto);
         chat.setChatRoom(chatRoom);
         Chat saveChat = chatRepository.save(chat);

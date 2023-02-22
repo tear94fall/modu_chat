@@ -2,8 +2,10 @@ package com.example.modumessenger.common.handler;
 
 import com.example.modumessenger.chat.dto.ChatDto;
 import com.example.modumessenger.chat.dto.ChatRoomDto;
+import com.example.modumessenger.chat.dto.ChatType;
 import com.example.modumessenger.chat.service.ChatRoomService;
 import com.example.modumessenger.chat.service.ChatService;
+import com.example.modumessenger.fcm.dto.FcmMessageDto;
 import com.example.modumessenger.fcm.service.FcmService;
 import com.example.modumessenger.member.dto.MemberDto;
 import com.example.modumessenger.member.service.MemberService;
@@ -68,11 +70,7 @@ public class WebSocketHandler extends TextWebSocketHandler implements MessageLis
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws ParseException, IOException, FirebaseMessagingException {
-        String payload = message.getPayload();
-        System.out.println(payload);
-
-        ChatDto recvChatDto = objectMapper.readValue(payload, ChatDto.class);
-
+        ChatDto recvChatDto = objectMapper.readValue(message.getPayload(), ChatDto.class);
         MemberDto sender = memberService.getUserById(recvChatDto.getSender());
         ChatRoomDto chatRoomDto = chatRoomService.searchChatRoomByRoomId(recvChatDto.getRoomId());
 
@@ -80,14 +78,10 @@ public class WebSocketHandler extends TextWebSocketHandler implements MessageLis
         if(members.size()==0) return;
 
         recvChatDto.setChatTime(calculateTime(recvChatDto.getChatTime()));
-        chatRoomDto.setLastChatTime(recvChatDto.getChatTime());
-
-        chatRoomDto.setLastChatMsg((recvChatDto.getChatType() == ChatType.TEXT.getChatType()) ?
-                recvChatDto.getMessage() : ChatType.fromChatType(recvChatDto.getChatType()).getChatTypeStr());
-
         Long chatId = chatService.saveChat(recvChatDto);
 
-        chatRoomDto.setLastChatId(chatId.toString());
+        chatRoomDto.updateLastChat(chatId.toString(), recvChatDto);
+
         chatRoomService.updateChatRoom(chatRoomDto.getRoomId(), chatRoomDto);
 
         ChatMessage chatMessage = new ChatMessage(SubscribeType.BROAD_CAST, chatRoomDto.getRoomId(), chatId.toString());
@@ -95,17 +89,11 @@ public class WebSocketHandler extends TextWebSocketHandler implements MessageLis
         ChannelTopic channel = new ChannelTopic(CHAT_MESSAGING_TOPIC_NAME);
         messagingPublisher.publish(channel, chatMessage);
 
-        Map<String, String> data = new HashMap<>() {
-            {
-                put("roomId", chatRoomDto.getRoomId());
-                put("sender", recvChatDto.getSender());
-            }
-        };
-
         // send to rabbitmq
         messageService.sendMsgToRabbitMq(recvChatDto);
 
-        fcmService.sendTopicMessageWithData(chatRoomDto.getRoomId(), chatRoomDto.getRoomName(), recvChatDto.getMessage(), null, data);
+        FcmMessageDto fcmMessageDto = new FcmMessageDto(chatRoomDto, recvChatDto);
+        fcmService.sendTopicMessageWithData(fcmMessageDto);
     }
 
     @Override
@@ -242,36 +230,5 @@ public class WebSocketHandler extends TextWebSocketHandler implements MessageLis
         byteBuffer.position(0);
 
         return true;
-    }
-
-    enum ChatType {
-        TEXT(1, ""),
-        IMAGE(2, "image"),
-        FILE(3, "file"),
-        AUDIO(4, "audio");
-
-        private final int chatType;
-        private final String chatTypeStr;
-
-        private static final Map<Integer, ChatType> chatTypeMap = new HashMap<>();
-
-        static {
-            for(ChatType chatType : values()) {
-                chatTypeMap.put(chatType.getChatType(), chatType);
-            }
-        }
-
-        ChatType(int chatType, String chatTypeStr) {
-            this.chatType = chatType;
-            this.chatTypeStr = chatTypeStr;
-        }
-
-        public int getChatType() { return this.chatType; }
-        public String getChatTypeStr() { return this.chatTypeStr; }
-
-
-        public static ChatType fromChatType(int type) {
-            return chatTypeMap.get(type);
-        }
     }
 }

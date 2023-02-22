@@ -17,6 +17,9 @@
 ## 프로젝트 구조
 ![architecture](./images/architecture.jpg)
 
+## 로그인 프로세스
+![architecture](./images/login_process.jpg)
+
 ## 채팅 서버 구조
 ![architecture](./images/architecture_chat.jpg)
 

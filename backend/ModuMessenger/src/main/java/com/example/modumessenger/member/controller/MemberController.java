@@ -27,8 +27,8 @@ public class MemberController {
         return ResponseEntity.ok().body(modelMapper.map(memberDto, ResponseMemberDto.class));
     }
 
-    @PostMapping("/member/signup")
-    public ResponseEntity<ResponseMemberDto> signupMember(@Valid @RequestBody GoogleLoginRequest googleLoginRequest) {
+    @PostMapping("/member")
+    public ResponseEntity<ResponseMemberDto> createMember(@Valid @RequestBody GoogleLoginRequest googleLoginRequest) {
         MemberDto memberDto = memberService.registerMember(googleLoginRequest);
         return ResponseEntity.ok().body(modelMapper.map(memberDto, ResponseMemberDto.class));
     }

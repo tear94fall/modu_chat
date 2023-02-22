@@ -25,26 +25,29 @@ public class MemberRepositoryImpl implements MemberCustomRepository {
     }
 
     @Override
-    public List<Member> findAllFriends(List<Long> friendsIds) {
-        return queryFactory
+    public Optional<List<Member>> findAllFriends(List<Long> friendsIds) {
+        return Optional.ofNullable(
+                queryFactory
                 .selectFrom(member)
                 .where(member.id.in(friendsIds))
-                .fetch();
+                .fetch());
     }
 
     @Override
-    public List<Member> findAllByUserIds(List<String> userIds) {
-        return queryFactory
+    public Optional<List<Member>> findAllByUserIds(List<String> userIds) {
+        return Optional.ofNullable(
+                queryFactory
                 .selectFrom(member)
                 .where(member.userId.in(userIds))
-                .fetch();
+                .fetch());
     }
 
     @Override
-    public List<Member> findFriendsByEmail(String email) {
-        return queryFactory
+    public Optional<List<Member>> findFriendsByEmail(String email) {
+        return Optional.ofNullable(
+                queryFactory
                 .selectFrom(member)
                 .where(member.email.eq(email))
-                .fetch();
+                .fetch());
     }
 }

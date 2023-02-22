@@ -109,7 +109,8 @@ public class MemberService implements UserDetailsService {
 
     public List<MemberDto> getFriendsList(String userId) {
         Member member = memberRepository.findByUserId(userId);
-        List<Member> memberList = memberRepository.findAllFriends(member.getFriends());
+        List<Member> memberList = memberRepository.findAllFriends(member.getFriends())
+                .orElseThrow(() -> new CustomException(ErrorCode.USERID_FRIENDS_NOT_FOUND_ERROR, userId));
 
         return memberList
                 .stream()
@@ -139,7 +140,8 @@ public class MemberService implements UserDetailsService {
             throw new DuplicateKeyException(String.format("존재하지 않는 유저의 이메일 입니다 'email: %s'", email));
         }
 
-        List<Member> memberList = memberRepository.findFriendsByEmail(email);
+        List<Member> memberList = memberRepository.findFriendsByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.USEREMAIL_FRIENDS_NOT_FOUND_ERROR, email));
 
         return memberList
                 .stream()

@@ -36,8 +36,7 @@ public class FindFriendsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_find_friends);
 
-        String accessToken = PreferenceManager.getString("access-token");
-        retrofitMemberAPI = RetrofitClient.createMemberApiService(accessToken);
+        retrofitMemberAPI = RetrofitClient.createMemberApiService();
 
         bindingView();
         getData();

@@ -68,9 +68,8 @@ public class CreateRoomActivity extends AppCompatActivity {
     }
 
     private void setData() {
-        String accessToken = PreferenceManager.getString("access-token");
-        retrofitMemberAPI = RetrofitClient.createMemberApiService(accessToken);
-        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService(accessToken);
+        retrofitMemberAPI = RetrofitClient.createMemberApiService();
+        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
 
         member = new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email"));
         getFriendsList(member);

@@ -157,9 +157,8 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     }
 
     private void getData() {
-        String accessToken = PreferenceManager.getString("access-token");
-        retrofitChatAPI = RetrofitClient.createChatApiService(accessToken);
-        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService(accessToken);
+        retrofitChatAPI = RetrofitClient.createChatApiService();
+        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
 
         jwtToken = PreferenceManager.getString("token");
         userId = PreferenceManager.getString("userId");

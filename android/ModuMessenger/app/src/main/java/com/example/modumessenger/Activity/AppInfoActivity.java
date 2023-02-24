@@ -53,8 +53,7 @@ public class AppInfoActivity extends AppCompatActivity {
     }
 
     private void setData() {
-        String accessToken = PreferenceManager.getString("access-token");
-        retrofitCommonDataAPI = RetrofitClient.createCommonApiService(accessToken);
+        retrofitCommonDataAPI = RetrofitClient.createCommonApiService();
 
         if(serverVersion != null && !serverVersion.equals("")) { serverVersionTextView.setText("서버 버전 : " + serverVersion); }
         if(appVersion != null && !appVersion.equals("")) { appVersionTextView.setText("앱 버전 : " + appVersion); }

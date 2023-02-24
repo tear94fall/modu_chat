@@ -135,8 +135,7 @@ public class FragmentChat extends Fragment {
     }
 
     private void setData() {
-        String accessToken = PreferenceManager.getString("access-token");
-        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService(accessToken);
+        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
 
         chatRoomList = new ArrayList<>();
     }

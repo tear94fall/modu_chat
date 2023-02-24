@@ -28,8 +28,7 @@ public class SplashActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        String accessToken = PreferenceManager.getString("access-token");
-        retrofitCommonDataAPI = RetrofitClient.createCommonApiService(accessToken);
+        retrofitCommonDataAPI = RetrofitClient.createCommonApiService();
 
         getVersion();
 

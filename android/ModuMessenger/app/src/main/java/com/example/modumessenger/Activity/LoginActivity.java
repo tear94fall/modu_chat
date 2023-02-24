@@ -95,8 +95,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void setData() {
-        String accessToken = PreferenceManager.getString("access-token");
-        retrofitMemberAPI = RetrofitClient.createMemberApiService(accessToken);
+        retrofitMemberAPI = RetrofitClient.createMemberApiService();
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
@@ -192,34 +191,31 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public void GetUserInfo(String email, String auth_type) {
-        MemberDto memberDto = new MemberDto();
-        memberDto.setAuth(auth_type);
-        memberDto.setEmail(email);
-
-        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto);
+        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(email);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override
             public void onResponse(@NonNull Call<MemberDto> call, @NonNull Response<MemberDto> response) {
-                if(!response.isSuccessful()){
+                if(response.isSuccessful()) {
+                    MemberDto result = response.body();
+
+                    if(result != null) {
+                        PreferenceManager.setString("userId", result.getUserId());
+                        PreferenceManager.setString("email", result.getEmail());
+                        PreferenceManager.setString("username", result.getUsername());
+                        PreferenceManager.setString("profileImage", result.getProfileImage());
+                        PreferenceManager.setString("wallpaperImage", result.getWallpaperImage());
+                        PreferenceManager.setString("statusMessage", result.getStatusMessage());
+
+                        Log.d("내정보 가져오기 요청 : ", result.toString());
+
+                        RequestLoginDto requestLoginDto = new RequestLoginDto(result.getUserId(), result.getEmail());
+                        LoginMember(requestLoginDto);
+                    }
+                } else {
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
                     Toast.makeText(getApplicationContext(),"연결이 원활하지 않습니다.", Toast.LENGTH_SHORT).show();
                 }
-
-                MemberDto result = response.body();
-                assert result != null;
-
-                PreferenceManager.setString("userId", result.getUserId());
-                PreferenceManager.setString("email", result.getEmail());
-                PreferenceManager.setString("username", result.getUsername());
-                PreferenceManager.setString("profileImage", result.getProfileImage());
-                PreferenceManager.setString("wallpaperImage", result.getWallpaperImage());
-                PreferenceManager.setString("statusMessage", result.getStatusMessage());
-
-                Log.d("내정보 가져오기 요청 : ", result.toString());
-
-                RequestLoginDto requestLoginDto = new RequestLoginDto(result.getUserId(), result.getEmail());
-                LoginMember(requestLoginDto);
             }
 
             @Override

@@ -56,8 +56,7 @@ public class SetAccountActivity extends AppCompatActivity {
     }
 
     private void setData() {
-        String accessToken = PreferenceManager.getString("access-token");
-        retrofitAuthAPI = RetrofitClient.createAuthApiService(accessToken);
+        retrofitAuthAPI = RetrofitClient.createAuthApiService();
     }
 
     private void setButtonClickEvent() {

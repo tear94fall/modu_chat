@@ -151,8 +151,7 @@ public class FragmentFriends extends Fragment {
     }
 
     private void setData() {
-        String accessToken = PreferenceManager.getString("access-token");
-        retrofitMemberAPI = RetrofitClient.createMemberApiService(accessToken);
+        retrofitMemberAPI = RetrofitClient.createMemberApiService();
     }
 
     private void setButtonClickEvent() {
@@ -202,7 +201,7 @@ public class FragmentFriends extends Fragment {
     }
 
     public void getMyProfileInfo(MemberDto memberDto) {
-        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto);
+        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto.getEmail());
 
         call.enqueue(new Callback<MemberDto>() {
             @Override

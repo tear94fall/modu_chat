@@ -54,8 +54,7 @@ public class NotificationActivity extends AppCompatActivity {
     }
 
     private void setData() {
-        String accessToken = PreferenceManager.getString("access-token");
-        retrofitCommonDataAPI = RetrofitClient.createCommonApiService(accessToken);
+        retrofitCommonDataAPI = RetrofitClient.createCommonApiService();
 
         notifyList = new ArrayList<>();
     }

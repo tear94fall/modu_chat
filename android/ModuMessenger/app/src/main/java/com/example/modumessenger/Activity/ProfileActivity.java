@@ -115,9 +115,8 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void setData() {
-        String accessToken = PreferenceManager.getString("access-token");
-        retrofitMemberAPI = RetrofitClient.createMemberApiService(accessToken);
-        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService(accessToken);
+        retrofitMemberAPI = RetrofitClient.createMemberApiService();
+        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
 
         setTextOnView(usernameTextView, member.getUsername());
         setTextOnView(statusMessageTextView, member.getStatusMessage());
@@ -220,7 +219,7 @@ public class ProfileActivity extends AppCompatActivity {
 
     // Retrofit function
     public void getMyProfileInfo(MemberDto memberDto) {
-        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto);
+        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto.getEmail());
 
         call.enqueue(new Callback<MemberDto>() {
             @Override

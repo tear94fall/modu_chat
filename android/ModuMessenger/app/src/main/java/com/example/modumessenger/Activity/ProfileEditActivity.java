@@ -183,9 +183,8 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
     }
 
     private void setData() {
-        String accessToken = PreferenceManager.getString("access-token");
-        retrofitMemberAPI = RetrofitClient.createMemberApiService(accessToken);
-        retrofitImageAPI = RetrofitClient.createImageApiService(accessToken);
+        retrofitMemberAPI = RetrofitClient.createMemberApiService();
+        retrofitImageAPI = RetrofitClient.createImageApiService();
 
         scopedStorageUtil = new ScopedStorageUtil();
         setTextOnView(myProfileName, member.getUsername());
@@ -314,7 +313,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
     }
 
     public void getMyProfileInfo(MemberDto memberDto) {
-        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto);
+        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto.getEmail());
 
         call.enqueue(new Callback<MemberDto>() {
             @Override

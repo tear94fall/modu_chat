@@ -79,9 +79,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setData() {
-        String accessToken = PreferenceManager.getString("access-token");
-        retrofitChatAPI = RetrofitClient.createChatApiService(accessToken);
-        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService(accessToken);
+        retrofitChatAPI = RetrofitClient.createChatApiService();
+        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
     }
 
     private void setButtonClickEvent() {

@@ -21,8 +21,8 @@ public interface RetrofitMemberAPI {
     @POST("chat-service/login")
     Call<Void> RequestLogin(@Body RequestLoginDto requestLoginDto);
 
-    @POST("chat-service/member")
-    Call<MemberDto> RequestUserInfo(@Body MemberDto MemberDto);
+    @GET("chat-service/member/{email}")
+    Call<MemberDto> RequestUserInfo(@Path("email") String email);
 
     @POST("chat-service/member/{userId}")
     Call<MemberDto> RequestUpdate(@Path("userId") String userId, @Body MemberDto memberDto);

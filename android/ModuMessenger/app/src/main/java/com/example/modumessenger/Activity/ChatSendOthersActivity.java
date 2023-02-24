@@ -97,8 +97,7 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
     }
 
     private void setData() {
-        String accessToken = PreferenceManager.getString("access-token");
-        retrofitImageAPI = RetrofitClient.createImageApiService(accessToken);
+        retrofitImageAPI = RetrofitClient.createImageApiService();
 
         scopedStorageUtil = new ScopedStorageUtil();
         sendOthersList = new ArrayList<>(Arrays.asList(SendOthers.SEND_OTHERS_GALLERY, SendOthers.SEND_OTHERS_CAMERA, SendOthers.SEND_OTHERS_FILE, SendOthers.SEND_OTHERS_AUDIO));

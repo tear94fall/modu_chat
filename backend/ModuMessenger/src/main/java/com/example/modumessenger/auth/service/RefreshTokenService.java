@@ -24,28 +24,27 @@ public class RefreshTokenService {
         refreshTokenRedisRepository.save(refreshToken);
     }
 
-    public TokenResponseDto reissueToken(String token) {
-        String jwt = token.replace("Bearer ", "");
+    public TokenResponseDto reissueToken(String accessToken, String refreshToken) {
+        accessToken = accessToken.replace("Bearer ", "");
+        refreshToken = refreshToken.replace("Bearer ", "");
 
-        jwtTokenProvider.validateToken(jwt);
-
-        String userId = jwtTokenProvider.findUserIdByJwt(jwt);
+        String userId = jwtTokenProvider.findUserIdByJwt(accessToken);
 
         RefreshToken findToken = refreshTokenRedisRepository.findById(userId).orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND, userId));
 
-        if(!jwt.equals(findToken.getToken())) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED_TOKEN_ERROR, jwt);
+        if(!refreshToken.equals(findToken.getToken())) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED_TOKEN_ERROR, refreshToken);
         }
 
-        List<String> roles = jwtTokenProvider.getAuthentication(jwt);
+        List<String> roles = jwtTokenProvider.getAuthentication(accessToken);
 
-        String refreshToken = jwtTokenProvider.createJwtRefreshToken(roles);
-        RefreshToken newRefreshToken = RefreshToken.createToken(userId, refreshToken);
-        updateRefreshToken(newRefreshToken);
+        String newAccessToken = jwtTokenProvider.createJwtAccessToken(userId, roles);
+        String newRefreshToken = jwtTokenProvider.createJwtRefreshToken(roles);
 
-        String accessToken = jwtTokenProvider.createJwtAccessToken(userId, roles);
+        RefreshToken newToken = RefreshToken.createToken(userId, newRefreshToken);
+        updateRefreshToken(newToken);
 
-        return new TokenResponseDto(accessToken, refreshToken);
+        return new TokenResponseDto(newAccessToken, newRefreshToken);
     }
 
     public void logoutToken(String accessToken) {

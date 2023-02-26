@@ -1,8 +1,7 @@
 package com.example.modumessenger.Activity;
 
-import static android.os.SystemClock.sleep;
-
 import static com.example.modumessenger.Activity.ProfileEditBottomSheetFragment.*;
+import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
 
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -26,10 +25,11 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.model.GlideUrl;
+import com.bumptech.glide.load.model.LazyHeaders;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.Global.ScopedStorageUtil;
 import com.example.modumessenger.R;
-import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
 import com.example.modumessenger.Retrofit.RetrofitImageAPI;
 import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.entity.Member;
@@ -224,15 +224,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
         RequestBody fileBody = RequestBody.Companion.create(file, MediaType.parse("multipart/form-data"));
         MultipartBody.Part filePart = MultipartBody.Part.createFormData("file", file.getName(), fileBody);
 
-        String originProfileImage;
-
-        if(event == PROFILE_EVENT.PROFILE_CHANGE.getEvent()) {
-            originProfileImage = member.getProfileImage();
-        } else {
-            originProfileImage = member.getWallpaperImage();
-        }
-
-        uploadProfileImage(filePart, originProfileImage, event);
+        uploadProfileImage(filePart, event);
     }
 
     private String getFileName(ContentResolver resolver, Uri uri) {
@@ -247,15 +239,6 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
 
     private boolean getIntentExtra(String key) {
         return getIntent().hasExtra(key);
-    }
-
-    private void setProfileImage(ImageView imageView, String imageUrl) {
-        Glide.with(this)
-                .load(imageUrl==null || imageUrl.equals("") ? R.drawable.basic_profile_image : imageUrl)
-                .error(Glide.with(this)
-                        .load(R.drawable.basic_profile_image)
-                        .into(imageView))
-                .into(imageView);
     }
 
     private void setDefaultProfileImage() {
@@ -352,7 +335,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
         });
     }
 
-    public void uploadProfileImage(MultipartBody.Part file, String originProfileImage, int event) {
+    public void uploadProfileImage(MultipartBody.Part file, int event) {
         Call<String> call = retrofitImageAPI.RequestUploadImage(file);
 
         call.enqueue(new Callback<String>() {
@@ -362,33 +345,32 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
                 }
 
-                assert response.body() != null;
-                String filePath = response.body();
-
-                if(event == PROFILE_EVENT.PROFILE_CHANGE.getEvent()) {
-                    member.setProfileImage(RetrofitClient.getBaseUrl() + "modu_chat/images/" + filePath);
-                } else {
-                    member.setWallpaperImage(RetrofitClient.getBaseUrl() + "modu_chat/images/" + filePath);
-                }
-
                 scopedStorageUtil.deleteTempFiles();
 
-                if(!member.getProfileImage().equals(originProfileImage) || !member.getWallpaperImage().equals(originProfileImage)) {
-                    member.setUsername(String.valueOf(myProfileName.getText()));
-                    member.setStatusMessage(String.valueOf(myStatusMessage.getText()));
+                if(response.isSuccessful()) {
+                    if(response.body() != null) {
+                        String fileName = response.body();
 
-                    sleep(1000);
+                        String username = String.valueOf(myProfileName.getText());
+                        String statusMessage = String.valueOf(myStatusMessage.getText());
 
-                    updateMyInfo(new MemberDto(member));
+                        member.updateProfile(
+                                username.equals("null") ? null : username,
+                                statusMessage.equals("null") ? null : statusMessage,
+                                event == PROFILE_EVENT.PROFILE_CHANGE.getEvent() ? fileName : member.getProfileImage(),
+                                event == PROFILE_EVENT.WALLPAPER_CHANGE.getEvent() ? fileName : member.getWallpaperImage()
+                        );
+
+                        updateMyInfo(new MemberDto(member));
+
+                        Log.d("프로필 이미지 업로드 요청 : ", response.body());
+                    }
                 }
-
-                Log.d("프로필 이미지 업로드 요청 : ", response.body());
             }
 
             @Override
             public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
-                member.setProfileImage(originProfileImage);
             }
         });
     }

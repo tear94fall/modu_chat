@@ -1,5 +1,7 @@
 package com.example.modumessenger.Fragments;
 
+import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -21,6 +23,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.model.GlideUrl;
+import com.bumptech.glide.load.model.LazyHeaders;
 import com.example.modumessenger.Activity.FindFriendsActivity;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Activity.SearchActivity;
@@ -206,31 +210,21 @@ public class FragmentFriends extends Fragment {
         call.enqueue(new Callback<MemberDto>() {
             @Override
             public void onResponse(@NonNull Call<MemberDto> call, @NonNull Response<MemberDto> response) {
-                if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
+                if(response.isSuccessful()) {
+                    if(response.body() != null) {
+                        MemberDto member = response.body();
+
+                        myName.setText(member.getUsername());
+                        myStatusMessage.setText(member.getStatusMessage());
+                        setProfileImage(myProfileImage, member.getProfileImage());
+
+                        if(memberDto.getEmail().equals(member.getEmail())){
+                            Log.d("중복 검사: ", "중복된 번호가 아닙니다.");
+                        }
+
+                        Log.d("내 정보 가져 오기 요청 : ", response.body().toString());
+                    }
                 }
-
-                MemberDto result = response.body();
-
-                assert response.body() != null;
-                assert result != null;
-
-                // get my Profile Info
-                myName.setText(result.getUsername());
-                myStatusMessage.setText(result.getStatusMessage());
-                Glide.with(requireContext())
-                        .load(result.getProfileImage())
-                        .error(Glide.with(requireContext())
-                                .load(R.drawable.basic_profile_image)
-                                .into(myProfileImage))
-                        .into(myProfileImage);
-
-                if(memberDto.getEmail().equals(result.getEmail())){
-                    Log.d("중복검사: ", "중복된 번호가 아닙니다");
-                }
-
-                Log.d("내 정보 가져오기 요청 : ", response.body().toString());
             }
 
             @Override

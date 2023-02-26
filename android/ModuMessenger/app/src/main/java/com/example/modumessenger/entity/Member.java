@@ -5,7 +5,6 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
-import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.dto.MemberDto;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.gson.annotations.SerializedName;
@@ -104,6 +103,13 @@ public class Member implements Parcelable {
     public void setProfileImage(String profileImage) { this.profileImage = (profileImage == null || profileImage.equals("") ? "" : profileImage); }
     public void setWallpaperImage(String wallpaperImage) { this.wallpaperImage = (wallpaperImage == null || wallpaperImage.equals("") ? "" : wallpaperImage); }
     public void setProfileList(List<Profile> profileList) { this.profileList = profileList; }
+
+    public void updateProfile(String username, String statusMessage, String profileImage, String wallpaperImage) {
+        if(username != null) setUsername(username);
+        if(statusMessage != null) setStatusMessage(statusMessage);
+        if(profileImage != null) setProfileImage(profileImage);
+        if(wallpaperImage != null) setWallpaperImage(wallpaperImage);
+    }
 
     @NonNull
     @Override

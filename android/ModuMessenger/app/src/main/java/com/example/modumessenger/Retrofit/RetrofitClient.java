@@ -14,7 +14,10 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class RetrofitClient {
     private static final String BASE_URL = "http://192.168.0.3:8000/";
 
-    private static OkHttpClient.Builder okHttp = new OkHttpClient().newBuilder()
+    private static OkHttpClient.Builder okHttp = new OkHttpClient.Builder()
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(10, TimeUnit.SECONDS)
+            .writeTimeout(10, TimeUnit.SECONDS)
             .retryOnConnectionFailure(true);
 
     private static Retrofit.Builder builder =
@@ -33,7 +36,6 @@ public class RetrofitClient {
 
         if (!okHttp.interceptors().contains(interceptor)) {
             okHttp.addInterceptor(interceptor);
-            okHttp.authenticator(TokenAuthenticator.getInstance());
 
             builder.client(okHttp.build());
             retrofit = builder.build();

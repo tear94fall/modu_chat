@@ -193,7 +193,7 @@ public class LoginActivity extends AppCompatActivity {
     public void GetUserInfo(String email, String auth_type) {
         Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(email);
 
-        call.enqueue(new Callback<MemberDto>() {
+        APIHelper.enqueueWithRetry(call, 5, new Callback<MemberDto>() {
             @Override
             public void onResponse(@NonNull Call<MemberDto> call, @NonNull Response<MemberDto> response) {
                 if(response.isSuccessful()) {

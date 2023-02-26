@@ -61,11 +61,16 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public Claims getClaimsFromJwtToken(String jwtToken) throws JwtException {
-        return Jwts.parser()
-                .setSigningKey(secretKey)
-                .parseClaimsJws(jwtToken)
-                .getBody();
+    public Claims getClaimsFromJwtToken(String jwtToken) {
+        try {
+            return Jwts.parser()
+                    .setSigningKey(secretKey)
+                    .parseClaimsJws(jwtToken)
+                    .getBody();
+
+        } catch (ExpiredJwtException e) {
+            return e.getClaims();
+        }
     }
 
     public String getRefreshToKenUUID(String refreshToken) {

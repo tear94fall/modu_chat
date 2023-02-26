@@ -15,9 +15,9 @@ public class AuthController {
     private final AccessTokenService accessTokenService;
     private final RefreshTokenService refreshTokenService;
 
-    @GetMapping("/reissue")
-    public ResponseEntity<TokenResponseDto> reissue(@RequestHeader("Authorization") String refreshToken) {
-        return ResponseEntity.ok(refreshTokenService.reissueToken(refreshToken));
+    @PostMapping("/reissue")
+    public ResponseEntity<TokenResponseDto> reissue(@RequestHeader("Authorization") String accessToken, @RequestHeader("refresh-token") String refreshToken) {
+        return ResponseEntity.ok(refreshTokenService.reissueToken(accessToken, refreshToken));
     }
 
     @PostMapping("/logout")

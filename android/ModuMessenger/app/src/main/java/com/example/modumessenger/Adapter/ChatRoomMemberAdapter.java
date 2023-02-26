@@ -1,5 +1,7 @@
 package com.example.modumessenger.Adapter;
 
+import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
+
 import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,8 +14,12 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.model.GlideUrl;
+import com.bumptech.glide.load.model.LazyHeaders;
 import com.example.modumessenger.Activity.ProfileActivity;
+import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.entity.Member;
 
 import java.util.List;
@@ -66,12 +72,7 @@ public class ChatRoomMemberAdapter extends RecyclerView.Adapter<ChatRoomMemberAd
         public void setUserInfo(Member member) {
             this.username.setText(member.getUsername());
             this.statusMessage.setText(member.getStatusMessage());
-            Glide.with(profileImage)
-                    .load(member.getProfileImage())
-                    .error(Glide.with(profileImage)
-                            .load(R.drawable.basic_profile_image)
-                            .into(profileImage))
-                    .into(profileImage);
+            setProfileImage(profileImage, member.getProfileImage());
         }
 
         public void setUserClickEvent(Member member) {

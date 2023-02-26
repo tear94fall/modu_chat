@@ -1,5 +1,7 @@
 package com.example.modumessenger.Adapter;
 
+import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
+
 import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,10 +15,13 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.model.GlideUrl;
+import com.bumptech.glide.load.model.LazyHeaders;
 import com.example.modumessenger.Activity.ChatActivity;
 import com.example.modumessenger.Fragments.FragmentChat;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.entity.ChatRoom;
 import com.example.modumessenger.RoomDatabase.Database.ChatRoomDatabase;
 import com.example.modumessenger.RoomDatabase.Entity.ChatRoomEntity;
@@ -174,16 +179,16 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
 
         public void setChatRoomImage(ChatRoom chatRoom) {
             if (chatRoom.getMembers().size() == 1) {
-                setGlide(chatRoom.getMembers().get(0).getProfileImage());
+                setProfileImage(chatRoomImage, chatRoom.getMembers().get(0).getProfileImage());
             } else if(chatRoom.getMembers().size() == 2) {
                 chatRoom.getMembers().forEach(member -> {
                     if(!member.getUserId().equals(userId)) {
-                        setGlide(member.getProfileImage());
+                        setProfileImage(chatRoomImage, member.getProfileImage());
                     }
                 });
             } else if (chatRoom.getMembers().size() > 2) {
                 if (chatRoom.getRoomImage() != null && !chatRoom.getRoomImage().equals("")) {
-                    setGlide(chatRoom.getRoomImage());
+                    setProfileImage(chatRoomImage, chatRoom.getRoomImage());
                 } else {
                     List<Member> memberList = chatRoom.getMembers().stream()
                             .filter(m -> !m.getUserId().equals(userId))
@@ -196,54 +201,11 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
                     for(int index=0; index<Math.min(4, memberList.size()); index++) {
                         imageViewList.get(index).setVisibility(View.VISIBLE);
                         cardViewList.get(index).setVisibility(View.VISIBLE);
-                        setGlide(imageViewList.get(index), memberList.get(index).getProfileImage());
+                        setProfileImage(imageViewList.get(index), memberList.get(index).getProfileImage());
                     }
                 }
             } else {
-                if (chatRoom.getRoomImage() != null && !chatRoom.getRoomImage().equals("")) {
-                    setGlide(chatRoom.getRoomImage());
-                } else {
-                    setGlide(null);
-                }
-            }
-        }
-
-        public void setGlide(ImageView imageView, String imageUrl) {
-            if(imageUrl != null && !imageUrl.equals("")) {
-                Glide.with(imageView)
-                        .load(imageUrl)
-                        .error(Glide.with(imageView)
-                                .load(R.drawable.basic_profile_image)
-                                .into(imageView))
-                        .into(imageView);
-            } else {
-                Glide.with(imageView)
-                        .load(R.drawable.basic_profile_image)
-                        .into(imageView);
-            }
-        }
-
-        public void setGlide(int resources) {
-            Glide.with(chatRoomImage)
-                    .load(resources)
-                    .error(Glide.with(chatRoomImage)
-                            .load(R.drawable.basic_profile_image)
-                            .into(chatRoomImage))
-                    .into(chatRoomImage);
-        }
-
-        public void setGlide(String imageUrl) {
-            if(imageUrl != null && !imageUrl.equals("")) {
-                Glide.with(chatRoomImage)
-                        .load(imageUrl)
-                        .error(Glide.with(chatRoomImage)
-                                .load(R.drawable.basic_profile_image)
-                                .into(chatRoomImage))
-                        .into(chatRoomImage);
-            } else {
-                Glide.with(chatRoomImage)
-                        .load(R.drawable.basic_profile_image)
-                        .into(chatRoomImage);
+                setProfileImage(chatRoomImage, chatRoom.getRoomImage());
             }
         }
 

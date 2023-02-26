@@ -1,29 +1,44 @@
 # Modu-Messenger Backend
 
-# Backend
+## Project Info
+
+### Backend
 
 - [Spring Boot](https://spring.io/projects/spring-boot)
 - [Spring Cloud](https://spring.io/projects/spring-cloud)
+- [Spring Cloud Api Gateway](https://spring.io/projects/spring-cloud-gateway)
+- [Spring Cloud Eureka](https://cloud.spring.io/spring-cloud-netflix/reference/html/)
+- [Spring Cloud Config](https://docs.spring.io/spring-cloud-config/docs/current/reference/html/)
+- [Spring Cloud OpenFeign](https://cloud.spring.io/spring-cloud-openfeign/reference/html)
 - [Spring Security](https://spring.io/projects/spring-security)
 - [Spring Data JPA](https://spring.io/projects/spring-data-jpa)
-- [Querydsl](http://querydsl.com/)
+- [Spring Querydsl](http://querydsl.com/)
 - [Spring WebSocket](https://spring.io/guides/gs/messaging-stomp-websocket/)
 - [Spring AMQP](https://spring.io/projects/spring-amqp)
 - [Springfox Swagger UI](http://springfox.github.io/springfox/docs/current/)
 - [JSON Web Tokens](https://jwt.io/)
 
-# Database
+### Database
 
 - [MySQL](https://www.mysql.com/)
 - [Redis](https://redis.io/)
 
-# DevOps
+### Infra Structure
 
 - [Amazon Web Services](https://aws.amazon.com/)
 - [Docker](https://www.docker.com/)
 - [k8s](https://kubernetes.io/ko/)
+- [minio](https://min.io/)
+- [Rabbit MQ](https://www.rabbitmq.com/)
+- [Zipkin](https://zipkin.io/)
 
-# 연관 관계
+## Project Architecture
+
+### MSA (Micro Service Architecture)
+
+모두의 메신저 프로젝트는 마이크로 서비스 아키텍처를 기반으로 하고 있습니다.  
+
+## Project Structure
 
 ### Spring API Gateway
 스프링 api gateway 를 통해 jwt 토큰 인증 과정을 가장 앞단에서 처리  
@@ -34,6 +49,8 @@ jwt 검증을 통해 인가된 사용자는 resource로의 접근이 가능
 ### Spring config-server
 
 ### rabbit-mq 를 이용한 메시징 처리
+
+## Dev Diary
 
 ### 채팅 서버
 채팅 기능은 메인 기능 이므로, 가장 많은 부하가 걸린다. 이를 개선하기 위해 여러 컨테이너를 띄워 문제를 해결하려고 했다.  

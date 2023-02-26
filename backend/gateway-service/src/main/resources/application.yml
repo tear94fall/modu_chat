@@ -52,6 +52,13 @@ spring:
         - id: chat-service
           uri: lb://CHAT-SERVICE
           predicates:
+            - Path=/chat-service/auth/reissue
+            - Method=POST
+          filters:
+            - RewritePath=/chat-service/(?<segment>.*), /$\{segment}
+        - id: chat-service
+          uri: lb://CHAT-SERVICE
+          predicates:
             - Path=/chat-service/**
           filters:
             - AuthorizationHeaderFilter

@@ -21,14 +21,14 @@ public class MemberController {
     private final MemberService memberService;
     private final ModelMapper modelMapper;
 
-    @PostMapping("/member")
-    public ResponseEntity<ResponseMemberDto> userId(@Valid @RequestBody RequestMemberDto requestMemberDto) {
-        MemberDto memberDto = memberService.getMemberByEmail(requestMemberDto.getEmail());
+    @GetMapping("/member/{email}")
+    public ResponseEntity<ResponseMemberDto> userId(@Valid @PathVariable("email") String email) {
+        MemberDto memberDto = memberService.getMemberByEmail(email);
         return ResponseEntity.ok().body(modelMapper.map(memberDto, ResponseMemberDto.class));
     }
 
-    @PostMapping("/member/signup")
-    public ResponseEntity<ResponseMemberDto> signupMember(@Valid @RequestBody GoogleLoginRequest googleLoginRequest) {
+    @PostMapping("/member")
+    public ResponseEntity<ResponseMemberDto> createMember(@Valid @RequestBody GoogleLoginRequest googleLoginRequest) {
         MemberDto memberDto = memberService.registerMember(googleLoginRequest);
         return ResponseEntity.ok().body(modelMapper.map(memberDto, ResponseMemberDto.class));
     }
@@ -63,4 +63,10 @@ public class MemberController {
 
         return ResponseEntity.ok().body(result);
     }
+
+//    @GetMapping("/member/{userId}")
+//    public ResponseEntity<String> getMember(@Valid @PathVariable("userId") String userId) {
+//        MemberDto member = memberService.getUserById(userId);
+//        return ResponseEntity.ok().body(member.getUserId());
+//    }
 }

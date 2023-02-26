@@ -76,9 +76,8 @@ public class InviteActivity extends AppCompatActivity {
     }
 
     private void setData() {
-        String accessToken = PreferenceManager.getString("access-token");
-        retrofitMemberAPI = RetrofitClient.createMemberApiService(accessToken);
-        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService(accessToken);
+        retrofitMemberAPI = RetrofitClient.createMemberApiService();
+        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
 
         friendsList = new ArrayList<>();
     }

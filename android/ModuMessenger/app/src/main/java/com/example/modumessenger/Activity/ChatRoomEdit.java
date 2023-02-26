@@ -82,8 +82,7 @@ public class ChatRoomEdit extends AppCompatActivity implements View.OnTouchListe
     }
 
     private void setData() {
-        String accessToken = PreferenceManager.getString("access-token");
-        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService(accessToken);
+        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
     }
 
     @SuppressLint("ClickableViewAccessibility")

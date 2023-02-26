@@ -1,5 +1,7 @@
 package com.example.modumessenger.Fragments;
 
+import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,6 +19,8 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.model.GlideUrl;
+import com.bumptech.glide.load.model.LazyHeaders;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.Grid.SettingGridAdapter;
@@ -79,8 +83,7 @@ public class FragmentSetting extends Fragment {
     }
 
     private void setData() {
-        String accessToken = PreferenceManager.getString("access-token");
-        retrofitMemberAPI = RetrofitClient.createMemberApiService(accessToken);
+        retrofitMemberAPI = RetrofitClient.createMemberApiService();
     }
 
     private void bindingView(View view) {
@@ -122,7 +125,7 @@ public class FragmentSetting extends Fragment {
 
     // Retrofit function
     public void getMyProfileInfo(MemberDto memberDto) {
-        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto);
+        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto.getEmail());
 
         call.enqueue(new Callback<MemberDto>() {
             @Override
@@ -135,15 +138,10 @@ public class FragmentSetting extends Fragment {
                 assert response.body() != null;
                 myInfo = response.body();
 
-                // get my Profile Info
                 myProfileName.setText(myInfo.getUsername());
                 myProfileEmail.setText(myInfo.getEmail());
-                Glide.with(requireContext())
-                        .load(myInfo.getProfileImage())
-                        .error(Glide.with(requireContext())
-                                .load(R.drawable.basic_profile_image)
-                                .into(myProfileImage))
-                        .into(myProfileImage);
+
+                setProfileImage(myProfileImage, myInfo.getProfileImage());
 
                 if(memberDto.getEmail().equals(myInfo.getEmail())){
                     Log.d("중복검사: ", "중복된 번호가 아닙니다");

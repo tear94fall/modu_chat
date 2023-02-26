@@ -61,8 +61,7 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     private void setData() {
-        String accessToken = PreferenceManager.getString("access-token");
-        retrofitMemberAPI = RetrofitClient.createMemberApiService(accessToken);
+        retrofitMemberAPI = RetrofitClient.createMemberApiService();
     }
 
     private void setButtonClickEvent() {

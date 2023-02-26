@@ -1,5 +1,7 @@
 package com.example.modumessenger.Activity;
 
+import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
+
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
@@ -16,6 +18,8 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.model.GlideUrl;
+import com.bumptech.glide.load.model.LazyHeaders;
 import com.example.modumessenger.Global.OnSwipeListener;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
@@ -115,9 +119,8 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void setData() {
-        String accessToken = PreferenceManager.getString("access-token");
-        retrofitMemberAPI = RetrofitClient.createMemberApiService(accessToken);
-        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService(accessToken);
+        retrofitMemberAPI = RetrofitClient.createMemberApiService();
+        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
 
         setTextOnView(usernameTextView, member.getUsername());
         setTextOnView(statusMessageTextView, member.getStatusMessage());
@@ -196,16 +199,6 @@ public class ProfileActivity extends AppCompatActivity {
         return getIntent().hasExtra(key);
     }
 
-    private void setProfileImage(ImageView imageView, String imageUrl) {
-        // need to fix
-        Glide.with(this)
-                .load(imageUrl==null || imageUrl.equals("") ? R.drawable.basic_profile_image : imageUrl)
-                .error(Glide.with(this)
-                        .load(R.drawable.basic_profile_image)
-                        .into(imageView))
-                .into(imageView);
-    }
-
     private void setTextOnView(TextView view, String value) {
         if(value != null && !value.equals("")) {
             view.setText(value);
@@ -220,7 +213,7 @@ public class ProfileActivity extends AppCompatActivity {
 
     // Retrofit function
     public void getMyProfileInfo(MemberDto memberDto) {
-        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto);
+        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto.getEmail());
 
         call.enqueue(new Callback<MemberDto>() {
             @Override

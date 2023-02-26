@@ -2,6 +2,8 @@ package com.example.modumessenger.chat.controller;
 
 import com.example.modumessenger.chat.dto.ChatRoomDto;
 import com.example.modumessenger.chat.service.ChatRoomService;
+import com.example.modumessenger.common.exception.CustomException;
+import com.example.modumessenger.common.exception.ErrorCode;
 import com.example.modumessenger.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +34,16 @@ public class ChatRoomController {
     public ResponseEntity<ChatRoomDto> createChatRoom(@Valid @RequestBody List<String> userIds) {
         ChatRoomDto chatRoomDto = chatRoomService.createChatRoom(userIds);
         return ResponseEntity.ok().body(chatRoomDto);
+    }
+
+    @GetMapping("/chat/{roomId}/{userId}")
+    public ResponseEntity<String> checkValidChatRoomMember(@Valid @PathVariable("roomId") String roomId, @PathVariable("userId") String userId) throws CustomException {
+        ChatRoomDto chatRoomDto = chatRoomService.searchChatRoomByRoomId(roomId);
+
+        if(chatRoomDto.checkChatRoomMember(userId))
+            throw new CustomException(ErrorCode.INVALID_CHAT_ROOM_MEMBER, roomId);
+
+        return ResponseEntity.ok().body(userId);
     }
 
     @DeleteMapping("/chat/{roomId}/{userId}")

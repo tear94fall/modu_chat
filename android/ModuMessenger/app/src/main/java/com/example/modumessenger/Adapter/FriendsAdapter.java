@@ -1,5 +1,7 @@
 package com.example.modumessenger.Adapter;
 
+import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
+
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
@@ -19,10 +21,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.load.model.GlideUrl;
+import com.bumptech.glide.load.model.LazyHeaders;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.example.modumessenger.Activity.ProfileActivity;
+import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.MemberDto;
 
 import java.util.List;
@@ -74,27 +80,7 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.MyViewHo
         public void setUserInfo(MemberDto member) {
             this.username.setText(member.getUsername());
             this.statusMessage.setText(member.getStatusMessage());
-            Glide.with(profileImage)
-                    .load(member.getProfileImage())
-                    .listener(new RequestListener<Drawable>() {
-                        @Override
-                        public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                            return false;
-                        }
-
-                        @Override
-                        public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                            if (resource instanceof BitmapDrawable) {
-                                Bitmap bitmap = ((BitmapDrawable) resource).getBitmap();
-                                Log.d("Glide", String.format("bitmap %,d bytes, size: %d x %d", bitmap.getByteCount(), bitmap.getWidth(), bitmap.getHeight()));
-                            }
-                            return false;
-                        }
-                    })
-                    .error(Glide.with(profileImage)
-                            .load(R.drawable.basic_profile_image)
-                            .into(profileImage))
-                    .into(profileImage);
+            setProfileImage(profileImage, member.getProfileImage());
         }
 
         public void setUserClickEvent(MemberDto member) {

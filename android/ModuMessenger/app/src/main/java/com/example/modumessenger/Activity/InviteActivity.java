@@ -68,18 +68,18 @@ public class InviteActivity extends AppCompatActivity {
     }
 
     private void getData() {
+        retrofitMemberAPI = RetrofitClient.createMemberApiService();
+        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
+
+        friendsList = new ArrayList<>();
+    }
+
+    private void setData() {
         roomId = getIntent().getStringExtra("roomId");
         currentMember = getIntent().getStringArrayListExtra("currentMember");
         member = new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email"));
 
         getFriendsList(member);
-    }
-
-    private void setData() {
-        retrofitMemberAPI = RetrofitClient.createMemberApiService();
-        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
-
-        friendsList = new ArrayList<>();
     }
 
     private void setButtonClickEvent() {

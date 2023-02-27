@@ -11,6 +11,11 @@ import com.example.modumessenger.Retrofit.RetrofitClient;
 public class GlideUtil {
 
     public static void setProfileImage(ImageView imageView, String fileName) {
+        if(fileName == null || fileName.equals("")) {
+            setBasicProfileImage(imageView);
+            return ;
+        }
+
         String accessToken = PreferenceManager.getString("access-token");
         String url = RetrofitClient.getBaseUrl() + "storage-service/view/"+ fileName;
 
@@ -24,6 +29,12 @@ public class GlideUtil {
                 .error(Glide.with(imageView)
                         .load(R.drawable.basic_profile_image)
                         .into(imageView))
+                .into(imageView);
+    }
+
+    public static void setBasicProfileImage(ImageView imageView) {
+        Glide.with(imageView)
+                .load(R.drawable.basic_profile_image)
                 .into(imageView);
     }
 }

@@ -159,6 +159,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
             } else if (chatRoom.getMembers().size() > 2) {
                 List<String> userIds = chatRoom.getMembers().stream()
                         .map(Member::getUsername)
+                        .filter(name -> !name.equals(username))
                         .collect(Collectors.toList());
                 String title = String.join(", ", userIds);
                 title = title.substring(0, Math.min(title.length(), 25)).trim();

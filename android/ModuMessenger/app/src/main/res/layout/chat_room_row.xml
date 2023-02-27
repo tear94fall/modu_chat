@@ -117,11 +117,13 @@
 
         <TextView
             android:id="@+id/chat_room_name"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
             android:layout_marginTop="12dp"
+            android:layout_marginEnd="12dp"
             android:text="채팅방 이름"
+            app:layout_constraintEnd_toStartOf="@+id/last_chat_time"
             app:layout_constraintStart_toEndOf="@+id/chat_room_image_card_view"
             app:layout_constraintTop_toTopOf="@+id/chat_room_image_card_view" />
 

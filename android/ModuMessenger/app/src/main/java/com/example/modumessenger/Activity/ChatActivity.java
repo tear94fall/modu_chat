@@ -58,6 +58,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import okhttp3.OkHttpClient;
@@ -92,7 +93,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     TextView inputMsgTextView;
     Button sendMsg, sendOthers;
 
-    String jwtToken, userId, roomId;
+    String jwtToken, userId, roomId, username;
 
     ActionBarDrawerToggle actionBarDrawerToggle;
 
@@ -162,6 +163,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
         jwtToken = PreferenceManager.getString("token");
         userId = PreferenceManager.getString("userId");
+        username = PreferenceManager.getString("username");
         roomId = getIntent().getStringExtra("roomId");
         if(roomId != null && !roomId.equals("")) {
             getRoomInfo(roomId);
@@ -385,6 +387,32 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         chatRecyclerView.setAdapter(new ChatRoomMemberAdapter(chatMemberList));
     }
 
+    public void setChatRoomName(List<Member> chatRoomMembers, String chatRoomName) {
+        String roomName = "새로운 채팅방";
+
+        if(!chatRoomName.equals("") && !chatRoomName.equals(roomName)) {
+            setTitle(chatRoomName);
+            return;
+        }
+
+        List<String> usernames = chatRoomMembers.stream()
+                .map(Member::getUsername)
+                .filter(name -> !name.equals(username))
+                .collect(Collectors.toList());
+
+        roomName = String.join(", ", usernames);
+
+        switch(usernames.size()) {
+            case 0: // self
+                setTitle(String.format("나와의 채팅 (%s)", username));
+                break;
+            case 1: // 1on1
+            default: // multi
+                setTitle(roomName);
+                break;
+        }
+    }
+
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEvent(MessageEvent messageEvent) {
         Log.e("event bus call", "Chat Event " + messageEvent.getChatBubble().getChatMsg());
@@ -508,7 +536,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 chatMemberList.clear();
                 chatRoomDto.getMembers().forEach(m -> chatMemberList.add(new Member(m)));
 
-                setTitle(roomInfo.getRoomName());
+                setChatRoomName(chatMemberList, roomInfo.getRoomName());
                 setNavInfo(roomInfo);
 
                 Log.d("채팅방 정보 가져오기 요청 : ", response.body().toString());
@@ -558,7 +586,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 chatMemberList.clear();
                 chatRoomDto.getMembers().forEach(m -> chatMemberList.add(new Member(m)));
 
-                setTitle(roomInfo.getRoomName());
+                setChatRoomName(chatMemberList, roomInfo.getRoomName());
                 setNavInfo(roomInfo);
 
                 Log.d("채팅방 정보 가져오기 요청 : ", response.body().toString());

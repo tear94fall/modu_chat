@@ -1,5 +1,7 @@
 package com.example.modumessenger.Adapter;
 
+import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
+
 import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -80,12 +82,7 @@ public class InviteAdapter extends RecyclerView.Adapter<InviteAdapter.AddChatVie
         public void setUserInfo(MemberDto member) {
             this.username.setText(member.getUsername());
             this.statusMessage.setText(member.getStatusMessage());
-            Glide.with(profileImage)
-                    .load(member.getProfileImage())
-                    .error(Glide.with(profileImage)
-                            .load(R.drawable.basic_profile_image)
-                            .into(profileImage))
-                    .into(profileImage);
+            setProfileImage(profileImage, member.getProfileImage());
         }
 
         public void setUserClickEvent(MemberDto member) {

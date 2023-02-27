@@ -24,8 +24,8 @@
 
         <TextView
             android:id="@+id/my_user_name"
-            android:layout_width="71dp"
-            android:layout_height="22dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
             android:layout_marginTop="12dp"
             android:text="사용자 이름"

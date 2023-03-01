@@ -15,14 +15,9 @@ import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.model.GlideUrl;
-import com.bumptech.glide.load.model.LazyHeaders;
 import com.example.modumessenger.Activity.CreateRoomActivity;
 import com.example.modumessenger.Activity.ProfileActivity;
-import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
-import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.MemberDto;
 
 import java.util.List;
@@ -86,10 +81,6 @@ public class CreateRoomAdapter extends RecyclerView.Adapter<CreateRoomAdapter.Ad
                 Intent intent = new Intent(v.getContext(), ProfileActivity.class);
                 intent.putExtra("email", member.getEmail());
                 intent.putExtra("userId", member.getUserId());
-                intent.putExtra("username", member.getUsername());
-                intent.putExtra("statusMessage", member.getStatusMessage());
-                intent.putExtra("profileImage", member.getProfileImage());
-                intent.putExtra("wallpaperImage", member.getWallpaperImage());
 
                 v.getContext().startActivity(intent);
             });

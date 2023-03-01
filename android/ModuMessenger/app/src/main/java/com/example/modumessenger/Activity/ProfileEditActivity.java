@@ -2,6 +2,8 @@ package com.example.modumessenger.Activity;
 
 import static com.example.modumessenger.Activity.ProfileEditBottomSheetFragment.*;
 import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
+import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+import static com.example.modumessenger.Global.SharedPrefHelper.setSharedObject;
 
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -24,10 +26,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.model.GlideUrl;
-import com.bumptech.glide.load.model.LazyHeaders;
-import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.Global.ScopedStorageUtil;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitImageAPI;
@@ -76,7 +74,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
     @Override
     public void onResume() {
         super.onResume();
-        getMyProfileInfo(new MemberDto(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
+        getMyProfileInfo(member.getEmail());
     }
 
     @Override
@@ -171,15 +169,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
     }
 
     private void getData() {
-        if(getIntentExtra("profileImage") && getIntentExtra("username") && getIntentExtra("statusMessage")) {
-            member = new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email"));
-            member.setUsername(getIntent().getStringExtra("username"));
-            member.setStatusMessage(getIntent().getStringExtra("statusMessage"));
-            member.setProfileImage(getIntent().getStringExtra("profileImage"));
-            member.setWallpaperImage(getIntent().getStringExtra("wallpaperImage"));
-        } else {
-            Toast.makeText(this, "No Data", Toast.LENGTH_SHORT).show();
-        }
+        member = getSharedObjectMember();
     }
 
     private void setData() {
@@ -187,11 +177,8 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
         retrofitImageAPI = RetrofitClient.createImageApiService();
 
         scopedStorageUtil = new ScopedStorageUtil();
-        setTextOnView(myProfileName, member.getUsername());
-        setTextOnView(myStatusMessage, member.getStatusMessage());
 
-        setProfileImage(profileImageView, member.getProfileImage());
-        setProfileImage(wallpaperImageView, member.getWallpaperImage());
+        setUserProfile(member);
     }
 
     private void setButtonClickEvent() {
@@ -237,22 +224,20 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
         return fileName;
     }
 
-    private boolean getIntentExtra(String key) {
-        return getIntent().hasExtra(key);
-    }
-
-    private void setDefaultProfileImage() {
-        Glide.with(this)
-                .load(R.drawable.basic_profile_image)
-                .into(profileImageView);
-    }
-
     private void setTextOnView(TextView view, String value) {
         if(value != null && !value.equals("")) {
             view.setText(value);
         } else {
             view.setText("No Value");
         }
+    }
+
+    private void setUserProfile(Member member) {
+        setTextOnView(myProfileName, member.getUsername());
+        setTextOnView(myStatusMessage, member.getStatusMessage());
+
+        setProfileImage(profileImageView, member.getProfileImage());
+        setProfileImage(wallpaperImageView, member.getWallpaperImage());
     }
 
     // Retrofit function
@@ -262,29 +247,20 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
         call.enqueue(new Callback<MemberDto>() {
             @Override
             public void onResponse(@NonNull Call<MemberDto> call, @NonNull Response<MemberDto> response) {
-                if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
-                }
 
-                try {
-                    assert response.body() != null;
-                    MemberDto myInfo = response.body();
-                    member = new Member(myInfo);
+                if(response.isSuccessful()) {
+                    if(response.body() != null) {
+                        MemberDto myInfo = response.body();
+                        member = new Member(myInfo);
 
-                    setProfileImage(profileImageView, member.getProfileImage());
-                    setProfileImage(wallpaperImageView, member.getWallpaperImage());
+                        setUserProfile(member);
+                        setSharedObject("member", member);
 
-                    Log.d("내정보 업데이트 요청 : ", response.body().toString());
+                        Toast.makeText(getApplicationContext(), "프로필 정보가 업데이트 되었습니다.", Toast.LENGTH_SHORT).show();
+                        Log.d("내정보 업데이트 요청 : ", response.body().toString());
 
-                    Toast.makeText(getApplicationContext(), "프로필 정보가 업데이트 되었습니다.", Toast.LENGTH_SHORT).show();
-
-                    PreferenceManager.setString("profileImage", member.getProfileImage());
-                    PreferenceManager.setString("wallpaperImage", member.getWallpaperImage());
-
-                    finish();
-                } catch (Exception e) {
-                    Log.e("오류 발생 : ", e.getMessage());
+                        finish();
+                    }
                 }
             }
 
@@ -295,37 +271,23 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
         });
     }
 
-    public void getMyProfileInfo(MemberDto memberDto) {
-        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto.getEmail());
+    public void getMyProfileInfo(String email) {
+        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(email);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override
             public void onResponse(@NonNull Call<MemberDto> call, @NonNull Response<MemberDto> response) {
-                if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
+                if(response.isSuccessful()) {
+                    if(response.body() != null) {
+                        MemberDto memberDto = response.body();
+                        member.updateProfile(memberDto);
+
+                        setUserProfile(member);
+                        setSharedObject("member", member);
+
+                        Log.d("내 정보 가져오기 요청 : ", response.body().toString());
+                    }
                 }
-
-                MemberDto result = response.body();
-
-                assert response.body() != null;
-                assert result != null;
-
-                // get my Profile Info
-                myProfileName.setText(result.getUsername());
-                myStatusMessage.setText(result.getStatusMessage());
-
-                setProfileImage(profileImageView, result.getProfileImage());
-                setProfileImage(wallpaperImageView, result.getWallpaperImage());
-
-                member.setProfileImage(result.getProfileImage());
-                member.setWallpaperImage(result.getWallpaperImage());
-
-                if(member.getEmail().equals(result.getEmail())){
-                    Log.d("중복검사: ", "중복된 번호가 아닙니다");
-                }
-
-                Log.d("내 정보 가져오기 요청 : ", response.body().toString());
             }
 
             @Override
@@ -341,10 +303,6 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
         call.enqueue(new Callback<String>() {
             @Override
             public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
-                if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                }
-
                 scopedStorageUtil.deleteTempFiles();
 
                 if(response.isSuccessful()) {

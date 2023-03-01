@@ -22,7 +22,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 
-import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.Global.ScopedStorageUtil;
 import com.example.modumessenger.Grid.SendOthersGridAdapter;
 import com.example.modumessenger.Grid.SendOthersGridItem;

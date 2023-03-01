@@ -1,5 +1,8 @@
 package com.example.modumessenger.Adapter;
 
+import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
+import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
@@ -12,15 +15,9 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.load.model.GlideUrl;
-import com.bumptech.glide.load.model.LazyHeaders;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Activity.ProfileImageActivity;
-import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
-import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatType;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.RoomDatabase.Database.ChatDatabase;
@@ -46,14 +43,15 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     private final List<Member> memberList;
     private final List<ChatBubble> chatList;
-    private final String userId;
 
+    Member myInfo;
     ChatDatabase chatDatabase;
 
     public ChatHistoryAdapter(List<ChatBubble> chatList, List<Member> memberList) {
         this.memberList = (memberList == null || memberList.size() == 0) ? new ArrayList<>() : memberList;
         this.chatList = chatList;
-        userId = PreferenceManager.getString("userId");
+        this.myInfo = getSharedObjectMember();
+
         sortChatBubble();
     }
 
@@ -100,74 +98,23 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         if (holder instanceof ChatBubbleLeftViewHolder) {
             ChatBubbleLeftViewHolder leftHolder = ((ChatBubbleLeftViewHolder) holder);
 
-            Member member = memberList.stream()
-                    .filter(m -> m.getUserId().equals(chat.getSender()))
-                    .findFirst()
-                    .orElse(null);
+            Member member = getChatSendMember(chat.getSender());
+            setProfileImage((leftHolder.senderImage), member.getProfileImage());
 
-            if (member != null && member.getUserId().equals(chat.getSender())) {
-                if (!member.getProfileImage().equals("") && member.getProfileImage() != null) {
-                    Glide.with(((ChatBubbleLeftViewHolder) holder).senderImage)
-                            .load(member.getProfileImage())
-                            .diskCacheStrategy(DiskCacheStrategy.DATA)
-                            .error(Glide.with(((ChatBubbleLeftViewHolder) holder).senderImage)
-                                    .load(R.drawable.basic_profile_image)
-                                    .into(((ChatBubbleLeftViewHolder) holder).senderImage))
-                            .into(((ChatBubbleLeftViewHolder) holder).senderImage);
-                } else {
-                    Glide.with(((ChatBubbleLeftViewHolder) holder).senderImage)
-                            .load(R.drawable.basic_profile_image)
-                            .into(((ChatBubbleLeftViewHolder) holder).senderImage);
-                }
-
-                ((ChatBubbleLeftViewHolder) holder).setUserClickEvent(member);
-            }
-
-            Member chatSendMember = getChatSendMember(chat.getSender());
-            leftHolder.chatSender.setText(chatSendMember.getEmail());
-
+            leftHolder.setUserClickEvent(member);
+            leftHolder.chatSender.setText(member.getEmail());
             leftHolder.chatMessage.setText(chat.getChatMsg());
             leftHolder.leftChatTime.setText(getShortTime(chat.getChatTime()));
         } else if (holder instanceof ChatBubbleLeftImageViewHolder) {
             ChatBubbleLeftImageViewHolder leftImageViewHolder = ((ChatBubbleLeftImageViewHolder) holder);
+            Member member = getChatSendMember(chat.getSender());
 
-            Member member = memberList.stream()
-                    .filter(m -> m.getUserId().equals(chat.getSender()))
-                    .findFirst()
-                    .orElse(null);
+            setProfileImage((leftImageViewHolder.senderImage), member.getProfileImage());
+            setProfileImage(leftImageViewHolder.chatImage, chat.getChatMsg());
 
-            if(member != null && !member.getProfileImage().equals("") && member.getProfileImage()!=null) {
-                Glide.with(((ChatBubbleLeftImageViewHolder) holder).senderImage)
-                        .load(member.getProfileImage())
-                        .diskCacheStrategy(DiskCacheStrategy.DATA)
-                        .error(Glide.with(((ChatBubbleLeftImageViewHolder) holder).senderImage)
-                                .load(R.drawable.basic_profile_image)
-                                .into(((ChatBubbleLeftImageViewHolder) holder).senderImage))
-                        .into(((ChatBubbleLeftImageViewHolder) holder).senderImage);
-            } else {
-                Glide.with(((ChatBubbleLeftImageViewHolder) holder).senderImage)
-                        .load(R.drawable.basic_profile_image)
-                        .into(((ChatBubbleLeftImageViewHolder) holder).senderImage);
-            }
-
-            ((ChatBubbleLeftImageViewHolder) holder).setUserClickEvent(member);
-            ((ChatBubbleLeftImageViewHolder) holder).setChatImageClickEvent(chat);
-
-            Member chatSendMember = getChatSendMember(chat.getSender());
-            leftImageViewHolder.chatSender.setText(chatSendMember.getEmail());
-
-            String accessToken = PreferenceManager.getString("access-token");
-            String url = RetrofitClient.getBaseUrl() + "storage-service/view/"+ chat.getChatMsg();
-
-            GlideUrl glideUrl = new GlideUrl(url,
-                    new LazyHeaders.Builder()
-                            .addHeader("Authorization", accessToken)
-                            .build());
-
-            Glide.with(leftImageViewHolder.chatImage)
-                    .load(glideUrl)
-                    .into(leftImageViewHolder.chatImage);
-
+            leftImageViewHolder.setUserClickEvent(member);
+            leftImageViewHolder.setChatImageClickEvent(chat);
+            leftImageViewHolder.chatSender.setText(member.getEmail());
             leftImageViewHolder.leftChatTime.setText(getShortTime(chat.getChatTime()));
         } else if (holder instanceof ChatBubbleLeftDuplicateViewHolder) {
             ChatBubbleLeftDuplicateViewHolder leftDupHolder = ((ChatBubbleLeftDuplicateViewHolder) holder);
@@ -180,20 +127,8 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         } else if (holder instanceof ChatBubbleRightImageViewHolder) {
             ChatBubbleRightImageViewHolder rightImageViewHolder = ((ChatBubbleRightImageViewHolder) holder);
 
-            String accessToken = PreferenceManager.getString("access-token");
-            String url = RetrofitClient.getBaseUrl() + "storage-service/view/"+ chat.getChatMsg();
-
-            GlideUrl glideUrl = new GlideUrl(url,
-                    new LazyHeaders.Builder()
-                            .addHeader("Authorization", accessToken)
-                            .build());
-
-            Glide.with(rightImageViewHolder.chatImage)
-                    .load(glideUrl)
-                    .into(rightImageViewHolder.chatImage);
-
-            ((ChatBubbleRightImageViewHolder) holder).setChatImageClickEvent(chat);
-
+            setProfileImage(rightImageViewHolder.chatImage, chat.getChatMsg());
+            rightImageViewHolder.setChatImageClickEvent(chat);
             rightImageViewHolder.rightChatTime.setText(getShortTime(chat.getChatTime()));
         } else if (holder instanceof ChatBubbleRightDuplicateViewHolder) {
             ChatBubbleRightDuplicateViewHolder rightDupHolder = ((ChatBubbleRightDuplicateViewHolder) holder);
@@ -212,7 +147,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         ChatBubble chat = chatList.get(position);
         ChatBubble prevChat = chatList.get(Math.max(0, position - 1));
 
-        if (!chat.getSender().equals(userId)) {
+        if (!chat.getSender().equals(myInfo.getUserId())) {
             if (position > 0 &&
                     chat.getSender().equals(prevChat.getSender()) &&
                     getShortTime(chat.getChatTime()).equals(getShortTime(prevChat.getChatTime()))) {
@@ -238,7 +173,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         return memberList.stream()
                 .filter(chatRoomMember -> chatRoomMember.getUserId().equals(sender))
                 .findFirst()
-                .orElseThrow(IllegalArgumentException::new);
+                .orElse(null);
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -272,10 +207,6 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         Intent intent = new Intent(view.getContext(), ProfileActivity.class);
         intent.putExtra("email", member.getEmail());
         intent.putExtra("userId", member.getUserId());
-        intent.putExtra("username", member.getUsername());
-        intent.putExtra("statusMessage", member.getStatusMessage());
-        intent.putExtra("profileImage", member.getProfileImage());
-        intent.putExtra("wallpaperImage", member.getWallpaperImage());
 
         view.getContext().startActivity(intent);
     }

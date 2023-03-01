@@ -1,5 +1,7 @@
 package com.example.modumessenger.Activity;
 
+import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.net.Uri;
@@ -30,6 +32,7 @@ import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.dto.MemberDto;
+import com.example.modumessenger.entity.Member;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,6 +40,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -50,12 +54,14 @@ import retrofit2.Response;
 
 public class ProfileImageActivity  extends AppCompatActivity {
 
+    String email;
+    Member member;
+
     LinearLayout profileImageLayout;
     ViewPager2 profileImageSliderViewPager;
     Button profileCloseButton;
     ImageButton profileDownloadButton;
     List<String> profileImageList;
-    String userId, email;
 
     Disposable backgroundTask;
 
@@ -89,16 +95,11 @@ public class ProfileImageActivity  extends AppCompatActivity {
     }
 
     private void getData() {
-        userId = getIntent().getStringExtra("userId");
+        member = getSharedObjectMember();
         email = getIntent().getStringExtra("email");
 
         ArrayList<String> imageFileList = getIntent().getStringArrayListExtra("imageFileList");
-
-        if(imageFileList == null || imageFileList.size() == 0) {
-            getMyProfileInfo(new MemberDto(userId, email));
-        } else {
-            showImageLists(imageFileList);
-        }
+        showImageLists(imageFileList);
     }
 
     private void setEvents() {
@@ -239,8 +240,8 @@ public class ProfileImageActivity  extends AppCompatActivity {
     }
 
     // Retrofit function
-    public void getMyProfileInfo(MemberDto memberDto) {
-        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto.getEmail());
+    public void getMyProfileInfo(String email) {
+        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(email);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override

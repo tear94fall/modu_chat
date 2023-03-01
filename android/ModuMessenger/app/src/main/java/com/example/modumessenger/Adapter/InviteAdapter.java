@@ -14,7 +14,6 @@ import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.R;
 import com.example.modumessenger.dto.MemberDto;
@@ -89,10 +88,7 @@ public class InviteAdapter extends RecyclerView.Adapter<InviteAdapter.AddChatVie
             this.addChatCardViewLayout.setOnClickListener(v -> {
                 Intent intent = new Intent(v.getContext(), ProfileActivity.class);
                 intent.putExtra("userId", member.getUserId());
-                intent.putExtra("username", member.getUsername());
-                intent.putExtra("statusMessage", member.getStatusMessage());
-                intent.putExtra("profileImage", member.getProfileImage());
-                intent.putExtra("wallpaperImage", member.getWallpaperImage());
+                intent.putExtra("email", member.getEmail());
 
                 v.getContext().startActivity(intent);
             });

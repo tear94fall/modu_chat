@@ -1,5 +1,7 @@
 package com.example.modumessenger.Activity;
 
+import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -35,6 +37,8 @@ import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
 
+    Member member;
+
     BottomNavigationView bottomNavigationView;
     private ViewPager2 viewPager2;
 
@@ -46,21 +50,28 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        initFirebase();
-        bindingView();
         getData();
         setData();
+        bindingView();
+        initFirebase();
         setButtonClickEvent();
+    }
+
+    private void getData() {
+        member = getSharedObjectMember();
+    }
+
+    private void setData() {
+        retrofitChatAPI = RetrofitClient.createChatApiService();
+        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
     }
 
     private void initFirebase() {
         FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
-                System.out.println(task.getResult());
-
                 PreferenceManager.setString("fcm-token", task.getResult());
-                SendFcmToken(PreferenceManager.getString("userId"), PreferenceManager.getString("fcm-token"));
-                getChatRoomList(new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
+                SendFcmToken(member.getUserId(), PreferenceManager.getString("fcm-token"));
+                getChatRoomList(member.getUserId());
             } else {
                 System.out.println("fcm get token error");
             }
@@ -73,14 +84,6 @@ public class MainActivity extends AppCompatActivity {
         bottomNavigationView = findViewById(R.id.navigationView);
         viewPager2 = findViewById(R.id.view_pager);
         viewPager2.setAdapter(new ViewPagerAdapter(this));
-    }
-
-    private void getData() {
-    }
-
-    private void setData() {
-        retrofitChatAPI = RetrofitClient.createChatApiService();
-        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
     }
 
     private void setButtonClickEvent() {
@@ -194,8 +197,8 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void getChatRoomList(Member member) {
-        Call<List<ChatRoomDto>> call = retrofitChatRoomAPI.RequestChatRooms(member.getUserId());
+    public void getChatRoomList(String userId) {
+        Call<List<ChatRoomDto>> call = retrofitChatRoomAPI.RequestChatRooms(userId);
 
         call.enqueue(new Callback<List<ChatRoomDto>>() {
             @Override

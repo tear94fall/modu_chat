@@ -1,6 +1,7 @@
 package com.example.modumessenger.Fragments;
 
 import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
+import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -29,6 +30,7 @@ import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.dto.MemberDto;
+import com.example.modumessenger.entity.Member;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -36,7 +38,8 @@ import retrofit2.Response;
 
 public class FragmentSetting extends Fragment {
 
-    MemberDto myInfo;
+    Member member;
+
     ConstraintLayout setting_my_profile_card_view;
     ImageView myProfileImage;
     TextView myProfileName, myProfileEmail;
@@ -67,7 +70,7 @@ public class FragmentSetting extends Fragment {
         super.onResume();
         Log.e("DEBUG", "onResume of FragmentSetting");
 
-        getMyProfileInfo(new MemberDto(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
+        getMyProfileInfo(member.getEmail());
     }
 
     @Override
@@ -83,6 +86,7 @@ public class FragmentSetting extends Fragment {
     }
 
     private void setData() {
+        member = getSharedObjectMember();
         retrofitMemberAPI = RetrofitClient.createMemberApiService();
     }
 
@@ -113,41 +117,36 @@ public class FragmentSetting extends Fragment {
     private void setButtonClickEvent() {
         setting_my_profile_card_view.setOnClickListener(view -> {
             Intent intent = new Intent(view.getContext(), ProfileActivity.class);
-            intent.putExtra("email", myInfo.getEmail());
-            intent.putExtra("userId", myInfo.getUserId());
-            intent.putExtra("username", myInfo.getUsername());
-            intent.putExtra("statusMessage", myInfo.getStatusMessage());
-            intent.putExtra("profileImage", myInfo.getProfileImage());
+            intent.putExtra("email", member.getEmail());
+            intent.putExtra("userId", member.getUserId());
 
             view.getContext().startActivity(intent);
         });
     }
 
+    private void setUserProfile(Member member) {
+        myProfileName.setText(member.getUsername());
+        myProfileEmail.setText(member.getEmail());
+
+        setProfileImage(myProfileImage, member.getProfileImage());
+    }
+
     // Retrofit function
-    public void getMyProfileInfo(MemberDto memberDto) {
-        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto.getEmail());
+    public void getMyProfileInfo(String email) {
+        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(email);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override
             public void onResponse(@NonNull Call<MemberDto> call, @NonNull Response<MemberDto> response) {
-                if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
+                if(response.isSuccessful()) {
+                    if(response.body() != null) {
+                        MemberDto memberDto = response.body();
+                        member.updateProfile(memberDto);
+                        setUserProfile(member);
+
+                        Log.d("내 정보 가져 오기 요청 : ", response.body().toString());
+                    }
                 }
-
-                assert response.body() != null;
-                myInfo = response.body();
-
-                myProfileName.setText(myInfo.getUsername());
-                myProfileEmail.setText(myInfo.getEmail());
-
-                setProfileImage(myProfileImage, myInfo.getProfileImage());
-
-                if(memberDto.getEmail().equals(myInfo.getEmail())){
-                    Log.d("중복검사: ", "중복된 번호가 아닙니다");
-                }
-
-                Log.d("내 정보 가져오기 요청 : ", response.body().toString());
             }
 
             @Override

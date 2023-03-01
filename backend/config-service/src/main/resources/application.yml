@@ -8,6 +8,12 @@ spring:
   profiles:
     active: native
 
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
   cloud:
     config:
       server:
@@ -18,4 +24,4 @@ management:
   endpoints:
     web:
       exposure:
-        include: refresh
+        include: health, beans, refresh, busrefresh

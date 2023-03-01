@@ -11,6 +11,12 @@ spring:
       max-request-size: 10MB
       location: d:\\temp\\spring_uploaded_files
 
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
 eureka:
   instance:
     instance-id: storage-service

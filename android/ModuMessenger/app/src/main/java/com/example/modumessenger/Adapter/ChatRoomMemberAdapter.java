@@ -13,17 +13,11 @@ import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.model.GlideUrl;
-import com.bumptech.glide.load.model.LazyHeaders;
 import com.example.modumessenger.Activity.ProfileActivity;
-import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
-import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.entity.Member;
 
 import java.util.List;
-
 
 public class ChatRoomMemberAdapter extends RecyclerView.Adapter<ChatRoomMemberAdapter.ChatRoomMemberHolder> {
 

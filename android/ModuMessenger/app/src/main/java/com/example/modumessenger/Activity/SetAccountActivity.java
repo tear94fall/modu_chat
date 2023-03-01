@@ -13,8 +13,6 @@ import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitAuthAPI;
 import com.example.modumessenger.Retrofit.RetrofitClient;
-import com.example.modumessenger.dto.GoogleLoginRequest;
-import com.example.modumessenger.dto.SignUpDto;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -92,21 +90,17 @@ public class SetAccountActivity extends AppCompatActivity {
     public void RequestLogout() {
         Call<Void> call = retrofitAuthAPI.logout();
 
-        // execute synchronous
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
-                if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
+                if(response.isSuccessful()) {
+                    Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                    logoutGoogle(intent);
                 }
-
-                Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-                logoutGoogle(intent);
             }
 
             @Override

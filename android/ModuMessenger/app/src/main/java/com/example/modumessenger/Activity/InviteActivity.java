@@ -1,5 +1,7 @@
 package com.example.modumessenger.Activity;
 
+import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
@@ -11,7 +13,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.Adapter.InviteAdapter;
-import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
 import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
@@ -77,7 +78,7 @@ public class InviteActivity extends AppCompatActivity {
     private void setData() {
         roomId = getIntent().getStringExtra("roomId");
         currentMember = getIntent().getStringArrayListExtra("currentMember");
-        member = new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email"));
+        member = getSharedObjectMember();
 
         getFriendsList(member);
     }

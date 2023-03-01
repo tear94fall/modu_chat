@@ -1,5 +1,6 @@
 package com.example.modumessenger.Activity;
 
+import static com.example.modumessenger.Global.SharedPrefHelper.setSharedObject;
 import static com.google.android.gms.auth.api.signin.GoogleSignIn.*;
 
 import android.app.Activity;
@@ -21,6 +22,7 @@ import com.example.modumessenger.dto.GoogleLoginRequest;
 import com.example.modumessenger.dto.MemberDto;
 import com.example.modumessenger.dto.RequestLoginDto;
 import com.example.modumessenger.dto.SignUpDto;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -29,6 +31,7 @@ import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
 
 import com.example.modumessenger.Retrofit.*;
+import com.google.gson.Gson;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -65,7 +68,15 @@ public class LoginActivity extends AppCompatActivity {
             Toast.makeText(this.getApplicationContext(),"로그인을 시도 합니다.", Toast.LENGTH_SHORT).show();
 
             LoginButton.setVisibility(View.INVISIBLE);
-            GetUserInfo(account.getEmail(), "google");
+
+            String refreshToken = PreferenceManager.getString("refresh-token");
+            String accessToken = PreferenceManager.getString("access-token");
+
+            if(refreshToken.equals("") || accessToken.equals("")) {
+                LoginMember(new RequestLoginDto(account.getId(), account.getEmail()));
+            } else {
+                GetUserInfo(account.getEmail(), "google");
+            }
         }
     }
 
@@ -200,12 +211,8 @@ public class LoginActivity extends AppCompatActivity {
                     MemberDto result = response.body();
 
                     if(result != null) {
-                        PreferenceManager.setString("userId", result.getUserId());
-                        PreferenceManager.setString("email", result.getEmail());
-                        PreferenceManager.setString("username", result.getUsername());
-                        PreferenceManager.setString("profileImage", result.getProfileImage());
-                        PreferenceManager.setString("wallpaperImage", result.getWallpaperImage());
-                        PreferenceManager.setString("statusMessage", result.getStatusMessage());
+                        String json = new Gson().toJson(result);
+                        setSharedObject("member", json);
 
                         Log.d("내정보 가져오기 요청 : ", result.toString());
 

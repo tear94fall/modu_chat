@@ -1,5 +1,7 @@
 package com.example.modumessenger.Activity;
 
+import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+
 import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,11 +14,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.Adapter.SearchFriendsAdapter;
-import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.dto.MemberDto;
+import com.example.modumessenger.entity.Member;
 
 import java.util.List;
 
@@ -25,6 +27,8 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class SearchActivity extends AppCompatActivity {
+
+    Member member;
 
     SearchView searchView;
     RecyclerView findFriendRecyclerView;
@@ -57,7 +61,7 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     private void getData() {
-
+        member = getSharedObjectMember();
     }
 
     private void setData() {
@@ -91,9 +95,7 @@ public class SearchActivity extends AppCompatActivity {
     @SuppressLint("NotifyDataSetChanged")
     public void addFriendByEmail(MemberDto friends) {
         try {
-            MemberDto memberDto = new MemberDto(PreferenceManager.getString("userId"), PreferenceManager.getString("email"));
-
-            addFriend(memberDto, friends);
+            addFriend(member.getUserId(), friends);
             searchFriendsAdapter.notifyDataSetChanged();
         } catch (Exception e) {
             Toast.makeText(getApplicationContext(), "친구 추가에 실패헀습니다", Toast.LENGTH_SHORT).show();
@@ -107,23 +109,17 @@ public class SearchActivity extends AppCompatActivity {
         call.enqueue(new Callback<List<MemberDto>>() {
             @Override
             public void onResponse(@NonNull Call<List<MemberDto>> call, @NonNull Response<List<MemberDto>> response) {
-                if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
-                }
+                Log.d("친구 검색 요청 : ", response.body().toString());
 
-                try {
-                    assert response.body() != null;
-                    Log.d("친구 검색 요청 : ", response.body().toString());
-                    Toast.makeText(getApplicationContext(), email + " 을 검색하였습니다.", Toast.LENGTH_SHORT).show();
+                if(response.isSuccessful()) {
+                    if(response.body() != null) {
+                        Toast.makeText(getApplicationContext(), email + " 을 검색하였습니다.", Toast.LENGTH_SHORT).show();
 
-                    assert response.body() != null;
-                    searchMemberList = response.body();
-                    searchFriendsAdapter = new SearchFriendsAdapter(searchMemberList);
-                    findFriendRecyclerView.setAdapter(searchFriendsAdapter);
+                        searchMemberList = response.body();
 
-                } catch (Exception e) {
-                    Log.e("오류 발생 : ", e.getMessage());
+                        searchFriendsAdapter = new SearchFriendsAdapter(searchMemberList);
+                        findFriendRecyclerView.setAdapter(searchFriendsAdapter);
+                    }
                 }
             }
 
@@ -134,24 +130,18 @@ public class SearchActivity extends AppCompatActivity {
         });
     }
 
-    public void addFriend(MemberDto member, MemberDto friend) {
-        Call<MemberDto> call = retrofitMemberAPI.RequestAddFriends(member.getUserId(), friend);
+    public void addFriend(String userId, MemberDto friend) {
+        Call<MemberDto> call = retrofitMemberAPI.RequestAddFriends(userId, friend);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override
             public void onResponse(@NonNull Call<MemberDto> call, @NonNull Response<MemberDto> response) {
-                if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
-                }
-
-                try {
-                    assert response.body() != null;
-                    Log.d("친구 추가 요청 : ", response.body().toString());
-                    MemberDto friend = response.body();
-                    Toast.makeText(getApplicationContext(), friend.getUsername() + "님과 친구가 되었습니다.", Toast.LENGTH_SHORT).show();
-                } catch (Exception e) {
-                    Log.e("오류 발생 : ", e.getMessage());
+                if(response.isSuccessful()) {
+                    if(response.body() != null) {
+                        Log.d("친구 추가 요청 : ", response.body().toString());
+                        MemberDto memberDto = response.body();
+                        Toast.makeText(getApplicationContext(), memberDto.getUsername() + "님과 친구가 되었습니다.", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
 

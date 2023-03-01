@@ -111,6 +111,13 @@ public class Member implements Parcelable {
         if(wallpaperImage != null) setWallpaperImage(wallpaperImage);
     }
 
+    public void updateProfile(MemberDto memberDto) {
+        if(memberDto.getUsername() != null) setUsername(memberDto.getUsername() );
+        if(memberDto.getStatusMessage() != null) setStatusMessage(memberDto.getStatusMessage());
+        if(memberDto.getProfileImage() != null) setProfileImage(memberDto.getProfileImage());
+        if(memberDto.getWallpaperImage() != null) setWallpaperImage(memberDto.getWallpaperImage());
+    }
+
     @NonNull
     @Override
     public String toString() { return "Member{" + "user_id='" + userId + '\'' + ", email='" + email + '\'' + '}'; }

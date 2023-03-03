@@ -1,6 +1,6 @@
-package com.example.wsservice.service;
+package com.example.wsservice.member.service;
 
-import com.example.wsservice.client.MemberServiceFeignClient;
+import com.example.wsservice.member.client.MemberServiceFeignClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

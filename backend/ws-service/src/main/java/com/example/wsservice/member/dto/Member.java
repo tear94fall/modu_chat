@@ -1,4 +1,4 @@
-package com.example.wsservice.dto;
+package com.example.wsservice.member.dto;
 
 import lombok.Data;
 

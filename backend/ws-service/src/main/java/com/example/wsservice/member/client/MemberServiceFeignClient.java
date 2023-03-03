@@ -1,4 +1,4 @@
-package com.example.wsservice.client;
+package com.example.wsservice.member.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;

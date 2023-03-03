@@ -1,6 +1,6 @@
-package com.example.wsservice.controller;
+package com.example.wsservice.member.controller;
 
-import com.example.wsservice.service.MemberService;
+import com.example.wsservice.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -544,7 +544,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
                 Request request = new Request
                         .Builder()
-                        .url("ws://192.168.0.3:8000/chat-service/modu-chat/" + roomId)
+                        .url("ws://192.168.0.3:8000/ws-service/modu-chat/" + roomId)
                         .addHeader("userId", member.getUserId())
                         .addHeader("Authorization", PreferenceManager.getString("access-token"))
                         .build();

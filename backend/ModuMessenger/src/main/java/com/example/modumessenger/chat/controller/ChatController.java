@@ -20,6 +20,17 @@ import java.util.List;
 public class ChatController {
     private final ChatService chatService;
 
+    @PostMapping("/chat")
+    public ResponseEntity<Long> createChat(@Valid @RequestBody ChatDto chatDto) {
+        return ResponseEntity.ok().body(chatService.saveChat(chatDto));
+    }
+
+    @GetMapping("/chat/{chatId}")
+    public ResponseEntity<ChatDto> getChat(@Valid @PathVariable("chatId") String chatId) {
+        ChatDto chatDto = chatService.searchChatById(chatId);
+        return ResponseEntity.ok().body(chatDto);
+    }
+
     @GetMapping("/chat/{roomId}/chats")
     public ResponseEntity<List<ChatDto>> getChatRoomHistory(@Valid @PathVariable("roomId") String roomId) {
         List<ChatDto> chatDtoList = chatService.searchChatByRoomId(roomId);

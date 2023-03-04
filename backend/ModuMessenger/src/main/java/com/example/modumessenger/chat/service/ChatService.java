@@ -75,7 +75,8 @@ public class ChatService {
 
     public ChatDto searchChatById(String chatId) {
         Long id = Long.parseLong(chatId);
-        Optional<Chat> chat = chatRepository.findById(id);
+        Chat chat = chatRepository.findById(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_NOT_FOUND_ERROR, chatId));
         return modelMapper.map(chat, ChatDto.class);
     }
 
@@ -89,7 +90,7 @@ public class ChatService {
         return saveChat.getId();
     }
 
-    public ChatDto searchChatByRoomIdAndChatId(String roomId, String chatId) {
+    public ChatDto searchChatByRoomIdAndChatId(String chatId, String roomId) {
         Long id = Long.parseLong(chatId);
         Chat chat = chatRepository.findByRoomIdAndChatId(roomId, id);
         return modelMapper.map(chat, ChatDto.class);

@@ -8,15 +8,18 @@ import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
 @Configuration
-@RequiredArgsConstructor
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
 
     private final WebSocketHandler webSocketHandler;
 
+    public WebSocketConfig(WebSocketHandler webSocketHandler) {
+        this.webSocketHandler = webSocketHandler;
+    }
+
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(webSocketHandler, "ws/modu-chat")
+        registry.addHandler(webSocketHandler, "/modu-chat/**")
                 .setAllowedOrigins("*");
     }
 }

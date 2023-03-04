@@ -5,11 +5,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
-
-import java.io.IOException;
 
 @Slf4j
 @Component
@@ -18,9 +15,9 @@ public class RabbitListenHandler {
 
     private final ObjectMapper objectMapper;
 
-    @RabbitListener(queues = "modu-chat.queue")
-    public void receiveMessage(String message) throws JsonProcessingException {
-        ChatDto chatDto = objectMapper.readValue(message, ChatDto.class);
-        System.out.println(chatDto);
-    }
+//    @RabbitListener(queues = "modu-chat.queue")
+//    public void receiveMessage(String message) throws JsonProcessingException {
+//        ChatDto chatDto = objectMapper.readValue(message, ChatDto.class);
+//        log.info("[consumer][message] {}", chatDto);
+//    }
 }

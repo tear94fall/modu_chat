@@ -1,6 +1,7 @@
 package com.example.modumessenger.Fragments;
 
 import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
+import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -22,19 +23,16 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.model.GlideUrl;
-import com.bumptech.glide.load.model.LazyHeaders;
 import com.example.modumessenger.Activity.FindFriendsActivity;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Activity.SearchActivity;
 import com.example.modumessenger.Activity.SetFriendsActivity;
 import com.example.modumessenger.Adapter.FriendsAdapter;
-import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.dto.MemberDto;
+import com.example.modumessenger.entity.Member;
 
 import java.util.List;
 
@@ -52,6 +50,7 @@ public class FragmentFriends extends Fragment {
     ImageView myProfileImage;
 
     List<MemberDto> friendsList;
+    Member member;
 
     RetrofitMemberAPI retrofitMemberAPI;
 
@@ -86,10 +85,8 @@ public class FragmentFriends extends Fragment {
 
         requireActivity().invalidateOptionsMenu();
 
-        MemberDto memberDto = new MemberDto(PreferenceManager.getString("userId"), PreferenceManager.getString("email"));
-
-        getFriendsList(memberDto);
-        getMyProfileInfo(memberDto);
+        getFriendsList(member.getUserId());
+        getMyProfileInfo(member.getEmail());
     }
 
     @Override
@@ -151,7 +148,7 @@ public class FragmentFriends extends Fragment {
     }
 
     private void getData() {
-
+        member = getSharedObjectMember();
     }
 
     private void setData() {
@@ -161,40 +158,33 @@ public class FragmentFriends extends Fragment {
     private void setButtonClickEvent() {
         myProfileCard.setOnClickListener(view -> {
             Intent intent = new Intent(view.getContext(), ProfileActivity.class);
-
-            intent.putExtra("email", PreferenceManager.getString("email"));
-            intent.putExtra("userId", PreferenceManager.getString("userId"));
-            intent.putExtra("username", PreferenceManager.getString("username"));
-            intent.putExtra("statusMessage", PreferenceManager.getString("statusMessage"));
-            intent.putExtra("profileImage", PreferenceManager.getString("profileImage"));
-            intent.putExtra("wallpaperImage", PreferenceManager.getString("wallpaperImage"));
+            intent.putExtra("email", member.getEmail());
+            intent.putExtra("userId", member.getUserId());
 
             view.getContext().startActivity(intent);
         });
     }
 
     // Retrofit function
-    public void getFriendsList(MemberDto memberDto) {
-        Call<List<MemberDto>> call = retrofitMemberAPI.RequestFriends(memberDto.getUserId());
+    public void getFriendsList(String userId) {
+        Call<List<MemberDto>> call = retrofitMemberAPI.RequestFriends(userId);
 
         call.enqueue(new Callback<List<MemberDto>>() {
             @Override
             public void onResponse(@NonNull Call<List<MemberDto>> call, @NonNull Response<List<MemberDto>> response) {
-                if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
+                if(response.isSuccessful()) {
+                    if(response.body() != null) {
+                        friendsList = response.body();
+                        recyclerView.setAdapter(new FriendsAdapter(friendsList));
+
+                        // friend count
+                        String count = Integer.toString(friendsList.size());
+                        String friendCountMessage = "친구 " + count + " 명";
+                        friendsCount.setText(friendCountMessage);
+
+                        Log.d("친구 리스트 가져오기 요청 : ", response.body().toString());
+                    }
                 }
-
-                assert response.body() != null;
-                friendsList = response.body();
-                recyclerView.setAdapter(new FriendsAdapter(friendsList));
-
-                // friend count
-                String count = Integer.toString(friendsList.size());
-                String friendCountMessage = "친구 " + count + " 명";
-                friendsCount.setText(friendCountMessage);
-
-                Log.d("친구 리스트 가져오기 요청 : ", response.body().toString());
             }
 
             @Override
@@ -204,21 +194,21 @@ public class FragmentFriends extends Fragment {
         });
     }
 
-    public void getMyProfileInfo(MemberDto memberDto) {
-        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto.getEmail());
+    public void getMyProfileInfo(String email) {
+        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(email);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override
             public void onResponse(@NonNull Call<MemberDto> call, @NonNull Response<MemberDto> response) {
                 if(response.isSuccessful()) {
                     if(response.body() != null) {
-                        MemberDto member = response.body();
+                        MemberDto memberDto = response.body();
 
-                        myName.setText(member.getUsername());
-                        myStatusMessage.setText(member.getStatusMessage());
-                        setProfileImage(myProfileImage, member.getProfileImage());
+                        myName.setText(memberDto.getUsername());
+                        myStatusMessage.setText(memberDto.getStatusMessage());
+                        setProfileImage(myProfileImage, memberDto.getProfileImage());
 
-                        if(memberDto.getEmail().equals(member.getEmail())){
+                        if(email.equals(memberDto.getEmail())){
                             Log.d("중복 검사: ", "중복된 번호가 아닙니다.");
                         }
 

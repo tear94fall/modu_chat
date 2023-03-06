@@ -14,8 +14,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.json.simple.parser.ParseException;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.listener.ChannelTopic;
@@ -141,13 +139,6 @@ public class WebSocketHandler extends TextWebSocketHandler implements MessageLis
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
 
-    }
-
-    // recv from rabbitmq
-    @RabbitListener(queues = "modu-chat.queue")
-    public void consume(ChatDto chatDto) {
-        log.info("message: {}", chatDto.toString());
-        log.info(chatDto.toString());
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.example.modumessenger.Activity;
 
+import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,7 +14,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.Adapter.CreateRoomAdapter;
-import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
 import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
@@ -71,7 +72,7 @@ public class CreateRoomActivity extends AppCompatActivity {
         retrofitMemberAPI = RetrofitClient.createMemberApiService();
         retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
 
-        member = new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email"));
+        member = getSharedObjectMember();
         getFriendsList(member);
 
         addChatList = new ArrayList<>();
@@ -92,13 +93,13 @@ public class CreateRoomActivity extends AppCompatActivity {
     }
 
     public void addUserIdOnAddChatList(String userId) {
-        if(!PreferenceManager.getString("userId").equals(userId)) {
+        if(!member.getUserId().equals(userId)) {
             this.addChatList.add(userId);
         }
     }
 
     public void removeUserIdOnAddChatList(String userId) {
-        if(!PreferenceManager.getString("userId").equals(userId)) {
+        if(!member.getUserId().equals(userId)) {
             this.addChatList.remove(userId);
         }
     }

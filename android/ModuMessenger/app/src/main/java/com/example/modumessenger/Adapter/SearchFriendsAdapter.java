@@ -1,5 +1,8 @@
 package com.example.modumessenger.Adapter;
 
+import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
+import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
@@ -19,14 +22,19 @@ import com.example.modumessenger.Activity.SearchActivity;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.dto.MemberDto;
+import com.example.modumessenger.entity.Member;
 
 import java.util.List;
 
 public class SearchFriendsAdapter extends RecyclerView.Adapter<SearchFriendsAdapter.SearchFriendsViewHolder> {
 
     List<MemberDto> searchMemberList;
+    Member member;
 
-    public SearchFriendsAdapter(List<MemberDto> searchMemberList) { this.searchMemberList = searchMemberList; }
+    public SearchFriendsAdapter(List<MemberDto> searchMemberList) {
+        this.searchMemberList = searchMemberList;
+        this.member = getSharedObjectMember();
+    }
 
     @NonNull
     @Override
@@ -38,17 +46,15 @@ public class SearchFriendsAdapter extends RecyclerView.Adapter<SearchFriendsAdap
 
     @Override
     public void onBindViewHolder(@NonNull SearchFriendsViewHolder holder, int position) {
-        MemberDto member = this.searchMemberList.get(position);
+        MemberDto memberDto = this.searchMemberList.get(position);
 
-        holder.setUserInfo(member);
-        holder.setUserClickEvent(member);
-        holder.setAddFriendsButton(member);
-
-        String userId = PreferenceManager.getString("userId");
+        holder.setUserInfo(memberDto);
+        holder.setUserClickEvent(memberDto);
+        holder.setAddFriendsButton(memberDto);
 
         searchMemberList.forEach(m -> {
             // exclude my info
-            if(userId.equals(member.getUserId())) {
+            if(member.getUserId().equals(memberDto.getUserId())) {
                 holder.addFriendsButton.setVisibility(View.INVISIBLE);
             }
             // need to add exclude already friends info
@@ -83,12 +89,7 @@ public class SearchFriendsAdapter extends RecyclerView.Adapter<SearchFriendsAdap
         public void setUserInfo(MemberDto member) {
             this.username.setText(member.getUsername());
             this.statusMessage.setText(member.getStatusMessage());
-            Glide.with(profileImage)
-                    .load(member.getProfileImage())
-                    .error(Glide.with(profileImage)
-                            .load(R.drawable.basic_profile_image)
-                            .into(profileImage))
-                    .into(profileImage);
+            setProfileImage(profileImage, member.getProfileImage());
         }
 
         public void setUserClickEvent(MemberDto member) {
@@ -96,10 +97,6 @@ public class SearchFriendsAdapter extends RecyclerView.Adapter<SearchFriendsAdap
                 Intent intent = new Intent(v.getContext(), ProfileActivity.class);
                 intent.putExtra("email", member.getEmail());
                 intent.putExtra("userId", member.getUserId());
-                intent.putExtra("username", member.getUsername());
-                intent.putExtra("statusMessage", member.getStatusMessage());
-                intent.putExtra("profileImage", member.getProfileImage());
-                intent.putExtra("wallpaperImage", member.getWallpaperImage());
 
                 v.getContext().startActivity(intent);
             });

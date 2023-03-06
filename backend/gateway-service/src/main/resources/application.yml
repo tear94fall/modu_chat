@@ -28,34 +28,34 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: chat-service
-          uri: lb://CHAT-SERVICE
+        - id: member-service
+          uri: lb://MEMBER-SERVICE
           predicates:
-            - Path=/chat-service/login
+            - Path=/member-service/login
             - Method=POST
           filters:
-            - RewritePath=/chat-service/(?<segment>.*), /$\{segment}
-        - id: chat-service
-          uri: lb://CHAT-SERVICE
+            - RewritePath=/member-service/(?<segment>.*), /$\{segment}
+        - id: member-service
+          uri: lb://MEMBER-SERVICE
           predicates:
-            - Path=/chat-service/member/signup
+            - Path=/member-service/member
             - Method=POST
           filters:
-            - RewritePath=/chat-service/(?<segment>.*), /$\{segment}
-        - id: chat-service
-          uri: lb://CHAT-SERVICE
+            - RewritePath=/member-service/(?<segment>.*), /$\{segment}
+        - id: member-service
+          uri: lb://MEMBER-SERVICE
           predicates:
-            - Path=/chat-service/member
+            - Path=/member-service/auth/reissue
             - Method=POST
           filters:
-            - RewritePath=/chat-service/(?<segment>.*), /$\{segment}
-        - id: chat-service
-          uri: lb://CHAT-SERVICE
+            - RewritePath=/member-service/(?<segment>.*), /$\{segment}
+        - id: member-service
+          uri: lb://MEMBER-SERVICE
           predicates:
-            - Path=/chat-service/auth/reissue
-            - Method=POST
+            - Path=/member-service/**
           filters:
-            - RewritePath=/chat-service/(?<segment>.*), /$\{segment}
+            - AuthorizationHeaderFilter
+            - RewritePath=/member-service/(?<segment>.*), /$\{segment}
         - id: chat-service
           uri: lb://CHAT-SERVICE
           predicates:
@@ -63,13 +63,13 @@ spring:
           filters:
             - AuthorizationHeaderFilter
             - RewritePath=/chat-service/(?<segment>.*), /$\{segment}
-        - id: chat-service
-          uri: lb:ws://CHAT-SERVICE
+        - id: ws-service
+          uri: lb:ws://WS-SERVICE
           predicates:
-            - Path=/chat-service/modu-chat/**
+            - Path=/ws-service/modu-chat/**
           filters:
             - AuthorizationHeaderFilter
-            - RewritePath=/chat-service/(?<segment>.*), /$\{segment}
+            - RewritePath=/ws-service/(?<segment>.*), /$\{segment}
         - id: storage-service
           uri: lb://STORAGE-SERVICE
           predicates:

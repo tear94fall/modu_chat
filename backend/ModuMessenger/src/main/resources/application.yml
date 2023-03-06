@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: chat-service
+    name: member-service
 
   profiles:
     default: local
@@ -65,7 +65,7 @@ security:
 
 eureka:
   instance:
-    instance-id: chat-service
+    instance-id: member-service
 
   client:
     register-with-eureka: true

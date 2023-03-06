@@ -10,9 +10,9 @@ import retrofit2.http.POST;
 
 public interface RetrofitAuthAPI {
 
-    @POST("chat-service/auth/reissue")
+    @POST("member-service/auth/reissue")
     Call<TokenResponseDto> reissue(@Header("Authorization") String accessToken, @Header("refresh-token") String refreshToken);
 
-    @POST("chat-service/auth/logout")
+    @POST("member-service/auth/logout")
     Call<Void> logout();
 }

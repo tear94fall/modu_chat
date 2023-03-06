@@ -1,5 +1,7 @@
 package com.example.modumessenger.Activity;
 
+import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -7,10 +9,8 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.GridView;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,7 +33,6 @@ import com.example.modumessenger.Adapter.ChatHistoryAdapter;
 import com.example.modumessenger.Adapter.ChatRoomMemberAdapter;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.Grid.RecentChatImageGridAdapter;
-import com.example.modumessenger.Grid.RecentChatImageGridItem;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitChatAPI;
 import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
@@ -70,6 +69,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class ChatActivity extends AppCompatActivity implements ChatSendOthersActivity.ChatSendOthersBottomSheetListener {
+    Member member;
     ChatRoom roomInfo;
 
     OkHttpClient client;
@@ -92,7 +92,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     TextView inputMsgTextView;
     Button sendMsg, sendOthers;
 
-    String jwtToken, userId, roomId;
+    String roomId;
 
     ActionBarDrawerToggle actionBarDrawerToggle;
 
@@ -160,8 +160,8 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         retrofitChatAPI = RetrofitClient.createChatApiService();
         retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
 
-        jwtToken = PreferenceManager.getString("token");
-        userId = PreferenceManager.getString("userId");
+        member = getSharedObjectMember();
+
         roomId = getIntent().getStringExtra("roomId");
         if(roomId != null && !roomId.equals("")) {
             getRoomInfo(roomId);
@@ -202,7 +202,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 ChatDto chatDto = new ChatDto();
                 chatDto.setRoomId(roomId);
                 chatDto.setMessage(msg);
-                chatDto.setSender(userId);
+                chatDto.setSender(member.getUserId());
                 chatDto.setChatTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                 chatDto.setChatType(ChatType.CHAT_TYPE_TEXT);
 
@@ -282,7 +282,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                     .setTitle("나가기")
                     .setPositiveButton("아니오", (dialog, which) -> Toast.makeText(getApplicationContext(), "취소", Toast.LENGTH_LONG).show())
                     .setNeutralButton("예", (dialog, which) -> {
-                        exitChatRoom(roomId, userId);
+                        exitChatRoom(roomId, member.getUserId());
                         Toast.makeText(getApplicationContext(), "채팅방에서 나갑니다.", Toast.LENGTH_SHORT).show();
                         finish();
                     })
@@ -385,6 +385,32 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         chatRecyclerView.setAdapter(new ChatRoomMemberAdapter(chatMemberList));
     }
 
+    public void setChatRoomName(List<Member> chatRoomMembers, String chatRoomName) {
+        String roomName = "새로운 채팅방";
+
+        if(!chatRoomName.equals("") && !chatRoomName.equals(roomName)) {
+            setTitle(chatRoomName);
+            return;
+        }
+
+        List<String> usernames = chatRoomMembers.stream()
+                .map(Member::getUsername)
+                .filter(name -> !name.equals(member.getUsername()))
+                .collect(Collectors.toList());
+
+        roomName = String.join(", ", usernames);
+
+        switch(usernames.size()) {
+            case 0: // self
+                setTitle(String.format("나와의 채팅 (%s)", member.getUsername()));
+                break;
+            case 1: // 1on1
+            default: // multi
+                setTitle(roomName);
+                break;
+        }
+    }
+
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEvent(MessageEvent messageEvent) {
         Log.e("event bus call", "Chat Event " + messageEvent.getChatBubble().getChatMsg());
@@ -397,7 +423,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         ChatDto chatDto = new ChatDto();
         chatDto.setRoomId(roomId);
         chatDto.setMessage(filename);
-        chatDto.setSender(userId);
+        chatDto.setSender(member.getUserId());
         chatDto.setChatTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         chatDto.setChatType(ChatType.CHAT_TYPE_IMAGE);
 
@@ -508,7 +534,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 chatMemberList.clear();
                 chatRoomDto.getMembers().forEach(m -> chatMemberList.add(new Member(m)));
 
-                setTitle(roomInfo.getRoomName());
+                setChatRoomName(chatMemberList, roomInfo.getRoomName());
                 setNavInfo(roomInfo);
 
                 Log.d("채팅방 정보 가져오기 요청 : ", response.body().toString());
@@ -518,9 +544,8 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
                 Request request = new Request
                         .Builder()
-                        .url("ws://192.168.0.3:8000/chat-service/modu-chat/" + roomId)
-                        .addHeader("token", jwtToken)
-                        .addHeader("userId", userId)
+                        .url("ws://192.168.0.3:8000/ws-service/modu-chat/" + roomId)
+                        .addHeader("userId", member.getUserId())
                         .addHeader("Authorization", PreferenceManager.getString("access-token"))
                         .build();
                 listener = new ChatWebSocketListener();
@@ -558,7 +583,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 chatMemberList.clear();
                 chatRoomDto.getMembers().forEach(m -> chatMemberList.add(new Member(m)));
 
-                setTitle(roomInfo.getRoomName());
+                setChatRoomName(chatMemberList, roomInfo.getRoomName());
                 setNavInfo(roomInfo);
 
                 Log.d("채팅방 정보 가져오기 요청 : ", response.body().toString());

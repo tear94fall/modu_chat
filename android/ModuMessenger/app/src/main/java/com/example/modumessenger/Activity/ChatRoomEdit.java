@@ -1,5 +1,7 @@
 package com.example.modumessenger.Activity;
 
+import static com.example.modumessenger.Global.GlideUtil.setBasicProfileImage;
+
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
@@ -21,7 +23,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
 import com.example.modumessenger.Global.OnSwipeListener;
-import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
 import com.example.modumessenger.entity.ChatRoom;
@@ -75,14 +76,14 @@ public class ChatRoomEdit extends AppCompatActivity implements View.OnTouchListe
     }
 
     private void getData() {
+        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
+    }
+
+    private void setData() {
         roomId = getIntent().getStringExtra("roomId");
         if(roomId != null && !roomId.equals("")) {
             getRoomInfo(roomId);
         }
-    }
-
-    private void setData() {
-        retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -158,7 +159,7 @@ public class ChatRoomEdit extends AppCompatActivity implements View.OnTouchListe
                 }else if (menuItem.getItemId() == R.id.action_menu2){
                     Toast.makeText(this, "기본 이미지로 변경합니다", Toast.LENGTH_SHORT).show();
                     roomInfo.setRoomImage("");
-                    setDefaultProfileImage();
+                    setBasicProfileImage(chatRoomImageView);
                 }else {
                     Toast.makeText(this, "프로필 이미지 변경", Toast.LENGTH_SHORT).show();
                 }
@@ -167,12 +168,6 @@ public class ChatRoomEdit extends AppCompatActivity implements View.OnTouchListe
             });
             popupMenu.show();
         });
-    }
-
-    private void setDefaultProfileImage() {
-        Glide.with(this)
-                .load(R.drawable.basic_profile_image)
-                .into(chatRoomImageView);
     }
 
     // Retrofit function

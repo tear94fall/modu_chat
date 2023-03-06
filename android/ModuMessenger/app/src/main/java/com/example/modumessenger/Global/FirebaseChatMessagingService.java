@@ -1,5 +1,7 @@
 package com.example.modumessenger.Global;
 
+import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+
 import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -18,12 +20,19 @@ import androidx.core.app.NotificationCompat;
 
 import com.example.modumessenger.Activity.ChatActivity;
 import com.example.modumessenger.R;
+import com.example.modumessenger.entity.Member;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
 import java.util.Objects;
 
 public class FirebaseChatMessagingService extends FirebaseMessagingService {
+
+    private final Member member;
+
+    public FirebaseChatMessagingService() {
+        member = getSharedObjectMember();
+    }
 
     @Override
     public void onNewToken(String s) {
@@ -36,7 +45,7 @@ public class FirebaseChatMessagingService extends FirebaseMessagingService {
         super.onMessageReceived(remoteMessage);
 
         if (remoteMessage.getData().size() > 0) {
-            String userId = PreferenceManager.getString("userId");
+            String userId = member.getUserId();
             if(userId == null || userId.equals("") || !Objects.requireNonNull(remoteMessage.getData().get("sender")).equals(userId)) {
                 sendNotification(remoteMessage);
 

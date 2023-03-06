@@ -1,5 +1,7 @@
 package com.example.modumessenger.Fragments;
 
+import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,15 +18,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.Activity.CreateRoomActivity;
-import com.example.modumessenger.Activity.FindFriendsActivity;
-import com.example.modumessenger.Activity.SearchActivity;
 import com.example.modumessenger.Adapter.ChatRoomAdapter;
-import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
 import com.example.modumessenger.RoomDatabase.Database.ChatRoomDatabase;
@@ -36,7 +34,6 @@ import com.example.modumessenger.dto.ChatRoomDto;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,6 +49,8 @@ public class FragmentChat extends Fragment {
 
     ChatRoomDatabase chatRoomDatabase;
     RetrofitChatRoomAPI retrofitChatRoomAPI;
+
+    Member member;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -84,7 +83,7 @@ public class FragmentChat extends Fragment {
         Log.e("DEBUG", "onResume of FragmentFriends");
 
         requireActivity().invalidateOptionsMenu();
-        getChatRoomList(new Member(PreferenceManager.getString("userId"), PreferenceManager.getString("email")));
+        getChatRoomList(member.getUserId());
     }
 
     @Override
@@ -131,7 +130,7 @@ public class FragmentChat extends Fragment {
     }
 
     private void getData() {
-
+        member = getSharedObjectMember();
     }
 
     private void setData() {
@@ -166,31 +165,29 @@ public class FragmentChat extends Fragment {
     }
 
     // Retrofit function
-    public void getChatRoomList(Member member) {
-        Call<List<ChatRoomDto>> call = retrofitChatRoomAPI.RequestChatRooms(member.getUserId());
+    public void getChatRoomList(String userId) {
+        Call<List<ChatRoomDto>> call = retrofitChatRoomAPI.RequestChatRooms(userId);
 
         call.enqueue(new Callback<List<ChatRoomDto>>() {
             @Override
             public void onResponse(@NonNull Call<List<ChatRoomDto>> call, @NonNull Response<List<ChatRoomDto>> response) {
-                if (!response.isSuccessful()) {
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
+                if(response.isSuccessful()) {
+                    if(response.body() != null) {
+                        List<ChatRoomDto> chatRoomDtoList = response.body();
+
+                        if(chatRoomList.size() != chatRoomDtoList.size()) {
+                            chatRoomList.clear();
+
+                            chatRoomDtoList.forEach(c -> {
+                                chatRoomList.add(new ChatRoom(c));
+                            });
+
+                            chatRecyclerView.setAdapter(new ChatRoomAdapter(chatRoomList, FragmentChat.this));
+                        }
+
+                        Log.d("채팅방 목록 가져오기 요청 : ", response.body().toString());
+                    }
                 }
-
-                assert response.body() != null;
-                List<ChatRoomDto> chatRoomDtoList = response.body();
-
-                if(chatRoomList.size() != chatRoomDtoList.size()) {
-                    chatRoomList.clear();
-
-                    chatRoomDtoList.forEach(c -> {
-                        chatRoomList.add(new ChatRoom(c));
-                    });
-
-                    chatRecyclerView.setAdapter(new ChatRoomAdapter(chatRoomList, FragmentChat.this));
-                }
-
-                Log.d("채팅방 목록 가져오기 요청 : ", response.body().toString());
             }
 
             @Override
@@ -213,15 +210,12 @@ public class FragmentChat extends Fragment {
         call.enqueue(new Callback<List<ChatRoomDto>>() {
             @Override
             public void onResponse(@NonNull Call<List<ChatRoomDto>> call, @NonNull Response<List<ChatRoomDto>> response) {
-                if (!response.isSuccessful()) {
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
+                if(response.isSuccessful()) {
+                    if(response.body() != null) {
+                        List<ChatRoomDto> chatRoomDtoList = response.body();
+                        Log.d("채팅방 검색 : ", response.body().toString());
+                    }
                 }
-
-                assert response.body() != null;
-                List<ChatRoomDto> chatRoomDtoList = response.body();
-
-                Log.d("채팅방 검색 : ", response.body().toString());
             }
 
             @Override

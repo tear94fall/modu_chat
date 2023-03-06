@@ -10,6 +10,7 @@
 - [Spring Cloud Eureka](https://cloud.spring.io/spring-cloud-netflix/reference/html/)
 - [Spring Cloud Config](https://docs.spring.io/spring-cloud-config/docs/current/reference/html/)
 - [Spring Cloud OpenFeign](https://cloud.spring.io/spring-cloud-openfeign/reference/html)
+- [Spring Cloud Bus](https://docs.spring.io/spring-cloud-bus/docs/current/reference/html/)
 - [Spring Security](https://spring.io/projects/spring-security)
 - [Spring Data JPA](https://spring.io/projects/spring-data-jpa)
 - [Spring Querydsl](http://querydsl.com/)

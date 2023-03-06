@@ -11,6 +11,20 @@ spring:
     username: root
     password: root1234
 
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show-sql: true
+        format_sql: true
+        default_batch_fetch_size: 1000
+    open-in-view: false
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+
 eureka:
   instance:
     instance-id: chat-service

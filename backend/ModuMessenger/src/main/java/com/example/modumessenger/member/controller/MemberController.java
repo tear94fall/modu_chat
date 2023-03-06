@@ -63,10 +63,4 @@ public class MemberController {
 
         return ResponseEntity.ok().body(result);
     }
-
-//    @GetMapping("/member/{userId}")
-//    public ResponseEntity<String> getMember(@Valid @PathVariable("userId") String userId) {
-//        MemberDto member = memberService.getUserById(userId);
-//        return ResponseEntity.ok().body(member.getUserId());
-//    }
 }

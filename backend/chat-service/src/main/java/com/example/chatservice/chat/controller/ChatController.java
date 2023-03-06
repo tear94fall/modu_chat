@@ -1,7 +1,7 @@
-package com.example.modumessenger.chat.controller;
+package com.example.chatservice.chat.controller;
 
-import com.example.modumessenger.chat.dto.ChatDto;
-import com.example.modumessenger.chat.service.ChatService;
+import com.example.chatservice.chat.dto.ChatDto;
+import com.example.chatservice.chat.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;

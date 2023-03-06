@@ -226,43 +226,6 @@ public class ProfileActivity extends AppCompatActivity {
         });
     }
 
-    public void getMyProfileInfo(MemberDto memberDto) {
-        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(memberDto.getEmail());
-
-        call.enqueue(new Callback<MemberDto>() {
-            @Override
-            public void onResponse(@NonNull Call<MemberDto> call, @NonNull Response<MemberDto> response) {
-                if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
-                }
-
-                MemberDto result = response.body();
-
-                assert response.body() != null;
-                assert result != null;
-
-                // get my Profile Info
-                usernameTextView.setText(result.getUsername());
-                statusMessageTextView.setText(result.getStatusMessage());
-
-                setProfileImage(profileImageView, result.getProfileImage());
-                setProfileImage(wallpaperImageView, result.getWallpaperImage());
-
-                if(email.equals(result.getEmail())){
-                    Log.d("중복검사: ", "중복된 번호가 아닙니다");
-                }
-
-                Log.d("내 정보 가져오기 요청 : ", response.body().toString());
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<MemberDto> call, @NonNull Throwable t) {
-                Log.e("연결실패", t.getMessage());
-            }
-        });
-    }
-
     public void createChatRoom(List<String> userIds) {
         Call<ChatRoomDto> call = retrofitChatRoomAPI.RequestCreateChatRoom(userIds);
 

@@ -45,6 +45,7 @@ public class LoginActivity extends AppCompatActivity {
     SignInButton LoginButton;
     ActivityResultLauncher<Intent> startActivityResult;
     RetrofitMemberAPI retrofitMemberAPI;
+    RetrofitAuthAPI retrofitAuthAPI;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,6 +108,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private void setData() {
         retrofitMemberAPI = RetrofitClient.createMemberApiService();
+        retrofitAuthAPI = RetrofitClient.createAuthApiService();
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
@@ -167,7 +169,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public void LoginMember(RequestLoginDto requestLoginDto){
-        Call<Void> call = retrofitMemberAPI.RequestLogin(requestLoginDto);
+        Call<Void> call = retrofitAuthAPI.login(requestLoginDto);
 
         call.enqueue(new Callback<Void>() {
             @Override

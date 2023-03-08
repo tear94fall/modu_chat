@@ -1,7 +1,6 @@
 package com.example.modumessenger.config;
 
 import com.example.modumessenger.common.Properties.RedisProperties;
-import com.example.modumessenger.common.handler.WebSocketHandler;
 import com.example.modumessenger.messaging.service.MessagingSubscriber;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.annotation.EnableCaching;
@@ -24,10 +23,9 @@ public class RedisConfig {
     private static final String CHAT_MESSAGING_TOPIC_NAME = "modu-chat";
 
     @Bean
-    public RedisMessageListenerContainer redisMessageListener(RedisConnectionFactory connectionFactory, WebSocketHandler webSocketHandler) {
+    public RedisMessageListenerContainer redisMessageListener(RedisConnectionFactory connectionFactory) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
-        container.addMessageListener(webSocketHandler, createChatMessagingTopic());
 
         return container;
     }

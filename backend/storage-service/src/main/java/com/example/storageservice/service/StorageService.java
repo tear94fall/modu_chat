@@ -119,15 +119,21 @@ public class StorageService {
     }
 
     public String downloadFromUrl(String imgURL) {
+        String SLASH = "/";
+        String PARAMETER = "?";
         String fullPath = "";
-        String[] fileName = imgURL.substring(imgURL.lastIndexOf("/")).split("/");
+
+        String fileName = imgURL.substring(imgURL.lastIndexOf(SLASH) + 1);
+        if(fileName.contains(PARAMETER)) {
+            fileName = fileName.substring(0, fileName.indexOf(PARAMETER));
+        }
 
         try{
             URL url = new URL(imgURL);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             InputStream is = connection.getInputStream();
 
-            File file = new File(fileName[1]);
+            File file = new File(fileName);
             FileOutputStream out = new FileOutputStream(file);
             int i = 0;
 

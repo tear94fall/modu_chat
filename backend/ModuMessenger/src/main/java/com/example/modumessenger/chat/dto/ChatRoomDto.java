@@ -1,7 +1,6 @@
 package com.example.modumessenger.chat.dto;
 
 import com.example.modumessenger.chat.entity.ChatRoom;
-import com.example.modumessenger.common.handler.WebSocketHandler;
 import com.example.modumessenger.member.dto.MemberDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

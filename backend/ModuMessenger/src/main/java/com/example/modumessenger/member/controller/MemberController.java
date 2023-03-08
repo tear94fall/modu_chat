@@ -27,6 +27,12 @@ public class MemberController {
         return ResponseEntity.ok().body(modelMapper.map(memberDto, ResponseMemberDto.class));
     }
 
+    @GetMapping("/member/id/{userId}")
+    public ResponseEntity<MemberDto> getMember(@Valid @PathVariable("userId") String userId) {
+        MemberDto memberDto = memberService.getUserById(userId);
+        return ResponseEntity.ok().body(memberDto);
+    }
+
     @PostMapping("/member")
     public ResponseEntity<ResponseMemberDto> createMember(@Valid @RequestBody GoogleLoginRequest googleLoginRequest) {
         MemberDto memberDto = memberService.registerMember(googleLoginRequest);

@@ -1,5 +1,6 @@
 package com.example.modumessenger.Retrofit;
 
+import com.example.modumessenger.dto.RequestLoginDto;
 import com.example.modumessenger.dto.TokenResponseDto;
 
 import retrofit2.Call;
@@ -10,9 +11,12 @@ import retrofit2.http.POST;
 
 public interface RetrofitAuthAPI {
 
-    @POST("member-service/auth/reissue")
+    @POST("auth-service/auth/reissue")
     Call<TokenResponseDto> reissue(@Header("Authorization") String accessToken, @Header("refresh-token") String refreshToken);
 
-    @POST("member-service/auth/logout")
+    @POST("auth-service/login")
+    Call<Void> login(@Body RequestLoginDto requestLoginDto);
+
+    @POST("auth-service/auth/logout")
     Call<Void> logout();
 }

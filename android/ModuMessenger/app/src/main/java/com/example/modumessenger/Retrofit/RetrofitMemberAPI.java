@@ -18,9 +18,6 @@ public interface RetrofitMemberAPI {
     @POST("member-service/member")
     Call<SignUpDto> RequestSignup(@Body GoogleLoginRequest googleLoginRequest);
 
-    @POST("member-service/login")
-    Call<Void> RequestLogin(@Body RequestLoginDto requestLoginDto);
-
     @GET("member-service/member/{email}")
     Call<MemberDto> RequestUserInfo(@Path("email") String email);
 

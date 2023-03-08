@@ -28,13 +28,13 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: member-service
-          uri: lb://MEMBER-SERVICE
+        - id: auth-service
+          uri: lb://AUTH-SERVICE
           predicates:
-            - Path=/member-service/login
+            - Path=/auth-service/login
             - Method=POST
           filters:
-            - RewritePath=/member-service/(?<segment>.*), /$\{segment}
+            - RewritePath=/auth-service/(?<segment>.*), /$\{segment}
         - id: member-service
           uri: lb://MEMBER-SERVICE
           predicates:
@@ -42,13 +42,13 @@ spring:
             - Method=POST
           filters:
             - RewritePath=/member-service/(?<segment>.*), /$\{segment}
-        - id: member-service
-          uri: lb://MEMBER-SERVICE
+        - id: auth-service
+          uri: lb://AUTH-SERVICE
           predicates:
-            - Path=/member-service/auth/reissue
+            - Path=/auth-service/auth/reissue
             - Method=POST
           filters:
-            - RewritePath=/member-service/(?<segment>.*), /$\{segment}
+            - RewritePath=/auth-service/(?<segment>.*), /$\{segment}
         - id: member-service
           uri: lb://MEMBER-SERVICE
           predicates:

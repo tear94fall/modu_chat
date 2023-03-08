@@ -27,11 +27,8 @@ ext {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-websocket'
-    implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.security:spring-security-test'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.springframework.boot:spring-boot-starter-amqp'
 
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
@@ -60,7 +57,6 @@ dependencies {
 
     implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
 
-    compile 'org.springframework.boot:spring-boot-starter-oauth2-client'
     compile 'com.google.api-client:google-api-client:1.31.2'
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'mysql:mysql-connector-java'

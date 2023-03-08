@@ -1,9 +1,7 @@
 package com.example.modumessenger.common.data.controller;
 
-import com.example.modumessenger.chat.dto.ChatDto;
 import com.example.modumessenger.common.data.dto.CommonDataDto;
 import com.example.modumessenger.common.data.service.CommonDataService;
-import com.example.modumessenger.common.data.type.CommonDataType;
 import com.example.modumessenger.common.data.type.EnumMapperFactory;
 import com.example.modumessenger.common.data.type.EnumMapperValue;
 import lombok.RequiredArgsConstructor;

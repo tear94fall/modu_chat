@@ -1,0 +1,36 @@
+server:
+  port: 9990
+
+spring:
+  application:
+    name: push-service
+
+  profiles:
+    default: local
+    include: oauth
+
+  config:
+    use-legacy-processing: true
+    activate:
+      on-profile: local
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/modu_chat?serverTimezone=Asia/Seoul
+    username: root
+    password: root1234
+
+project:
+  properties:
+    firebase-sdk-path: "firebase/modu_chat_firebase_service_key.json"
+    firebase-multicast-message-size: 500
+
+eureka:
+  instance:
+    instance-id: push-service
+
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka

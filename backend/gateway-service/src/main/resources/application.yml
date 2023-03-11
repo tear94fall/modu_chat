@@ -35,13 +35,6 @@ spring:
             - Method=POST
           filters:
             - RewritePath=/auth-service/(?<segment>.*), /$\{segment}
-        - id: member-service
-          uri: lb://MEMBER-SERVICE
-          predicates:
-            - Path=/member-service/member
-            - Method=POST
-          filters:
-            - RewritePath=/member-service/(?<segment>.*), /$\{segment}
         - id: auth-service
           uri: lb://AUTH-SERVICE
           predicates:
@@ -49,6 +42,27 @@ spring:
             - Method=POST
           filters:
             - RewritePath=/auth-service/(?<segment>.*), /$\{segment}
+        - id: auth-service
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/auth-service/auth/logout
+          filters:
+            - AuthorizationHeaderFilter
+            - RewritePath=/auth-service/(?<segment>.*), /$\{segment}
+        - id: member-service
+          uri: lb://MEMBER-SERVICE
+          predicates:
+            - Path=/member-service/member/signup
+            - Method=POST
+          filters:
+            - RewritePath=/member-service/(?<segment>.*), /$\{segment}
+        - id: member-service
+          uri: lb://MEMBER-SERVICE
+          predicates:
+            - Path=/member-service/member/common/**
+            - Method=POST
+          filters:
+            - RewritePath=/member-service/(?<segment>.*), /$\{segment}
         - id: member-service
           uri: lb://MEMBER-SERVICE
           predicates:

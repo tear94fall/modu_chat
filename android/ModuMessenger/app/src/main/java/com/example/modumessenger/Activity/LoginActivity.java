@@ -70,14 +70,7 @@ public class LoginActivity extends AppCompatActivity {
 
             LoginButton.setVisibility(View.INVISIBLE);
 
-            String refreshToken = PreferenceManager.getString("refresh-token");
-            String accessToken = PreferenceManager.getString("access-token");
-
-            if(refreshToken.equals("") || accessToken.equals("")) {
-                LoginMember(new RequestLoginDto(account.getId(), account.getEmail()));
-            } else {
-                GetUserInfo(account.getEmail(), "google");
-            }
+            LoginMember(new RequestLoginDto(account.getId(), account.getEmail()));
         }
     }
 
@@ -147,18 +140,16 @@ public class LoginActivity extends AppCompatActivity {
         call.enqueue(new Callback<SignUpDto>() {
             @Override
             public void onResponse(@NonNull Call<SignUpDto> call, @NonNull Response<SignUpDto> response) {
-                if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
+                if(response.isSuccessful()) {
+                    if(response.body() != null) {
+                        SignUpDto signUpDto = response.body();
+
+                        Log.d("회원가입 완료 : ", signUpDto.toString());
+                        LoginButton.setVisibility(View.INVISIBLE);
+
+                        LoginMember(new RequestLoginDto(signUpDto.getUserId(), signUpDto.getEmail()));
+                    }
                 }
-
-                SignUpDto result = response.body();
-                assert result != null;
-
-                Log.d("회원가입 완료 : ", result.toString());
-
-                // need to login before GetUserInfo because access token need.
-                GetUserInfo(result.getEmail(), googleLoginRequest.getAuthType());
             }
 
             @Override
@@ -190,9 +181,7 @@ public class LoginActivity extends AppCompatActivity {
 
                 Toast.makeText(getApplicationContext(),"로그인에 성공 하였습니다. 반갑습니다.", Toast.LENGTH_SHORT).show();
 
-                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                startActivity(intent);
-                finish();
+                GetUserInfo(requestLoginDto.getEmail(), "google");
             }
 
             @Override
@@ -218,8 +207,9 @@ public class LoginActivity extends AppCompatActivity {
 
                         Log.d("내정보 가져오기 요청 : ", result.toString());
 
-                        RequestLoginDto requestLoginDto = new RequestLoginDto(result.getUserId(), result.getEmail());
-                        LoginMember(requestLoginDto);
+                        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                        startActivity(intent);
+                        finish();
                     }
                 } else {
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());

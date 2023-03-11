@@ -31,6 +31,7 @@ import com.bumptech.glide.Glide;
 import com.example.modumessenger.Adapter.ChatBubble;
 import com.example.modumessenger.Adapter.ChatHistoryAdapter;
 import com.example.modumessenger.Adapter.ChatRoomMemberAdapter;
+import com.example.modumessenger.Global.ActivityStack;
 import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.Grid.RecentChatImageGridAdapter;
 import com.example.modumessenger.R;
@@ -111,12 +112,21 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         setButtonClickEvent();
         setScrollEvent();
         settingSideNavBar();
+
+        ActivityStack.getInstance().regOnCreateState(this);
     }
 
     @Override
     public void onResume() {
         super.onResume();
         updateRoomInfo(roomId);
+        ActivityStack.getInstance().regOnResumeState(this);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        ActivityStack.getInstance().regOnPauseState(this);
     }
 
     @Override
@@ -133,6 +143,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     protected void onDestroy() {
         super.onDestroy();
         setEventBus(false);
+        ActivityStack.getInstance().regOnDestroyState(this);
     }
 
     @Override
@@ -440,6 +451,10 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         } else {
             Toast.makeText(getApplicationContext(), "메세지 전송에 실패하였습니다.", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    public String getRoomId() {
+        return roomId;
     }
 
     @Override

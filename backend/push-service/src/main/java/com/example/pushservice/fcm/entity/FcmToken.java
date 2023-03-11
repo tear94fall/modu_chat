@@ -1,4 +1,4 @@
-package com.example.modumessenger.fcm.entity;
+package com.example.pushservice.fcm.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

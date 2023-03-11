@@ -1,8 +1,8 @@
-package com.example.modumessenger.fcm.service;
+package com.example.pushservice.fcm.service;
 
-import com.example.modumessenger.fcm.dto.FcmMessageDto;
-import com.example.modumessenger.fcm.entity.FcmToken;
-import com.example.modumessenger.fcm.repository.FcmRepository;
+import com.example.pushservice.fcm.dto.FcmMessageDto;
+import com.example.pushservice.fcm.entity.FcmToken;
+import com.example.pushservice.fcm.repository.FcmRepository;
 import com.google.api.core.ApiFuture;
 import com.google.firebase.messaging.*;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Service

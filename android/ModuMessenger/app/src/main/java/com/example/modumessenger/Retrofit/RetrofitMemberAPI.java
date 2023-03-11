@@ -15,7 +15,7 @@ import retrofit2.http.Path;
 
 public interface RetrofitMemberAPI {
 
-    @POST("member-service/member")
+    @POST("member-service/member/signup")
     Call<SignUpDto> RequestSignup(@Body GoogleLoginRequest googleLoginRequest);
 
     @GET("member-service/member/{email}")

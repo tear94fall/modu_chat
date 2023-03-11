@@ -1,4 +1,4 @@
-package com.example.modumessenger.fcm.dto;
+package com.example.pushservice.fcm.dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

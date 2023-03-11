@@ -1,4 +1,4 @@
-package com.example.modumessenger.config;
+package com.example.pushservice.config;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;

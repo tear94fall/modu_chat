@@ -1,8 +1,7 @@
-package com.example.modumessenger.fcm.dto;
+package com.example.wsservice.fcm.dto;
 
-import com.example.modumessenger.chat.dto.ChatDto;
-import com.example.modumessenger.chat.dto.ChatRoomDto;
-import lombok.AllArgsConstructor;
+import com.example.wsservice.chat.dto.ChatDto;
+import com.example.wsservice.chat.dto.ChatRoomDto;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
@@ -46,3 +45,4 @@ public class FcmMessageDto {
         };
     }
 }
+

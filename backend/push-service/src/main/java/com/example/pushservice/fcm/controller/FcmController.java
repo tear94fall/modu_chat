@@ -1,9 +1,10 @@
-package com.example.modumessenger.fcm.controller;
+package com.example.pushservice.fcm.controller;
 
-import com.example.modumessenger.fcm.dto.RequestChatDto;
-import com.example.modumessenger.fcm.dto.RequestPushMessage;
-import com.example.modumessenger.fcm.entity.FcmToken;
-import com.example.modumessenger.fcm.service.FcmService;
+import com.example.pushservice.fcm.dto.FcmMessageDto;
+import com.example.pushservice.fcm.dto.RequestChatDto;
+import com.example.pushservice.fcm.dto.RequestPushMessage;
+import com.example.pushservice.fcm.entity.FcmToken;
+import com.example.pushservice.fcm.service.FcmService;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.MulticastMessage;
@@ -27,6 +28,12 @@ public class FcmController {
     Long multicastMessageSize;
 
     private final FcmService fcmService;
+
+    @PostMapping("/push/chat")
+    public ResponseEntity<Void> pushMessage(@RequestBody FcmMessageDto fcmMessageDto) throws FirebaseMessagingException {
+        fcmService.sendTopicMessageWithData(fcmMessageDto);
+        return ResponseEntity.ok().build();
+    }
 
     @PutMapping("/chat/{userId}/token")
     public ResponseEntity<String> registerFcmToken(@PathVariable("userId") String userId, @RequestBody String token) {

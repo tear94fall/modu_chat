@@ -1,6 +1,6 @@
-package com.example.modumessenger.fcm.repository;
+package com.example.pushservice.fcm.repository;
 
-import com.example.modumessenger.fcm.entity.FcmToken;
+import com.example.pushservice.fcm.entity.FcmToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

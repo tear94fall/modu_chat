@@ -64,8 +64,3 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: http://localhost:8761/eureka
-
-project:
-  properties:
-    firebase-sdk-path: "firebase/modu_chat_firebase_service_key.json"
-    firebase-multicast-message-size: 500

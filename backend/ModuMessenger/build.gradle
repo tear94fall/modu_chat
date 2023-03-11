@@ -48,7 +48,6 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
     implementation 'com.google.api-client:google-api-client:1.31.2'
-    implementation 'com.google.firebase:firebase-admin:9.0.0'
 
     implementation 'io.springfox:springfox-boot-starter:3.0.0'
     implementation 'io.springfox:springfox-swagger-ui:3.0.0'

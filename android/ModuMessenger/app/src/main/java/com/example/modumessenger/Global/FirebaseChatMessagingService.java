@@ -3,6 +3,7 @@ package com.example.modumessenger.Global;
 import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -20,10 +21,13 @@ import androidx.core.app.NotificationCompat;
 
 import com.example.modumessenger.Activity.ChatActivity;
 import com.example.modumessenger.R;
+import com.example.modumessenger.dto.FcmMessageDto;
 import com.example.modumessenger.entity.Member;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
+import java.util.Map;
 import java.util.Objects;
 
 public class FirebaseChatMessagingService extends FirebaseMessagingService {
@@ -45,14 +49,31 @@ public class FirebaseChatMessagingService extends FirebaseMessagingService {
         super.onMessageReceived(remoteMessage);
 
         if (remoteMessage.getData().size() > 0) {
-            String userId = member.getUserId();
-            if(userId == null || userId.equals("") || !Objects.requireNonNull(remoteMessage.getData().get("sender")).equals(userId)) {
-                sendNotification(remoteMessage);
+            ObjectMapper mapper = new ObjectMapper();
+            FcmMessageDto fcmMessageDto = mapper.convertValue(remoteMessage.getData(), FcmMessageDto.class);
 
-                Handler handler = new Handler(Looper.getMainLooper());
-                handler.post(() -> Toast.makeText(getApplicationContext(), "새로운 메시지가 도착하였습니다.", Toast.LENGTH_LONG).show());
+            if(!Objects.requireNonNull(fcmMessageDto.getSender()).equals(member.getUserId())) {
+                ActivityStack activityStack =  ActivityStack.getInstance();
+                Activity foregroundActivity = activityStack.getForegroundActivity();
+
+                if(foregroundActivity instanceof ChatActivity) {
+                    ChatActivity chatActivity = (ChatActivity) foregroundActivity;
+
+                    if(!chatActivity.getRoomId().equals(fcmMessageDto.getRoomId())) {
+                        setPushAlarm(remoteMessage);
+                    }
+                } else {
+                    setPushAlarm(remoteMessage);
+                }
             }
         }
+    }
+
+    private void setPushAlarm(RemoteMessage remoteMessage) {
+        sendNotification(remoteMessage);
+
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(() -> Toast.makeText(getApplicationContext(), "새로운 메시지가 도착하였습니다.", Toast.LENGTH_LONG).show());
     }
 
     @SuppressLint("ObsoleteSdkInt")

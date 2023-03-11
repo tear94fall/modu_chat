@@ -5,6 +5,8 @@ import com.example.wsservice.chat.dto.ChatMessage;
 import com.example.wsservice.chat.dto.ChatRoomDto;
 import com.example.wsservice.chat.service.ChatRoomService;
 import com.example.wsservice.chat.service.ChatService;
+import com.example.wsservice.fcm.dto.FcmMessageDto;
+import com.example.wsservice.fcm.service.FcmService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     private final RabbitTemplate rabbitTemplate;
     private final ChatService chatService;
     private final ChatRoomService chatRoomService;
+    private final FcmService fcmService;
 
     private static final ConcurrentHashMap<String, WebSocketSession> CLIENTS = new ConcurrentHashMap<String, WebSocketSession>();
 
@@ -54,9 +57,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
         producerMessage(chatMessage);
 
-        // send to push-service (fcm)
-//        FcmMessageDto fcmMessageDto = new FcmMessageDto(chatRoomDto, recvChatDto);
-//        fcmService.sendTopicMessageWithData(fcmMessageDto);
+        FcmMessageDto fcmMessageDto = new FcmMessageDto(chatRoomDto, recvChatDto);
+        fcmService.sendFcmMessage(fcmMessageDto);
     }
 
     @Override

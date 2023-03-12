@@ -1,0 +1,41 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: member-service
+
+  profiles:
+    default: local
+    include: oauth
+
+  datasource:
+    url: jdbc:mysql://database:3306/modu-chat
+    username: root
+    password: root1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL5Dialect
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show-sql: true
+        format_sql: true
+        default_batch_fetch_size: 1000
+    open-in-view: false
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+
+eureka:
+  instance:
+    instance-id: member-service
+
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka

@@ -1,6 +1,6 @@
-package com.example.modumessenger.config;
+package com.example.memberservice.config;
 
-import com.example.modumessenger.common.decoder.FeignErrorDecoder;
+import com.example.memberservice.global.decoder.FeignErrorDecoder;
 import feign.Logger;
 import feign.Retryer;
 import feign.codec.ErrorDecoder;

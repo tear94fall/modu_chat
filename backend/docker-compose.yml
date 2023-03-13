@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  database:
+    image: mysql
+    container_name: mysql
+    ports:
+      - 3306:3306
+    volumes:
+      - mysql-data:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: modu-chat
+      MYSQL_USER: user 
+      MYSQL_PASSWORD: userpwd
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_ROOT_PASSWORD: root1234
+    networks:
+      - modu-chat-network
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -u root --password=$$MYSQL_ROOT_PASSWORD']
+      interval: 10s
+      timeout: 2s
+      retries: 100
+    restart: always
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+      - 25672:25672
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    container_name: minio
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: miniopass
+    restart: always
+    shm_size: '1gb'
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - /Users/imjunseob/data:/data
+  zipkin:
+    container_name: zipkin
+    image: openzipkin/zipkin
+    restart: always
+    ports:
+      - "9411:9411"
+  application:
+    build:
+      context: ./member-service
+      dockerfile: ./Dockerfile
+    container_name: member-service
+    ports:
+      - 8080:8080
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/modu-chat
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root1234
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - modu-chat-network
+    restart: always
+
+networks:
+  modu-chat-network:
+
+volumes:
+  mysql-data:

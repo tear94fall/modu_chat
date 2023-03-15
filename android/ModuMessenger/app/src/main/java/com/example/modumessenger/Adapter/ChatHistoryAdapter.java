@@ -197,6 +197,100 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         notifyDataSetChanged();
     }
 
+    public int getRightChatBubbleType(int chatContentType) {
+        /*
+        채팅 타입 정리
+        RIGHT_SINGLE (RS) - 시간, 메시지 내용
+        RIGHT_HEADER (RH) - 메시지 내용
+        RIGHT_TAIL (RT) - 시간, 메시지 내용
+
+        현재 채팅은 내가 보낸 채팅
+        1) 가장 처음에 위치한 채팅 인경우
+            1.1) 다음 채팅이 다른 사람이 보낸 채팅인 경우
+                - RS
+            1.2) 다음 채팅이 내가 보낸 채팅인 경우
+                1.2.1) 전송 시간이 동일한 경우
+                    - RH
+                1.1.2) 전송 시간이 다른 경우
+                    - RS
+        2) 가장 끝에 위치한 채팅 경우
+            2.1) 이전 채팅이 다른 사람이 보낸 채팅인 경우
+                - RS
+            2.2) 이전 채팅이 내가 보낸 채팅인 경우
+                2.2.1) 전송 시간이 동일한 경우
+                    - RT
+                2.2.2) 전송 시간이 다른 경우
+                    - RS
+        3) 중간에 위치한 채팅인 경우
+            3.1) 이전 채팅이 다른 사람이 보낸 채팅인 경우
+                3.1.1) 다음 채팅이 다른 사람이 보낸 채팅인 경우
+                    - RS
+                3.1.2) 다음 채팅이 내가 보낸 채팅인 경우
+                    3.1.2.1) 전송 시간이 동일한 경우
+                        - RH
+                    3.1.2.2) 전송 시간이 다른 경우
+                        - RS
+            3.2) 이전 채팅이 내가 보낸 채팅인 경우
+                3.2.1) 다음 채팅이 다른 사람이 보낸 채팅인 경우
+                    - RT
+                3.2.2) 다음 채팅이 내가 보낸 채팅인 경우
+                    3.2.2.1) 전송 시간이 동일한 경우
+                        - RH
+                    3.2.2.2) 전송 시간이 다른 경우
+                        - RT
+         */
+
+        return ChatBubbleType.RIGHT_TEXT_TAIL.getType();
+    }
+
+    public int getLeftChatBubbleType(int chatContentType) {
+        /*
+        채팅 타입 정리
+        LEFT_SINGLE (LS) - 프로필 사진, 이름, 시간, 메시지 내용
+        LEFT_HEADER (LH) - 프로필 사진, 이름, 메시지 내용
+        LEFT_BODY (LB) - 메시지 내용
+        LEFT_TAIL (LT) - 시간, 메시지 내용
+
+        현재 채팅은 다른 사람이 보낸 채팅
+        1) 가장 처음에 위치한 채팅 인경우
+            1.1) 다음 채팅이 다른 사람이 보낸 채팅인 경우
+                - RS
+            1.2) 다음 채팅과 보낸 사람이 같은 경우
+                1.2.1) 전송 시간이 동일한 경우
+                    - LH
+                1.1.2) 전송 시간이 다른 경우
+                    - LS
+        2) 가장 끝에 위치한 채팅 경우
+            2.1) 이전 채팅이 다른 사람이 보낸 채팅인 경우
+                - RS
+            2.2) 이전 채팅과 보낸 사람이 같은 경우
+                2.2.1) 전송 시간이 동일한 경우
+                    - LT
+                2.2.2) 전송 시간이 다른 경우
+                    - LS
+        3) 중간에 위치한 채팅인 경우
+            3.1) 이전 채팅이 다른 사람이 보낸 채팅인 경우
+                3.1.1) 다음 채팅이 다른 사람이 보낸 채팅인 경우
+                    - LS
+                3.1.2) 다음 채팅과 보낸 사람이 같은 경우
+                    2.2.1) 전송 시간이 동일한 경우
+                        - LH
+                    2.2.2) 전송 시간이 다른 경우
+                        - LS
+            3.2) 이전 채팅과 보낸 사람이 같은 경우
+                3.2.1) 다음 채팅이 다른 사람이 보낸 채팅인 경우
+                    - LT
+                3.2.2) 다음 채팅과 보낸 사람이 같은 경우
+                    2.2.1) 전송 시간이 동일한 경우
+                        - LB
+                    2.2.2) 전송 시간이 다른 경우
+                        - LT
+
+         */
+
+        return ChatBubbleType.LEFT_TEXT_TAIL.getType();
+    }
+
     public String getShortTime(String time) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime dateTime = LocalDateTime.parse(time, formatter);

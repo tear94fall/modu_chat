@@ -1,7 +1,9 @@
 package com.example.modumessenger.Adapter;
 
+import static com.example.modumessenger.Adapter.ChatBubbleType.*;
 import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
 import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+import static com.example.modumessenger.dto.ChatType.*;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -18,7 +20,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Activity.ProfileImageActivity;
 import com.example.modumessenger.R;
-import com.example.modumessenger.dto.ChatType;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.RoomDatabase.Database.ChatDatabase;
 import com.example.modumessenger.RoomDatabase.Entity.ChatEntity;
@@ -33,13 +34,9 @@ import java.util.List;
 public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     public final int LEFT = 1;
-    public final int RIGHT = 2;
     public final int LEFT_DUP = 3;
-    public final int RIGHT_DUP = 4;
     public final int LEFT_IMAGE = 5;
-    public final int RIGHT_IMAGE = 6;
     private final int LEFT_IMAGE_DUP = 5;
-    private final int RIGHT_IMAGE_DUP = 6;
 
     private final List<Member> memberList;
     private final List<ChatBubble> chatList;
@@ -59,34 +56,26 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
 
-        View view;
         Context context = parent.getContext();
         LayoutInflater inflater = LayoutInflater.from(context);
 
         chatDatabase = ChatDatabase.getInstance(parent.getContext());
 
-        if (viewType == LEFT) {
-            view = inflater.inflate(R.layout.chat_bubble_left, parent, false);
-            return new ChatHistoryAdapter.ChatBubbleLeftViewHolder(view);
-        } else if (viewType == RIGHT) {
-            view = inflater.inflate(R.layout.chat_bubble_right, parent, false);
-            return new ChatHistoryAdapter.ChatBubbleRightViewHolder(view);
-        } else if (viewType == LEFT_DUP) {
-            view = inflater.inflate(R.layout.chat_bubble_left_dup, parent, false);
-            return new ChatHistoryAdapter.ChatBubbleLeftDuplicateViewHolder(view);
-        } else if (viewType == RIGHT_DUP) {
-            view = inflater.inflate(R.layout.chat_bubble_right_dup, parent, false);
-            return new ChatHistoryAdapter.ChatBubbleRightDuplicateViewHolder(view);
-        } else if (viewType == LEFT_IMAGE) {
-            view = inflater.inflate(R.layout.chat_bubble_left_image, parent, false);
-            return new ChatHistoryAdapter.ChatBubbleLeftImageViewHolder(view);
-        } else if (viewType == RIGHT_IMAGE) {
-            view = inflater.inflate(R.layout.chat_bubble_right_image, parent, false);
-            return new ChatBubbleRightImageViewHolder(view);
-        }  else {
-            view = inflater.inflate(R.layout.chat_bubble_right, parent, false);
-            return new ChatHistoryAdapter.ChatBubbleRightViewHolder(view);
+        if (viewType == RIGHT_TEXT_SINGLE.getType() || viewType == RIGHT_TEXT_HEADER.getType() || viewType == RIGHT_TEXT_TAIL.getType()) {
+            return new ChatBubbleRightTextViewHolder(inflater.inflate(R.layout.chat_bubble_right, parent, false), viewType);
+        } else if(viewType == RIGHT_IMAGE_SINGLE.getType() || viewType == RIGHT_IMAGE_HEADER.getType() || viewType == RIGHT_IMAGE_TAIL.getType()) {
+            return new ChatBubbleRightImageViewHolder(inflater.inflate(R.layout.chat_bubble_right_image, parent, false), viewType);
         }
+
+        if (viewType == LEFT_TEXT_SINGLE.getType()) {
+            return new ChatHistoryAdapter.ChatBubbleLeftViewHolder(inflater.inflate(R.layout.chat_bubble_left, parent, false));
+        } else if (viewType == LEFT_TEXT_BODY.getType()) {
+            return new ChatHistoryAdapter.ChatBubbleLeftDuplicateViewHolder(inflater.inflate(R.layout.chat_bubble_left_dup, parent, false));
+        } else if (viewType == LEFT_IMAGE_SINGLE.getType()) {
+            return new ChatHistoryAdapter.ChatBubbleLeftImageViewHolder(inflater.inflate(R.layout.chat_bubble_left_image, parent, false));
+        }
+
+        return new ChatHistoryAdapter.ChatBubbleRightTextViewHolder(inflater.inflate(R.layout.chat_bubble_right, parent, false), viewType);
     }
 
     @Override
@@ -102,9 +91,9 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             setProfileImage((leftHolder.senderImage), member.getProfileImage());
 
             leftHolder.setUserClickEvent(member);
-            leftHolder.chatSender.setText(member.getEmail());
+            leftHolder.chatSender.setText(member.getUsername());
             leftHolder.chatMessage.setText(chat.getChatMsg());
-            leftHolder.leftChatTime.setText(getShortTime(chat.getChatTime()));
+            leftHolder.chatTime.setText(getShortTime(chat.getChatTime()));
         } else if (holder instanceof ChatBubbleLeftImageViewHolder) {
             ChatBubbleLeftImageViewHolder leftImageViewHolder = ((ChatBubbleLeftImageViewHolder) holder);
             Member member = getChatSendMember(chat.getSender());
@@ -114,26 +103,18 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             leftImageViewHolder.setUserClickEvent(member);
             leftImageViewHolder.setChatImageClickEvent(chat);
-            leftImageViewHolder.chatSender.setText(member.getEmail());
-            leftImageViewHolder.leftChatTime.setText(getShortTime(chat.getChatTime()));
+            leftImageViewHolder.chatSender.setText(member.getUsername());
+            leftImageViewHolder.chatTime.setText(getShortTime(chat.getChatTime()));
         } else if (holder instanceof ChatBubbleLeftDuplicateViewHolder) {
             ChatBubbleLeftDuplicateViewHolder leftDupHolder = ((ChatBubbleLeftDuplicateViewHolder) holder);
             leftDupHolder.chatMessage.setText(chat.getChatMsg());
-            leftDupHolder.leftChatTime.setVisibility(View.INVISIBLE);
-        } else if (holder instanceof ChatBubbleRightViewHolder) {
-            ChatBubbleRightViewHolder rightHolder = ((ChatBubbleRightViewHolder) holder);
-            rightHolder.chatMessage.setText(chat.getChatMsg());
-            rightHolder.rightChatTime.setText(getShortTime(chat.getChatTime()));
+            leftDupHolder.chatTime.setVisibility(View.INVISIBLE);
+        } else if (holder instanceof ChatBubbleRightTextViewHolder) {
+            ChatBubbleRightTextViewHolder rightText = ((ChatBubbleRightTextViewHolder) holder);
+            rightText.setChatBubble(chat);
         } else if (holder instanceof ChatBubbleRightImageViewHolder) {
-            ChatBubbleRightImageViewHolder rightImageViewHolder = ((ChatBubbleRightImageViewHolder) holder);
-
-            setProfileImage(rightImageViewHolder.chatImage, chat.getChatMsg());
-            rightImageViewHolder.setChatImageClickEvent(chat);
-            rightImageViewHolder.rightChatTime.setText(getShortTime(chat.getChatTime()));
-        } else if (holder instanceof ChatBubbleRightDuplicateViewHolder) {
-            ChatBubbleRightDuplicateViewHolder rightDupHolder = ((ChatBubbleRightDuplicateViewHolder) holder);
-            rightDupHolder.chatMessage.setText(chat.getChatMsg());
-            rightDupHolder.leftChatTime.setVisibility(View.INVISIBLE);
+            ChatBubbleRightImageViewHolder rightImage = ((ChatBubbleRightImageViewHolder) holder);
+            rightImage.setChatBubble(chat);
         }
     }
 
@@ -144,6 +125,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     @Override
     public int getItemViewType(int position) {
+        int type;
         ChatBubble chat = chatList.get(position);
         ChatBubble prevChat = chatList.get(Math.max(0, position - 1));
 
@@ -152,17 +134,15 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                     chat.getSender().equals(prevChat.getSender()) &&
                     getShortTime(chat.getChatTime()).equals(getShortTime(prevChat.getChatTime()))) {
 
-                return chat.getChatType() == ChatType.CHAT_TYPE_TEXT ? LEFT_DUP : LEFT_IMAGE_DUP;
+                type = chat.getChatType() == CHAT_TYPE_TEXT ? LEFT_TEXT_BODY.getType() : LEFT_IMAGE_SINGLE.getType();
+            } else {
+                type = chat.getChatType() == CHAT_TYPE_TEXT ? LEFT_TEXT_SINGLE.getType() : LEFT_IMAGE_SINGLE.getType();
             }
-
-            return chat.getChatType() == ChatType.CHAT_TYPE_TEXT ? LEFT : LEFT_IMAGE;
         } else {
-            if (position > 0 && getShortTime(chat.getChatTime()).equals(getShortTime(prevChat.getChatTime()))) {
-                return chat.getChatType() == ChatType.CHAT_TYPE_TEXT ? RIGHT_DUP : RIGHT_IMAGE_DUP;
-            }
+            type = getRightChatBubbleType(position);
         }
 
-        return chat.getChatType() == ChatType.CHAT_TYPE_TEXT ? RIGHT : RIGHT_IMAGE;
+        return type;
     }
 
     public void sortChatBubble() {
@@ -197,7 +177,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         notifyDataSetChanged();
     }
 
-    public int getRightChatBubbleType(int chatContentType) {
+    public int getRightChatBubbleType(int position) {
         /*
         채팅 타입 정리
         RIGHT_SINGLE (RS) - 시간, 메시지 내용
@@ -206,44 +186,70 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         현재 채팅은 내가 보낸 채팅
         1) 가장 처음에 위치한 채팅 인경우
-            1.1) 다음 채팅이 다른 사람이 보낸 채팅인 경우
-                - RS
+            1.1) 다음 채팅이 다른 사람이 보낸 채팅인 경우 - RS
             1.2) 다음 채팅이 내가 보낸 채팅인 경우
-                1.2.1) 전송 시간이 동일한 경우
-                    - RH
-                1.1.2) 전송 시간이 다른 경우
-                    - RS
+                1.1.1) 전송 시간이 다른 경우 - RS
+                1.2.2) 전송 시간이 동일한 경우 - RH
         2) 가장 끝에 위치한 채팅 경우
-            2.1) 이전 채팅이 다른 사람이 보낸 채팅인 경우
-                - RS
+            2.1) 이전 채팅이 다른 사람이 보낸 채팅인 경우 - RS
             2.2) 이전 채팅이 내가 보낸 채팅인 경우
-                2.2.1) 전송 시간이 동일한 경우
-                    - RT
-                2.2.2) 전송 시간이 다른 경우
-                    - RS
+                2.2.1) 전송 시간이 다른 경우 - RS
+                2.2.2) 전송 시간이 동일한 경우 - RT
         3) 중간에 위치한 채팅인 경우
             3.1) 이전 채팅이 다른 사람이 보낸 채팅인 경우
-                3.1.1) 다음 채팅이 다른 사람이 보낸 채팅인 경우
-                    - RS
+                3.1.1) 다음 채팅이 다른 사람이 보낸 채팅인 경우 - RS
                 3.1.2) 다음 채팅이 내가 보낸 채팅인 경우
-                    3.1.2.1) 전송 시간이 동일한 경우
-                        - RH
-                    3.1.2.2) 전송 시간이 다른 경우
-                        - RS
+                    3.1.2.1) 전송 시간이 다른 경우 - RS
+                    3.1.2.2) 전송 시간이 동일한 경우 - RH
             3.2) 이전 채팅이 내가 보낸 채팅인 경우
-                3.2.1) 다음 채팅이 다른 사람이 보낸 채팅인 경우
-                    - RT
+                3.2.1) 다음 채팅이 다른 사람이 보낸 채팅인 경우 - RT
                 3.2.2) 다음 채팅이 내가 보낸 채팅인 경우
-                    3.2.2.1) 전송 시간이 동일한 경우
-                        - RH
-                    3.2.2.2) 전송 시간이 다른 경우
-                        - RT
+                    3.2.2.1) 전송 시간이 다른 경우 - RT
+                    3.2.2.2) 전송 시간이 동일한 경우 - RH
          */
 
-        return ChatBubbleType.RIGHT_TEXT_TAIL.getType();
+        ChatBubbleType type = INVALID;
+        ChatBubble currentChat = chatList.get(position);
+
+        if (position == 0) {
+            ChatBubble nextChat = chatList.get(position + 1);
+
+            if (!currentChat.getSender().equals(nextChat.getSender())) {
+                type = RIGHT_TEXT_SINGLE;
+            } else {
+                type = (!equalShotTime(currentChat.getChatTime(), nextChat.getChatTime())) ? RIGHT_TEXT_SINGLE : RIGHT_TEXT_HEADER;
+            }
+        } else if (position == getItemCount() - 1) {
+            ChatBubble prevChat = chatList.get(position - 1);
+
+            if (!currentChat.getSender().equals(prevChat.getSender())) {
+                type = RIGHT_TEXT_SINGLE;
+            } else {
+                type = (!equalShotTime(currentChat.getChatTime(), prevChat.getChatTime())) ? RIGHT_TEXT_SINGLE : RIGHT_TEXT_TAIL;
+            }
+        } else {
+            ChatBubble prevChat = chatList.get(position - 1);
+            ChatBubble nextChat = chatList.get(position + 1);
+
+            if (!currentChat.getSender().equals(prevChat.getSender())) {
+                if (!currentChat.getSender().equals(nextChat.getSender())) {
+                    type = RIGHT_TEXT_SINGLE;
+                } else {
+                    type = (!equalShotTime(currentChat.getChatTime(), nextChat.getChatTime())) ? RIGHT_TEXT_SINGLE : RIGHT_TEXT_HEADER;
+                }
+            } else {
+                if (!currentChat.getSender().equals(nextChat.getSender())) {
+                    type = RIGHT_TEXT_TAIL;
+                } else {
+                    type = (!equalShotTime(currentChat.getChatTime(), nextChat.getChatTime())) ? RIGHT_TEXT_TAIL : RIGHT_TEXT_HEADER;
+                }
+            }
+        }
+
+        return convertChatType(currentChat.getChatType(), type);
     }
 
-    public int getLeftChatBubbleType(int chatContentType) {
+    public int getLeftChatBubbleType(int position) {
         /*
         채팅 타입 정리
         LEFT_SINGLE (LS) - 프로필 사진, 이름, 시간, 메시지 내용
@@ -253,45 +259,61 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         현재 채팅은 다른 사람이 보낸 채팅
         1) 가장 처음에 위치한 채팅 인경우
-            1.1) 다음 채팅이 다른 사람이 보낸 채팅인 경우
-                - RS
+            1.1) 다음 채팅이 다른 사람이 보낸 채팅인 경우 - RS
             1.2) 다음 채팅과 보낸 사람이 같은 경우
-                1.2.1) 전송 시간이 동일한 경우
-                    - LH
-                1.1.2) 전송 시간이 다른 경우
-                    - LS
+                1.1.1) 전송 시간이 다른 경우 - LS
+                1.2.2) 전송 시간이 동일한 경우 - LH
         2) 가장 끝에 위치한 채팅 경우
-            2.1) 이전 채팅이 다른 사람이 보낸 채팅인 경우
-                - RS
+            2.1) 이전 채팅이 다른 사람이 보낸 채팅인 경우 - RS
             2.2) 이전 채팅과 보낸 사람이 같은 경우
-                2.2.1) 전송 시간이 동일한 경우
-                    - LT
-                2.2.2) 전송 시간이 다른 경우
-                    - LS
+                2.2.1) 전송 시간이 다른 경우 - LS
+                2.2.2) 전송 시간이 동일한 경우 - LT
         3) 중간에 위치한 채팅인 경우
             3.1) 이전 채팅이 다른 사람이 보낸 채팅인 경우
-                3.1.1) 다음 채팅이 다른 사람이 보낸 채팅인 경우
-                    - LS
+                3.1.1) 다음 채팅이 다른 사람이 보낸 채팅인 경우 - LS
                 3.1.2) 다음 채팅과 보낸 사람이 같은 경우
-                    2.2.1) 전송 시간이 동일한 경우
-                        - LH
-                    2.2.2) 전송 시간이 다른 경우
-                        - LS
+                    2.2.1) 전송 시간이 다른 경우 - LS
+                    2.2.2) 전송 시간이 동일한 경우 - LH
             3.2) 이전 채팅과 보낸 사람이 같은 경우
-                3.2.1) 다음 채팅이 다른 사람이 보낸 채팅인 경우
-                    - LT
+                3.2.1) 다음 채팅이 다른 사람이 보낸 채팅인 경우 - LT
                 3.2.2) 다음 채팅과 보낸 사람이 같은 경우
-                    2.2.1) 전송 시간이 동일한 경우
-                        - LB
-                    2.2.2) 전송 시간이 다른 경우
-                        - LT
+                    2.2.1) 전송 시간이 다른 경우 - LT
+                    2.2.2) 전송 시간이 동일한 경우 - LB
 
          */
 
-        return ChatBubbleType.LEFT_TEXT_TAIL.getType();
+        return LEFT_TEXT_TAIL.getType();
     }
 
-    public String getShortTime(String time) {
+    public int convertChatType(int contentType, ChatBubbleType chatBubbleType) {
+        int type;
+
+        switch(contentType) {
+            case CHAT_TYPE_TEXT:
+                type = chatBubbleType.getType();
+                break;
+            case CHAT_TYPE_IMAGE:
+                type = chatBubbleType.getType() + 1;
+                break;
+            case CHAT_TYPE_FILE:
+                type = chatBubbleType.getType() + 2;
+                break;
+            case CHAT_TYPE_AUDIO:
+                type = chatBubbleType.getType() + 3;
+                break;
+            default:
+                type = CHAT_TYPE_INVALID;
+                break;
+        }
+
+        return type;
+    }
+
+    public boolean equalShotTime(String time1, String time2) {
+        return getShortTime(time1).equals(getShortTime(time2));
+    }
+
+    public static String getShortTime(String time) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime dateTime = LocalDateTime.parse(time, formatter);
         return dateTime.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT));
@@ -308,7 +330,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public class ChatBubbleLeftViewHolder extends RecyclerView.ViewHolder {
         ImageView senderImage;
         TextView chatMessage;
-        TextView leftChatTime;
+        TextView chatTime;
         TextView chatSender;
 
         public ChatBubbleLeftViewHolder(@NonNull View itemView) {
@@ -316,7 +338,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             senderImage = itemView.findViewById(R.id.message_sender_image);
             chatMessage = itemView.findViewById(R.id.left_chat_text);
             chatSender = itemView.findViewById(R.id.message_sender);
-            leftChatTime = itemView.findViewById(R.id.left_chat_time);
+            chatTime = itemView.findViewById(R.id.left_chat_time);
         }
 
         public void setUserClickEvent(Member member) {
@@ -329,7 +351,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public class ChatBubbleLeftImageViewHolder extends RecyclerView.ViewHolder {
         ImageView senderImage;
         ImageView chatImage;
-        TextView leftChatTime;
+        TextView chatTime;
         TextView chatSender;
 
         public ChatBubbleLeftImageViewHolder(@NonNull View itemView) {
@@ -337,7 +359,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             senderImage = itemView.findViewById(R.id.message_sender_image);
             chatImage = itemView.findViewById(R.id.left_chat_image);
             chatSender = itemView.findViewById(R.id.message_sender);
-            leftChatTime = itemView.findViewById(R.id.left_chat_time);
+            chatTime = itemView.findViewById(R.id.left_chat_time);
         }
 
         public void setUserClickEvent(Member member) {
@@ -361,34 +383,47 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public static class ChatBubbleLeftDuplicateViewHolder extends RecyclerView.ViewHolder {
         TextView chatMessage;
-        TextView leftChatTime;
+        TextView chatTime;
 
         public ChatBubbleLeftDuplicateViewHolder(@NonNull View itemView) {
             super(itemView);
             chatMessage = itemView.findViewById(R.id.left_chat_text);
-            leftChatTime = itemView.findViewById(R.id.left_chat_time);
+            chatTime = itemView.findViewById(R.id.left_chat_time);
         }
     }
 
-    public static class ChatBubbleRightViewHolder extends RecyclerView.ViewHolder {
+    public static class ChatBubbleRightTextViewHolder extends RecyclerView.ViewHolder {
         TextView chatMessage;
-        TextView rightChatTime;
+        TextView chatTime;
+        int type;
 
-        public ChatBubbleRightViewHolder(@NonNull View itemView) {
+        public ChatBubbleRightTextViewHolder(@NonNull View itemView, int type) {
             super(itemView);
             chatMessage = itemView.findViewById(R.id.right_chat_text);
-            rightChatTime = itemView.findViewById(R.id.right_chat_time);
+            chatTime = itemView.findViewById(R.id.right_chat_time);
+            this.type = type;
+        }
+
+        public void setChatBubble(ChatBubble chatBubble) {
+            chatMessage.setText(chatBubble.getChatMsg());
+            chatTime.setText(getShortTime(chatBubble.getChatTime()));
+
+            if(type == RIGHT_TEXT_HEADER.getType()) {
+                chatTime.setVisibility(View.INVISIBLE);
+            }
         }
     }
 
     public static class ChatBubbleRightImageViewHolder extends RecyclerView.ViewHolder {
         ImageView chatImage;
-        TextView rightChatTime;
+        TextView chatTime;
+        int type;
 
-        public ChatBubbleRightImageViewHolder(@NonNull View itemView) {
+        public ChatBubbleRightImageViewHolder(@NonNull View itemView, int type) {
             super(itemView);
             chatImage = itemView.findViewById(R.id.right_chat_image);
-            rightChatTime = itemView.findViewById(R.id.right_chat_time);
+            chatTime = itemView.findViewById(R.id.right_chat_time);
+            this.type = type;
         }
 
         public void setChatImageClickEvent(ChatBubble chat) {
@@ -402,16 +437,15 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 v.getContext().startActivity(intent);
             });
         }
-    }
 
-    public static class ChatBubbleRightDuplicateViewHolder extends RecyclerView.ViewHolder {
-        TextView chatMessage;
-        TextView leftChatTime;
+        public void setChatBubble(ChatBubble chatBubble) {
+            setProfileImage(chatImage, chatBubble.getChatMsg());
+            setChatImageClickEvent(chatBubble);
+            chatTime.setText(getShortTime(chatBubble.getChatTime()));
 
-        public ChatBubbleRightDuplicateViewHolder(@NonNull View itemView) {
-            super(itemView);
-            chatMessage = itemView.findViewById(R.id.right_chat_text);
-            leftChatTime = itemView.findViewById(R.id.right_chat_time);
+            if(type == RIGHT_IMAGE_HEADER.getType()) {
+                chatTime.setVisibility(View.INVISIBLE);
+            }
         }
     }
 }

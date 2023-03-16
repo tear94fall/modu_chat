@@ -34,8 +34,8 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
             android:text="오전 10:14"
-            app:layout_constraintStart_toEndOf="@+id/left_chat_text"
-            tools:layout_editor_absoluteY="20dp" />
+            app:layout_constraintBottom_toBottomOf="@+id/left_chat_text"
+            app:layout_constraintStart_toEndOf="@+id/left_chat_text" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

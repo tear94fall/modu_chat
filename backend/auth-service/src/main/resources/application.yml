@@ -7,7 +7,7 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/modu_chat?serverTimezone=Asia/Seoul
+    url: jdbc:mysql://localhost:3306/modu-chat?serverTimezone=Asia/Seoul
     username: root
     password: root1234
 
@@ -51,7 +51,7 @@ security:
 
 eureka:
   instance:
-    instance-id: chat-service
+    instance-id: auth-service
 
   client:
     register-with-eureka: true

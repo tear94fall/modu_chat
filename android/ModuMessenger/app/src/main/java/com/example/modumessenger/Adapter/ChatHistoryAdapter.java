@@ -154,6 +154,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         현재 채팅은 내가 보낸 채팅
         1) 가장 처음에 위치한 채팅 인경우
+            1.0) 총 채팅이 1개인 경우 - RS
             1.1) 다음 채팅이 다른 사람이 보낸 채팅인 경우 - RS
             1.2) 다음 채팅이 내가 보낸 채팅인 경우
                 1.1.1) 전송 시간이 다른 경우 - RS
@@ -180,12 +181,16 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         ChatBubble currentChat = chatList.get(position);
 
         if (position == 0) {
-            ChatBubble nextChat = chatList.get(position + 1);
-
-            if (!currentChat.getSender().equals(nextChat.getSender())) {
+            if(getItemCount() == 1) {
                 type = RIGHT_TEXT_SINGLE;
             } else {
-                type = (!equalShotTime(currentChat.getChatTime(), nextChat.getChatTime())) ? RIGHT_TEXT_SINGLE : RIGHT_TEXT_HEADER;
+                ChatBubble nextChat = chatList.get(position + 1);
+
+                if (!currentChat.getSender().equals(nextChat.getSender())) {
+                    type = RIGHT_TEXT_SINGLE;
+                } else {
+                    type = (!equalShotTime(currentChat.getChatTime(), nextChat.getChatTime())) ? RIGHT_TEXT_SINGLE : RIGHT_TEXT_HEADER;
+                }
             }
         } else if (position == getItemCount() - 1) {
             ChatBubble prevChat = chatList.get(position - 1);
@@ -227,6 +232,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         현재 채팅은 다른 사람이 보낸 채팅
         1) 가장 처음에 위치한 채팅 인경우
+            1.0) 총 채팅이 1개인 경우 - LS
             1.1) 다음 채팅이 다른 사람이 보낸 채팅인 경우 - LS
             1.2) 다음 채팅과 보낸 사람이 같은 경우
                 1.1.1) 전송 시간이 다른 경우 - LS
@@ -255,12 +261,16 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         ChatBubble currentChat = chatList.get(position);
 
         if (position == 0) {
-            ChatBubble nextChat = chatList.get(position + 1);
-
-            if (!currentChat.getSender().equals(nextChat.getSender())) {
+            if (getItemCount() == 1) {
                 type = LEFT_TEXT_SINGLE;
             } else {
-                type = (!equalShotTime(currentChat.getChatTime(), nextChat.getChatTime())) ? LEFT_TEXT_SINGLE : LEFT_TEXT_HEADER;
+                ChatBubble nextChat = chatList.get(position + 1);
+
+                if (!currentChat.getSender().equals(nextChat.getSender())) {
+                    type = LEFT_TEXT_SINGLE;
+                } else {
+                    type = (!equalShotTime(currentChat.getChatTime(), nextChat.getChatTime())) ? LEFT_TEXT_SINGLE : LEFT_TEXT_HEADER;
+                }
             }
         } else if (position == getItemCount() - 1) {
             ChatBubble prevChat = chatList.get(position - 1);

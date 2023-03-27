@@ -33,4 +33,9 @@ public class Profile extends BaseTimeEntity {
         this.profileType = profileDto.getProfileType();
         this.value = profileDto.getValue();
     }
+
+    public Profile(ProfileType profileType, String value) {
+        this.profileType = profileType;
+        this.value = value;
+    }
 }

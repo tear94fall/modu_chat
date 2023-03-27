@@ -87,7 +87,7 @@ public class MemberService implements UserDetailsService {
     public MemberDto getMemberByEmail(String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND, email));
-        return modelMapper.map(member, MemberDto.class);
+        return new MemberDto(member);
     }
 
     public MemberDto getUserIdByEmail(String email) {
@@ -99,6 +99,8 @@ public class MemberService implements UserDetailsService {
         Member findMember = memberRepository.searchMemberByUserId(userId).orElseGet(Member::new);
 
         findMember.setUsername(memberDto.getUsername());
+        findMember.checkProfileUpdate(memberDto);
+
         findMember.setStatusMessage(memberDto.getStatusMessage());
         findMember.setProfileImage(memberDto.getProfileImage());
         findMember.setWallpaperImage(memberDto.getWallpaperImage());

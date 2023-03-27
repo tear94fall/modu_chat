@@ -25,11 +25,14 @@ import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.example.modumessenger.dto.MemberDto;
 import com.example.modumessenger.entity.Member;
+import com.example.modumessenger.entity.Profile;
+import com.example.modumessenger.entity.ProfileType;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -138,7 +141,16 @@ public class ProfileActivity extends AppCompatActivity {
         wallpaperImageView.setOnClickListener(v -> {
             Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
             intent.putExtra("email", email);
-            intent.putStringArrayListExtra("imageFileList", new ArrayList<>(Collections.singletonList(member.getWallpaperImage())));
+
+            List<String> imageFileList = member.getProfileList()
+                    .stream()
+                    .filter(profile -> profile.getProfileType().equals(ProfileType.PROFILE_WALLPAPER))
+                    .map(Profile::getValue)
+                    .collect(Collectors.toList());
+
+            imageFileList.add(member.getWallpaperImage());
+
+            intent.putStringArrayListExtra("imageFileList", new ArrayList<>(imageFileList));
             startActivity(intent);
         });
 
@@ -150,7 +162,16 @@ public class ProfileActivity extends AppCompatActivity {
         profileImageView.setOnClickListener(v -> {
             Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
             intent.putExtra("email", member.getEmail());
-            intent.putStringArrayListExtra("imageFileList", new ArrayList<>(Collections.singletonList(member.getProfileImage())));
+
+            List<String> imageFileList = member.getProfileList()
+                    .stream()
+                    .filter(profile -> profile.getProfileType().equals(ProfileType.PROFILE_IMAGE))
+                    .map(Profile::getValue)
+                    .collect(Collectors.toList());
+
+            imageFileList.add(member.getProfileImage());
+
+            intent.putStringArrayListExtra("imageFileList", new ArrayList<>(imageFileList));
             startActivity(intent);
         });
 

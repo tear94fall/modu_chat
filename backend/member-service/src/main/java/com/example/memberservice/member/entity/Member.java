@@ -4,6 +4,7 @@ import com.example.memberservice.chat.entity.ChatRoomMember;
 import com.example.memberservice.global.entity.BaseTimeEntity;
 import com.example.memberservice.member.dto.MemberDto;
 import com.example.memberservice.member.entity.profile.Profile;
+import com.example.memberservice.member.entity.profile.ProfileType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -55,9 +56,36 @@ public class Member extends BaseTimeEntity {
     @Column(name = "friends")
     private List<Long> Friends;
 
+    public void insertProfile(Profile profile) {
+        this.profileList.add(profile);
+    }
+
     @Override
     public String toString() {
         return getUserId() + ", " + getUsername() + "," + getEmail() + "," + getAuth() + "," + getStatusMessage() + "," + getProfileImage();
+    }
+
+    public void checkProfileUpdate(MemberDto memberDto) {
+        if (!getStatusMessage().equals(memberDto.getStatusMessage())) {
+            setStatusMessage(memberDto.getStatusMessage());
+            Profile profile = new Profile(ProfileType.PROFILE_STATUS_MESSAGE, memberDto.getStatusMessage());
+            profile.setMember(this);
+            insertProfile(profile);
+        }
+
+        if (!getProfileImage().equals(memberDto.getProfileImage())) {
+            setProfileImage(memberDto.getProfileImage());
+            Profile profile = new Profile(ProfileType.PROFILE_IMAGE, memberDto.getProfileImage());
+            profile.setMember(this);
+            insertProfile(profile);
+        }
+
+        if (!getWallpaperImage().equals(memberDto.getWallpaperImage())) {
+            setWallpaperImage(memberDto.getWallpaperImage());
+            Profile profile = new Profile(ProfileType.PROFILE_WALLPAPER, memberDto.getWallpaperImage());
+            profile.setMember(this);
+            insertProfile(profile);
+        }
     }
 
     public Member update(String name, String picture) {

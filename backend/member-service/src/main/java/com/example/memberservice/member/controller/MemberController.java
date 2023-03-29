@@ -45,6 +45,12 @@ public class MemberController {
         return ResponseEntity.ok().body(modelMapper.map(memberDto, ResponseMemberDto.class));
     }
 
+    @DeleteMapping("/member/profile/{userId}")
+    public ResponseEntity<ResponseMemberDto> deleteProfileImage(@Valid @PathVariable("userId") String userId, @RequestBody String profileImage) {
+        MemberDto memberDto = memberService.deleteProfileImage(userId, profileImage);
+        return ResponseEntity.ok().body(modelMapper.map(memberDto, ResponseMemberDto.class));
+    }
+
     @GetMapping("member/{userId}/friends")
     public ResponseEntity<List<ResponseMemberDto>> friendsList(@Valid @PathVariable("userId") String userId) {
         List<MemberDto> friendsList = memberService.getFriendsList(userId);

@@ -9,6 +9,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -43,6 +44,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Observable;
@@ -60,7 +62,7 @@ public class ProfileImageActivity  extends AppCompatActivity {
     LinearLayout profileImageLayout;
     ViewPager2 profileImageSliderViewPager;
     Button profileCloseButton;
-    ImageButton profileDownloadButton;
+    ImageButton profileDownloadButton, profileDeleteButton;
     List<String> profileImageList;
 
     Disposable backgroundTask;
@@ -86,6 +88,7 @@ public class ProfileImageActivity  extends AppCompatActivity {
         profileImageLayout = findViewById(R.id.profile_image_index_layout);
         profileCloseButton = findViewById(R.id.profile_image_close_button);
         profileDownloadButton = findViewById(R.id.profile_image_download_button);
+        profileDeleteButton = findViewById(R.id.profile_image_delete_button);
     }
 
     private void setData() {
@@ -100,6 +103,7 @@ public class ProfileImageActivity  extends AppCompatActivity {
 
         ArrayList<String> imageFileList = getIntent().getStringArrayListExtra("imageFileList");
         showImageLists(imageFileList);
+        getMyProfileInfo(email);
     }
 
     private void setEvents() {
@@ -109,6 +113,12 @@ public class ProfileImageActivity  extends AppCompatActivity {
             int currentItem = profileImageSliderViewPager.getCurrentItem();
             String imageFile = this.profileImageList.get(currentItem);
             saveImageFromUrl(imageFile);
+        });
+
+        profileDeleteButton.setOnClickListener(v -> {
+            int currentItem = profileImageSliderViewPager.getCurrentItem();
+            String imageFile = this.profileImageList.get(currentItem);
+            deleteProfileImage(member.getUserId(), imageFile);
         });
 
         profileImageSliderViewPager.registerOnPageChangeCallback(new OnPageChangeCallback() {
@@ -246,22 +256,41 @@ public class ProfileImageActivity  extends AppCompatActivity {
         call.enqueue(new Callback<MemberDto>() {
             @Override
             public void onResponse(@NonNull Call<MemberDto> call, @NonNull Response<MemberDto> response) {
-                if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
+                        MemberDto memberDto = response.body();
+
+                        if (!memberDto.getUserId().equals(member.getUserId())) {
+                            profileDeleteButton.setVisibility(View.INVISIBLE);
+                        }
+                    }
                 }
 
-                assert response.body() != null;
-                MemberDto result = response.body();
-
-                profileImageList.add(result.getProfileImage());
-
-                profileImageSliderViewPager.setOffscreenPageLimit(1);
-                profileImageSliderViewPager.setAdapter(new ProfileImageSliderAdapter(profileImageList));
-
-                setupProfileImageIndex(profileImageList.size());
-
                 Log.d("내 정보 가져오기 요청 : ", response.body().toString());
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<MemberDto> call, @NonNull Throwable t) {
+                Log.e("연결실패", t.getMessage());
+            }
+        });
+    }
+
+    public void deleteProfileImage(String userId, String image) {
+        Call<MemberDto> call = retrofitMemberAPI.RequestDeleteProfileImage(userId, image);
+
+        call.enqueue(new Callback<MemberDto>() {
+            @Override
+            public void onResponse(@NonNull Call<MemberDto> call, @NonNull Response<MemberDto> response) {
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
+                        profileImageList.stream()
+                                .filter(p -> p.equals(image))
+                                .findFirst().ifPresent(s -> profileImageList.remove(s));
+                    }
+                }
+
+                Log.d("프로필 이미지 삭제 요청 : ", response.body().toString());
             }
 
             @Override

@@ -67,8 +67,16 @@ public class Member extends BaseTimeEntity {
 
     public void checkProfileUpdate(MemberDto memberDto) {
         if (!getStatusMessage().equals(memberDto.getStatusMessage())) {
+            Profile profile = getProfileList().stream()
+                    .filter(p -> p.getProfileType().equals(ProfileType.PROFILE_STATUS_MESSAGE) && p.getValue().equals(memberDto.getStatusMessage()))
+                    .findFirst().orElse(null);
+
+            if (profile != null) {
+                getProfileList().remove(profile);
+            }
+
             setStatusMessage(memberDto.getStatusMessage());
-            Profile profile = new Profile(ProfileType.PROFILE_STATUS_MESSAGE, memberDto.getStatusMessage());
+            profile = new Profile(ProfileType.PROFILE_STATUS_MESSAGE, memberDto.getStatusMessage());
             profile.setMember(this);
             insertProfile(profile);
         }

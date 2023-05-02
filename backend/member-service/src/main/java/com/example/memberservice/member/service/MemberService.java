@@ -6,7 +6,9 @@ import com.example.memberservice.global.properties.GoogleOauthProperties;
 import com.example.memberservice.member.dto.GoogleLoginRequest;
 import com.example.memberservice.member.dto.MemberDto;
 import com.example.memberservice.member.entity.Member;
+import com.example.memberservice.member.entity.profile.Profile;
 import com.example.memberservice.member.repository.MemberRepository;
+import com.example.memberservice.member.repository.ProfileRepository;
 import com.example.memberservice.storage.client.StorageFeignClient;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -47,6 +49,7 @@ public class MemberService implements UserDetailsService {
     }
 
     private final MemberRepository memberRepository;
+    private final ProfileRepository profileRepository;
     private final ModelMapper modelMapper;
     private final GoogleOauthProperties googleOauthProperties;
     private final StorageFeignClient storageFeignClient;
@@ -107,6 +110,25 @@ public class MemberService implements UserDetailsService {
 
         Member updateMember = memberRepository.save(findMember);
         return modelMapper.map(updateMember, MemberDto.class);
+    }
+
+    public MemberDto deleteProfileImage(String userId, String profileImage) {
+        Member findMember = memberRepository.findByUserId(userId);
+
+        Profile profile = findMember.getProfileList()
+                .stream()
+                .filter(p -> p.getValue().equals(profileImage))
+                .findFirst()
+                .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND, userId));
+
+        storageFeignClient.delete(profile.getValue());
+
+        findMember.getProfileList().remove(profile);
+
+        Member saveMember = memberRepository.save(findMember);
+        profileRepository.delete(profile);
+
+        return new MemberDto(saveMember);
     }
 
     public List<MemberDto> getFriendsList(String userId) {

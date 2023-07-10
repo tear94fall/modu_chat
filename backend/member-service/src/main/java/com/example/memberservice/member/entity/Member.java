@@ -29,6 +29,7 @@ public class Member extends BaseTimeEntity {
     private Long id;
 
     @NotNull
+    @Column(name = "user_id")
     private String userId;
 
     private String auth;

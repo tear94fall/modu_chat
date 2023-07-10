@@ -161,7 +161,7 @@ public class MemberService implements UserDetailsService {
 
     public List<MemberDto> findFriend(String email) {
         if(!memberRepository.existsByEmail(email)) {
-            throw new DuplicateKeyException(String.format("존재하지 않는 유저의 이메일 입니다 'email: %s'", email));
+            return new ArrayList<>();
         }
 
         List<Member> memberList = memberRepository.findFriendsByEmail(email)
@@ -169,7 +169,7 @@ public class MemberService implements UserDetailsService {
 
         return memberList
                 .stream()
-                .map(u -> modelMapper.map(u, MemberDto.class))
+                .map(MemberDto::new)
                 .collect(Collectors.toList());
     }
 

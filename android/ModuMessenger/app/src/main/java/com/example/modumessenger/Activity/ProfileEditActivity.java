@@ -33,6 +33,7 @@ import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.MemberDto;
+import com.google.gson.Gson;
 
 import java.io.File;
 import java.util.Objects;
@@ -251,10 +252,11 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
                 if(response.isSuccessful()) {
                     if(response.body() != null) {
                         MemberDto myInfo = response.body();
-                        member = new Member(myInfo);
 
                         setUserProfile(member);
-                        setSharedObject("member", member);
+
+                        String json = new Gson().toJson(myInfo);
+                        setSharedObject("member", json);
 
                         Toast.makeText(getApplicationContext(), "프로필 정보가 업데이트 되었습니다.", Toast.LENGTH_SHORT).show();
                         Log.d("내정보 업데이트 요청 : ", response.body().toString());
@@ -283,7 +285,9 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
                         member.updateProfile(memberDto);
 
                         setUserProfile(member);
-                        setSharedObject("member", member);
+
+                        String json = new Gson().toJson(member);
+                        setSharedObject("member", json);
 
                         Log.d("내 정보 가져오기 요청 : ", response.body().toString());
                     }

@@ -165,23 +165,23 @@ public class LoginActivity extends AppCompatActivity {
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
-                if(!response.isSuccessful()){
+                if(response.isSuccessful()) {
+                    String refreshToken = response.headers().get("refresh-token");
+                    String accessToken = response.headers().get("access-token");
+
+                    Log.e("refresh jwt 토큰 발급 완료 : ", refreshToken);
+                    Log.e("access jwt 토큰 발급 완료 : ", accessToken);
+
+                    PreferenceManager.setString("refresh-token", "Bearer" + " " + refreshToken);
+                    PreferenceManager.setString("access-token", "Bearer" + " " + accessToken);
+
+                    Toast.makeText(getApplicationContext(),"로그인에 성공 하였습니다. 반갑습니다.", Toast.LENGTH_SHORT).show();
+
+                    GetUserInfo(requestLoginDto.getEmail(), "google");
+                } else {
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
                     Toast.makeText(getApplicationContext(),"연결이 원활하지 않습니다.", Toast.LENGTH_SHORT).show();
                 }
-
-                String refreshToken = response.headers().get("refresh-token");
-                String accessToken = response.headers().get("access-token");
-
-                Log.e("refresh jwt 토큰 발급 완료 : ", refreshToken);
-                Log.e("access jwt 토큰 발급 완료 : ", accessToken);
-
-                PreferenceManager.setString("refresh-token", "Bearer" + " " + refreshToken);
-                PreferenceManager.setString("access-token", "Bearer" + " " + accessToken);
-
-                Toast.makeText(getApplicationContext(),"로그인에 성공 하였습니다. 반갑습니다.", Toast.LENGTH_SHORT).show();
-
-                GetUserInfo(requestLoginDto.getEmail(), "google");
             }
 
             @Override

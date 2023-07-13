@@ -4,6 +4,7 @@ import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectM
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
@@ -19,12 +20,14 @@ import com.example.modumessenger.Fragments.FragmentFriends;
 import com.example.modumessenger.Fragments.FragmentChat;
 import com.example.modumessenger.Fragments.FragmentSetting;
 import com.example.modumessenger.Global.PreferenceManager;
+import com.example.modumessenger.Global.UiUtil;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitChatAPI;
 import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.example.modumessenger.entity.Member;
+import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -40,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     Member member;
 
     BottomNavigationView bottomNavigationView;
+    BadgeDrawable badgeDrawable;
     private ViewPager2 viewPager2;
 
     RetrofitChatAPI retrofitChatAPI;
@@ -84,6 +88,17 @@ public class MainActivity extends AppCompatActivity {
         bottomNavigationView = findViewById(R.id.navigationView);
         viewPager2 = findViewById(R.id.view_pager);
         viewPager2.setAdapter(new ViewPagerAdapter(this));
+
+        badgeDrawable = bottomNavigationView.getOrCreateBadge(R.id.chatItem);
+
+        badgeDrawable.setVerticalOffset(UiUtil.DpToPx(MainActivity.this, 4));
+        badgeDrawable.setHorizontalOffset(UiUtil.DpToPx(MainActivity.this, 1));
+        badgeDrawable.setNumber(3);
+
+        badgeDrawable.setBackgroundColor(ContextCompat.getColor(MainActivity.this, R.color.red));
+        badgeDrawable.setBadgeTextColor(ContextCompat.getColor(MainActivity.this, R.color.white));
+
+        badgeDrawable.setVisible(false);
     }
 
     private void setButtonClickEvent() {

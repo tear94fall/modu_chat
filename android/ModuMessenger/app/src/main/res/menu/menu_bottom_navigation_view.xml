@@ -3,7 +3,7 @@
 
     <item
         android:id="@+id/friendsItem"
-        android:icon="@android:drawable/ic_menu_call"
+        android:icon="@drawable/ic_baseline_person_24"
         android:title="@string/friends" />
     <item
         android:id="@+id/chatItem"

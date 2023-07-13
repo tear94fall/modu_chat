@@ -64,6 +64,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
         holder.setChatRoomTitle(chatRoom);
         holder.setChatRoomLastMsg(chatRoom);
         holder.setChatRoomLastTime(chatRoom);
+        holder.setChatBadge(chatRoom);
         holder.setChatRoomImage(chatRoom);
         holder.setChatRoomClickEvent(chatRoom);
     }
@@ -92,6 +93,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
         TextView chatRoomName;
         TextView lastChatMessage;
         TextView lastChatTime;
+        TextView chatBadge;
         ImageView chatRoomImage;
         ConstraintLayout chatRoomCardView;
         ImageView memberImage1, memberImage2, memberImage3, memberImage4;
@@ -117,6 +119,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
             chatRoomName = itemView.findViewById(R.id.chat_room_name);
             lastChatMessage = itemView.findViewById(R.id.last_chat_message);
             lastChatTime = itemView.findViewById(R.id.last_chat_time);
+            chatBadge = itemView.findViewById(R.id.chat_badge);
             chatRoomImage = itemView.findViewById(R.id.chat_room_image);
             chatRoomCardView = itemView.findViewById(R.id.chatRoomCardViewLayout);
 
@@ -175,6 +178,11 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
 
         public void setChatRoomLastTime(ChatRoom chatRoom) {
             this.lastChatTime.setText(chatRoom.getLastChatTime().equals("") || chatRoom.getLastChatMsg().equals("") ? "" : getShortTime(chatRoom.getLastChatTime()));
+        }
+
+        public void setChatBadge(ChatRoom chatRoom) {
+            this.chatBadge.setText("1");
+            this.chatBadge.setVisibility(View.INVISIBLE);
         }
 
         public void setChatRoomImage(ChatRoom chatRoom) {

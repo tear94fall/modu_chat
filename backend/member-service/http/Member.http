@@ -1,0 +1,2 @@
+### 멤버 조회 요청
+GET http://localhost:8080/member/joonsub2990@gmail.com

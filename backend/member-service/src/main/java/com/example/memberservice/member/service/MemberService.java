@@ -39,6 +39,12 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 @RequiredArgsConstructor
 public class MemberService implements UserDetailsService {
 
+    private final MemberRepository memberRepository;
+    private final ProfileRepository profileRepository;
+    private final ModelMapper modelMapper;
+    private final GoogleOauthProperties googleOauthProperties;
+    private final StorageFeignClient storageFeignClient;
+
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         Member member = memberRepository.findByEmail(email)
@@ -48,43 +54,35 @@ public class MemberService implements UserDetailsService {
                 true, true, true, true, new ArrayList<>());
     }
 
-    private final MemberRepository memberRepository;
-    private final ProfileRepository profileRepository;
-    private final ModelMapper modelMapper;
-    private final GoogleOauthProperties googleOauthProperties;
-    private final StorageFeignClient storageFeignClient;
-
     public MemberDto getUserById(String userId) {
-        Member member = memberRepository.findByUserId(userId);
+        Member member = memberRepository.findByUserId(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userId));
+
         return modelMapper.map(member, MemberDto.class);
     }
 
     public MemberDto registerMember(GoogleLoginRequest googleLoginRequest) {
         Payload payload = GoogleIdTokenVerifier(googleLoginRequest.getIdToken());
-
-        MemberDto memberDto = null;
-
-        // need to add exception
-        if (payload != null) {
-            String email = payload.getEmail();
-
-            if(memberRepository.existsByEmail(email)){
-                Member findMember = memberRepository.findByEmail(email)
-                        .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND, email));
-
-                return modelMapper.map(findMember, MemberDto.class);
-            }
-
-            memberDto = new MemberDto(payload);
-
-            ResponseEntity<String> upload = storageFeignClient.upload(memberDto.getProfileImage());
-            String filename = upload.getBody();
-            memberDto.setProfileImage(filename);
+        if (payload == null) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED_GOOGLE_ID_TOKEN_ERROR, googleLoginRequest.getIdToken());
         }
 
-        Member save = memberRepository.save(new Member(memberDto));
+        String email = payload.getEmail();
+        if (memberRepository.existsByEmail(email)) {
+            throw new CustomException(ErrorCode.ALREADY_EXIST_USERID, email);
+        }
 
-        return new MemberDto(save);
+        MemberDto memberDto = new MemberDto(payload);
+        Member member = memberRepository.save(new Member(memberDto));
+        memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.CREATE_NEW_USER_FAIL, email));
+
+        ResponseEntity<String> upload = storageFeignClient.upload(memberDto.getProfileImage());
+        if (!member.getProfileImage().equals(upload.getBody())) {
+            throw new CustomException(ErrorCode.USER_PROFILE_IMAGE_UPLOAD_ERROR, member.getProfileImage());
+        }
+
+        return new MemberDto(member);
     }
 
     public MemberDto getMemberByEmail(String email) {
@@ -93,29 +91,18 @@ public class MemberService implements UserDetailsService {
         return new MemberDto(member);
     }
 
-    public MemberDto getUserIdByEmail(String email) {
-        Member findMember = memberRepository.searchMemberByUserId(email).orElseGet(Member::new);
-        return modelMapper.map(findMember, MemberDto.class);
-    }
-
     public MemberDto updateMember(String userId, MemberDto memberDto) {
-        Member findMember = memberRepository.searchMemberByUserId(userId).orElseGet(Member::new);
-
-        findMember.setUsername(memberDto.getUsername());
-        findMember.checkProfileUpdate(memberDto);
-
-        findMember.setStatusMessage(memberDto.getStatusMessage());
-        findMember.setProfileImage(memberDto.getProfileImage());
-        findMember.setWallpaperImage(memberDto.getWallpaperImage());
-
-        Member updateMember = memberRepository.save(findMember);
+        Member member = memberRepository.searchMemberByUserId(userId).orElseGet(Member::new);
+        member.updateMember(memberDto);
+        Member updateMember = memberRepository.save(member);
         return modelMapper.map(updateMember, MemberDto.class);
     }
 
     public MemberDto deleteProfileImage(String userId, String profileImage) {
-        Member findMember = memberRepository.findByUserId(userId);
+        Member member = memberRepository.findByUserId(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userId));
 
-        Profile profile = findMember.getProfileList()
+        Profile profile = member.getProfileList()
                 .stream()
                 .filter(p -> p.getValue().equals(profileImage))
                 .findFirst()
@@ -123,22 +110,24 @@ public class MemberService implements UserDetailsService {
 
         storageFeignClient.delete(profile.getValue());
 
-        findMember.getProfileList().remove(profile);
+        member.getProfileList().remove(profile);
 
-        Member saveMember = memberRepository.save(findMember);
+        Member saveMember = memberRepository.save(member);
         profileRepository.delete(profile);
 
         return new MemberDto(saveMember);
     }
 
     public List<MemberDto> getFriendsList(String userId) {
-        Member member = memberRepository.findByUserId(userId);
-        List<Member> memberList = memberRepository.findAllFriends(member.getFriends())
+        Member member = memberRepository.findByUserId(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userId));
+
+        List<Member> friendList = memberRepository.findAllFriends(member.getFriends())
                 .orElseThrow(() -> new CustomException(ErrorCode.USERID_FRIENDS_NOT_FOUND_ERROR, userId));
 
-        return memberList
+        return friendList
                 .stream()
-                .map(u -> modelMapper.map(u, MemberDto.class))
+                .map(friend -> modelMapper.map(friend, MemberDto.class))
                 .collect(Collectors.toList());
     }
 
@@ -149,23 +138,24 @@ public class MemberService implements UserDetailsService {
             ));
         }
 
-        Member member = memberRepository.findByUserId(userId);
-        Member friend = memberRepository.findByEmail(memberDto.getEmail())
+        Member member = memberRepository.findByUserId(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userId));
+
+        Member friend = memberRepository.findByEmail(member.getEmail())
                 .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND, memberDto.getEmail()));
 
-        memberRepository.findByUserId(userId).getFriends().add(friend.getId());
-        memberRepository.save(member);
+        member.getFriends().add(friend.getId());
 
         return modelMapper.map(friend, MemberDto.class);
     }
 
     public List<MemberDto> findFriend(String email) {
         if(!memberRepository.existsByEmail(email)) {
-            return new ArrayList<>();
+            throw new CustomException(ErrorCode.EMAIL_NOT_FOUND, email);
         }
 
         List<Member> memberList = memberRepository.findFriendsByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.USEREMAIL_FRIENDS_NOT_FOUND_ERROR, email));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_EMAIL_FRIENDS_NOT_FOUND_ERROR, email));
 
         return memberList
                 .stream()
@@ -173,20 +163,16 @@ public class MemberService implements UserDetailsService {
                 .collect(Collectors.toList());
     }
 
-    public Payload GoogleIdTokenVerifier(String id_token) {
-        String tmp = googleOauthProperties.getClientId();
+    public Payload GoogleIdTokenVerifier(String token) {
         GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance())
                 .setAudience(Collections.singletonList(googleOauthProperties.getClientId()))
                 .build();
 
-        GoogleIdToken idToken = null;
-
         try {
-            idToken = verifier.verify(id_token);
+            GoogleIdToken googleIdToken = verifier.verify(token);
+            return googleIdToken.getPayload();
         } catch (GeneralSecurityException | IOException e) {
-            throw new RuntimeException(e);
+            throw new CustomException(ErrorCode.UNAUTHORIZED_GOOGLE_ID_TOKEN_ERROR, token);
         }
-
-        return idToken.getPayload();
     }
 }

@@ -30,6 +30,7 @@ import com.example.modumessenger.entity.ProfileType;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -145,10 +146,9 @@ public class ProfileActivity extends AppCompatActivity {
             List<String> imageFileList = member.getProfileList()
                     .stream()
                     .filter(profile -> profile.getProfileType().equals(ProfileType.PROFILE_WALLPAPER))
+                    .sorted(Comparator.comparing(Profile::getLastModifiedDateTime).reversed())
                     .map(Profile::getValue)
                     .collect(Collectors.toList());
-
-            imageFileList.add(member.getWallpaperImage());
 
             intent.putStringArrayListExtra("imageFileList", new ArrayList<>(imageFileList));
             startActivity(intent);
@@ -166,10 +166,9 @@ public class ProfileActivity extends AppCompatActivity {
             List<String> imageFileList = member.getProfileList()
                     .stream()
                     .filter(profile -> profile.getProfileType().equals(ProfileType.PROFILE_IMAGE))
+                    .sorted(Comparator.comparing(Profile::getLastModifiedDateTime).reversed())
                     .map(Profile::getValue)
                     .collect(Collectors.toList());
-
-            imageFileList.add(member.getProfileImage());
 
             intent.putStringArrayListExtra("imageFileList", new ArrayList<>(imageFileList));
             startActivity(intent);

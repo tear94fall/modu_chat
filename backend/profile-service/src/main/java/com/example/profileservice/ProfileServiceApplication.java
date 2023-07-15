@@ -1,4 +1,4 @@
-package com.example.memberservice;
+package com.example.profileservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -8,10 +8,10 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @EnableFeignClients
 @EnableDiscoveryClient
 @SpringBootApplication
-public class MemberServiceApplication {
+public class ProfileServiceApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(MemberServiceApplication.class, args);
+		SpringApplication.run(ProfileServiceApplication.class, args);
 	}
 
 }

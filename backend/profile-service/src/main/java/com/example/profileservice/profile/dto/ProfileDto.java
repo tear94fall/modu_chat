@@ -1,27 +1,24 @@
-package com.example.memberservice.member.dto;
+package com.example.profileservice.profile.dto;
 
-import com.example.memberservice.member.entity.profile.Profile;
-import com.example.memberservice.member.entity.profile.ProfileType;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import com.example.profileservice.profile.entity.Profile;
+import com.example.profileservice.profile.entity.ProfileType;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
 import java.time.format.DateTimeFormatter;
 
-@Data
-@Builder
+@Getter
 @NoArgsConstructor
-@AllArgsConstructor
-public class ProfileDto implements Serializable {
+public class ProfileDto {
 
+    private Long memberId;
     private ProfileType profileType;
     private String value;
     private String createdDate;
     private String updatedDate;
 
     public ProfileDto(Profile profile) {
+        this.memberId = profile.getMemberId();
         this.profileType = profile.getProfileType();
         this.value = profile.getValue();
         this.createdDate = profile.getCreatedDate() != null ? profile.getCreatedDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : "";

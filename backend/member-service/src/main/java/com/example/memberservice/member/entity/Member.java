@@ -8,7 +8,6 @@ import com.example.memberservice.member.entity.profile.ProfileType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -18,7 +17,6 @@ import java.util.stream.Collectors;
 
 @Entity
 @Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class Member extends BaseTimeEntity {
@@ -29,6 +27,7 @@ public class Member extends BaseTimeEntity {
     private Long id;
 
     @NotNull
+    @Column(name = "user_id")
     private String userId;
 
     private String auth;
@@ -65,7 +64,7 @@ public class Member extends BaseTimeEntity {
         return getUserId() + ", " + getUsername() + "," + getEmail() + "," + getAuth() + "," + getStatusMessage() + "," + getProfileImage();
     }
 
-    public void checkProfileUpdate(MemberDto memberDto) {
+    public void updateProfile(MemberDto memberDto) {
         if (!getStatusMessage().equals(memberDto.getStatusMessage())) {
             Profile profile = getProfileList().stream()
                     .filter(p -> p.getProfileType().equals(ProfileType.PROFILE_STATUS_MESSAGE) && p.getValue().equals(memberDto.getStatusMessage()))
@@ -75,44 +74,46 @@ public class Member extends BaseTimeEntity {
                 getProfileList().remove(profile);
             }
 
-            setStatusMessage(memberDto.getStatusMessage());
+            this.statusMessage = memberDto.getStatusMessage();
             profile = new Profile(ProfileType.PROFILE_STATUS_MESSAGE, memberDto.getStatusMessage());
             profile.setMember(this);
             insertProfile(profile);
         }
 
         if (!getProfileImage().equals(memberDto.getProfileImage())) {
-            setProfileImage(memberDto.getProfileImage());
+            this.profileImage = memberDto.getProfileImage();;
             Profile profile = new Profile(ProfileType.PROFILE_IMAGE, memberDto.getProfileImage());
             profile.setMember(this);
             insertProfile(profile);
         }
 
         if (!getWallpaperImage().equals(memberDto.getWallpaperImage())) {
-            setWallpaperImage(memberDto.getWallpaperImage());
+            this.wallpaperImage = memberDto.getWallpaperImage();
             Profile profile = new Profile(ProfileType.PROFILE_WALLPAPER, memberDto.getWallpaperImage());
             profile.setMember(this);
             insertProfile(profile);
         }
     }
 
-    public Member update(String name, String picture) {
-        this.username = name;
-        this.profileImage = picture;
+    public void updateMember(MemberDto memberDto) {
+        this.username = memberDto.getUsername();
+        this.statusMessage = memberDto.getStatusMessage();
+        this.profileImage = memberDto.getProfileImage();
+        this.wallpaperImage = memberDto.getWallpaperImage();
 
-        return this;
+        this.updateProfile(memberDto);
     }
 
     public Member(MemberDto memberDto) {
-        setUserId(memberDto.getUserId());
-        setAuth(memberDto.getAuth());
-        setRole(memberDto.getRole());
-        setEmail(memberDto.getEmail());
-        setUsername(memberDto.getUsername());
-        setStatusMessage(memberDto.getStatusMessage());
-        setProfileImage(memberDto.getProfileImage());
-        setWallpaperImage(memberDto.getWallpaperImage());
-        setProfileList(memberDto.getProfileDtoList().stream().map(Profile::new).collect(Collectors.toList()));
+        this.userId = memberDto.getUserId();
+        this.auth = memberDto.getAuth();
+        this.role = memberDto.getRole();
+        this.email = memberDto.getEmail();
+        this.username = memberDto.getUsername();
+        this.statusMessage = memberDto.getStatusMessage();
+        this.profileImage = memberDto.getProfileImage();
+        this.wallpaperImage = memberDto.getWallpaperImage();
+        this.profileList = memberDto.getProfileDtoList().stream().map(Profile::new).collect(Collectors.toList());
         this.Friends = new ArrayList<>();
     }
 
@@ -125,9 +126,9 @@ public class Member extends BaseTimeEntity {
         this.email = email;
     }
 
-    public Member(String email, String name, String picture) {
-        setEmail(email);
-        setUsername(name);
-        setProfileImage(picture);
+    public Member(String email, String username, String picture) {
+        this.email = email;
+        this.username = username;
+        this.profileImage = picture;
     }
 }

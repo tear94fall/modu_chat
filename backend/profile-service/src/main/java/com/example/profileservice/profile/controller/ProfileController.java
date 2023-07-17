@@ -20,13 +20,23 @@ public class ProfileController {
         return ResponseEntity.ok().body(profileService.getMemberProfiles(memberId));
     }
 
+    @GetMapping("/profile/{memberId}/{id}/{count}")
+    public ResponseEntity<List<ProfileDto>> getProfilesOffset(@PathVariable String memberId, @PathVariable String id, @PathVariable String count) {
+        return ResponseEntity.ok().body(profileService.getMemberProfileOffset(memberId, id, count));
+    }
+
+    @GetMapping("/profile/{memberId}/{id}")
+    public ResponseEntity<ProfileDto> getProfile(@PathVariable String memberId, @PathVariable String id) {
+        return ResponseEntity.ok().body(profileService.getMemberProfile(memberId, id));
+    }
+
     @PostMapping("/profile")
     public ResponseEntity<ProfileDto> createProfile(@RequestBody ProfileDto profileDto) {
         return ResponseEntity.ok().body(profileService.registerProfile(profileDto));
     }
 
-    @DeleteMapping("/profile/{memberId}/{value}")
-    public ResponseEntity<Long> removeProfile(@PathVariable String memberId, @PathVariable String value) {
-        return ResponseEntity.ok().body(profileService.deleteProfile(memberId, value));
+    @DeleteMapping("/profile/{memberId}/{id}")
+    public ResponseEntity<Long> removeProfile(@PathVariable String memberId, @PathVariable String id) {
+        return ResponseEntity.ok().body(profileService.deleteProfile(memberId, id));
     }
 }

@@ -25,6 +25,19 @@ public class ProfileService {
                 .collect(Collectors.toList());
     }
 
+    public List<ProfileDto> getMemberProfileOffset(String memberId, String id, String count) {
+        List<Profile> profileList = profileRepository.findByMemberProfileOffset(Long.valueOf(memberId), Long.valueOf(id), Long.valueOf(count));
+
+        return profileList.stream()
+                .map(ProfileDto::new)
+                .collect(Collectors.toList());
+    }
+
+    public ProfileDto getMemberProfile(String memberId, String id) {
+        Profile profile = profileRepository.findByMemberProfile(Long.valueOf(memberId), Long.valueOf(id));
+        return new ProfileDto(profile);
+    }
+
     public ProfileDto registerProfile(ProfileDto profileDto) {
         Profile profile = new Profile(profileDto);
         profileRepository.save(profile);
@@ -32,7 +45,7 @@ public class ProfileService {
         return new ProfileDto(profile);
     }
 
-    public Long deleteProfile(String memberId, String value) {
-        return profileRepository.deleteByMemberProfile(Long.valueOf(memberId), value);
+    public Long deleteProfile(String memberId, String id) {
+        return profileRepository.deleteByMemberProfile(Long.valueOf(memberId), Long.valueOf(id));
     }
 }

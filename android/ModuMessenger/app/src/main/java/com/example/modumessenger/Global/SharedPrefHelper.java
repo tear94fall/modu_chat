@@ -1,8 +1,5 @@
 package com.example.modumessenger.Global;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-
 import com.example.modumessenger.entity.Member;
 import com.google.gson.Gson;
 

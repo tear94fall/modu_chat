@@ -1,6 +1,6 @@
 package com.example.modumessenger.Activity;
 
-import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
@@ -61,7 +61,7 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     private void getData() {
-        member = getSharedObjectMember();
+        member = getDataStoreMember();
     }
 
     private void setData() {

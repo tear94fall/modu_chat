@@ -1,5 +1,7 @@
 package com.example.modumessenger.Global;
 
+import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreStr;
+
 import android.annotation.SuppressLint;
 import android.app.appsearch.AppSearchResult;
 import android.content.Context;
@@ -9,6 +11,9 @@ import androidx.datastore.preferences.core.Preferences;
 import androidx.datastore.preferences.core.PreferencesKeys;
 import androidx.datastore.preferences.rxjava2.RxPreferenceDataStoreBuilder;
 import androidx.datastore.rxjava2.RxDataStore;
+
+import com.example.modumessenger.entity.Member;
+import com.google.gson.Gson;
 
 import java.io.File;
 
@@ -33,7 +38,7 @@ public class DataStoreUtils {
     }
 
     public void getPreferences(Context context, String dataFileName) {
-        this.filePath = context.getFilesDir().getAbsolutePath() + "/datastore/";
+        this.filePath = context.getFilesDir().getAbsolutePath() + "/modu-chat/";
         RxPreferenceDataStoreBuilder builder = new RxPreferenceDataStoreBuilder(context, dataFileName);
         dataStore = builder.build();
     }
@@ -190,5 +195,4 @@ public class DataStoreUtils {
             return Single.just(mutablePreferences);
         });
     }
-
 }

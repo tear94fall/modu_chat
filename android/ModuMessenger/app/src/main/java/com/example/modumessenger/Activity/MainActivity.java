@@ -1,6 +1,6 @@
 package com.example.modumessenger.Activity;
 
-import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+import static com.example.modumessenger.Global.DataStoreHelper.*;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,7 +19,6 @@ import android.widget.Toast;
 import com.example.modumessenger.Fragments.FragmentFriends;
 import com.example.modumessenger.Fragments.FragmentChat;
 import com.example.modumessenger.Fragments.FragmentSetting;
-import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.Global.UiUtil;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitChatAPI;
@@ -62,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getData() {
-        member = getSharedObjectMember();
+        member = getDataStoreMember();
     }
 
     private void setData() {
@@ -73,8 +72,8 @@ public class MainActivity extends AppCompatActivity {
     private void initFirebase() {
         FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
-                PreferenceManager.setString("fcm-token", task.getResult());
-                SendFcmToken(member.getUserId(), PreferenceManager.getString("fcm-token"));
+                setDataStoreObject("fcm-token", task.getResult());
+                SendFcmToken(member.getUserId(), getDataStoreStr("fcm-token"));
                 getChatRoomList(member.getUserId());
             } else {
                 System.out.println("fcm get token error");

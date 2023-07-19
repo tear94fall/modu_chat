@@ -1,6 +1,6 @@
 package com.example.modumessenger.Activity;
 
-import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -78,7 +78,7 @@ public class InviteActivity extends AppCompatActivity {
     private void setData() {
         roomId = getIntent().getStringExtra("roomId");
         currentMember = getIntent().getStringArrayListExtra("currentMember");
-        member = getSharedObjectMember();
+        member = getDataStoreMember();
 
         getFriendsList(member);
     }

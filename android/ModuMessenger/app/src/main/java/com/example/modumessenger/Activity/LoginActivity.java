@@ -1,6 +1,6 @@
 package com.example.modumessenger.Activity;
 
-import static com.example.modumessenger.Global.SharedPrefHelper.setSharedObject;
+import static com.example.modumessenger.Global.DataStoreHelper.*;
 import static com.google.android.gms.auth.api.signin.GoogleSignIn.*;
 
 import android.app.Activity;
@@ -16,13 +16,11 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.dto.GoogleLoginRequest;
 import com.example.modumessenger.dto.MemberDto;
 import com.example.modumessenger.dto.RequestLoginDto;
 import com.example.modumessenger.dto.SignUpDto;
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -122,7 +120,7 @@ public class LoginActivity extends AppCompatActivity {
     private void SignupToBackend(Task<GoogleSignInAccount> completedTask, String auth_type) {
         try {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
-            SignupMember(new GoogleLoginRequest(account.getIdToken(), "google"));
+            SignupMember(new GoogleLoginRequest(account.getIdToken(), auth_type));
         } catch (ApiException e) {
             Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
         }
@@ -166,14 +164,13 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
                 if(response.isSuccessful()) {
-                    String refreshToken = response.headers().get("refresh-token");
-                    String accessToken = response.headers().get("access-token");
+                    initDataStore(getApplicationContext(), requestLoginDto.getEmail());
 
-                    Log.e("refresh jwt 토큰 발급 완료 : ", refreshToken);
-                    Log.e("access jwt 토큰 발급 완료 : ", accessToken);
+                    setDataStoreObject("refresh-token", "Bearer" + " " + response.headers().get("refresh-token"));
+                    setDataStoreObject("access-token", "Bearer" + " " + response.headers().get("access-token"));
 
-                    PreferenceManager.setString("refresh-token", "Bearer" + " " + refreshToken);
-                    PreferenceManager.setString("access-token", "Bearer" + " " + accessToken);
+                    Log.e("refresh jwt 토큰 발급 완료 : ", getDataStoreStr("refresh-token"));
+                    Log.e("access jwt 토큰 발급 완료 : ", getDataStoreStr("access-token"));
 
                     Toast.makeText(getApplicationContext(),"로그인에 성공 하였습니다. 반갑습니다.", Toast.LENGTH_SHORT).show();
 
@@ -202,8 +199,8 @@ public class LoginActivity extends AppCompatActivity {
                     MemberDto result = response.body();
 
                     if(result != null) {
-                        String json = new Gson().toJson(result);
-                        setSharedObject("member", json);
+                        String member = new Gson().toJson(result);
+                        setDataStoreObject("member", member);
 
                         Log.d("내정보 가져오기 요청 : ", result.toString());
 

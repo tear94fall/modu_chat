@@ -1,7 +1,7 @@
 package com.example.modumessenger.Fragments;
 
+import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
 import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
-import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -19,11 +19,7 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.model.GlideUrl;
-import com.bumptech.glide.load.model.LazyHeaders;
 import com.example.modumessenger.Activity.ProfileActivity;
-import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.Grid.SettingGridAdapter;
 import com.example.modumessenger.Grid.SettingGridItem;
 import com.example.modumessenger.R;
@@ -86,7 +82,7 @@ public class FragmentSetting extends Fragment {
     }
 
     private void setData() {
-        member = getSharedObjectMember();
+        member = getDataStoreMember();
         retrofitMemberAPI = RetrofitClient.createMemberApiService();
     }
 

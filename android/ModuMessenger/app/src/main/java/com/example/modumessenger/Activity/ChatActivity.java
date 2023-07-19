@@ -1,6 +1,6 @@
 package com.example.modumessenger.Activity;
 
-import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+import static com.example.modumessenger.Global.DataStoreHelper.*;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -171,7 +171,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         retrofitChatAPI = RetrofitClient.createChatApiService();
         retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
 
-        member = getSharedObjectMember();
+        member = getDataStoreMember();
 
         roomId = getIntent().getStringExtra("roomId");
         if(roomId != null && !roomId.equals("")) {

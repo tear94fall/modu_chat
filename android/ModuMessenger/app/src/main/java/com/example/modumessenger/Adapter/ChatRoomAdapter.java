@@ -1,7 +1,7 @@
 package com.example.modumessenger.Adapter;
 
+import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
 import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
-import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
 
 import android.content.Intent;
 import android.view.LayoutInflater;
@@ -111,7 +111,7 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
             super(itemView);
             this.fragmentChat = fragmentChat;
 
-            this.member = getSharedObjectMember();
+            member = getDataStoreMember();
 
             userId = member.getUserId();
             username = member.getUsername();

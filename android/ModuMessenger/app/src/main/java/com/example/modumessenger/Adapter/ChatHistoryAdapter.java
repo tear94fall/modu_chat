@@ -1,8 +1,8 @@
 package com.example.modumessenger.Adapter;
 
 import static com.example.modumessenger.Adapter.ChatBubbleType.*;
+import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
 import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
-import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
 import static com.example.modumessenger.dto.ChatType.*;
 
 import android.annotation.SuppressLint;
@@ -42,7 +42,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public ChatHistoryAdapter(List<ChatBubble> chatList, List<Member> memberList) {
         this.memberList = (memberList == null || memberList.size() == 0) ? new ArrayList<>() : memberList;
         this.chatList = chatList;
-        this.myInfo = getSharedObjectMember();
+        myInfo = getDataStoreMember();
 
         sortChatBubble();
     }

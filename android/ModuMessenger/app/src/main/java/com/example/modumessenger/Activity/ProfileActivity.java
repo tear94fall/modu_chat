@@ -1,7 +1,7 @@
 package com.example.modumessenger.Activity;
 
+import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
 import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
-import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -112,7 +112,7 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void getData() {
-        myInfo = getSharedObjectMember();
+        myInfo = getDataStoreMember();
         userId = getIntent().getStringExtra("userId");
         email = getIntent().getStringExtra("email");
     }

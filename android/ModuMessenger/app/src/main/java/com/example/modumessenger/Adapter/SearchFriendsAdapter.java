@@ -1,7 +1,7 @@
 package com.example.modumessenger.Adapter;
 
+import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
 import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
-import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
 
 import android.content.Context;
 import android.content.Intent;
@@ -16,10 +16,8 @@ import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Activity.SearchActivity;
-import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.R;
 import com.example.modumessenger.dto.MemberDto;
 import com.example.modumessenger.entity.Member;
@@ -33,7 +31,7 @@ public class SearchFriendsAdapter extends RecyclerView.Adapter<SearchFriendsAdap
 
     public SearchFriendsAdapter(List<MemberDto> searchMemberList) {
         this.searchMemberList = searchMemberList;
-        this.member = getSharedObjectMember();
+        member = getDataStoreMember();
     }
 
     @NonNull

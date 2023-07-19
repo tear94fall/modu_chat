@@ -1,9 +1,10 @@
 package com.example.modumessenger.Activity;
 
-import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -41,10 +42,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Observable;
@@ -62,7 +61,7 @@ public class ProfileImageActivity  extends AppCompatActivity {
     LinearLayout profileImageLayout;
     ViewPager2 profileImageSliderViewPager;
     Button profileCloseButton;
-    ImageButton profileDownloadButton, profileDeleteButton;
+    ImageButton profileDownloadButton, profileDeleteButton, profileHistoryButton;
     List<String> profileImageList;
 
     Disposable backgroundTask;
@@ -89,6 +88,7 @@ public class ProfileImageActivity  extends AppCompatActivity {
         profileCloseButton = findViewById(R.id.profile_image_close_button);
         profileDownloadButton = findViewById(R.id.profile_image_download_button);
         profileDeleteButton = findViewById(R.id.profile_image_delete_button);
+        profileHistoryButton = findViewById(R.id.profile_image_history_button);
     }
 
     private void setData() {
@@ -98,7 +98,7 @@ public class ProfileImageActivity  extends AppCompatActivity {
     }
 
     private void getData() {
-        member = getSharedObjectMember();
+        member = getDataStoreMember();
         email = getIntent().getStringExtra("email");
 
         ArrayList<String> imageFileList = getIntent().getStringArrayListExtra("imageFileList");
@@ -119,6 +119,11 @@ public class ProfileImageActivity  extends AppCompatActivity {
             int currentItem = profileImageSliderViewPager.getCurrentItem();
             String imageFile = this.profileImageList.get(currentItem);
             deleteProfileImage(member.getUserId(), imageFile);
+        });
+
+        profileHistoryButton.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), ProfileHistoryActivity.class);
+            startActivity(intent);
         });
 
         profileImageSliderViewPager.registerOnPageChangeCallback(new OnPageChangeCallback() {

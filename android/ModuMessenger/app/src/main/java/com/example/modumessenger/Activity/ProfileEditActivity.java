@@ -1,9 +1,8 @@
 package com.example.modumessenger.Activity;
 
 import static com.example.modumessenger.Activity.ProfileEditBottomSheetFragment.*;
+import static com.example.modumessenger.Global.DataStoreHelper.*;
 import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
-import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
-import static com.example.modumessenger.Global.SharedPrefHelper.setSharedObject;
 
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -170,7 +169,8 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
     }
 
     private void getData() {
-        member = getSharedObjectMember();
+        Object json = getDataStoreStr("member");
+        member = getDataStoreMember();
     }
 
     private void setData() {
@@ -256,7 +256,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
                         setUserProfile(member);
 
                         String json = new Gson().toJson(myInfo);
-                        setSharedObject("member", json);
+                        setDataStoreObject("member", json);
 
                         Toast.makeText(getApplicationContext(), "프로필 정보가 업데이트 되었습니다.", Toast.LENGTH_SHORT).show();
                         Log.d("내정보 업데이트 요청 : ", response.body().toString());
@@ -287,7 +287,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
                         setUserProfile(member);
 
                         String json = new Gson().toJson(member);
-                        setSharedObject("member", json);
+                        setDataStoreObject("member", json);
 
                         Log.d("내 정보 가져오기 요청 : ", response.body().toString());
                     }

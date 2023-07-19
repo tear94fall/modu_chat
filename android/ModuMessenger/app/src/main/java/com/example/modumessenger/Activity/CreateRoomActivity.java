@@ -1,6 +1,6 @@
 package com.example.modumessenger.Activity;
 
-import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -72,7 +72,7 @@ public class CreateRoomActivity extends AppCompatActivity {
         retrofitMemberAPI = RetrofitClient.createMemberApiService();
         retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
 
-        member = getSharedObjectMember();
+        member = getDataStoreMember();
         getFriendsList(member);
 
         addChatList = new ArrayList<>();

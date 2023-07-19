@@ -2,6 +2,9 @@ package com.example.modumessenger.Global;
 
 import android.content.Context;
 
+import com.example.modumessenger.entity.Member;
+import com.google.gson.Gson;
+
 public class DataStoreHelper {
 
     public static void initDataStore(Context context, String fileName) {
@@ -38,6 +41,18 @@ public class DataStoreHelper {
 
     public static String getDataStoreStr(String key) {
         return DataStoreUtils.getInstance().readValueBackStr(key);
+    }
+
+    public static Member getDataStoreMember() {
+        Object json = getDataStoreStr("member");
+        return new Gson().fromJson(json.toString(), Member.class);
+    }
+
+    public static void setDataStoreMember(Member member) {
+        if (member != null) {
+            String result = new Gson().toJson(member);
+            setDataStoreObject("member", result);
+        }
     }
 
     public static void delDataStoreObject(String key) {

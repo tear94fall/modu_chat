@@ -1,6 +1,6 @@
 package com.example.modumessenger.Global;
 
-import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -27,7 +27,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
-import java.util.Map;
 import java.util.Objects;
 
 public class FirebaseChatMessagingService extends FirebaseMessagingService {
@@ -35,7 +34,7 @@ public class FirebaseChatMessagingService extends FirebaseMessagingService {
     private final Member member;
 
     public FirebaseChatMessagingService() {
-        member = getSharedObjectMember();
+        member = getDataStoreMember();
     }
 
     @Override

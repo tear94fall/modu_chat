@@ -1,6 +1,6 @@
 package com.example.modumessenger.Fragments;
 
-import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -130,7 +130,7 @@ public class FragmentChat extends Fragment {
     }
 
     private void getData() {
-        member = getSharedObjectMember();
+        member = getDataStoreMember();
     }
 
     private void setData() {

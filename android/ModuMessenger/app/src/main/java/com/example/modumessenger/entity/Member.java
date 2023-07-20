@@ -9,6 +9,7 @@ import com.example.modumessenger.dto.MemberDto;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -116,6 +117,22 @@ public class Member implements Parcelable {
         if(memberDto.getStatusMessage() != null) setStatusMessage(memberDto.getStatusMessage());
         if(memberDto.getProfileImage() != null) setProfileImage(memberDto.getProfileImage());
         if(memberDto.getWallpaperImage() != null) setWallpaperImage(memberDto.getWallpaperImage());
+    }
+
+    public List<String> getProfileListTypedDesc(ProfileType type) {
+        return this.getProfileList()
+                .stream()
+                .filter(profile -> profile.getProfileType().equals(type))
+                .sorted(Comparator.comparing(Profile::getLastModifiedDateTime).reversed())
+                .map(Profile::getValue)
+                .collect(Collectors.toList());
+    }
+
+    public List<Profile> getAllProfileListDesc() {
+        return this.getProfileList()
+                .stream()
+                .sorted(Comparator.comparing(Profile::getLastModifiedDateTime).reversed())
+                .collect(Collectors.toList());
     }
 
     @NonNull

@@ -2,6 +2,7 @@ package com.example.modumessenger.Activity;
 
 import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
 import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
+import static com.example.modumessenger.entity.ProfileType.*;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -10,6 +11,7 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -25,15 +27,11 @@ import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.example.modumessenger.dto.MemberDto;
 import com.example.modumessenger.entity.Member;
-import com.example.modumessenger.entity.Profile;
-import com.example.modumessenger.entity.ProfileType;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -50,6 +48,7 @@ public class ProfileActivity extends AppCompatActivity {
     ImageView profileImageView, wallpaperImageView;
     TextView usernameTextView, statusMessageTextView;
     Button profileEditButton, profileCloseButton, createChatRoomButton;
+    ImageButton profileHistoryButton;
     GestureDetector gestureDetector;
 
     RetrofitMemberAPI retrofitMemberAPI;
@@ -108,6 +107,8 @@ public class ProfileActivity extends AppCompatActivity {
         profileCloseButton = findViewById(R.id.profile_close_button);
         createChatRoomButton = findViewById(R.id.start_chat_button);
 
+        profileHistoryButton = findViewById(R.id.profile_image_history_button);
+
         profileEditButton.setVisibility(View.INVISIBLE);
     }
 
@@ -143,12 +144,7 @@ public class ProfileActivity extends AppCompatActivity {
             Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
             intent.putExtra("email", email);
 
-            List<String> imageFileList = member.getProfileList()
-                    .stream()
-                    .filter(profile -> profile.getProfileType().equals(ProfileType.PROFILE_WALLPAPER))
-                    .sorted(Comparator.comparing(Profile::getLastModifiedDateTime).reversed())
-                    .map(Profile::getValue)
-                    .collect(Collectors.toList());
+            List<String> imageFileList = member.getProfileListTypedDesc(PROFILE_WALLPAPER);
 
             intent.putStringArrayListExtra("imageFileList", new ArrayList<>(imageFileList));
             startActivity(intent);
@@ -163,13 +159,7 @@ public class ProfileActivity extends AppCompatActivity {
             Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
             intent.putExtra("email", member.getEmail());
 
-            List<String> imageFileList = member.getProfileList()
-                    .stream()
-                    .filter(profile -> profile.getProfileType().equals(ProfileType.PROFILE_IMAGE))
-                    .sorted(Comparator.comparing(Profile::getLastModifiedDateTime).reversed())
-                    .map(Profile::getValue)
-                    .collect(Collectors.toList());
-
+            List<String> imageFileList = member.getProfileListTypedDesc(PROFILE_IMAGE);
             intent.putStringArrayListExtra("imageFileList", new ArrayList<>(imageFileList));
             startActivity(intent);
         });
@@ -191,6 +181,12 @@ public class ProfileActivity extends AppCompatActivity {
             }
 
             createChatRoom(userIds);
+        });
+
+        profileHistoryButton.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), ProfileHistoryActivity.class);
+            intent.putExtra("email", email);
+            startActivity(intent);
         });
     }
 

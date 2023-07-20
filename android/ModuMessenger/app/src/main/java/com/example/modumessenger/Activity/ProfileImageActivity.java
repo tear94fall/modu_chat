@@ -4,7 +4,6 @@ import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMembe
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
-import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -61,7 +60,7 @@ public class ProfileImageActivity  extends AppCompatActivity {
     LinearLayout profileImageLayout;
     ViewPager2 profileImageSliderViewPager;
     Button profileCloseButton;
-    ImageButton profileDownloadButton, profileDeleteButton, profileHistoryButton;
+    ImageButton profileDownloadButton, profileDeleteButton;
     List<String> profileImageList;
 
     Disposable backgroundTask;
@@ -88,7 +87,6 @@ public class ProfileImageActivity  extends AppCompatActivity {
         profileCloseButton = findViewById(R.id.profile_image_close_button);
         profileDownloadButton = findViewById(R.id.profile_image_download_button);
         profileDeleteButton = findViewById(R.id.profile_image_delete_button);
-        profileHistoryButton = findViewById(R.id.profile_image_history_button);
     }
 
     private void setData() {
@@ -119,11 +117,6 @@ public class ProfileImageActivity  extends AppCompatActivity {
             int currentItem = profileImageSliderViewPager.getCurrentItem();
             String imageFile = this.profileImageList.get(currentItem);
             deleteProfileImage(member.getUserId(), imageFile);
-        });
-
-        profileHistoryButton.setOnClickListener(v -> {
-            Intent intent = new Intent(v.getContext(), ProfileHistoryActivity.class);
-            startActivity(intent);
         });
 
         profileImageSliderViewPager.registerOnPageChangeCallback(new OnPageChangeCallback() {
@@ -266,7 +259,7 @@ public class ProfileImageActivity  extends AppCompatActivity {
                         MemberDto memberDto = response.body();
 
                         if (!memberDto.getUserId().equals(member.getUserId())) {
-                            profileDeleteButton.setVisibility(View.INVISIBLE);
+                            profileDeleteButton.setVisibility(View.GONE);
                         }
                     }
                 }

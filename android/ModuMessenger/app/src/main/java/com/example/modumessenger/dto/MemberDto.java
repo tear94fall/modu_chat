@@ -2,7 +2,6 @@ package com.example.modumessenger.dto;
 
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.entity.Role;
-import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 import java.util.stream.Collectors;

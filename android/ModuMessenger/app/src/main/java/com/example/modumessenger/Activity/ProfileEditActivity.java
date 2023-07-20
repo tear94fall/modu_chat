@@ -169,7 +169,6 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
     }
 
     private void getData() {
-        Object json = getDataStoreStr("member");
         member = getDataStoreMember();
     }
 

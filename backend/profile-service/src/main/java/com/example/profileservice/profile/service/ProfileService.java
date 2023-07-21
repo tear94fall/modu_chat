@@ -1,9 +1,12 @@
 package com.example.profileservice.profile.service;
 
+import com.example.profileservice.member.client.MemberFeignClient;
+import com.example.profileservice.member.dto.AddProfileDto;
 import com.example.profileservice.profile.dto.ProfileDto;
 import com.example.profileservice.profile.entity.Profile;
 import com.example.profileservice.profile.repository.ProfileRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -16,6 +19,7 @@ import java.util.stream.Collectors;
 public class ProfileService {
 
     private final ProfileRepository profileRepository;
+    private final MemberFeignClient memberFeignClient;
 
     public List<ProfileDto> getMemberProfiles(String memberId) {
         List<Profile> profileList = profileRepository.findByMemberId(Long.valueOf(memberId));
@@ -41,6 +45,8 @@ public class ProfileService {
     public ProfileDto registerProfile(ProfileDto profileDto) {
         Profile profile = new Profile(profileDto);
         profileRepository.save(profile);
+
+        memberFeignClient.addMemberProfile(new AddProfileDto(profile));
 
         return new ProfileDto(profile);
     }

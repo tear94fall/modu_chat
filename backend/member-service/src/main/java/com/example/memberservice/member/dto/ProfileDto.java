@@ -16,6 +16,7 @@ import java.time.format.DateTimeFormatter;
 @AllArgsConstructor
 public class ProfileDto implements Serializable {
 
+    private Long id;
     private ProfileType profileType;
     private String value;
     private String createdDate;

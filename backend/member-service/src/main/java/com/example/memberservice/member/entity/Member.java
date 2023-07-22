@@ -3,6 +3,7 @@ package com.example.memberservice.member.entity;
 import com.example.memberservice.chat.entity.ChatRoomMember;
 import com.example.memberservice.global.entity.BaseTimeEntity;
 import com.example.memberservice.member.dto.MemberDto;
+import com.example.memberservice.member.dto.ProfileDto;
 import com.example.memberservice.member.entity.profile.Profile;
 import com.example.memberservice.member.entity.profile.ProfileType;
 import lombok.AllArgsConstructor;
@@ -55,6 +56,9 @@ public class Member extends BaseTimeEntity {
     @Column(name = "friends")
     private List<Long> Friends;
 
+    @ElementCollection
+    private List<Long> profiles;
+
     public void insertProfile(Profile profile) {
         this.profileList.add(profile);
     }
@@ -62,6 +66,10 @@ public class Member extends BaseTimeEntity {
     @Override
     public String toString() {
         return getUserId() + ", " + getUsername() + "," + getEmail() + "," + getAuth() + "," + getStatusMessage() + "," + getProfileImage();
+    }
+
+    public void updateProfile(ProfileDto profileDto) {
+        profiles.add(profileDto.getId());
     }
 
     public void updateProfile(MemberDto memberDto) {

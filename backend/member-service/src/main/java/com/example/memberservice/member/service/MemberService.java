@@ -5,10 +5,12 @@ import com.example.memberservice.global.exception.ErrorCode;
 import com.example.memberservice.global.properties.GoogleOauthProperties;
 import com.example.memberservice.member.dto.GoogleLoginRequest;
 import com.example.memberservice.member.dto.MemberDto;
+import com.example.memberservice.member.dto.ProfileDto;
 import com.example.memberservice.member.entity.Member;
 import com.example.memberservice.member.entity.profile.Profile;
 import com.example.memberservice.member.repository.MemberRepository;
 import com.example.memberservice.member.repository.ProfileRepository;
+import com.example.memberservice.profile.client.ProfileFeignClient;
 import com.example.memberservice.storage.client.StorageFeignClient;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -44,6 +46,7 @@ public class MemberService implements UserDetailsService {
     private final ModelMapper modelMapper;
     private final GoogleOauthProperties googleOauthProperties;
     private final StorageFeignClient storageFeignClient;
+    private final ProfileFeignClient profileFeignClient;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -73,16 +76,27 @@ public class MemberService implements UserDetailsService {
         }
 
         MemberDto memberDto = new MemberDto(payload);
-        Member member = memberRepository.save(new Member(memberDto));
-        memberRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.CREATE_NEW_USER_FAIL, email));
+        Member member = new Member(memberDto);
 
-        ResponseEntity<String> upload = storageFeignClient.upload(memberDto.getProfileImage());
-        if (!member.getProfileImage().equals(upload.getBody())) {
+        String uploadFile = storageFeignClient.upload(memberDto.getProfileImage()).getBody();
+        if (!member.getProfileImage().equals(uploadFile)) {
             throw new CustomException(ErrorCode.USER_PROFILE_IMAGE_UPLOAD_ERROR, member.getProfileImage());
         }
 
-        return new MemberDto(member);
+        ProfileDto profileDto = new ProfileDto();
+        ProfileDto saveProfile = profileFeignClient.addProfileRequest(profileDto).getBody();
+
+        member.updateProfile(profileDto);
+
+        if (saveProfile == null || !saveProfile.getValue().equals(uploadFile)) {
+            throw new CustomException(ErrorCode.USER_PROFILE_IMAGE_UPLOAD_ERROR, uploadFile);
+        }
+
+        Member saveMember = memberRepository.save(member);
+        memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.CREATE_NEW_USER_FAIL, email));
+
+        return new MemberDto(saveMember);
     }
 
     public MemberDto getMemberByEmail(String email) {

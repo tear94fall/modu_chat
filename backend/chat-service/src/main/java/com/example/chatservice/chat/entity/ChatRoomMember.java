@@ -1,6 +1,5 @@
 package com.example.chatservice.chat.entity;
 
-import com.example.chatservice.member.entity.Member;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,16 +19,14 @@ public class ChatRoomMember {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "member_id")
-    private Member member;
+    private Long memberId;
 
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "chat_room_id")
     private ChatRoom chatRoom;
 
-    public ChatRoomMember(Member member, ChatRoom chatRoom) {
-        setMember(member);
+    public ChatRoomMember(Long memberId, ChatRoom chatRoom) {
+        setMemberId(memberId);
         setChatRoom(chatRoom);
     }
 }

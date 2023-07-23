@@ -17,15 +17,6 @@ public class ChatRepositoryImpl implements ChatCustomRepository {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<Chat> findAllQueryDsl() {
-        return queryFactory
-                .selectFrom(chat)
-                .leftJoin(chat.chatRoom, chatRoom)
-                .fetchJoin()
-                .fetch();
-    }
-
-    @Override
     public Chat findByRoomIdAndChatId(String roomId, Long chatId) {
         return queryFactory
                 .selectFrom(chat)

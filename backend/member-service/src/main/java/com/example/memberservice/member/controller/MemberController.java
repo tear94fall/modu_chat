@@ -1,9 +1,6 @@
 package com.example.memberservice.member.controller;
 
-import com.example.memberservice.member.dto.GoogleLoginRequest;
-import com.example.memberservice.member.dto.MemberDto;
-import com.example.memberservice.member.dto.RequestMemberDto;
-import com.example.memberservice.member.dto.ResponseMemberDto;
+import com.example.memberservice.member.dto.*;
 import com.example.memberservice.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -45,12 +42,6 @@ public class MemberController {
         return ResponseEntity.ok().body(modelMapper.map(memberDto, ResponseMemberDto.class));
     }
 
-    @DeleteMapping("/member/profile/{userId}")
-    public ResponseEntity<ResponseMemberDto> deleteProfileImage(@Valid @PathVariable("userId") String userId, @RequestBody String profileImage) {
-        MemberDto memberDto = memberService.deleteProfileImage(userId, profileImage);
-        return ResponseEntity.ok().body(modelMapper.map(memberDto, ResponseMemberDto.class));
-    }
-
     @GetMapping("member/{userId}/friends")
     public ResponseEntity<List<ResponseMemberDto>> friendsList(@Valid @PathVariable("userId") String userId) {
         List<MemberDto> friendsList = memberService.getFriendsList(userId);
@@ -74,5 +65,29 @@ public class MemberController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok().body(result);
+    }
+
+    @GetMapping("member/members")
+    public ResponseEntity<List<MemberDto>> findMembersByUserId(@Valid @RequestParam List<String> userIds) {
+        List<MemberDto> members = memberService.findMembers(userIds);
+        return ResponseEntity.ok().body(members);
+    }
+
+    @GetMapping("member/members/{ids}")
+    public ResponseEntity<List<MemberDto>> findMembersById(@Valid @PathVariable("ids") List<Long> ids) {
+        List<MemberDto> members = memberService.findMembersById(ids);
+        return ResponseEntity.ok().body(members);
+    }
+
+    @PutMapping("/member/invite")
+    public ResponseEntity<List<MemberDto>> inviteMembers(@Valid @RequestBody ChatRoomMemberDto chatRoomMemberDto) {
+        List<MemberDto> addMembers = memberService.inviteMembers(chatRoomMemberDto);
+        return ResponseEntity.ok().body(addMembers);
+    }
+
+    @PutMapping("/member/exit")
+    public ResponseEntity<List<MemberDto>> exitMembers(@Valid @RequestBody ChatRoomMemberDto chatRoomMemberDto) {
+        List<MemberDto> exitMembers = memberService.exitMembers(chatRoomMemberDto);
+        return ResponseEntity.ok().body(exitMembers);
     }
 }

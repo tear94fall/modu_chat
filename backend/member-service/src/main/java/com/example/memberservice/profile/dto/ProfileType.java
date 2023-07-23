@@ -1,4 +1,4 @@
-package com.example.chatservice.member.entity.profile;
+package com.example.memberservice.profile.dto;
 
 import lombok.Getter;
 
@@ -8,4 +8,3 @@ public enum ProfileType {
     PROFILE_WALLPAPER,
     PROFILE_IMAGE
 }
-

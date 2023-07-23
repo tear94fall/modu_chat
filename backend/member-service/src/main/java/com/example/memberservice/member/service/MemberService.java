@@ -5,12 +5,11 @@ import com.example.memberservice.global.exception.ErrorCode;
 import com.example.memberservice.global.properties.GoogleOauthProperties;
 import com.example.memberservice.member.dto.GoogleLoginRequest;
 import com.example.memberservice.member.dto.MemberDto;
-import com.example.memberservice.member.dto.ProfileDto;
+import com.example.memberservice.member.dto.ChatRoomMemberDto;
 import com.example.memberservice.member.entity.Member;
-import com.example.memberservice.member.entity.profile.Profile;
 import com.example.memberservice.member.repository.MemberRepository;
-import com.example.memberservice.member.repository.ProfileRepository;
 import com.example.memberservice.profile.client.ProfileFeignClient;
+import com.example.memberservice.profile.dto.ProfileDto;
 import com.example.memberservice.storage.client.StorageFeignClient;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -19,7 +18,6 @@ import com.google.api.client.json.gson.GsonFactory;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -42,7 +40,6 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 public class MemberService implements UserDetailsService {
 
     private final MemberRepository memberRepository;
-    private final ProfileRepository profileRepository;
     private final ModelMapper modelMapper;
     private final GoogleOauthProperties googleOauthProperties;
     private final StorageFeignClient storageFeignClient;
@@ -86,7 +83,7 @@ public class MemberService implements UserDetailsService {
         ProfileDto profileDto = new ProfileDto();
         ProfileDto saveProfile = profileFeignClient.addProfileRequest(profileDto).getBody();
 
-        member.updateProfile(profileDto);
+        member.addProfile(profileDto.getId());
 
         if (saveProfile == null || !saveProfile.getValue().equals(uploadFile)) {
             throw new CustomException(ErrorCode.USER_PROFILE_IMAGE_UPLOAD_ERROR, uploadFile);
@@ -110,26 +107,6 @@ public class MemberService implements UserDetailsService {
         member.updateMember(memberDto);
         Member updateMember = memberRepository.save(member);
         return modelMapper.map(updateMember, MemberDto.class);
-    }
-
-    public MemberDto deleteProfileImage(String userId, String profileImage) {
-        Member member = memberRepository.findByUserId(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userId));
-
-        Profile profile = member.getProfileList()
-                .stream()
-                .filter(p -> p.getValue().equals(profileImage))
-                .findFirst()
-                .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND, userId));
-
-        storageFeignClient.delete(profile.getValue());
-
-        member.getProfileList().remove(profile);
-
-        Member saveMember = memberRepository.save(member);
-        profileRepository.delete(profile);
-
-        return new MemberDto(saveMember);
     }
 
     public List<MemberDto> getFriendsList(String userId) {
@@ -188,5 +165,64 @@ public class MemberService implements UserDetailsService {
         } catch (GeneralSecurityException | IOException e) {
             throw new CustomException(ErrorCode.UNAUTHORIZED_GOOGLE_ID_TOKEN_ERROR, token);
         }
+    }
+
+    public List<MemberDto> findMembers(List<String> userIds) {
+        List<Member> members = memberRepository.findAllByUserIds(userIds).orElseGet(ArrayList::new);
+
+        return members
+                .stream()
+                .map(MemberDto::new)
+                .collect(Collectors.toList());
+    }
+
+    public List<MemberDto> findMembersById(List<Long> ids) {
+        List<Member> members = memberRepository.findAllById(ids);
+        return members
+                .stream()
+                .map(MemberDto::new)
+                .collect(Collectors.toList());
+    }
+
+    public List<MemberDto> inviteMembers(ChatRoomMemberDto chatRoomMemberDto) {
+        List<Long> chatRoomMembersIds = chatRoomMemberDto.getChatRoomMembers()
+                .stream()
+                .map(MemberDto::getId)
+                .collect(Collectors.toList());
+
+        List<Member> members = memberRepository.findAllById(chatRoomMembersIds);
+
+        Long chatRoomId = chatRoomMemberDto.getChatRoomId();
+
+        List<Member> inviteMembers = members
+                .stream()
+                .peek(member -> member.addChatRoom(chatRoomId))
+                .collect(Collectors.toList());
+
+        return inviteMembers
+                .stream()
+                .map(MemberDto::new)
+                .collect(Collectors.toList());
+    }
+
+    public List<MemberDto> exitMembers(ChatRoomMemberDto chatRoomMemberDto) {
+        List<Long> chatRoomMembersIds = chatRoomMemberDto.getChatRoomMembers()
+                .stream()
+                .map(MemberDto::getId)
+                .collect(Collectors.toList());
+
+        List<Member> members = memberRepository.findAllById(chatRoomMembersIds);
+
+        Long chatRoomId = chatRoomMemberDto.getChatRoomId();
+
+        List<Member> exitMembers = members
+                .stream()
+                .peek(member -> member.delChatRoom(chatRoomId))
+                .collect(Collectors.toList());
+
+        return exitMembers
+                .stream()
+                .map(MemberDto::new)
+                .collect(Collectors.toList());
     }
 }

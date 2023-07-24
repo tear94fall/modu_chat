@@ -24,6 +24,4 @@ public class MemberDto implements Serializable {
     private String statusMessage;
     private String profileImage;
     private String wallpaperImage;
-    private List<Long> profiles;
-    private List<Long> chatRoomsMembers;
 }

@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.List;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 
@@ -28,8 +27,6 @@ public class MemberDto implements Serializable {
     private String statusMessage;
     private String profileImage;
     private String wallpaperImage;
-    private List<Long> profiles;
-    private List<Long> chatRoomMembers;
 
     public MemberDto(Member member) {
         setId(member.getId());
@@ -41,7 +38,6 @@ public class MemberDto implements Serializable {
         setStatusMessage(member.getStatusMessage());
         setProfileImage(member.getProfileImage());
         setWallpaperImage(member.getWallpaperImage());
-        setProfiles(member.getProfiles());
     }
 
     public MemberDto(Payload payload) {

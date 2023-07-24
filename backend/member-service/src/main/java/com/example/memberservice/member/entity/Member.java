@@ -44,15 +44,15 @@ public class Member extends BaseTimeEntity {
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     private List<ChatRoomMember> chatRoomMemberList = new ArrayList<>();
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "friends", joinColumns = @JoinColumn(name = "id"))
     @Column(name = "friends")
     private List<Long> friends;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.LAZY)
     private List<Long> profiles;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.LAZY)
     private List<Long> chatRoomMembers;
 
     public void addProfile(Long id) {
@@ -89,8 +89,8 @@ public class Member extends BaseTimeEntity {
         this.profileImage = memberDto.getProfileImage();
         this.wallpaperImage = memberDto.getWallpaperImage();
         this.friends = new ArrayList<>();
-        this.profiles = memberDto.getProfiles();
-        this.chatRoomMembers = memberDto.getChatRoomMembers();
+        this.profiles = new ArrayList<>();
+        this.chatRoomMembers = new ArrayList<>();
     }
 
     public Member(String userId) {

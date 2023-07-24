@@ -6,7 +6,6 @@ import com.example.profileservice.profile.dto.ProfileDto;
 import com.example.profileservice.profile.entity.Profile;
 import com.example.profileservice.profile.repository.ProfileRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;

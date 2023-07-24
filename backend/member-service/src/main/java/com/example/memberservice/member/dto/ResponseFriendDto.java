@@ -1,21 +1,17 @@
 package com.example.memberservice.member.dto;
 
 import com.example.memberservice.member.entity.Role;
-import com.example.memberservice.profile.dto.ProfileDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResponseMemberDto implements Serializable {
+public class ResponseFriendDto {
 
     private String userId;
     private String auth;
@@ -25,9 +21,8 @@ public class ResponseMemberDto implements Serializable {
     private String statusMessage;
     private String profileImage;
     private String wallpaperImage;
-    private List<ProfileDto> profiles;
 
-    public ResponseMemberDto(MemberDto memberDto, List<ProfileDto> profiles) {
+    public ResponseFriendDto(MemberDto memberDto) {
         this.userId = memberDto.getUserId();
         this.auth = memberDto.getAuth();
         this.role = memberDto.getRole();
@@ -36,6 +31,5 @@ public class ResponseMemberDto implements Serializable {
         this.statusMessage = memberDto.getStatusMessage();
         this.profileImage = memberDto.getProfileImage();
         this.wallpaperImage = memberDto.getWallpaperImage();
-        this.profiles = profiles;
     }
 }

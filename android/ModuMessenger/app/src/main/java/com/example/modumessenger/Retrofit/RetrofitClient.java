@@ -1,8 +1,5 @@
 package com.example.modumessenger.Retrofit;
 
-import android.text.TextUtils;
-
-import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.util.concurrent.TimeUnit;

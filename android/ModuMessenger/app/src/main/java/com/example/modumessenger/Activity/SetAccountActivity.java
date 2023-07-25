@@ -9,7 +9,7 @@ import android.widget.Button;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.modumessenger.Global.PreferenceManager;
+import com.example.modumessenger.Global.DataStoreHelper;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitAuthAPI;
 import com.example.modumessenger.Retrofit.RetrofitClient;
@@ -78,7 +78,7 @@ public class SetAccountActivity extends AppCompatActivity {
         if(intent != null) {
             googleSignInClient.signOut()
                     .addOnCompleteListener(this, task -> {
-                        PreferenceManager.clear();
+                        DataStoreHelper.clearDataStore();
 
                         startActivity(intent);
                         finish();

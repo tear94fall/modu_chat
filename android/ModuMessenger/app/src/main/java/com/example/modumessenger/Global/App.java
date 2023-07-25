@@ -1,15 +1,15 @@
 package com.example.modumessenger.Global;
 
+import static com.example.modumessenger.Global.DataStoreHelper.initDataStore;
+
 import android.app.Application;
 
 public class App extends Application {
-
-    public static PreferenceManager refs;
 
     @Override
     public void onCreate(){
         super.onCreate();
 
-        refs = new PreferenceManager(getApplicationContext());
+        initDataStore(getApplicationContext(), "modu-chat");
     }
 }

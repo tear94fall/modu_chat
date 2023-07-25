@@ -12,7 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.model.GlideUrl;
 import com.bumptech.glide.load.model.LazyHeaders;
-import com.example.modumessenger.Global.PreferenceManager;
+import com.example.modumessenger.Global.DataStoreHelper;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 
@@ -55,7 +55,7 @@ public class ProfileImageSliderAdapter extends RecyclerView.Adapter<ProfileImage
         }
 
         public void bindSliderImage(String imageFile) {
-            String accessToken = PreferenceManager.getString("access-token");
+            String accessToken = DataStoreHelper.getDataStoreStr("access-token");
             String url = RetrofitClient.getBaseUrl() + "storage-service/view/"+ imageFile;
 
             GlideUrl glideUrl = new GlideUrl(url,

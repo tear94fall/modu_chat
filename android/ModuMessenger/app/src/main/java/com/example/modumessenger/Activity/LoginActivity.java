@@ -164,8 +164,6 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
                 if(response.isSuccessful()) {
-                    initDataStore(getApplicationContext(), requestLoginDto.getEmail());
-
                     setDataStoreObject("refresh-token", "Bearer" + " " + response.headers().get("refresh-token"));
                     setDataStoreObject("access-token", "Bearer" + " " + response.headers().get("access-token"));
 
@@ -173,6 +171,8 @@ public class LoginActivity extends AppCompatActivity {
                     Log.e("access jwt 토큰 발급 완료 : ", getDataStoreStr("access-token"));
 
                     Toast.makeText(getApplicationContext(),"로그인에 성공 하였습니다. 반갑습니다.", Toast.LENGTH_SHORT).show();
+
+                    retrofitMemberAPI = RetrofitClient.createMemberApiService(); // recreate with token at interceptor
 
                     GetUserInfo(requestLoginDto.getEmail(), "google");
                 } else {

@@ -5,7 +5,6 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.example.modumessenger.Global.DataStoreHelper;
-import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.dto.TokenResponseDto;
 import com.google.gson.GsonBuilder;
 
@@ -83,8 +82,8 @@ public abstract class RetryAbleCallback<T> implements Callback<T> {
     }
 
     private void reissueToken() {
-        String accessToken = PreferenceManager.getString("access-token");
-        String refreshToken = PreferenceManager.getString("refresh-token");
+        String accessToken = DataStoreHelper.getDataStoreStr("access-token");
+        String refreshToken = DataStoreHelper.getDataStoreStr("refresh-token");
 
         RetrofitAuthAPI retrofitAuthAPI = retrofit.create(RetrofitAuthAPI.class);
         Call<TokenResponseDto> call = retrofitAuthAPI.reissue(accessToken, refreshToken);

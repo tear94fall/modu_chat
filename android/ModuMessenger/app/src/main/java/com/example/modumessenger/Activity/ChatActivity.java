@@ -32,7 +32,7 @@ import com.example.modumessenger.Adapter.ChatBubble;
 import com.example.modumessenger.Adapter.ChatHistoryAdapter;
 import com.example.modumessenger.Adapter.ChatRoomMemberAdapter;
 import com.example.modumessenger.Global.ActivityStack;
-import com.example.modumessenger.Global.PreferenceManager;
+import com.example.modumessenger.Global.DataStoreHelper;
 import com.example.modumessenger.Grid.RecentChatImageGridAdapter;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitChatAPI;
@@ -561,7 +561,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                         .Builder()
                         .url("ws://192.168.0.3:8000/ws-service/modu-chat/" + roomId)
                         .addHeader("userId", member.getUserId())
-                        .addHeader("Authorization", PreferenceManager.getString("access-token"))
+                        .addHeader("Authorization", DataStoreHelper.getDataStoreStr("access-token"))
                         .build();
                 listener = new ChatWebSocketListener();
                 webSocket = client.newWebSocket(request, listener);

@@ -38,7 +38,7 @@ public class DataStoreUtils {
     }
 
     public void getPreferences(Context context, String dataFileName) {
-        this.filePath = context.getFilesDir().getAbsolutePath() + "/modu-chat/";
+        this.filePath = context.getFilesDir().getAbsolutePath();
         RxPreferenceDataStoreBuilder builder = new RxPreferenceDataStoreBuilder(context, dataFileName);
         dataStore = builder.build();
     }
@@ -194,5 +194,12 @@ public class DataStoreUtils {
             mutablePreferences.remove(stringKey);
             return Single.just(mutablePreferences);
         });
+    }
+
+    @SuppressLint("UnsafeOptInUsageWarning")
+    public Boolean checkKey(String strKey) {
+        Preferences.Key<Long> key = PreferencesKeys.longKey(strKey);
+        Flowable<Boolean> flowable = dataStore.data().map(preferences -> preferences.contains(key));
+        return flowable.blockingFirst();
     }
 }

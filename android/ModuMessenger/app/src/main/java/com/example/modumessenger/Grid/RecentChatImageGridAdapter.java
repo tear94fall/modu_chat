@@ -11,7 +11,7 @@ import android.widget.ImageView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.model.GlideUrl;
 import com.bumptech.glide.load.model.LazyHeaders;
-import com.example.modumessenger.Global.PreferenceManager;
+import com.example.modumessenger.Global.DataStoreHelper;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatDto;
@@ -54,7 +54,7 @@ public class RecentChatImageGridAdapter extends BaseAdapter {
 
         ImageView itemImageView = convertView.findViewById(R.id.recent_chat_image_view);
 
-        String accessToken = PreferenceManager.getString("access-token");
+        String accessToken = DataStoreHelper.getDataStoreStr("access-token");
         String url = RetrofitClient.getBaseUrl() + "storage-service/view/"+ recentChatImageGridItem.getImageUrl();
 
         GlideUrl glideUrl = new GlideUrl(url,

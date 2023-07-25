@@ -9,7 +9,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.modumessenger.Global.PreferenceManager;
 import com.example.modumessenger.Retrofit.RetrofitCommonDataAPI;
 import com.example.modumessenger.entity.CommonData;
 import com.example.modumessenger.Retrofit.RetrofitClient;

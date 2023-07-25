@@ -58,4 +58,8 @@ public class DataStoreHelper {
     public static void delDataStoreObject(String key) {
         DataStoreUtils.getInstance().deleteValue(key);
     }
+
+    public static Boolean checkDataStoreKey(String key) {
+        return DataStoreUtils.getInstance().checkKey(key);
+    }
 }

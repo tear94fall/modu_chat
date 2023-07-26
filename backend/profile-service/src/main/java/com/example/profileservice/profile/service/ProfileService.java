@@ -43,8 +43,8 @@ public class ProfileService {
 
     public ProfileDto registerProfile(ProfileDto profileDto) {
         Profile profile = new Profile(profileDto);
-        profileRepository.save(profile);
 
+        profileRepository.save(profile);
         memberFeignClient.addMemberProfile(new AddProfileDto(profile));
 
         return new ProfileDto(profile);

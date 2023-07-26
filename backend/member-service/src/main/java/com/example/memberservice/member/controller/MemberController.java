@@ -3,6 +3,7 @@ package com.example.memberservice.member.controller;
 import com.example.memberservice.member.dto.*;
 import com.example.memberservice.member.service.MemberService;
 import com.example.memberservice.profile.client.ProfileFeignClient;
+import com.example.memberservice.profile.dto.AddProfileDto;
 import com.example.memberservice.profile.dto.ProfileDto;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -39,10 +40,17 @@ public class MemberController {
     @PostMapping("/member/signup")
     public ResponseEntity<ResponseMemberDto> createMember(@Valid @RequestBody GoogleLoginRequest googleLoginRequest) {
         MemberDto memberDto = memberService.registerMember(googleLoginRequest);
+        MemberDto memberDto1 = memberService.addProfileImage(memberDto);
         List<ProfileDto> profiles = profileFeignClient.getMemberProfiles(memberDto.getId()).getBody();
 
         ResponseMemberDto responseMemberDto = new ResponseMemberDto(memberDto, profiles);
         return ResponseEntity.ok().body(responseMemberDto);
+    }
+
+    @PostMapping("/member/profile")
+    public ResponseEntity<Long> addMemberProfile(@RequestBody AddProfileDto addProfileDto) {
+        Long profileId = memberService.addMemberProfile(addProfileDto);
+        return ResponseEntity.ok().body(profileId);
     }
 
     @PostMapping("/member/{userId}")

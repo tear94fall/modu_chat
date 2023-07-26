@@ -8,7 +8,7 @@ GET http://localhost:8880/api/v1/profile/1/25
 GET http://localhost:8880/api/v1/profile/1/30/3
 
 ### 프로필 추가 요청
-POST http://localhost:8880/api/v1/profile
+POST http://localhost:8880/profile
 Content-Type: application/json
 
 < ./Profile.json

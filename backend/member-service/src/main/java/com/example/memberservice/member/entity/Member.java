@@ -3,6 +3,8 @@ package com.example.memberservice.member.entity;
 import com.example.memberservice.chat.entity.ChatRoomMember;
 import com.example.memberservice.global.entity.BaseTimeEntity;
 import com.example.memberservice.member.dto.MemberDto;
+import com.example.memberservice.profile.dto.ProfileDto;
+import com.example.memberservice.profile.dto.ProfileType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -70,6 +72,16 @@ public class Member extends BaseTimeEntity {
     @Override
     public String toString() {
         return getUserId() + ", " + getUsername() + "," + getEmail() + "," + getAuth() + "," + getStatusMessage() + "," + getProfileImage();
+    }
+
+    public void updateMemberInfo(ProfileDto profileDto) {
+        if (profileDto.getProfileType() == ProfileType.PROFILE_STATUS_MESSAGE) {
+            this.statusMessage = profileDto.getValue();
+        } else if (profileDto.getProfileType() == ProfileType.PROFILE_IMAGE) {
+            this.profileImage = profileDto.getValue();
+        } else if (profileDto.getProfileType() == ProfileType.PROFILE_WALLPAPER) {
+            this.wallpaperImage = profileDto.getValue();
+        }
     }
 
     public void updateMember(MemberDto memberDto) {

@@ -9,7 +9,9 @@ import com.example.memberservice.member.dto.ChatRoomMemberDto;
 import com.example.memberservice.member.entity.Member;
 import com.example.memberservice.member.repository.MemberRepository;
 import com.example.memberservice.profile.client.ProfileFeignClient;
+import com.example.memberservice.profile.dto.AddProfileDto;
 import com.example.memberservice.profile.dto.ProfileDto;
+import com.example.memberservice.profile.dto.ProfileType;
 import com.example.memberservice.storage.client.StorageFeignClient;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -30,6 +32,7 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
@@ -75,25 +78,33 @@ public class MemberService implements UserDetailsService {
         MemberDto memberDto = new MemberDto(payload);
         Member member = new Member(memberDto);
 
-        String uploadFile = storageFeignClient.upload(memberDto.getProfileImage()).getBody();
-        if (!member.getProfileImage().equals(uploadFile)) {
-            throw new CustomException(ErrorCode.USER_PROFILE_IMAGE_UPLOAD_ERROR, member.getProfileImage());
-        }
-
-        ProfileDto profileDto = new ProfileDto();
-        ProfileDto saveProfile = profileFeignClient.addProfileRequest(profileDto).getBody();
-
-        member.addProfile(profileDto.getId());
-
-        if (saveProfile == null || !saveProfile.getValue().equals(uploadFile)) {
-            throw new CustomException(ErrorCode.USER_PROFILE_IMAGE_UPLOAD_ERROR, uploadFile);
-        }
-
         Member saveMember = memberRepository.save(member);
         memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.CREATE_NEW_USER_FAIL, email));
 
         return new MemberDto(saveMember);
+    }
+
+    public MemberDto addProfileImage(MemberDto memberDto) {
+        Member member = memberRepository.findById(memberDto.getId())
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_ID_NOT_FOUND_ERROR, memberDto.getId()));
+
+        String uploadFile = storageFeignClient.upload(member.getProfileImage()).getBody();
+        if (uploadFile == null || uploadFile.equals("")) {
+            throw new CustomException(ErrorCode.USER_PROFILE_IMAGE_UPLOAD_ERROR, memberDto.getProfileImage());
+        }
+
+        ProfileDto profileDto = new ProfileDto(0L, member.getId(), ProfileType.PROFILE_IMAGE, uploadFile, "", "");
+        ProfileDto saveProfile = profileFeignClient.addProfileRequest(profileDto).getBody();
+
+        if (saveProfile == null || !saveProfile.getValue().equals(uploadFile)) {
+            throw new CustomException(ErrorCode.USER_PROFILE_IMAGE_UPLOAD_ERROR, uploadFile);
+        }
+
+        member.updateMemberInfo(saveProfile);
+        member.addProfile(profileDto.getId());
+
+        return new MemberDto(member);
     }
 
     public MemberDto getMemberByEmail(String email) {
@@ -224,5 +235,14 @@ public class MemberService implements UserDetailsService {
                 .stream()
                 .map(MemberDto::new)
                 .collect(Collectors.toList());
+    }
+
+    public Long addMemberProfile(AddProfileDto addProfileDto) {
+        Member member = memberRepository.findById(addProfileDto.getMemberId())
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_ID_NOT_FOUND_ERROR, addProfileDto.getMemberId()));
+
+        member.addProfile(addProfileDto.getProfileId());
+
+        return member.getProfiles().get(member.getProfiles().size()-1);
     }
 }

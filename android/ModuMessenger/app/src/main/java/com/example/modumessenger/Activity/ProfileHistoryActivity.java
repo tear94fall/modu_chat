@@ -1,5 +1,7 @@
 package com.example.modumessenger.Activity;
 
+import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
+
 import android.os.Bundle;
 import android.util.Log;
 
@@ -14,8 +16,12 @@ import com.example.modumessenger.Global.RecyclerDecorationHeight;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
+import com.example.modumessenger.Retrofit.RetrofitProfileAPI;
 import com.example.modumessenger.dto.MemberDto;
+import com.example.modumessenger.dto.ProfileDto;
 import com.example.modumessenger.entity.Member;
+
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -23,12 +29,14 @@ import retrofit2.Response;
 
 public class ProfileHistoryActivity extends AppCompatActivity {
 
-    String email;
+    Long memberId;
+    Member member;
 
     RecyclerView recyclerView;
     ProfileHistoryAdapter profileHistoryAdapter;
 
     RetrofitMemberAPI retrofitMemberAPI;
+    RetrofitProfileAPI retrofitProfileAPI;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,11 +60,14 @@ public class ProfileHistoryActivity extends AppCompatActivity {
 
     private void setData() {
         retrofitMemberAPI = RetrofitClient.createMemberApiService();
+        retrofitProfileAPI = RetrofitClient.createProfileApiService();
     }
 
     private void getData() {
-        email = getIntent().getStringExtra("email");
-        setProfileHistory(email);
+        member = getDataStoreMember();
+        memberId = Long.parseLong(getIntent().getStringExtra("memberId"));
+
+        getMemberInfo(memberId);
     }
 
     private void setEvents() {
@@ -64,7 +75,17 @@ public class ProfileHistoryActivity extends AppCompatActivity {
     }
 
     // Retrofit function
-    public void setProfileHistory(String email) {
+    public void getMemberInfo(Long id) {
+        /*
+        get member info retrofit request
+         */
+
+        // finish request
+        getProfileList(memberId);
+    }
+
+    // must removed
+    public void getProfileHistory(String email) {
         Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(email);
 
         call.enqueue(new Callback<MemberDto>() {
@@ -88,6 +109,26 @@ public class ProfileHistoryActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Call<MemberDto> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
+            }
+        });
+    }
+
+    public void getProfileList(Long id) {
+        Call<List<ProfileDto>> call = retrofitProfileAPI.getMemberProfiles(id);
+
+        call.enqueue(new Callback<List<ProfileDto>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<ProfileDto>> call, @NonNull Response<List<ProfileDto>> response) {
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
+                        List<ProfileDto> profileList = response.body();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<ProfileDto>> call, @NonNull Throwable t) {
+
             }
         });
     }

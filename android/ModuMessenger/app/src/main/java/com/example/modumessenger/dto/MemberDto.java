@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class MemberDto {
+
+    private Long id;
     private String userId;
     private String email;
     private String auth;
@@ -17,6 +19,7 @@ public class MemberDto {
     private String wallpaperImage;
     private List<ProfileDto> profileDtoList;
 
+    public Long getId() { return this.id; }
     public String getUserId() { return this.userId; }
     public String getEmail() { return this.email; }
     public String getAuth() { return this.auth; }
@@ -27,6 +30,7 @@ public class MemberDto {
     public String getWallpaperImage() { return this.wallpaperImage; }
     public List<ProfileDto> getProfileDtoList() { return this.profileDtoList; }
 
+    public void setId(Long id) { this.id = id; }
     public void setUserId(String userId) { this.userId = userId; }
     public void setEmail(String email) { this.email = email; }
     public void setAuth(String auth) { this.auth = auth; }
@@ -51,6 +55,7 @@ public class MemberDto {
     }
 
     public MemberDto(Member member) {
+        setId(member.getId());
         setUserId(member.getUserId());
         setEmail(member.getEmail());
         setAuth(member.getAuth());

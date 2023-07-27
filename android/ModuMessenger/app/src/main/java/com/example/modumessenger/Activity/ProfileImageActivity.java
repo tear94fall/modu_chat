@@ -32,8 +32,11 @@ import com.example.modumessenger.Global.DataStoreHelper;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
+import com.example.modumessenger.Retrofit.RetrofitProfileAPI;
 import com.example.modumessenger.dto.MemberDto;
+import com.example.modumessenger.dto.ProfileDto;
 import com.example.modumessenger.entity.Member;
+import com.example.modumessenger.entity.ProfileType;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,8 +44,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Observable;
@@ -54,6 +60,8 @@ import retrofit2.Response;
 
 public class ProfileImageActivity  extends AppCompatActivity {
 
+    ProfileType type;
+    Long memberId;
     String email;
     Member member;
 
@@ -66,6 +74,7 @@ public class ProfileImageActivity  extends AppCompatActivity {
     Disposable backgroundTask;
 
     RetrofitMemberAPI retrofitMemberAPI;
+    RetrofitProfileAPI retrofitProfileAPI;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,16 +100,17 @@ public class ProfileImageActivity  extends AppCompatActivity {
 
     private void setData() {
         retrofitMemberAPI = RetrofitClient.createMemberApiService();
+        retrofitProfileAPI = RetrofitClient.createProfileApiService();
 
         profileImageList = new ArrayList<>();
     }
 
     private void getData() {
         member = getDataStoreMember();
-        email = getIntent().getStringExtra("email");
+        type = Enum.valueOf(ProfileType.class, getIntent().getStringExtra("type"));
+        memberId = Long.parseLong(getIntent().getStringExtra("memberId"));
 
-        ArrayList<String> imageFileList = getIntent().getStringArrayListExtra("imageFileList");
-        showImageLists(imageFileList);
+        getMemberProfileList(memberId);
         getMyProfileInfo(email);
     }
 
@@ -151,7 +161,7 @@ public class ProfileImageActivity  extends AppCompatActivity {
         }
     }
 
-    private void showImageLists(ArrayList<String> imageFileList) {
+    private void showImageLists(List<String> imageFileList) {
         profileImageList.addAll(imageFileList);
 
         profileImageSliderViewPager.setOffscreenPageLimit(1);
@@ -247,7 +257,58 @@ public class ProfileImageActivity  extends AppCompatActivity {
         return fileExt.equalsIgnoreCase("jpg") ? "image/jpeg" : "image/" + fileExt.toLowerCase();
     }
 
+    private List<String> getProfileListByType(ProfileType type, List<ProfileDto> profileList) {
+        List<String> list = profileList.stream()
+                .filter(profile -> {
+                    if (type == ProfileType.PROFILE_IMAGE) {
+                        return profile.getProfileType().equals(ProfileType.PROFILE_IMAGE);
+                    } else if (type == ProfileType.PROFILE_WALLPAPER) {
+                        return profile.getProfileType().equals(ProfileType.PROFILE_WALLPAPER);
+                    } else if (type == ProfileType.PROFILE_STATUS_MESSAGE) {
+                        return false;
+                    }
+
+                    return false;
+                })
+                .sorted(Comparator.comparing(ProfileDto::getLastModifiedDateTime).reversed())
+                .map(ProfileDto::getValue)
+                .collect(Collectors.toList());
+
+        if (list.size() == 0) {
+            if (type == ProfileType.PROFILE_IMAGE) {
+                list = new ArrayList<>(Collections.singletonList(member.getProfileImage()));
+            } else if (type == ProfileType.PROFILE_WALLPAPER) {
+                list = new ArrayList<>(Collections.singletonList(member.getWallpaperImage()));
+            }
+        }
+
+        return list;
+    }
+
     // Retrofit function
+    public void getMemberProfileList(Long id) {
+        Call<List<ProfileDto>> call = retrofitProfileAPI.getMemberProfiles(id);
+
+        call.enqueue(new Callback<List<ProfileDto>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<ProfileDto>> call, @NonNull Response<List<ProfileDto>> response) {
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
+                        List<ProfileDto> profileList = response.body();
+
+                        List<String> profileImageList = getProfileListByType(type, profileList);
+                        showImageLists(profileImageList);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<ProfileDto>> call, @NonNull Throwable t) {
+
+            }
+        });
+    }
+
     public void getMyProfileInfo(String email) {
         Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(email);
 

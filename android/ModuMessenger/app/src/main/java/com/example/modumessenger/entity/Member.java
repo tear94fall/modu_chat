@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Member implements Parcelable {
+    @SerializedName("id")
+    private Long id;
     @SerializedName("userId")
     private String userId;
     @SerializedName("email")
@@ -85,6 +87,7 @@ public class Member implements Parcelable {
         email = in.readString();
     }
 
+    public Long getId() { return this.id; }
     public String getUserId() { return this.userId; }
     public String getEmail() { return this.email; }
     public String getAuth() { return this.auth; }
@@ -95,6 +98,7 @@ public class Member implements Parcelable {
     public String getWallpaperImage() { return this.wallpaperImage; }
     public List<Profile> getProfileList() { return this.profileList; }
 
+    public void setId(Long id) { this.id = id; }
     public void setUserId(String userId) { this.userId = userId; }
     public void setEmail(String email) { this.email = email; }
     public void setUsername(String username) { this.username = username; }

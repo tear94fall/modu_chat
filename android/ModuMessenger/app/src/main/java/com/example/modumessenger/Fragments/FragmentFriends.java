@@ -158,6 +158,7 @@ public class FragmentFriends extends Fragment {
     private void setButtonClickEvent() {
         myProfileCard.setOnClickListener(view -> {
             Intent intent = new Intent(view.getContext(), ProfileActivity.class);
+            intent.putExtra("memberId", String.valueOf(member.getId()));
             intent.putExtra("email", member.getEmail());
             intent.putExtra("userId", member.getUserId());
 

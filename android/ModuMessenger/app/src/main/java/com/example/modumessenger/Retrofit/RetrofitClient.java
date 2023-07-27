@@ -47,5 +47,6 @@ public class RetrofitClient {
     public static RetrofitCommonDataAPI createCommonApiService(){ return createService(RetrofitCommonDataAPI.class); }
     public static RetrofitImageAPI createImageApiService(){ return createService(RetrofitImageAPI.class); }
     public static RetrofitAuthAPI createAuthApiService(){ return createService(RetrofitAuthAPI.class); }
+    public static RetrofitProfileAPI createProfileApiService() { return createService(RetrofitProfileAPI.class); }
 }
 

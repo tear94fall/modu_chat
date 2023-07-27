@@ -7,22 +7,26 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class ProfileDto {
+    private Long id;
     private ProfileType profileType;
     private String value;
     private String createdDate;
     private String updatedDate;
 
+    public Long getId() { return this.id; }
     public ProfileType getProfileType() { return this.profileType; }
     public String getValue() { return this.value; }
     public String getCreatedDate() { return this.createdDate; }
     public String getUpdatedDate() { return this.updatedDate; }
 
+    public void setId(Long id) { this.id = id; }
     public void setValue(String value) { this.value = value; }
     public void setProfileType(ProfileType profileType) { this.profileType = profileType; }
     public void setCreatedDate(String createdDate) { this.createdDate = createdDate; }
     public void setUpdatedDate(String updatedDate) { this.updatedDate = updatedDate; }
 
     public ProfileDto(Profile profile) {
+        setId(profile.getId());
         setProfileType(profile.getProfileType());
         setValue(profile.getValue());
         setCreatedDate(profile.getCreatedDate() != null ? profile.getCreatedDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : "");

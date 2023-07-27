@@ -27,6 +27,7 @@ import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.example.modumessenger.dto.MemberDto;
 import com.example.modumessenger.entity.Member;
+import com.example.modumessenger.entity.ProfileType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,9 +40,9 @@ import retrofit2.Response;
 
 public class ProfileActivity extends AppCompatActivity {
 
+    Long memberId;
     String userId;
     String email;
-    Member myInfo;
     Member member;
     boolean isMyInfo = true;
 
@@ -69,21 +70,21 @@ public class ProfileActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        if(email != null && !email.equals("")) {
+        if (email != null && !email.equals("")) {
             getUserInfo(email);
         }
     }
 
     private void setGestureDetector() {
-        gestureDetector = new GestureDetector(this, new OnSwipeListener(){
+        gestureDetector = new GestureDetector(this, new OnSwipeListener() {
             @Override
             public boolean onSwipe(Direction direction) {
-                if (direction==Direction.up){
+                if (direction == Direction.up) {
                     //do your stuff
                     Log.d("Swipe Up", "onSwipe: up");
                 }
 
-                if (direction==Direction.down){
+                if (direction == Direction.down) {
                     //do your stuff
                     Log.d("Swipe Down", "onSwipe: down");
                     finish();
@@ -113,21 +114,20 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void getData() {
-        myInfo = getDataStoreMember();
-        userId = getIntent().getStringExtra("userId");
-        email = getIntent().getStringExtra("email");
+        member = getDataStoreMember();
+        memberId = Long.parseLong(getIntent().getStringExtra("memberId"));
     }
 
     private void setData() {
         retrofitMemberAPI = RetrofitClient.createMemberApiService();
         retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
 
-        if (myInfo.getEmail().equals(email)) {
-            setUserProfile(myInfo);
+        if (member.getId().equals(memberId)) {
+            setUserProfile(member);
             profileEditButton.setVisibility(View.VISIBLE);
             createChatRoomButton.setText("나와 채팅 하기");
         } else {
-            getUserInfo(email);
+            getUserInfo(member.getEmail());
             createChatRoomButton.setText("친구와 채팅 하기");
             isMyInfo = false;
         }
@@ -141,13 +141,7 @@ public class ProfileActivity extends AppCompatActivity {
         });
 
         wallpaperImageView.setOnClickListener(v -> {
-            Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
-            intent.putExtra("email", email);
-
-            List<String> imageFileList = member.getProfileListTypedDesc(PROFILE_WALLPAPER);
-
-            intent.putStringArrayListExtra("imageFileList", new ArrayList<>(imageFileList));
-            startActivity(intent);
+            profileImageIntent(v, PROFILE_WALLPAPER);
         });
 
         profileImageView.setOnTouchListener((v, event) -> {
@@ -156,12 +150,7 @@ public class ProfileActivity extends AppCompatActivity {
         });
 
         profileImageView.setOnClickListener(v -> {
-            Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
-            intent.putExtra("email", member.getEmail());
-
-            List<String> imageFileList = member.getProfileListTypedDesc(PROFILE_IMAGE);
-            intent.putStringArrayListExtra("imageFileList", new ArrayList<>(imageFileList));
-            startActivity(intent);
+            profileImageIntent(v, PROFILE_IMAGE);
         });
 
         profileEditButton.setOnClickListener(v -> {
@@ -176,8 +165,8 @@ public class ProfileActivity extends AppCompatActivity {
             // if not, create chat room
             List<String> userIds = new ArrayList<>(Collections.singletonList(userId));
 
-            if(!isMyInfo) {
-                userIds.add(myInfo.getUserId());
+            if (!isMyInfo) {
+                userIds.add(member.getUserId());
             }
 
             createChatRoom(userIds);
@@ -185,9 +174,17 @@ public class ProfileActivity extends AppCompatActivity {
 
         profileHistoryButton.setOnClickListener(v -> {
             Intent intent = new Intent(v.getContext(), ProfileHistoryActivity.class);
-            intent.putExtra("email", email);
+            intent.putExtra("memberId", String.valueOf(member.getId()));
             startActivity(intent);
         });
+    }
+
+    private void profileImageIntent(View v, ProfileType type) {
+        Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
+        intent.putExtra("memberId", String.valueOf(member.getId()));
+        intent.putExtra("type", type.name());
+
+        startActivity(intent);
     }
 
     private boolean getIntentExtra(String key) {
@@ -195,7 +192,7 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void setTextOnView(TextView view, String value) {
-        if(value != null && !value.equals("")) {
+        if (value != null && !value.equals("")) {
             view.setText(value);
         } else {
             view.setText("");
@@ -223,8 +220,8 @@ public class ProfileActivity extends AppCompatActivity {
         call.enqueue(new Callback<MemberDto>() {
             @Override
             public void onResponse(@NonNull Call<MemberDto> call, @NonNull Response<MemberDto> response) {
-                if(response.isSuccessful()) {
-                    if(response.body() != null) {
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
                         MemberDto memberDto = response.body();
                         member = new Member(memberDto);
 
@@ -248,7 +245,7 @@ public class ProfileActivity extends AppCompatActivity {
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override
             public void onResponse(@NonNull Call<ChatRoomDto> call, @NonNull Response<ChatRoomDto> response) {
-                if(!response.isSuccessful()){
+                if (!response.isSuccessful()) {
                     Log.e("연결이 비정상적 : ", "error code : " + response.code() + ", body : " + response.body());
                     return;
                 }

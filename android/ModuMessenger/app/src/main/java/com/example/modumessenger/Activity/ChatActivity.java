@@ -268,8 +268,8 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_baseline_arrow_back_24);
 
-        DrawerLayout drawLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        DrawerLayout drawLayout = findViewById(R.id.drawer_layout);
+        NavigationView navigationView = findViewById(R.id.nav_view);
 
         ConstraintLayout recentImageView = navigationView.findViewById(R.id.recentImageConstraintLayout);
 

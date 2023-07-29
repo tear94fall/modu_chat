@@ -113,8 +113,7 @@ public class FragmentSetting extends Fragment {
     private void setButtonClickEvent() {
         setting_my_profile_card_view.setOnClickListener(view -> {
             Intent intent = new Intent(view.getContext(), ProfileActivity.class);
-            intent.putExtra("email", member.getEmail());
-            intent.putExtra("userId", member.getUserId());
+            intent.putExtra("memberId", String.valueOf(member.getId()));
 
             view.getContext().startActivity(intent);
         });

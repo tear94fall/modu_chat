@@ -342,8 +342,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public void startProfileActivity(View view, Member member) {
         Intent intent = new Intent(view.getContext(), ProfileActivity.class);
-        intent.putExtra("email", member.getEmail());
-        intent.putExtra("userId", member.getUserId());
+        intent.putExtra("memberId", String.valueOf(member.getId()));
 
         view.getContext().startActivity(intent);
     }

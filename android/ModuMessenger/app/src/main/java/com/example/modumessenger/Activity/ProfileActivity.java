@@ -187,22 +187,6 @@ public class ProfileActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private boolean getIntentExtra(String key) {
-        return getIntent().hasExtra(key);
-    }
-
-    private void setTextOnView(TextView view, String value) {
-        if (value != null && !value.equals("")) {
-            view.setText(value);
-        } else {
-            view.setText("");
-        }
-    }
-
-    private void setImageOnView(ImageView view, int value) {
-        view.setImageResource(value);
-    }
-
     private void setUserProfile(Member member) {
         usernameTextView.setText(member.getUsername());
         statusMessageTextView.setText(member.getStatusMessage());

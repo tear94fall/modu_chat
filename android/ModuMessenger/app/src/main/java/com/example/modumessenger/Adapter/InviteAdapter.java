@@ -87,8 +87,7 @@ public class InviteAdapter extends RecyclerView.Adapter<InviteAdapter.AddChatVie
         public void setUserClickEvent(MemberDto member) {
             this.addChatCardViewLayout.setOnClickListener(v -> {
                 Intent intent = new Intent(v.getContext(), ProfileActivity.class);
-                intent.putExtra("userId", member.getUserId());
-                intent.putExtra("email", member.getEmail());
+                intent.putExtra("memberId", String.valueOf(member.getId()));
 
                 v.getContext().startActivity(intent);
             });

@@ -72,6 +72,7 @@ public class ChatRoomMemberAdapter extends RecyclerView.Adapter<ChatRoomMemberAd
         public void setUserClickEvent(Member member) {
             this.cardViewLayout.setOnClickListener(v -> {
                 Intent intent = new Intent(v.getContext(), ProfileActivity.class);
+                intent.putExtra("memberId", String.valueOf(member.getId()));
                 intent.putExtra("email", member.getEmail());
                 intent.putExtra("userId", member.getUserId());
                 intent.putExtra("username", member.getUsername());

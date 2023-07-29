@@ -93,8 +93,7 @@ public class SearchFriendsAdapter extends RecyclerView.Adapter<SearchFriendsAdap
         public void setUserClickEvent(MemberDto member) {
             this.cardViewLayout.setOnClickListener(v -> {
                 Intent intent = new Intent(v.getContext(), ProfileActivity.class);
-                intent.putExtra("email", member.getEmail());
-                intent.putExtra("userId", member.getUserId());
+                intent.putExtra("memberId", String.valueOf(member.getId()));
 
                 v.getContext().startActivity(intent);
             });

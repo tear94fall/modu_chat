@@ -17,6 +17,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ResponseMemberDto implements Serializable {
 
+    private Long id;
     private String userId;
     private String auth;
     private Role role;
@@ -28,6 +29,7 @@ public class ResponseMemberDto implements Serializable {
     private List<ProfileDto> profiles;
 
     public ResponseMemberDto(MemberDto memberDto, List<ProfileDto> profiles) {
+        this.id = memberDto.getId();
         this.userId = memberDto.getUserId();
         this.auth = memberDto.getAuth();
         this.role = memberDto.getRole();

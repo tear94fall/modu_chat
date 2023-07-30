@@ -31,6 +31,14 @@ public class MemberController {
         return ResponseEntity.ok().body(responseMemberDto);
     }
 
+    @GetMapping("/member/member/{id}")
+    public ResponseEntity<ResponseMemberDto> getMemberById(@Valid @PathVariable("id") Long id) {
+        MemberDto memberDto = memberService.getMemberById(id);
+        List<ProfileDto> profiles = profileFeignClient.getMemberProfiles(memberDto.getId()).getBody();
+
+        return ResponseEntity.ok().body(new ResponseMemberDto(memberDto, profiles));
+    }
+
     @GetMapping("/member/id/{userId}")
     public ResponseEntity<MemberDto> getMember(@Valid @PathVariable("userId") String userId) {
         MemberDto memberDto = memberService.getUserById(userId);

@@ -91,3 +91,10 @@ spring:
           filters:
             - AuthorizationHeaderFilter
             - RewritePath=/storage-service/(?<segment>.*), /$\{segment}
+        - id: profile-service
+          uri: lb://PROFILE-SERVICE
+          predicates:
+            - Path=/profile-service/**
+          filters:
+            - AuthorizationHeaderFilter
+            - RewritePath=/profile-service/(?<segment>.*), /$\{segment}

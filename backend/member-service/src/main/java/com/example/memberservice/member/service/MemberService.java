@@ -107,6 +107,12 @@ public class MemberService implements UserDetailsService {
         return new MemberDto(member);
     }
 
+    public MemberDto getMemberById(Long id) {
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_ID_NOT_FOUND_ERROR, id));
+        return new MemberDto(member);
+    }
+
     public MemberDto getMemberByEmail(String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND, email));

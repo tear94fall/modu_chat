@@ -22,6 +22,9 @@ public interface RetrofitMemberAPI {
     @GET("member-service/member/{email}")
     Call<MemberDto> RequestUserInfo(@Path("email") String email);
 
+    @GET("member-service/member/member/{id}")
+    Call<MemberDto> RequestMemberById(@Path("id") Long id);
+
     @POST("member-service/member/{userId}")
     Call<MemberDto> RequestUpdate(@Path("userId") String userId, @Body MemberDto memberDto);
 

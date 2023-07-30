@@ -44,7 +44,8 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/toolbar"
-                app:layout_constraintBottom_toTopOf="@id/bottomConstraintLayout" />
+                app:layout_constraintBottom_toTopOf="@id/bottomConstraintLayout"
+                tools:listitem="@layout/chat_bubble_left_image" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/bottomConstraintLayout"

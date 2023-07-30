@@ -17,7 +17,7 @@ public class MemberDto {
     private String statusMessage;
     private String profileImage;
     private String wallpaperImage;
-    private List<ProfileDto> profileDtoList;
+    private List<ProfileDto> profiles;
 
     public Long getId() { return this.id; }
     public String getUserId() { return this.userId; }
@@ -28,7 +28,7 @@ public class MemberDto {
     public String getStatusMessage() { return this.statusMessage; }
     public String getProfileImage() { return this.profileImage; }
     public String getWallpaperImage() { return this.wallpaperImage; }
-    public List<ProfileDto> getProfileDtoList() { return this.profileDtoList; }
+    public List<ProfileDto> getProfiles() { return this.profiles; }
 
     public void setId(Long id) { this.id = id; }
     public void setUserId(String userId) { this.userId = userId; }
@@ -39,7 +39,7 @@ public class MemberDto {
     public void setStatusMessage(String statusMessage) { this.statusMessage = statusMessage; }
     public void setProfileImage(String profileImage) { this.profileImage = profileImage; }
     public void setWallpaperImage(String wallpaperImage) { this.wallpaperImage = wallpaperImage; }
-    public void setProfileDtoList(List<ProfileDto> profileDtoList) { this.profileDtoList = profileDtoList; }
+    public void setProfiles(List<ProfileDto> profileDtoList) { this.profiles = profileDtoList; }
 
     public MemberDto() {
 
@@ -63,6 +63,6 @@ public class MemberDto {
         setStatusMessage(member.getStatusMessage());
         setProfileImage(member.getProfileImage());
         setWallpaperImage(member.getWallpaperImage());
-        setProfileDtoList(member.getProfileList() != null ? member.getProfileList().stream().map(ProfileDto::new).collect(Collectors.toList()) : null);
+        setProfiles(member.getProfiles() != null ? member.getProfiles().stream().map(ProfileDto::new).collect(Collectors.toList()) : null);
     }
 }

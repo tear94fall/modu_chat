@@ -15,29 +15,31 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.modumessenger.R;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.entity.Profile;
+import com.example.modumessenger.entity.ProfileType;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class ProfileHistoryAdapter extends RecyclerView.Adapter<ProfileHistoryAdapter.FindFriendsViewHolder> {
+public class ProfileHistoryAdapter extends RecyclerView.Adapter<ProfileHistoryAdapter.ProfileHistoryViewHolder> {
 
     Member member;
     List<Profile> profileList;
 
     public ProfileHistoryAdapter(Member member) {
         this.member = member;
-        this.profileList = member.getAllProfileListDesc();
+        this.profileList = member.getProfiles() != null ? member.getAllProfileListDesc() : new ArrayList<>();
     }
 
     @NonNull
     @Override
-    public ProfileHistoryAdapter.FindFriendsViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public ProfileHistoryViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.profile_image_history_row, parent, false);
-        return new ProfileHistoryAdapter.FindFriendsViewHolder(view);
+        return new ProfileHistoryViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ProfileHistoryAdapter.FindFriendsViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ProfileHistoryViewHolder holder, int position) {
         holder.setDataAtIndex(member, profileList, position);
     }
 
@@ -46,28 +48,31 @@ public class ProfileHistoryAdapter extends RecyclerView.Adapter<ProfileHistoryAd
         return profileList.size();
     }
 
-    public static class FindFriendsViewHolder extends RecyclerView.ViewHolder {
+    public static class ProfileHistoryViewHolder extends RecyclerView.ViewHolder {
 
         ImageView profileImage, profileHistoryImage;
-        TextView profileName;
+        TextView profileName, profileDate;
 
-        public FindFriendsViewHolder(@NonNull View itemView) {
+        public ProfileHistoryViewHolder(@NonNull View itemView) {
             super(itemView);
 
             profileName = itemView.findViewById(R.id.profile_history_my_profile_name);
+            profileDate = itemView.findViewById(R.id.profile_history_my_profile_date);
 
             profileImage = itemView.findViewById(R.id.profile_history_my_profile_image);
             profileHistoryImage = itemView.findViewById(R.id.profile_history_image);
         }
 
         public void setDataAtIndex(Member member, List<Profile> profileList, int position) {
-            setUserProfileImage(member.getProfileImage());
-            setProfileName(member.getUsername());
-
             Profile profile = profileList.get(position);
             if(profile.getProfileType() == PROFILE_IMAGE || profile.getProfileType() == PROFILE_WALLPAPER) {
                 setProfileHistoryImage(profile.getValue());
             }
+            // add if type is status message
+
+            setUserProfileImage(member.getProfileImage());
+            setProfileName(member.getUsername(), profile.getProfileType());
+            setProfileDate(profile.getCreatedDateTime());
         }
 
         public void setUserProfileImage(String imageUrl) {
@@ -78,8 +83,21 @@ public class ProfileHistoryAdapter extends RecyclerView.Adapter<ProfileHistoryAd
             setProfileImage(profileHistoryImage, imageUrl);
         }
 
-        public void setProfileName(String name) {
-            profileName.setText(name);
+        public void setProfileName(String name, ProfileType type) {
+            String msg = name;
+
+            if (type == PROFILE_IMAGE) {
+                msg += "님의 프로필 이미지";
+            } else if (type == PROFILE_WALLPAPER) {
+                msg += "님의 배경 이미지";
+            }
+            // add if type is status message
+
+            profileName.setText(msg);
+        }
+
+        public void setProfileDate(String date) {
+            profileDate.setText(date.substring(0, date.indexOf(" ")));
         }
     }
 }

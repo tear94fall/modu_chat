@@ -209,6 +209,10 @@ public class ProfileActivity extends AppCompatActivity {
                         MemberDto memberDto = response.body();
                         member = new Member(memberDto);
 
+                        if (member.getProfiles().size() == 0) {
+                            profileHistoryButton.setVisibility(View.GONE);
+                        }
+
                         setUserProfile(member);
                     }
                 }

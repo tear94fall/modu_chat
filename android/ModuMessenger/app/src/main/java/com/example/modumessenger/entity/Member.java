@@ -33,7 +33,7 @@ public class Member implements Parcelable {
     @SerializedName("wallpaperImage")
     private String wallpaperImage;
     @SerializedName("profile")
-    private List<Profile> profileList;
+    private List<Profile> profiles;
 
     public Member(String userId, Member member) {
 
@@ -47,7 +47,7 @@ public class Member implements Parcelable {
         setStatusMessage(memberDto.getStatusMessage());
         setProfileImage(memberDto.getProfileImage() == null ? null : memberDto.getProfileImage().toString());
         setWallpaperImage(memberDto.getWallpaperImage());
-        setProfileList(memberDto.getProfileDtoList() != null ? memberDto.getProfileDtoList().stream().map(Profile::new).collect(Collectors.toList()) : null);
+        setProfiles(memberDto.getProfiles() != null ? memberDto.getProfiles().stream().map(Profile::new).collect(Collectors.toList()) : null);
     }
 
     public Member(GoogleSignInAccount account) {
@@ -96,7 +96,7 @@ public class Member implements Parcelable {
     public String getStatusMessage() { return this.statusMessage; }
     public String getProfileImage() { return this.profileImage; }
     public String getWallpaperImage() { return this.wallpaperImage; }
-    public List<Profile> getProfileList() { return this.profileList; }
+    public List<Profile> getProfiles() { return this.profiles; }
 
     public void setId(Long id) { this.id = id; }
     public void setUserId(String userId) { this.userId = userId; }
@@ -107,7 +107,7 @@ public class Member implements Parcelable {
     public void setStatusMessage(String statusMessage) { this.statusMessage = statusMessage; }
     public void setProfileImage(String profileImage) { this.profileImage = (profileImage == null || profileImage.equals("") ? "" : profileImage); }
     public void setWallpaperImage(String wallpaperImage) { this.wallpaperImage = (wallpaperImage == null || wallpaperImage.equals("") ? "" : wallpaperImage); }
-    public void setProfileList(List<Profile> profileList) { this.profileList = profileList; }
+    public void setProfiles(List<Profile> profileList) { this.profiles = profileList; }
 
     public void updateProfile(String username, String statusMessage, String profileImage, String wallpaperImage) {
         if(username != null) setUsername(username);
@@ -124,7 +124,7 @@ public class Member implements Parcelable {
     }
 
     public List<String> getProfileListTypedDesc(ProfileType type) {
-        return this.getProfileList()
+        return this.getProfiles()
                 .stream()
                 .filter(profile -> profile.getProfileType().equals(type))
                 .sorted(Comparator.comparing(Profile::getLastModifiedDateTime).reversed())
@@ -133,7 +133,7 @@ public class Member implements Parcelable {
     }
 
     public List<Profile> getAllProfileListDesc() {
-        return this.getProfileList()
+        return this.getProfiles()
                 .stream()
                 .sorted(Comparator.comparing(Profile::getLastModifiedDateTime).reversed())
                 .collect(Collectors.toList());

@@ -67,26 +67,20 @@ public class ProfileHistoryActivity extends AppCompatActivity {
         member = getDataStoreMember();
         memberId = Long.parseLong(getIntent().getStringExtra("memberId"));
 
-        getMemberInfo(memberId);
+        getMemberInfoById(memberId);
     }
 
     private void setEvents() {
 
     }
 
-    // Retrofit function
-    public void getMemberInfo(Long id) {
-        /*
-        get member info retrofit request
-         */
-
-        // finish request
-        getProfileList(memberId);
+    public void getMemberInfoById(Long id) {
+        getProfileHistory(id);
     }
 
-    // must removed
-    public void getProfileHistory(String email) {
-        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(email);
+    // Retrofit function
+    public void getProfileHistory(Long id) {
+        Call<MemberDto> call = retrofitMemberAPI.RequestMemberById(id);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override
@@ -101,34 +95,14 @@ public class ProfileHistoryActivity extends AppCompatActivity {
                         profileHistoryAdapter = new ProfileHistoryAdapter(member);
                         recyclerView.setAdapter(profileHistoryAdapter);
                     }
-                }
 
-                Log.d("내 정보 가져오기 요청 : ", response.body().toString());
+                    Log.d("회원 가져오기 요청 id : ", response.body().getId().toString());
+                }
             }
 
             @Override
             public void onFailure(@NonNull Call<MemberDto> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
-            }
-        });
-    }
-
-    public void getProfileList(Long id) {
-        Call<List<ProfileDto>> call = retrofitProfileAPI.getMemberProfiles(id);
-
-        call.enqueue(new Callback<List<ProfileDto>>() {
-            @Override
-            public void onResponse(@NonNull Call<List<ProfileDto>> call, @NonNull Response<List<ProfileDto>> response) {
-                if (response.isSuccessful()) {
-                    if (response.body() != null) {
-                        List<ProfileDto> profileList = response.body();
-                    }
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<List<ProfileDto>> call, @NonNull Throwable t) {
-
             }
         });
     }

@@ -163,13 +163,13 @@ public class ProfileActivity extends AppCompatActivity {
         createChatRoomButton.setOnClickListener(view -> {
             // exist chat room
             // if not, create chat room
-            List<String> userIds = new ArrayList<>(Collections.singletonList(userId));
+            List<Long> ids = new ArrayList<>(Collections.singletonList(member.getId()));
 
             if (!isMyInfo) {
-                userIds.add(member.getUserId());
+                ids.add(memberId);
             }
 
-            createChatRoom(userIds);
+            createChatRoom(ids);
         });
 
         profileHistoryButton.setOnClickListener(v -> {
@@ -227,8 +227,8 @@ public class ProfileActivity extends AppCompatActivity {
         });
     }
 
-    public void createChatRoom(List<String> userIds) {
-        Call<ChatRoomDto> call = retrofitChatRoomAPI.RequestCreateChatRoom(userIds);
+    public void createChatRoom(List<Long> ids) {
+        Call<ChatRoomDto> call = retrofitChatRoomAPI.RequestCreateChatRoom(ids);
 
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override

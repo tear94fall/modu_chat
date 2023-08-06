@@ -10,6 +10,6 @@ import retrofit2.http.Path;
 
 public interface RetrofitProfileAPI {
 
-    @GET("profile-service/api/v1/profile/{memberId}")
+    @GET("profile-service/profile/{memberId}")
     Call<List<ProfileDto>> getMemberProfiles(@Path("memberId") Long memberId);
 }

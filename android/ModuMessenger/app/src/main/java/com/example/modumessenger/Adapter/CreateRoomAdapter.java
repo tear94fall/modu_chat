@@ -90,9 +90,9 @@ public class CreateRoomAdapter extends RecyclerView.Adapter<CreateRoomAdapter.Ad
                 boolean checked = ((CheckBox) view).isChecked();
 
                 if(checked) {
-                    ((CreateRoomActivity) this.context).addUserIdOnAddChatList(member.getUserId());
+                    ((CreateRoomActivity) this.context).addUserIdOnAddChatList(member.getId());
                 } else {
-                    ((CreateRoomActivity) this.context).removeUserIdOnAddChatList(member.getUserId());
+                    ((CreateRoomActivity) this.context).removeUserIdOnAddChatList(member.getId());
                 }
             });
         }

@@ -84,10 +84,10 @@ public class ChatRoomService {
                 .collect(Collectors.toList());
     }
 
-    public ChatRoomDto createChatRoom(List<String> userIds) {
-        List<MemberDto> members = memberFeignClient.getMembersByUserId(userIds);
+    public ChatRoomDto createChatRoom(List<Long> ids) {
+        List<MemberDto> members = memberFeignClient.getMembersById(ids);
         if(members.size() == 0) {
-            throw new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userIds.toString());
+            throw new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, ids.toString());
         }
 
         //legacy

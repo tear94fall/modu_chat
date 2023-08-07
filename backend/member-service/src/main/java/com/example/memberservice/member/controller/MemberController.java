@@ -96,7 +96,7 @@ public class MemberController {
     }
 
     @GetMapping("/member/members")
-    public ResponseEntity<List<MemberDto>> findMembersByUserId(@Valid @RequestParam List<String> userIds) {
+    public ResponseEntity<List<MemberDto>> findMembersByUserId(@Valid @RequestParam("userIds") List<String> userIds) {
         List<MemberDto> members = memberService.findMembers(userIds);
         return ResponseEntity.ok().body(members);
     }

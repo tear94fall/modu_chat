@@ -37,34 +37,34 @@ spring:
   zipkin:
     base-url: http://localhost:9411
 
-feign:
-  client:
-    config:
-      default:
-        connectTimeout: 5000
-        readTimeout: 5000
-        loggerLevel: full
+#feign:
+#  client:
+#    config:
+#      default:
+#        connectTimeout: 5000
+#        readTimeout: 5000
+#        loggerLevel: full
 
-  # Updated to spring.cloud.openfeign.circuitbreaker.enabled in 4.0.0-SNAPSHOT
-  circuit-breaker:
-    enabled: true
-
-resilience4j:
-  circuit-breaker:
-    configs:
-      default:
-        waitDurationInOpenState: 30s
-        slowCallRateThreshold: 80
-        slowCallDurationThreshold: 5s
-        registerHealthIndicator: true
-    instances:
-      default:
-        baseConfig: default
-  time-limiter:
-    configs:
-      default:
-        timeoutDuration: 6s
-        cancelRunningFuture: true
+  # Updated to spring.cloud.openfeign.circuit-breaker.enabled in 4.0.0-SNAPSHOT
+#  circuit-breaker:
+#    enabled: true
+#
+#resilience4j:
+#  circuit-breaker:
+#    configs:
+#      default:
+#        waitDurationInOpenState: 30s
+#        slowCallRateThreshold: 80
+#        slowCallDurationThreshold: 5s
+#        registerHealthIndicator: true
+#    instances:
+#      default:
+#        baseConfig: default
+#  time-limiter:
+#    configs:
+#      default:
+#        timeoutDuration: 6s
+#        cancelRunningFuture: true
 
 logging:
   level:

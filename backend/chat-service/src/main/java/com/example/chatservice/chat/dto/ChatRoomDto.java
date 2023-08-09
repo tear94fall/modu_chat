@@ -27,6 +27,7 @@ public class ChatRoomDto implements Serializable{
     private List<MemberDto> members = new ArrayList<>();
 
     public ChatRoomDto(ChatRoom chatRoom, List<MemberDto> members) {
+        setId(chatRoom.getId());
         setRoomId(chatRoom.getRoomId());
         setRoomName(chatRoom.getRoomName());
         setRoomImage(chatRoom.getRoomImage());

@@ -15,17 +15,17 @@ public class ProfileController {
     private final ProfileService profileService;
 
     @GetMapping("/profile/{memberId}")
-    public ResponseEntity<List<ProfileDto>> getProfiles(@PathVariable String memberId) {
+    public ResponseEntity<List<ProfileDto>> getProfiles(@PathVariable("memberId") Long memberId) {
         return ResponseEntity.ok().body(profileService.getMemberProfiles(memberId));
     }
 
     @GetMapping("/profile/{memberId}/{id}/{count}")
-    public ResponseEntity<List<ProfileDto>> getProfilesOffset(@PathVariable String memberId, @PathVariable String id, @PathVariable String count) {
+    public ResponseEntity<List<ProfileDto>> getProfilesOffset(@PathVariable("memberId") String memberId, @PathVariable("id") String id, @PathVariable("count") String count) {
         return ResponseEntity.ok().body(profileService.getMemberProfileOffset(memberId, id, count));
     }
 
     @GetMapping("/profile/{memberId}/{id}")
-    public ResponseEntity<ProfileDto> getProfile(@PathVariable String memberId, @PathVariable String id) {
+    public ResponseEntity<ProfileDto> getProfile(@PathVariable("memberId") String memberId, @PathVariable("id") String id) {
         return ResponseEntity.ok().body(profileService.getMemberProfile(memberId, id));
     }
 
@@ -35,7 +35,7 @@ public class ProfileController {
     }
 
     @DeleteMapping("/profile/{memberId}/{id}")
-    public ResponseEntity<Long> removeProfile(@PathVariable String memberId, @PathVariable String id) {
+    public ResponseEntity<Long> removeProfile(@PathVariable("memberId") String memberId, @PathVariable("id") String id) {
         return ResponseEntity.ok().body(profileService.deleteProfile(memberId, id));
     }
 }

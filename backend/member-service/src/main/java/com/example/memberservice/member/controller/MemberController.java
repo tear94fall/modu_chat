@@ -62,8 +62,8 @@ public class MemberController {
     }
 
     @PostMapping("/member/{userId}")
-    private ResponseEntity<ResponseMemberDto> updateMember(@Valid @PathVariable("userId") String userId, @RequestBody RequestMemberDto requestMemberDto) {
-        MemberDto memberDto = memberService.updateMember(userId, modelMapper.map(requestMemberDto, MemberDto.class));
+    private ResponseEntity<ResponseMemberDto> updateMember(@Valid @PathVariable("userId") String userId, @RequestBody UpdateProfileDto updateProfileDto) {
+        MemberDto memberDto = memberService.updateMember(userId, updateProfileDto);
         List<ProfileDto> profiles = profileFeignClient.getMemberProfiles(memberDto.getId()).getBody();
 
         ResponseMemberDto responseMemberDto = new ResponseMemberDto(memberDto, profiles);
@@ -81,8 +81,8 @@ public class MemberController {
     }
 
     @PostMapping("/member/{userId}/friends")
-    public ResponseEntity<ResponseFriendDto> addFriends(@Valid @PathVariable("userId") String userId, @RequestBody RequestMemberDto requestMemberDto) {
-        return ResponseEntity.ok().body(modelMapper.map(memberService.addFriends(userId, modelMapper.map(requestMemberDto, MemberDto.class)), ResponseFriendDto.class));
+    public ResponseEntity<ResponseFriendDto> addFriends(@Valid @PathVariable("userId") String userId, @RequestBody String email) {
+        return ResponseEntity.ok().body(modelMapper.map(memberService.addFriends(userId, email), ResponseFriendDto.class));
     }
 
     @GetMapping("/member/friends/{email}")

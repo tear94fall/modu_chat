@@ -6,6 +6,7 @@ import com.example.memberservice.global.properties.GoogleOauthProperties;
 import com.example.memberservice.member.dto.GoogleLoginRequest;
 import com.example.memberservice.member.dto.MemberDto;
 import com.example.memberservice.member.dto.ChatRoomMemberDto;
+import com.example.memberservice.member.dto.UpdateProfileDto;
 import com.example.memberservice.member.entity.Member;
 import com.example.memberservice.member.repository.MemberRepository;
 import com.example.memberservice.profile.client.ProfileFeignClient;
@@ -119,11 +120,14 @@ public class MemberService implements UserDetailsService {
         return new MemberDto(member);
     }
 
-    public MemberDto updateMember(String userId, MemberDto memberDto) {
-        Member member = memberRepository.searchMemberByUserId(userId).orElseGet(Member::new);
-        member.updateMember(memberDto);
+    public MemberDto updateMember(String userId, UpdateProfileDto updateProfileDto) {
+        Member member = memberRepository.searchMemberByUserId(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userId));
+
+        member.updateProfile(updateProfileDto);
         Member updateMember = memberRepository.save(member);
-        return modelMapper.map(updateMember, MemberDto.class);
+
+        return new MemberDto(updateMember);
     }
 
     public List<MemberDto> getFriendsList(String userId) {
@@ -139,10 +143,10 @@ public class MemberService implements UserDetailsService {
                 .collect(Collectors.toList());
     }
 
-    public MemberDto addFriends(String userId, MemberDto memberDto) {
-        if(!memberRepository.existsByEmail(memberDto.getEmail())) {
+    public MemberDto addFriends(String userId, String email) {
+        if(!memberRepository.existsByEmail(email)) {
             throw new DuplicateKeyException(String.format(
-                    "존재하지 않는 유저입니다 'auth: %s, email: %s'", memberDto.getAuth(), memberDto.getEmail()
+                    "존재하지 않는 유저입니다 'email: %s'", email
             ));
         }
 
@@ -150,9 +154,9 @@ public class MemberService implements UserDetailsService {
                 .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userId));
 
         Member friend = memberRepository.findByEmail(member.getEmail())
-                .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND, memberDto.getEmail()));
+                .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND, email));
 
-        member.getFriends().add(friend.getId());
+        member.addFriends(friend.getId());
 
         return modelMapper.map(friend, MemberDto.class);
     }

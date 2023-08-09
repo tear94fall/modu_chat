@@ -20,8 +20,8 @@ public class ProfileService {
     private final ProfileRepository profileRepository;
     private final MemberFeignClient memberFeignClient;
 
-    public List<ProfileDto> getMemberProfiles(String memberId) {
-        List<Profile> profileList = profileRepository.findByMemberId(Long.valueOf(memberId));
+    public List<ProfileDto> getMemberProfiles(Long memberId) {
+        List<Profile> profileList = profileRepository.findByMemberId(memberId);
 
         return profileList.stream()
                 .map(ProfileDto::new)

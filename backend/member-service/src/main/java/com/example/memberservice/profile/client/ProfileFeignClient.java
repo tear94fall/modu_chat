@@ -11,7 +11,7 @@ import java.util.List;
 public interface ProfileFeignClient {
 
     @GetMapping("/profile/{memberId}")
-    ResponseEntity<List<ProfileDto>> getMemberProfiles(@PathVariable Long memberId);
+    ResponseEntity<List<ProfileDto>> getMemberProfiles(@PathVariable("memberId") Long memberId);
 
     @PostMapping("/profile")
     ResponseEntity<ProfileDto> addProfileRequest(@RequestBody ProfileDto profileDto);

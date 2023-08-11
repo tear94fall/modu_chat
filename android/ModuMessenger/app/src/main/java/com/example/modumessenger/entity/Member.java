@@ -40,6 +40,7 @@ public class Member implements Parcelable {
     }
 
     public Member(MemberDto memberDto) {
+        setId(memberDto.getId());
         setUserId(memberDto.getUserId());
         setEmail(memberDto.getEmail());
         setAuth("google");

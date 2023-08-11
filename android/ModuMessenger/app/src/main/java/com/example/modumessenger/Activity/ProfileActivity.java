@@ -41,8 +41,6 @@ import retrofit2.Response;
 public class ProfileActivity extends AppCompatActivity {
 
     Long memberId;
-    String userId;
-    String email;
     Member member;
     boolean isMyInfo = true;
 
@@ -70,6 +68,8 @@ public class ProfileActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
+
+        String email = member.getEmail();
         if (email != null && !email.equals("")) {
             getUserInfo(email);
         }

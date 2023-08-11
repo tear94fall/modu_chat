@@ -57,8 +57,9 @@ public class MemberDto {
     public MemberDto(Member member) {
         setId(member.getId());
         setUserId(member.getUserId());
-        setEmail(member.getEmail());
         setAuth(member.getAuth());
+        setRole(member.getRole());
+        setEmail(member.getEmail());
         setUsername(member.getUsername());
         setStatusMessage(member.getStatusMessage());
         setProfileImage(member.getProfileImage());

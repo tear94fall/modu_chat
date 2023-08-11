@@ -29,6 +29,7 @@ import com.example.modumessenger.Global.ScopedStorageUtil;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitImageAPI;
 import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
+import com.example.modumessenger.dto.UpdateProfileDto;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.MemberDto;
@@ -109,7 +110,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
                 member.setWallpaperImage("");
             }
 
-            updateMyInfo(new MemberDto(member));
+            updateProfile(new UpdateProfileDto(member));
 
             if(event == PROFILE_EVENT.PROFILE_DEFAULT.getEvent()) {
                 setProfileImage(profileImageView, member.getProfileImage());
@@ -189,7 +190,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
                 member.setUsername(myProfileName.getText().toString());
                 member.setStatusMessage(myStatusMessage.getText().toString());
 
-                updateMyInfo(new MemberDto(member));
+                updateProfile(new UpdateProfileDto(member));
             }
         });
 
@@ -241,8 +242,8 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
     }
 
     // Retrofit function
-    public void updateMyInfo(MemberDto memberDto) {
-        Call<MemberDto> call = retrofitMemberAPI.RequestUpdate(member.getUserId(), memberDto);
+    public void updateProfile(UpdateProfileDto updateProfileDto) {
+        Call<MemberDto> call = retrofitMemberAPI.RequestUpdateProfile(member.getUserId(), updateProfileDto);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override
@@ -322,7 +323,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
                                 event == PROFILE_EVENT.WALLPAPER_CHANGE.getEvent() ? fileName : member.getWallpaperImage()
                         );
 
-                        updateMyInfo(new MemberDto(member));
+                        updateProfile(new UpdateProfileDto(member));
 
                         Log.d("프로필 이미지 업로드 요청 : ", response.body());
                     }

@@ -131,7 +131,7 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     public void addFriend(String userId, MemberDto friend) {
-        Call<MemberDto> call = retrofitMemberAPI.RequestAddFriends(userId, friend);
+        Call<MemberDto> call = retrofitMemberAPI.RequestAddFriends(userId, friend.getEmail());
 
         call.enqueue(new Callback<MemberDto>() {
             @Override

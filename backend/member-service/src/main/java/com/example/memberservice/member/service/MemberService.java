@@ -91,7 +91,7 @@ public class MemberService implements UserDetailsService {
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_ID_NOT_FOUND_ERROR, memberDto.getId()));
 
         String uploadFile = storageFeignClient.upload(member.getProfileImage()).getBody();
-        if (uploadFile == null || uploadFile.equals("")) {
+        if (uploadFile == null || uploadFile.isEmpty()) {
             throw new CustomException(ErrorCode.USER_PROFILE_IMAGE_UPLOAD_ERROR, memberDto.getProfileImage());
         }
 
@@ -120,7 +120,7 @@ public class MemberService implements UserDetailsService {
         return new MemberDto(member);
     }
 
-    public MemberDto updateMember(String userId, UpdateProfileDto updateProfileDto) {
+    public MemberDto updateMemberProfile(String userId, UpdateProfileDto updateProfileDto) {
         Member member = memberRepository.searchMemberByUserId(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userId));
 

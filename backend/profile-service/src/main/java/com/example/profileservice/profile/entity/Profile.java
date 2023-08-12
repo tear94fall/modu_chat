@@ -1,7 +1,7 @@
 package com.example.profileservice.profile.entity;
 
 import com.example.profileservice.global.entity.BaseTimeEntity;
-import com.example.profileservice.profile.dto.ProfileDto;
+import com.example.profileservice.profile.dto.CreateProfileDto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -24,9 +24,9 @@ public class Profile extends BaseTimeEntity {
 
     private String value;
 
-    public Profile(ProfileDto profileDto) {
-        this.memberId = profileDto.getMemberId();
-        this.profileType = profileDto.getProfileType();
-        this.value = profileDto.getValue();
+    public Profile(CreateProfileDto createProfileDto) {
+        this.memberId = createProfileDto.getMemberId();
+        this.profileType = createProfileDto.getProfileType();
+        this.value = createProfileDto.getValue();
     }
 }

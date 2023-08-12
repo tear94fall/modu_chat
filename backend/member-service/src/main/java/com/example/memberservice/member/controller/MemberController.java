@@ -48,10 +48,10 @@ public class MemberController {
     @PostMapping("/member/signup")
     public ResponseEntity<ResponseMemberDto> createMember(@Valid @RequestBody GoogleLoginRequest googleLoginRequest) {
         MemberDto memberDto = memberService.registerMember(googleLoginRequest);
-        MemberDto memberDto1 = memberService.addProfileImage(memberDto);
+        MemberDto updateMemberDto = memberService.addProfileImage(memberDto);
         List<ProfileDto> profiles = profileFeignClient.getMemberProfiles(memberDto.getId()).getBody();
 
-        ResponseMemberDto responseMemberDto = new ResponseMemberDto(memberDto, profiles);
+        ResponseMemberDto responseMemberDto = new ResponseMemberDto(updateMemberDto, profiles);
         return ResponseEntity.ok().body(responseMemberDto);
     }
 
@@ -62,8 +62,8 @@ public class MemberController {
     }
 
     @PostMapping("/member/{userId}")
-    private ResponseEntity<ResponseMemberDto> updateMember(@Valid @PathVariable("userId") String userId, @RequestBody UpdateProfileDto updateProfileDto) {
-        MemberDto memberDto = memberService.updateMember(userId, updateProfileDto);
+    private ResponseEntity<ResponseMemberDto> updateMemberProfileInfo(@Valid @PathVariable("userId") String userId, @RequestBody UpdateProfileDto updateProfileDto) {
+        MemberDto memberDto = memberService.updateMemberProfile(userId, updateProfileDto);
         List<ProfileDto> profiles = profileFeignClient.getMemberProfiles(memberDto.getId()).getBody();
 
         ResponseMemberDto responseMemberDto = new ResponseMemberDto(memberDto, profiles);

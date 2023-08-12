@@ -1,5 +1,6 @@
 package com.example.profileservice.profile.controller;
 
+import com.example.profileservice.profile.dto.CreateProfileDto;
 import com.example.profileservice.profile.dto.ProfileDto;
 import com.example.profileservice.profile.service.ProfileService;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +31,8 @@ public class ProfileController {
     }
 
     @PostMapping("/profile")
-    public ResponseEntity<ProfileDto> createProfile(@RequestBody ProfileDto profileDto) {
-        return ResponseEntity.ok().body(profileService.registerProfile(profileDto));
+    public ResponseEntity<ProfileDto> createProfile(@RequestBody CreateProfileDto createProfileDto) {
+        return ResponseEntity.ok().body(profileService.registerProfile(createProfileDto));
     }
 
     @DeleteMapping("/profile/{memberId}/{id}")

@@ -18,10 +18,7 @@ import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.Retrofit.RetrofitProfileAPI;
 import com.example.modumessenger.dto.MemberDto;
-import com.example.modumessenger.dto.ProfileDto;
 import com.example.modumessenger.entity.Member;
-
-import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;

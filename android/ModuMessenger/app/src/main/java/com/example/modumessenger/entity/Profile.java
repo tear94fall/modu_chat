@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter;
 public class Profile {
 
     private Long id;
+    private Long memberId;
     @SerializedName("profileType")
     private ProfileType profileType;
     @SerializedName("value")
@@ -18,12 +19,14 @@ public class Profile {
     private LocalDateTime updatedDate;
 
     public Long getId() { return this.id; }
+    public Long getMemberId() { return this.memberId; }
     public ProfileType getProfileType() { return this.profileType; }
     public String getValue() { return this.value; }
     public LocalDateTime getCreatedDate() { return this.createdDate; }
     public LocalDateTime getUpdatedDate() { return this.updatedDate; }
 
     public void setId(Long id) { this.id = id; }
+    public void setMemberId(Long memberId) { this.memberId = memberId; }
     public void setValue(String value) { this.value = value; }
     public void setProfileType(ProfileType profileType) { this.profileType = profileType; }
     public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
@@ -31,6 +34,7 @@ public class Profile {
 
     public Profile(ProfileDto profileDto) {
         setId(profileDto.getId());
+        setMemberId(profileDto.getMemberId());
         setProfileType(profileDto.getProfileType());
         setValue(profileDto.getValue());
         setCreatedDate(profileDto.getCreatedLocalDateTime());

@@ -23,6 +23,16 @@ public class ProfileRepositoryImpl implements ProfileCustomRepository {
     }
 
     @Override
+    public Profile findLatestProfile(Long memberId) {
+        return queryFactory
+                .selectFrom(profile)
+                .where(profile.memberId.eq(memberId))
+                .orderBy(profile.createdDate.desc())
+                .limit(1)
+                .fetchOne();
+    }
+
+    @Override
     public List<Profile> findByMemberProfileOffset(Long memberId, Long id, Long count) {
         return queryFactory
                 .selectFrom(profile)

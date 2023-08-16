@@ -7,6 +7,8 @@ import java.util.List;
 public interface ProfileCustomRepository {
     Profile findByMemberProfile(Long memberId, Long id);
 
+    Profile findLatestProfile(Long memberId);
+
     List<Profile> findByMemberProfileOffset(Long memberId, Long id, Long count);
 
     Long deleteByMemberProfile(Long memberId, Long id);

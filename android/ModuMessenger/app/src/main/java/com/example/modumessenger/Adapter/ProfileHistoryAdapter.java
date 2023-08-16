@@ -51,13 +51,14 @@ public class ProfileHistoryAdapter extends RecyclerView.Adapter<ProfileHistoryAd
     public static class ProfileHistoryViewHolder extends RecyclerView.ViewHolder {
 
         ImageView profileImage, profileHistoryImage;
-        TextView profileName, profileDate;
+        TextView profileName, profileDate, profileStatusMessage;
 
         public ProfileHistoryViewHolder(@NonNull View itemView) {
             super(itemView);
 
             profileName = itemView.findViewById(R.id.profile_history_my_profile_name);
             profileDate = itemView.findViewById(R.id.profile_history_my_profile_date);
+            profileStatusMessage = itemView.findViewById(R.id.profile_history_status_message);
 
             profileImage = itemView.findViewById(R.id.profile_history_my_profile_image);
             profileHistoryImage = itemView.findViewById(R.id.profile_history_image);
@@ -67,8 +68,11 @@ public class ProfileHistoryAdapter extends RecyclerView.Adapter<ProfileHistoryAd
             Profile profile = profileList.get(position);
             if(profile.getProfileType() == PROFILE_IMAGE || profile.getProfileType() == PROFILE_WALLPAPER) {
                 setProfileHistoryImage(profile.getValue());
+                profileStatusMessage.setVisibility(View.GONE);
+            } else if (profile.getProfileType() == PROFILE_STATUS_MESSAGE) {
+                profileStatusMessage.setText(profile.getValue());
+                profileHistoryImage.setVisibility(View.GONE);
             }
-            // add if type is status message
 
             setUserProfileImage(member.getProfileImage());
             setProfileName(member.getUsername(), profile.getProfileType());

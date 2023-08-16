@@ -20,6 +20,11 @@ public class ProfileController {
         return ResponseEntity.ok().body(profileService.getMemberProfiles(memberId));
     }
 
+    @GetMapping("/profile/latest/{memberId}")
+    public ResponseEntity<ProfileDto> getLatestProfile(@PathVariable("memberId") String memberId) {
+        return ResponseEntity.ok().body(profileService.getMemberLatestProfile(memberId));
+    }
+
     @GetMapping("/profile/{memberId}/{id}/{count}")
     public ResponseEntity<List<ProfileDto>> getProfilesOffset(@PathVariable("memberId") String memberId, @PathVariable("id") String id, @PathVariable("count") String count) {
         return ResponseEntity.ok().body(profileService.getMemberProfileOffset(memberId, id, count));

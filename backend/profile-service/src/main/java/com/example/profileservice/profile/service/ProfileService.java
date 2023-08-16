@@ -29,6 +29,11 @@ public class ProfileService {
                 .collect(Collectors.toList());
     }
 
+    public ProfileDto getMemberLatestProfile(String memberId) {
+        Profile latestProfile = profileRepository.findLatestProfile(Long.valueOf(memberId));
+        return new ProfileDto(latestProfile);
+    }
+
     public List<ProfileDto> getMemberProfileOffset(String memberId, String id, String count) {
         List<Profile> profileList = profileRepository.findByMemberProfileOffset(Long.valueOf(memberId), Long.valueOf(id), Long.valueOf(count));
 

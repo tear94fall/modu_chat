@@ -3,6 +3,8 @@ package com.example.modumessenger.Adapter;
 import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
 import static com.example.modumessenger.entity.ProfileType.*;
 
+import android.content.Intent;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +14,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.modumessenger.Activity.ProfileImageActivity;
 import com.example.modumessenger.R;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.entity.Profile;
@@ -40,8 +43,12 @@ public class ProfileHistoryAdapter extends RecyclerView.Adapter<ProfileHistoryAd
 
     @Override
     public void onBindViewHolder(@NonNull ProfileHistoryViewHolder holder, int position) {
-        holder.setDataAtIndex(member, profileList, position);
+        Profile profile = profileList.get(position);
+
+        holder.setDataAtIndex(member, profile);
+        holder.setProfileImageClickEvent(member, profile);
     }
+
 
     @Override
     public int getItemCount() {
@@ -64,19 +71,28 @@ public class ProfileHistoryAdapter extends RecyclerView.Adapter<ProfileHistoryAd
             profileHistoryImage = itemView.findViewById(R.id.profile_history_image);
         }
 
-        public void setDataAtIndex(Member member, List<Profile> profileList, int position) {
-            Profile profile = profileList.get(position);
+        public void setDataAtIndex(Member member, Profile profile) {
             if(profile.getProfileType() == PROFILE_IMAGE || profile.getProfileType() == PROFILE_WALLPAPER) {
                 setProfileHistoryImage(profile.getValue());
                 profileStatusMessage.setVisibility(View.GONE);
             } else if (profile.getProfileType() == PROFILE_STATUS_MESSAGE) {
-                profileStatusMessage.setText(profile.getValue());
+                setProfileStatusMessage(profile.getValue());
                 profileHistoryImage.setVisibility(View.GONE);
             }
 
             setUserProfileImage(member.getProfileImage());
             setProfileName(member.getUsername(), profile.getProfileType());
             setProfileDate(profile.getCreatedDateTime());
+        }
+
+        public void setProfileImageClickEvent(Member member, Profile profile) {
+            profileHistoryImage.setOnClickListener(v -> {
+                Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
+                intent.putExtra("memberId", String.valueOf(member.getId()));
+                intent.putExtra("type", profile.getProfileType());
+
+                v.getContext().startActivity(intent);
+            });
         }
 
         public void setUserProfileImage(String imageUrl) {
@@ -87,21 +103,38 @@ public class ProfileHistoryAdapter extends RecyclerView.Adapter<ProfileHistoryAd
             setProfileImage(profileHistoryImage, imageUrl);
         }
 
+        public void setProfileStatusMessage(String statusMessage) {
+            profileStatusMessage.setText(statusMessage);
+
+            float fontSize = statusMessage.length() < 15 ? 25 : 20;
+            profileStatusMessage.setTextSize(TypedValue.COMPLEX_UNIT_DIP, fontSize);
+        }
+
         public void setProfileName(String name, ProfileType type) {
             String msg = name;
 
-            if (type == PROFILE_IMAGE) {
-                msg += "님의 프로필 이미지";
-            } else if (type == PROFILE_WALLPAPER) {
-                msg += "님의 배경 이미지";
+            switch(type) {
+                case PROFILE_IMAGE:
+                    msg += "님의 프로필 이미지";
+                    break;
+                case PROFILE_WALLPAPER:
+                    msg += "님의 배경 이미지";
+                    break;
+                case PROFILE_STATUS_MESSAGE:
+                    msg += "님의 상태 메세지";
+                    break;
+                default:
+                    break;
             }
-            // add if type is status message
 
             profileName.setText(msg);
         }
 
-        public void setProfileDate(String date) {
-            profileDate.setText(date.substring(0, date.indexOf(" ")));
+        public void setProfileDate(String updateDate) {
+            String []date = updateDate.substring(0, updateDate.indexOf(" ")).split("-");
+            String result = String.format("%s년 %s월 %s일", date[0], date[1], date[2]);
+
+            profileDate.setText(result);
         }
     }
 }

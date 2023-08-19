@@ -204,7 +204,10 @@ public class FragmentFriends extends Fragment {
                         MemberDto memberDto = response.body();
 
                         myName.setText(memberDto.getUsername());
-                        myStatusMessage.setText(memberDto.getStatusMessage());
+
+                        String statusMessage = memberDto.getStatusMessage().length() > 15 ? memberDto.getStatusMessage().substring(0, 12) + "..." : memberDto.getStatusMessage();
+                        myStatusMessage.setText(statusMessage);
+
                         setProfileImage(myProfileImage, memberDto.getProfileImage());
 
                         if(email.equals(memberDto.getEmail())){

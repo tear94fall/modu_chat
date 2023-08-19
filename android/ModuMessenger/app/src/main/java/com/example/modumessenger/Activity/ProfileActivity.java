@@ -189,7 +189,9 @@ public class ProfileActivity extends AppCompatActivity {
 
     private void setUserProfile(Member member) {
         usernameTextView.setText(member.getUsername());
-        statusMessageTextView.setText(member.getStatusMessage());
+
+        String statusMessage = member.getStatusMessage().length() > 15 ? member.getStatusMessage().substring(0, 12) + "..." : member.getStatusMessage();
+        statusMessageTextView.setText(statusMessage);
 
         setProfileImage(profileImageView, member.getProfileImage());
         setProfileImage(wallpaperImageView, member.getWallpaperImage());

@@ -5,7 +5,9 @@ import com.example.profileservice.member.dto.AddProfileDto;
 import com.example.profileservice.profile.dto.CreateProfileDto;
 import com.example.profileservice.profile.dto.ProfileDto;
 import com.example.profileservice.profile.entity.Profile;
+import com.example.profileservice.profile.entity.ProfileType;
 import com.example.profileservice.profile.repository.ProfileRepository;
+import com.example.profileservice.storage.client.StorageFeignClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,7 @@ public class ProfileService {
 
     private final ProfileRepository profileRepository;
     private final MemberFeignClient memberFeignClient;
+    private final StorageFeignClient storageFeignClient;
 
     public List<ProfileDto> getMemberProfiles(Long memberId) {
         List<Profile> profileList = profileRepository.findByMemberId(memberId);
@@ -47,6 +50,10 @@ public class ProfileService {
         return new ProfileDto(profile);
     }
 
+    public Long getMemberProfileTotalCount(String memberId) {
+        return profileRepository.findMemberTotalProfiles(Long.valueOf(memberId));
+    }
+
     public ProfileDto registerProfile(CreateProfileDto createProfileDto) {
         Profile profile = new Profile(createProfileDto);
 
@@ -57,6 +64,12 @@ public class ProfileService {
     }
 
     public Long deleteProfile(String memberId, String id) {
+        Profile findProfile = profileRepository.findByMemberProfile(Long.valueOf(memberId), Long.valueOf(id));
+
+        if (findProfile.getProfileType() != ProfileType.PROFILE_STATUS_MESSAGE) {
+            storageFeignClient.delete(findProfile.getValue());
+        }
+
         return profileRepository.deleteByMemberProfile(Long.valueOf(memberId), Long.valueOf(id));
     }
 }

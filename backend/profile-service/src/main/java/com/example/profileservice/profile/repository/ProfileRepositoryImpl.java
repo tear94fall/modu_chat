@@ -1,6 +1,7 @@
 package com.example.profileservice.profile.repository;
 
 import com.example.profileservice.profile.entity.Profile;
+import com.querydsl.core.types.dsl.Wildcard;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
@@ -41,6 +42,14 @@ public class ProfileRepositoryImpl implements ProfileCustomRepository {
                 .orderBy(profile.createdDate.desc())
                 .limit(count)
                 .fetch();
+    }
+
+    @Override
+    public Long findMemberTotalProfiles(Long memberId) {
+        return queryFactory
+                .select(Wildcard.count)
+                .from(profile)
+                .fetch().get(0);
     }
 
     @Override

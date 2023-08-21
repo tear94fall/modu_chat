@@ -11,5 +11,7 @@ public interface ProfileCustomRepository {
 
     List<Profile> findByMemberProfileOffset(Long memberId, Long id, Long count);
 
+    Long findMemberTotalProfiles(Long memberId);
+
     Long deleteByMemberProfile(Long memberId, Long id);
 }

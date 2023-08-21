@@ -3,6 +3,7 @@ package com.example.profileservice.profile.controller;
 import com.example.profileservice.profile.dto.CreateProfileDto;
 import com.example.profileservice.profile.dto.ProfileDto;
 import com.example.profileservice.profile.service.ProfileService;
+import com.example.profileservice.storage.client.StorageFeignClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +15,7 @@ import java.util.List;
 public class ProfileController {
 
     private final ProfileService profileService;
+    private final StorageFeignClient storageFeignClient;
 
     @GetMapping("/profile/{memberId}")
     public ResponseEntity<List<ProfileDto>> getProfiles(@PathVariable("memberId") Long memberId) {
@@ -33,6 +35,11 @@ public class ProfileController {
     @GetMapping("/profile/{memberId}/{id}")
     public ResponseEntity<ProfileDto> getProfile(@PathVariable("memberId") String memberId, @PathVariable("id") String id) {
         return ResponseEntity.ok().body(profileService.getMemberProfile(memberId, id));
+    }
+
+    @GetMapping("/profile/total/count/{memberId}")
+    public ResponseEntity<Long> getTotalProfileCount(@PathVariable("memberId") String memberId) {
+        return ResponseEntity.ok().body(profileService.getMemberProfileTotalCount(memberId));
     }
 
     @PostMapping("/profile")

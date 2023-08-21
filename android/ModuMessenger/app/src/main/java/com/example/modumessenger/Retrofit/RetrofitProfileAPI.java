@@ -14,7 +14,7 @@ import retrofit2.http.Path;
 public interface RetrofitProfileAPI {
 
     @GET("profile-service/profile/{memberId}")
-    Call<List<ProfileDto>> getMemberProfiles(@Path("memberId") Long memberId);
+    Call<List<ProfileDto>> RequestMemberProfiles(@Path("memberId") Long memberId);
 
     @POST("profile-service/profile")
     Call<ProfileDto> RequestCreateProfile(@Body CreateProfileDto createProfileDto);

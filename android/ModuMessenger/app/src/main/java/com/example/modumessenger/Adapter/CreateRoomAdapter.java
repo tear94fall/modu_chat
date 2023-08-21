@@ -56,7 +56,7 @@ public class CreateRoomAdapter extends RecyclerView.Adapter<CreateRoomAdapter.Ad
         TextView username;
         TextView statusMessage;
         ImageView profileImage;
-        CheckBox addCHatCheck;
+        CheckBox addChatCheck;
         ConstraintLayout addChatCardViewLayout;
 
         public AddChatViewHolder(Context context, @NonNull View itemView) {
@@ -66,7 +66,7 @@ public class CreateRoomAdapter extends RecyclerView.Adapter<CreateRoomAdapter.Ad
             username = itemView.findViewById(R.id.add_user_name);
             statusMessage = itemView.findViewById(R.id.add_status_message);
             profileImage = itemView.findViewById(R.id.add_profile_image);
-            addCHatCheck = itemView.findViewById(R.id.invite_check_button);
+            addChatCheck = itemView.findViewById(R.id.invite_check_button);
             addChatCardViewLayout = itemView.findViewById(R.id.addChatCardViewLayout);
         }
 
@@ -86,7 +86,7 @@ public class CreateRoomAdapter extends RecyclerView.Adapter<CreateRoomAdapter.Ad
         }
 
         public void setAddChatButton(MemberDto member) {
-            this.addCHatCheck.setOnClickListener(view -> {
+            this.addChatCheck.setOnClickListener(view -> {
                 boolean checked = ((CheckBox) view).isChecked();
 
                 if(checked) {

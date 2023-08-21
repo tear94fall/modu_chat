@@ -14,6 +14,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.Activity.ProfileImageActivity;
 import com.example.modumessenger.R;
 import com.example.modumessenger.entity.Member;
@@ -27,6 +28,16 @@ public class ProfileHistoryAdapter extends RecyclerView.Adapter<ProfileHistoryAd
 
     Member member;
     List<Profile> profileList;
+
+    private ProfileMenuClickListener listener;
+
+    public interface ProfileMenuClickListener {
+        void onItemLongClick(View view, Profile profile);
+    }
+
+    public void setProfileMenuClickListener(ProfileMenuClickListener listener) {
+        this.listener = listener;
+    }
 
     public ProfileHistoryAdapter(Member member) {
         this.member = member;
@@ -45,10 +56,10 @@ public class ProfileHistoryAdapter extends RecyclerView.Adapter<ProfileHistoryAd
     public void onBindViewHolder(@NonNull ProfileHistoryViewHolder holder, int position) {
         Profile profile = profileList.get(position);
 
-        holder.setDataAtIndex(member, profile);
-        holder.setProfileImageClickEvent(member, profile);
+        holder.setProfileInfo(member, profile);
+        holder.setClickEvent(profile);
+        holder.setPopupMenuEvent(profile, listener);
     }
-
 
     @Override
     public int getItemCount() {
@@ -57,7 +68,7 @@ public class ProfileHistoryAdapter extends RecyclerView.Adapter<ProfileHistoryAd
 
     public static class ProfileHistoryViewHolder extends RecyclerView.ViewHolder {
 
-        ImageView profileImage, profileHistoryImage;
+        ImageView profileImage, profileHistoryImage, profileMenu;
         TextView profileName, profileDate, profileStatusMessage;
 
         public ProfileHistoryViewHolder(@NonNull View itemView) {
@@ -69,9 +80,10 @@ public class ProfileHistoryAdapter extends RecyclerView.Adapter<ProfileHistoryAd
 
             profileImage = itemView.findViewById(R.id.profile_history_my_profile_image);
             profileHistoryImage = itemView.findViewById(R.id.profile_history_image);
+            profileMenu = itemView.findViewById(R.id.profile_menu_button);
         }
 
-        public void setDataAtIndex(Member member, Profile profile) {
+        public void setProfileInfo(Member member, Profile profile) {
             if(profile.getProfileType() == PROFILE_IMAGE || profile.getProfileType() == PROFILE_WALLPAPER) {
                 setProfileHistoryImage(profile.getValue());
                 profileStatusMessage.setVisibility(View.GONE);
@@ -85,14 +97,21 @@ public class ProfileHistoryAdapter extends RecyclerView.Adapter<ProfileHistoryAd
             setProfileDate(profile.getCreatedDateTime());
         }
 
-        public void setProfileImageClickEvent(Member member, Profile profile) {
-            profileHistoryImage.setOnClickListener(v -> {
-                Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
-                intent.putExtra("memberId", String.valueOf(member.getId()));
-                intent.putExtra("type", profile.getProfileType());
+        public void setClickEvent(Profile profile) {
+            profileImage.setOnClickListener(v -> {
+                Intent intent = new Intent(v.getContext(), ProfileActivity.class);
+                intent.putExtra("memberId", String.valueOf(profile.getMemberId()));
 
                 v.getContext().startActivity(intent);
             });
+
+            profileHistoryImage.setOnClickListener(v -> {
+                // need to implementation
+            });
+        }
+
+        public void setPopupMenuEvent(Profile profile, ProfileMenuClickListener listener) {
+            profileMenu.setOnClickListener(v -> listener.onItemLongClick(v, profile));
         }
 
         public void setUserProfileImage(String imageUrl) {

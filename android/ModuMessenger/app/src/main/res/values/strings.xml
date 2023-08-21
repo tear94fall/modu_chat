@@ -5,6 +5,9 @@
     <string name="setting">설정</string>
     <string name="open">열기</string>
     <string name="closed">닫기</string>
+    <string name="delete_profile">프로필 삭제 하기</string>
+    <string name="set_profile">배경 화면 설정 하기</string>
+    <string name="save_profile">저장 하기</string>
 
     <string name="temp_images_dir">temp_images</string>
     <string name="temp_image">temp_image.jpg</string>

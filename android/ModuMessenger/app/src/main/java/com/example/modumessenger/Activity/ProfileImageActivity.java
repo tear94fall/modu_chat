@@ -287,7 +287,7 @@ public class ProfileImageActivity  extends AppCompatActivity {
 
     // Retrofit function
     public void getMemberProfileList(Long id) {
-        Call<List<ProfileDto>> call = retrofitProfileAPI.getMemberProfiles(id);
+        Call<List<ProfileDto>> call = retrofitProfileAPI.RequestMemberProfiles(id);
 
         call.enqueue(new Callback<List<ProfileDto>>() {
             @Override

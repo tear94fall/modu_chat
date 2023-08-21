@@ -1,9 +1,14 @@
 package com.example.modumessenger.Activity;
 
+import static androidx.appcompat.widget.PopupMenu.*;
 import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.PopupMenu;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,6 +24,7 @@ import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.Retrofit.RetrofitProfileAPI;
 import com.example.modumessenger.dto.MemberDto;
 import com.example.modumessenger.entity.Member;
+import com.example.modumessenger.entity.Profile;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -75,6 +81,33 @@ public class ProfileHistoryActivity extends AppCompatActivity {
         getProfileHistory(id);
     }
 
+    public void OpenProfilePopupMenu(View view, Profile profile) {
+        PopupMenu popup = new PopupMenu(ProfileHistoryActivity.this, view);
+        getMenuInflater().inflate(R.menu.menu_profile_list, popup.getMenu());
+
+        popup.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId()) {
+                case R.id.set_profile:
+                    Toast.makeText(getApplicationContext(), "프로필 설정 하기: " + profile.getId(), Toast.LENGTH_LONG).show();
+                    break;
+
+                case R.id.save_profile:
+                    Toast.makeText(getApplicationContext(), "프로필 저장 하기: " + profile.getId(), Toast.LENGTH_LONG).show();
+                    break;
+
+                case R.id.delete_profile:
+                    Toast.makeText(getApplicationContext(), "프로필 삭제 하기: " + profile.getId(), Toast.LENGTH_LONG).show();
+                    break;
+
+                default:
+                    break;
+            }
+            return false;
+        });
+
+        popup.show();
+    }
+
     // Retrofit function
     public void getProfileHistory(Long id) {
         Call<MemberDto> call = retrofitMemberAPI.RequestMemberById(id);
@@ -90,6 +123,8 @@ public class ProfileHistoryActivity extends AppCompatActivity {
                         setTitle(member.getUsername());
 
                         profileHistoryAdapter = new ProfileHistoryAdapter(member);
+                        profileHistoryAdapter.setProfileMenuClickListener((view, profile) -> OpenProfilePopupMenu(view, profile));
+
                         recyclerView.setAdapter(profileHistoryAdapter);
                     }
 

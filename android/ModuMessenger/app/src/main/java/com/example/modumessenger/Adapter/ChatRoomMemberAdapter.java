@@ -65,8 +65,14 @@ public class ChatRoomMemberAdapter extends RecyclerView.Adapter<ChatRoomMemberAd
 
         public void setUserInfo(Member member) {
             this.username.setText(member.getUsername());
-            this.statusMessage.setText(member.getStatusMessage());
+
+            setStatusMessage(member.getStatusMessage());
             setProfileImage(profileImage, member.getProfileImage());
+        }
+
+        public void setStatusMessage(String statusMessage) {
+            String msg = statusMessage.length() > 15 ? statusMessage.substring(0, 12) + "..." : statusMessage;
+            this.statusMessage.setText(msg);
         }
 
         public void setUserClickEvent(Member member) {

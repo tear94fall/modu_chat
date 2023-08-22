@@ -88,7 +88,7 @@ public class ProfileHistoryActivity extends AppCompatActivity {
         popup.setOnMenuItemClickListener(item -> {
             switch (item.getItemId()) {
                 case R.id.set_profile:
-                    Toast.makeText(getApplicationContext(), "프로필 설정 하기: " + profile.getId(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "프로필로 설정 하기: " + profile.getId(), Toast.LENGTH_LONG).show();
                     break;
 
                 case R.id.save_profile:
@@ -96,7 +96,7 @@ public class ProfileHistoryActivity extends AppCompatActivity {
                     break;
 
                 case R.id.delete_profile:
-                    Toast.makeText(getApplicationContext(), "프로필 삭제 하기: " + profile.getId(), Toast.LENGTH_LONG).show();
+                    deleteProfile(profile);
                     break;
 
                 default:
@@ -128,13 +128,39 @@ public class ProfileHistoryActivity extends AppCompatActivity {
                         recyclerView.setAdapter(profileHistoryAdapter);
                     }
 
-                    Log.d("회원 가져오기 요청 id : ", response.body().getId().toString());
+                    Log.d("프로필 리스트 가져 오기 요청 id : ", response.body().getId().toString());
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<MemberDto> call, @NonNull Throwable t) {
-                Log.e("연결실패", t.getMessage());
+                Log.e("연결 실패", t.getMessage());
+            }
+        });
+    }
+
+    public void deleteProfile(Profile profile) {
+        String memberId = Long.toString(profile.getMemberId());
+        String id = Long.toString(profile.getId());
+
+        Call<Long> call = retrofitProfileAPI.RequestDeleteProfile(memberId, id);
+
+        call.enqueue(new Callback<Long>() {
+            @Override
+            public void onResponse(@NonNull Call<Long> call, @NonNull Response<Long> response) {
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
+                        Long deleteId = response.body();
+
+                        Toast.makeText(getApplicationContext(), "프로필 삭제 완료", Toast.LENGTH_LONG).show();
+                        Log.d(String.format("프로필 삭제 하기 요청 (회원 id: %s, 프로필 id: %s)", memberId, id), deleteId.toString());
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Long> call, @NonNull Throwable t) {
+                Log.e("연결 실패", t.getMessage());
             }
         });
     }

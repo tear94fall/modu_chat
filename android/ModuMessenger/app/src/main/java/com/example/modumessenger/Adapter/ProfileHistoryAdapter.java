@@ -105,9 +105,11 @@ public class ProfileHistoryAdapter extends RecyclerView.Adapter<ProfileHistoryAd
                 v.getContext().startActivity(intent);
             });
 
-            profileHistoryImage.setOnClickListener(v -> {
-                // need to implementation
-            });
+            if (profile.getProfileType() != PROFILE_STATUS_MESSAGE) {
+                profileHistoryImage.setOnClickListener(v -> {
+                    // need to implementation
+                });
+            }
         }
 
         public void setPopupMenuEvent(Profile profile, ProfileMenuClickListener listener) {

@@ -354,7 +354,31 @@ public class ProfileImageActivity  extends AppCompatActivity {
 
             @Override
             public void onFailure(@NonNull Call<MemberDto> call, @NonNull Throwable t) {
-                Log.e("연결실패", t.getMessage());
+                Log.e("연결 실패", t.getMessage());
+            }
+        });
+    }
+
+    public void getProfileCount(String memberId) {
+        Call<Long> call = retrofitProfileAPI.RequestTotalProfileCount(memberId);
+
+        call.enqueue(new Callback<Long>() {
+            @Override
+            public void onResponse(@NonNull Call<Long> call, @NonNull Response<Long> response) {
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
+                        Long deleteId = response.body();
+
+                        Toast.makeText(getApplicationContext(), "프로필 삭제 완료", Toast.LENGTH_LONG).show();
+
+                        Log.d(String.format("프로필 갯수 조회 요청  (회원 id: %s)", memberId), deleteId.toString());
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Long> call, @NonNull Throwable t) {
+                Log.e("연결 실패", t.getMessage());
             }
         });
     }

@@ -191,19 +191,24 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
     private void setButtonClickEvent() {
         myProfileSaveButton.setOnClickListener(v -> {
             boolean isUpdate = false;
+            String username = myProfileName.getText().toString();
+            String statusMessage = myStatusMessage.getText().toString();
 
-            if(!member.getUsername().equals(myProfileName.getText().toString())){
+            if (!member.getUsername().equals(username)) {
                 isUpdate = true;
             }
 
-            if(!member.getStatusMessage().equals(myStatusMessage.getText().toString())) {
+            if (!member.getStatusMessage().equals(statusMessage)) {
                 isUpdate = true;
-                addProfile(new CreateProfileDto(member.getId(), ProfileType.PROFILE_STATUS_MESSAGE, myStatusMessage.getText().toString()));
+
+                if (!statusMessage.equals("")) {
+                    addProfile(new CreateProfileDto(member.getId(), ProfileType.PROFILE_STATUS_MESSAGE, statusMessage));
+                }
             }
 
-            if(isUpdate) {
-                member.setUsername(myProfileName.getText().toString());
-                member.setStatusMessage(myStatusMessage.getText().toString());
+            if (isUpdate) {
+                member.setUsername(username);
+                member.setStatusMessage(statusMessage);
 
                 updateProfile(new UpdateProfileDto(member));
             }

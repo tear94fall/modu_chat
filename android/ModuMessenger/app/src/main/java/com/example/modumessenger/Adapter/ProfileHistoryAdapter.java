@@ -1,7 +1,6 @@
 package com.example.modumessenger.Adapter;
 
 import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
-import static com.example.modumessenger.entity.ProfileType.*;
 
 import android.content.Intent;
 import android.util.TypedValue;
@@ -15,7 +14,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.Activity.ProfileActivity;
-import com.example.modumessenger.Activity.ProfileImageActivity;
 import com.example.modumessenger.R;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.entity.Profile;
@@ -24,10 +22,15 @@ import com.example.modumessenger.entity.ProfileType;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProfileHistoryAdapter extends RecyclerView.Adapter<ProfileHistoryAdapter.ProfileHistoryViewHolder> {
+public class ProfileHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     Member member;
     List<Profile> profileList;
+
+    int INVALID = -1;
+    int TEXT = 0;
+    int IMAGE = 1;
+    int WALLPAPER = 2;
 
     private ProfileMenuClickListener listener;
 
@@ -46,19 +49,34 @@ public class ProfileHistoryAdapter extends RecyclerView.Adapter<ProfileHistoryAd
 
     @NonNull
     @Override
-    public ProfileHistoryViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        RecyclerView.ViewHolder viewHolder;
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        View view = inflater.inflate(R.layout.profile_image_history_row, parent, false);
-        return new ProfileHistoryViewHolder(view);
+
+        if(viewType == TEXT) {
+            viewHolder = new TextProfileHistoryViewHolder(inflater.inflate(R.layout.profile_text_history_row, parent, false));
+        } else if(viewType == IMAGE || viewType == WALLPAPER) {
+            viewHolder = new ImageProfileHistoryViewHolder(inflater.inflate(R.layout.profile_image_history_row, parent, false));
+        } else {
+            viewHolder = new TextProfileHistoryViewHolder(inflater.inflate(R.layout.profile_text_history_row, parent, false));
+        }
+
+        return viewHolder;
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ProfileHistoryViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         Profile profile = profileList.get(position);
 
-        holder.setProfileInfo(member, profile);
-        holder.setClickEvent(profile);
-        holder.setPopupMenuEvent(profile, listener);
+        if (holder instanceof ImageProfileHistoryViewHolder) {
+            ImageProfileHistoryViewHolder viewHolder = ((ImageProfileHistoryViewHolder) holder);
+            viewHolder.setProfileInfo(member, profile);
+            viewHolder.setClickEvent(profile, listener);
+        } else if (holder instanceof TextProfileHistoryViewHolder) {
+            TextProfileHistoryViewHolder viewHolder = ((TextProfileHistoryViewHolder) holder);
+            viewHolder.setProfileInfo(member, profile);
+            viewHolder.setClickEvent(profile, listener);
+        }
     }
 
     @Override
@@ -66,96 +84,110 @@ public class ProfileHistoryAdapter extends RecyclerView.Adapter<ProfileHistoryAd
         return profileList.size();
     }
 
-    public static class ProfileHistoryViewHolder extends RecyclerView.ViewHolder {
+    @Override
+    public int getItemViewType(int position) {
+        switch (profileList.get(position).getProfileType()) {
+            case PROFILE_STATUS_MESSAGE:
+                return TEXT;
+            case PROFILE_IMAGE:
+                return IMAGE;
+            case PROFILE_WALLPAPER:
+                return WALLPAPER;
+            default:
+                return INVALID;
+        }
+    }
+
+    public static class ImageProfileHistoryViewHolder extends RecyclerView.ViewHolder {
 
         ImageView profileImage, profileHistoryImage, profileMenu;
-        TextView profileName, profileDate, profileStatusMessage;
+        TextView profileName, profileDate;
 
-        public ProfileHistoryViewHolder(@NonNull View itemView) {
+        public ImageProfileHistoryViewHolder(@NonNull View itemView) {
             super(itemView);
 
             profileName = itemView.findViewById(R.id.profile_history_my_profile_name);
             profileDate = itemView.findViewById(R.id.profile_history_my_profile_date);
-            profileStatusMessage = itemView.findViewById(R.id.profile_history_status_message);
-
             profileImage = itemView.findViewById(R.id.profile_history_my_profile_image);
-            profileHistoryImage = itemView.findViewById(R.id.profile_history_image);
             profileMenu = itemView.findViewById(R.id.profile_menu_button);
+            profileHistoryImage = itemView.findViewById(R.id.profile_history_image);
         }
 
         public void setProfileInfo(Member member, Profile profile) {
-            if(profile.getProfileType() == PROFILE_IMAGE || profile.getProfileType() == PROFILE_WALLPAPER) {
-                setProfileHistoryImage(profile.getValue());
-                profileStatusMessage.setVisibility(View.GONE);
-            } else if (profile.getProfileType() == PROFILE_STATUS_MESSAGE) {
-                setProfileStatusMessage(profile.getValue());
-                profileHistoryImage.setVisibility(View.GONE);
-            }
+            setProfileImage(profileHistoryImage, profile.getValue());
+            setProfileImage(profileImage, member.getProfileImage());
 
-            setUserProfileImage(member.getProfileImage());
-            setProfileName(member.getUsername(), profile.getProfileType());
-            setProfileDate(profile.getCreatedDateTime());
+            profileName.setText(getFullProfileName(member.getUsername(), profile.getProfileType()));
+            profileDate.setText(getFullProfileDate(profile.getLastModifiedDate()));
         }
 
-        public void setClickEvent(Profile profile) {
-            profileImage.setOnClickListener(v -> {
-                Intent intent = new Intent(v.getContext(), ProfileActivity.class);
-                intent.putExtra("memberId", String.valueOf(profile.getMemberId()));
+        public void setClickEvent(Profile profile, ProfileMenuClickListener listener) {
+            profileImage.setOnClickListener(v -> openProfileActivityIntent(v, profile.getMemberId()));
+            profileMenu.setOnClickListener(v -> listener.onItemLongClick(v, profile));
+            profileHistoryImage.setOnClickListener(v -> { /* need to implementation */ });
+        }
+    }
 
-                v.getContext().startActivity(intent);
-            });
+    public static class TextProfileHistoryViewHolder extends RecyclerView.ViewHolder {
 
-            if (profile.getProfileType() != PROFILE_STATUS_MESSAGE) {
-                profileHistoryImage.setOnClickListener(v -> {
-                    // need to implementation
-                });
-            }
+        ImageView profileImage, profileMenu;
+        TextView profileName, profileDate, profileStatusMessage;
+
+        public TextProfileHistoryViewHolder(@NonNull View itemView) {
+            super(itemView);
+
+            profileName = itemView.findViewById(R.id.profile_history_my_profile_name);
+            profileDate = itemView.findViewById(R.id.profile_history_my_profile_date);
+            profileImage = itemView.findViewById(R.id.profile_history_my_profile_image);
+            profileMenu = itemView.findViewById(R.id.profile_menu_button);
+            profileStatusMessage = itemView.findViewById(R.id.profile_history_status_message);
         }
 
-        public void setPopupMenuEvent(Profile profile, ProfileMenuClickListener listener) {
+        public void setProfileInfo(Member member, Profile profile) {
+            setProfileImage(profileImage, member.getProfileImage());
+
+            profileName.setText(getFullProfileName(member.getUsername(), profile.getProfileType()));
+            profileDate.setText(getFullProfileDate(profile.getLastModifiedDate()));
+
+            profileStatusMessage.setText(profile.getValue());
+            profileStatusMessage.setTextSize(TypedValue.COMPLEX_UNIT_DIP, profile.getValue().length() < 15 ? 25 : 20);
+        }
+
+        public void setClickEvent(Profile profile, ProfileMenuClickListener listener) {
+            profileImage.setOnClickListener(v -> openProfileActivityIntent(v, profile.getMemberId()));
             profileMenu.setOnClickListener(v -> listener.onItemLongClick(v, profile));
         }
+    }
 
-        public void setUserProfileImage(String imageUrl) {
-            setProfileImage(profileImage, imageUrl);
+    public static String getFullProfileName(String name, ProfileType type) {
+        String msg = name;
+
+        switch(type) {
+            case PROFILE_IMAGE:
+                msg += "님의 프로필 이미지";
+                break;
+            case PROFILE_WALLPAPER:
+                msg += "님의 배경 이미지";
+                break;
+            case PROFILE_STATUS_MESSAGE:
+                msg += "님의 상태 메세지";
+                break;
+            default:
+                break;
         }
 
-        public void setProfileHistoryImage(String imageUrl) {
-            setProfileImage(profileHistoryImage, imageUrl);
-        }
+        return msg;
+    }
 
-        public void setProfileStatusMessage(String statusMessage) {
-            profileStatusMessage.setText(statusMessage);
+    public static String getFullProfileDate(String dateTime) {
+        String []date = dateTime.substring(0, dateTime.indexOf(" ")).split("-");
+        return String.format("%s년 %s월 %s일", date[0], date[1], date[2]);
+    }
 
-            float fontSize = statusMessage.length() < 15 ? 25 : 20;
-            profileStatusMessage.setTextSize(TypedValue.COMPLEX_UNIT_DIP, fontSize);
-        }
+    public static void openProfileActivityIntent(View view, Long memberId) {
+        Intent intent = new Intent(view.getContext(), ProfileActivity.class);
+        intent.putExtra("memberId", String.valueOf(memberId));
 
-        public void setProfileName(String name, ProfileType type) {
-            String msg = name;
-
-            switch(type) {
-                case PROFILE_IMAGE:
-                    msg += "님의 프로필 이미지";
-                    break;
-                case PROFILE_WALLPAPER:
-                    msg += "님의 배경 이미지";
-                    break;
-                case PROFILE_STATUS_MESSAGE:
-                    msg += "님의 상태 메세지";
-                    break;
-                default:
-                    break;
-            }
-
-            profileName.setText(msg);
-        }
-
-        public void setProfileDate(String updateDate) {
-            String []date = updateDate.substring(0, updateDate.indexOf(" ")).split("-");
-            String result = String.format("%s년 %s월 %s일", date[0], date[1], date[2]);
-
-            profileDate.setText(result);
-        }
+        view.getContext().startActivity(intent);
     }
 }

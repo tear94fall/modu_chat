@@ -182,6 +182,7 @@ public class ProfileActivity extends AppCompatActivity {
     private void profileImageIntent(View v, ProfileType type) {
         Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
         intent.putExtra("memberId", String.valueOf(member.getId()));
+        intent.putExtra("profileId", "");
         intent.putExtra("type", type.name());
 
         startActivity(intent);

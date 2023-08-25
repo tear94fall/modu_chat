@@ -14,6 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.Activity.ProfileActivity;
+import com.example.modumessenger.Activity.ProfileImageActivity;
 import com.example.modumessenger.R;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.entity.Profile;
@@ -123,8 +124,8 @@ public class ProfileHistoryAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
         public void setClickEvent(Profile profile, ProfileMenuClickListener listener) {
             profileImage.setOnClickListener(v -> openProfileActivityIntent(v, profile.getMemberId()));
+            profileHistoryImage.setOnClickListener(v -> openProfileImageActivityIntent(v, profile));
             profileMenu.setOnClickListener(v -> listener.onItemLongClick(v, profile));
-            profileHistoryImage.setOnClickListener(v -> { /* need to implementation */ });
         }
     }
 
@@ -187,6 +188,15 @@ public class ProfileHistoryAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     public static void openProfileActivityIntent(View view, Long memberId) {
         Intent intent = new Intent(view.getContext(), ProfileActivity.class);
         intent.putExtra("memberId", String.valueOf(memberId));
+
+        view.getContext().startActivity(intent);
+    }
+
+    public static void openProfileImageActivityIntent(View view, Profile profile) {
+        Intent intent = new Intent(view.getContext(), ProfileImageActivity.class);
+        intent.putExtra("memberId", String.valueOf(profile.getMemberId()));
+        intent.putExtra("profileId", String.valueOf(profile.getId()));
+        intent.putExtra("type", profile.getProfileType().name());
 
         view.getContext().startActivity(intent);
     }

@@ -61,7 +61,7 @@ import retrofit2.Response;
 public class ProfileImageActivity  extends AppCompatActivity {
 
     ProfileType type;
-    Long memberId;
+    Long memberId, profileId;
     String email;
     Member member;
 
@@ -110,8 +110,13 @@ public class ProfileImageActivity  extends AppCompatActivity {
         type = Enum.valueOf(ProfileType.class, getIntent().getStringExtra("type"));
         memberId = Long.parseLong(getIntent().getStringExtra("memberId"));
 
-        getMemberProfileList(memberId);
-        getMyProfileInfo(email);
+        if (getIntent().getStringExtra("profileId").equals("")) {
+            getMemberProfileList(memberId);
+            getMyProfileInfo(email);
+        } else {
+            profileId = Long.parseLong(getIntent().getStringExtra("profileId"));
+            getMemberProfile(memberId, profileId);
+        }
     }
 
     private void setEvents() {
@@ -286,8 +291,33 @@ public class ProfileImageActivity  extends AppCompatActivity {
     }
 
     // Retrofit function
-    public void getMemberProfileList(Long id) {
-        Call<List<ProfileDto>> call = retrofitProfileAPI.RequestMemberProfiles(id);
+    public void getMemberProfile(Long memberId, Long profileId) {
+        Call<ProfileDto> call = retrofitProfileAPI.RequestMemberProfile(Long.toString(memberId), Long.toString(profileId));
+
+        call.enqueue(new Callback<ProfileDto>() {
+            @Override
+            public void onResponse(@NonNull Call<ProfileDto> call, @NonNull Response<ProfileDto> response) {
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
+                        ProfileDto profileDto = response.body();
+
+                        List<String> profileImageList = getProfileListByType(type, new ArrayList<>(Collections.singletonList(profileDto)));
+                        showImageLists(profileImageList);
+                    }
+                }
+
+                Log.d("프로필 리스트 가져오기 요청 : ", response.body().toString());
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ProfileDto> call, @NonNull Throwable t) {
+                Log.e("연결 실패", t.getMessage());
+            }
+        });
+    }
+
+    public void getMemberProfileList(Long memberId) {
+        Call<List<ProfileDto>> call = retrofitProfileAPI.RequestMemberProfiles(memberId);
 
         call.enqueue(new Callback<List<ProfileDto>>() {
             @Override
@@ -300,11 +330,13 @@ public class ProfileImageActivity  extends AppCompatActivity {
                         showImageLists(profileImageList);
                     }
                 }
+
+                Log.d("프로필 리스트 가져오기 요청 : ", response.body().toString());
             }
 
             @Override
             public void onFailure(@NonNull Call<List<ProfileDto>> call, @NonNull Throwable t) {
-
+                Log.e("연결 실패", t.getMessage());
             }
         });
     }
@@ -330,7 +362,7 @@ public class ProfileImageActivity  extends AppCompatActivity {
 
             @Override
             public void onFailure(@NonNull Call<MemberDto> call, @NonNull Throwable t) {
-                Log.e("연결실패", t.getMessage());
+                Log.e("연결 실패", t.getMessage());
             }
         });
     }

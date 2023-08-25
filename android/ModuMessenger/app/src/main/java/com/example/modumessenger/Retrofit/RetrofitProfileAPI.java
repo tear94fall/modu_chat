@@ -17,6 +17,9 @@ public interface RetrofitProfileAPI {
     @GET("profile-service/profile/{memberId}")
     Call<List<ProfileDto>> RequestMemberProfiles(@Path("memberId") Long memberId);
 
+    @GET("profile-service/profile/{memberId}/{id}")
+    Call<ProfileDto> RequestMemberProfile(@Path("memberId") String memberId, @Path("id") String id);
+
     @POST("profile-service/profile")
     Call<ProfileDto> RequestCreateProfile(@Body CreateProfileDto createProfileDto);
 

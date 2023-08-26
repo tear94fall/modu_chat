@@ -1,6 +1,5 @@
 package com.example.modumessenger.Activity;
 
-import static androidx.appcompat.widget.PopupMenu.*;
 import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
 
 import android.os.Bundle;
@@ -11,6 +10,7 @@ import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -53,6 +53,9 @@ public class ProfileHistoryActivity extends AppCompatActivity {
     }
 
     private void bindingView() {
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+
         recyclerView = findViewById(R.id.profile_history_recycler_view);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -75,6 +78,18 @@ public class ProfileHistoryActivity extends AppCompatActivity {
 
     private void setEvents() {
 
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case android.R.id.home:
+                finish();
+                return true;
+            default:
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     public void getMemberInfoById(Long id) {

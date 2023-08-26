@@ -275,7 +275,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
         recentImageView.setOnClickListener(v -> {
             if(recentImageList.size() != 0) {
-                Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
+                Intent intent = new Intent(v.getContext(), ChatImageActivity.class);
                 intent.putStringArrayListExtra("imageFileList", recentImageList);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
@@ -283,6 +283,12 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
             } else {
                 Toast.makeText(this.getApplicationContext(),"채팅방에 전송된 사진이 없습니다.", Toast.LENGTH_SHORT).show();
             }
+        });
+
+        ConstraintLayout chatRoomMemberView = navigationView.findViewById(R.id.chatRoomMemberConstraintLayout);
+
+        chatRoomMemberView.setOnClickListener(v -> {
+            // need to implementation
         });
 
         Button ExitButton = navigationView.findViewById(R.id.nav_exit_button);
@@ -696,7 +702,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 recentChatImageGridAdapter.setGridItems(imageChatList);
 
                 recent_chat_images.setOnItemClickListener((parent, v, position, id) -> {
-                    Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
+                    Intent intent = new Intent(v.getContext(), ChatImageActivity.class);
                     ArrayList<String> imageFileList = imageChatList.stream().skip(position).map(ChatDto::getMessage).collect(Collectors.toCollection(ArrayList::new));
                     intent.putStringArrayListExtra("imageFileList", imageFileList);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

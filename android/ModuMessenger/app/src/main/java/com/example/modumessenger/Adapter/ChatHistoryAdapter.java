@@ -17,8 +17,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.modumessenger.Activity.ChatImageActivity;
 import com.example.modumessenger.Activity.ProfileActivity;
-import com.example.modumessenger.Activity.ProfileImageActivity;
 import com.example.modumessenger.R;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.RoomDatabase.Database.ChatDatabase;
@@ -431,7 +431,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         public void setChatImageClickEvent(ChatBubble chat) {
             this.chatImage.setOnClickListener(v -> {
-                Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
+                Intent intent = new Intent(v.getContext(), ChatImageActivity.class);
 
                 ArrayList<String> imageFileList = new ArrayList<>();
                 imageFileList.add(chat.getChatMsg());
@@ -472,7 +472,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         public void setChatImageClickEvent(ChatBubble chat) {
             this.chatImage.setOnClickListener(v -> {
-                Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
+                Intent intent = new Intent(v.getContext(), ChatImageActivity.class);
 
                 ArrayList<String> imageFileList = new ArrayList<>();
                 imageFileList.add(chat.getChatMsg());
@@ -531,7 +531,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         public void setChatImageClickEvent(ChatBubble chat) {
             this.chatImage.setOnClickListener(v -> {
-                Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
+                Intent intent = new Intent(v.getContext(), ChatImageActivity.class);
 
                 ArrayList<String> imageFileList = new ArrayList<>();
                 imageFileList.add(chat.getChatMsg());

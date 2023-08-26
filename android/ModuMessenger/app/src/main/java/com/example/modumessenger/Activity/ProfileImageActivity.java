@@ -2,8 +2,10 @@ package com.example.modumessenger.Activity;
 
 import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
 
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -58,7 +60,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class ProfileImageActivity  extends AppCompatActivity {
+public class ProfileImageActivity extends AppCompatActivity {
 
     ProfileType type;
     Long memberId, profileId;
@@ -176,6 +178,20 @@ public class ProfileImageActivity  extends AppCompatActivity {
     }
 
     public void saveFile(@NonNull final File file, @NonNull final String mimeType, @NonNull final String displayName) throws IOException {
+        // check permission
+        if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            if (shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                Toast.makeText(this, "사진 다운로드를 취소 합니다.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            requestPermissions(new String[]{
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+            }, 1000);
+
+            return;
+        }
+
         ContentValues values = new ContentValues();
         values.put(MediaStore.MediaColumns.DISPLAY_NAME, displayName);
         values.put(MediaStore.MediaColumns.MIME_TYPE, mimeType);
@@ -202,7 +218,7 @@ public class ProfileImageActivity  extends AppCompatActivity {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) values.put(MediaStore.Images.Media.IS_PENDING, 0);
 
             contentResolver.update(item, values, null, null);
-            Toast.makeText(this, "사진이 저장되었습니다.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "사진이 저장 되었습니다.", Toast.LENGTH_SHORT).show();
         } catch (IOException e) {
             Toast.makeText(this, "사진을 저장할 수 없습니다.", Toast.LENGTH_SHORT).show();
             if (item != null) {

@@ -5,10 +5,14 @@ import com.example.memberservice.global.exception.ErrorCode;
 import com.example.memberservice.global.properties.GoogleOauthProperties;
 import com.example.memberservice.member.dto.GoogleLoginRequest;
 import com.example.memberservice.member.dto.MemberDto;
+import com.example.memberservice.member.dto.ChatRoomMemberDto;
+import com.example.memberservice.member.dto.UpdateProfileDto;
 import com.example.memberservice.member.entity.Member;
-import com.example.memberservice.member.entity.profile.Profile;
 import com.example.memberservice.member.repository.MemberRepository;
-import com.example.memberservice.member.repository.ProfileRepository;
+import com.example.memberservice.profile.client.ProfileFeignClient;
+import com.example.memberservice.profile.dto.AddProfileDto;
+import com.example.memberservice.profile.dto.ProfileDto;
+import com.example.memberservice.profile.dto.ProfileType;
 import com.example.memberservice.storage.client.StorageFeignClient;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -17,7 +21,6 @@ import com.google.api.client.json.gson.GsonFactory;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -30,6 +33,7 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
@@ -40,10 +44,10 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 public class MemberService implements UserDetailsService {
 
     private final MemberRepository memberRepository;
-    private final ProfileRepository profileRepository;
     private final ModelMapper modelMapper;
     private final GoogleOauthProperties googleOauthProperties;
     private final StorageFeignClient storageFeignClient;
+    private final ProfileFeignClient profileFeignClient;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -73,15 +77,40 @@ public class MemberService implements UserDetailsService {
         }
 
         MemberDto memberDto = new MemberDto(payload);
-        Member member = memberRepository.save(new Member(memberDto));
+        Member member = new Member(memberDto);
+
+        Member saveMember = memberRepository.save(member);
         memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.CREATE_NEW_USER_FAIL, email));
 
-        ResponseEntity<String> upload = storageFeignClient.upload(memberDto.getProfileImage());
-        if (!member.getProfileImage().equals(upload.getBody())) {
-            throw new CustomException(ErrorCode.USER_PROFILE_IMAGE_UPLOAD_ERROR, member.getProfileImage());
+        return new MemberDto(saveMember);
+    }
+
+    public MemberDto addProfileImage(MemberDto memberDto) {
+        Member member = memberRepository.findById(memberDto.getId())
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_ID_NOT_FOUND_ERROR, memberDto.getId()));
+
+        String uploadFile = storageFeignClient.upload(member.getProfileImage()).getBody();
+        if (uploadFile == null || uploadFile.isEmpty()) {
+            throw new CustomException(ErrorCode.USER_PROFILE_IMAGE_UPLOAD_ERROR, memberDto.getProfileImage());
         }
 
+        ProfileDto profileDto = new ProfileDto(0L, member.getId(), ProfileType.PROFILE_IMAGE, uploadFile, "", "");
+        ProfileDto saveProfile = profileFeignClient.addProfileRequest(profileDto).getBody();
+
+        if (saveProfile == null || !saveProfile.getValue().equals(uploadFile)) {
+            throw new CustomException(ErrorCode.USER_PROFILE_IMAGE_UPLOAD_ERROR, uploadFile);
+        }
+
+        member.updateMemberInfo(saveProfile);
+        member.addProfile(profileDto.getId());
+
+        return new MemberDto(member);
+    }
+
+    public MemberDto getMemberById(Long id) {
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_ID_NOT_FOUND_ERROR, id));
         return new MemberDto(member);
     }
 
@@ -91,31 +120,14 @@ public class MemberService implements UserDetailsService {
         return new MemberDto(member);
     }
 
-    public MemberDto updateMember(String userId, MemberDto memberDto) {
-        Member member = memberRepository.searchMemberByUserId(userId).orElseGet(Member::new);
-        member.updateMember(memberDto);
-        Member updateMember = memberRepository.save(member);
-        return modelMapper.map(updateMember, MemberDto.class);
-    }
-
-    public MemberDto deleteProfileImage(String userId, String profileImage) {
-        Member member = memberRepository.findByUserId(userId)
+    public MemberDto updateMemberProfile(String userId, UpdateProfileDto updateProfileDto) {
+        Member member = memberRepository.searchMemberByUserId(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userId));
 
-        Profile profile = member.getProfileList()
-                .stream()
-                .filter(p -> p.getValue().equals(profileImage))
-                .findFirst()
-                .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND, userId));
+        member.updateProfile(updateProfileDto);
+        Member updateMember = memberRepository.save(member);
 
-        storageFeignClient.delete(profile.getValue());
-
-        member.getProfileList().remove(profile);
-
-        Member saveMember = memberRepository.save(member);
-        profileRepository.delete(profile);
-
-        return new MemberDto(saveMember);
+        return new MemberDto(updateMember);
     }
 
     public List<MemberDto> getFriendsList(String userId) {
@@ -131,10 +143,10 @@ public class MemberService implements UserDetailsService {
                 .collect(Collectors.toList());
     }
 
-    public MemberDto addFriends(String userId, MemberDto memberDto) {
-        if(!memberRepository.existsByEmail(memberDto.getEmail())) {
+    public MemberDto addFriends(String userId, String email) {
+        if(!memberRepository.existsByEmail(email)) {
             throw new DuplicateKeyException(String.format(
-                    "존재하지 않는 유저입니다 'auth: %s, email: %s'", memberDto.getAuth(), memberDto.getEmail()
+                    "존재하지 않는 유저입니다 'email: %s'", email
             ));
         }
 
@@ -142,9 +154,9 @@ public class MemberService implements UserDetailsService {
                 .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userId));
 
         Member friend = memberRepository.findByEmail(member.getEmail())
-                .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND, memberDto.getEmail()));
+                .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND, email));
 
-        member.getFriends().add(friend.getId());
+        member.addFriends(friend.getId());
 
         return modelMapper.map(friend, MemberDto.class);
     }
@@ -174,5 +186,73 @@ public class MemberService implements UserDetailsService {
         } catch (GeneralSecurityException | IOException e) {
             throw new CustomException(ErrorCode.UNAUTHORIZED_GOOGLE_ID_TOKEN_ERROR, token);
         }
+    }
+
+    public List<MemberDto> findMembers(List<String> userIds) {
+        List<Member> members = memberRepository.findAllByUserIds(userIds).orElseGet(ArrayList::new);
+
+        return members
+                .stream()
+                .map(MemberDto::new)
+                .collect(Collectors.toList());
+    }
+
+    public List<MemberDto> findMembersById(List<Long> ids) {
+        List<Member> members = memberRepository.findAllById(ids);
+        return members
+                .stream()
+                .map(MemberDto::new)
+                .collect(Collectors.toList());
+    }
+
+    public List<MemberDto> inviteMembers(ChatRoomMemberDto chatRoomMemberDto) {
+        List<Long> chatRoomMembersIds = chatRoomMemberDto.getChatRoomMembers()
+                .stream()
+                .map(MemberDto::getId)
+                .collect(Collectors.toList());
+
+        List<Member> members = memberRepository.findAllById(chatRoomMembersIds);
+
+        Long chatRoomId = chatRoomMemberDto.getChatRoomId();
+
+        List<Member> inviteMembers = members
+                .stream()
+                .peek(member -> member.addChatRoom(chatRoomId))
+                .collect(Collectors.toList());
+
+        return inviteMembers
+                .stream()
+                .map(MemberDto::new)
+                .collect(Collectors.toList());
+    }
+
+    public List<MemberDto> exitMembers(ChatRoomMemberDto chatRoomMemberDto) {
+        List<Long> chatRoomMembersIds = chatRoomMemberDto.getChatRoomMembers()
+                .stream()
+                .map(MemberDto::getId)
+                .collect(Collectors.toList());
+
+        List<Member> members = memberRepository.findAllById(chatRoomMembersIds);
+
+        Long chatRoomId = chatRoomMemberDto.getChatRoomId();
+
+        List<Member> exitMembers = members
+                .stream()
+                .peek(member -> member.delChatRoom(chatRoomId))
+                .collect(Collectors.toList());
+
+        return exitMembers
+                .stream()
+                .map(MemberDto::new)
+                .collect(Collectors.toList());
+    }
+
+    public Long addMemberProfile(AddProfileDto addProfileDto) {
+        Member member = memberRepository.findById(addProfileDto.getMemberId())
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_ID_NOT_FOUND_ERROR, addProfileDto.getMemberId()));
+
+        member.addProfile(addProfileDto.getProfileId());
+
+        return member.getProfiles().get(member.getProfiles().size()-1);
     }
 }

@@ -29,6 +29,7 @@ public enum ErrorCode {
 
     // 404
     USERID_NOT_FOUND_ERROR(NOT_FOUND, "해당 사용자 아이디를 찾을수 없습니다."),
+    MEMBER_ID_NOT_FOUND_ERROR(NOT_FOUND, "회원을 찾을수 없습니다."),
     CHAT_NOT_FOUND_ERROR(NOT_FOUND, "채팅을 찾을수 없습니다."),
     CHATROOM_NOT_FOUND_ERROR(NOT_FOUND, "채팅방을 찾을수 없습니다."),
     USERID_FRIENDS_NOT_FOUND_ERROR(NOT_FOUND, "회원님의 아이디로 등록된 친구를 찾을 수 없습니다."),

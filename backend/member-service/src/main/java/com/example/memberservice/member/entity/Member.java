@@ -3,8 +3,9 @@ package com.example.memberservice.member.entity;
 import com.example.memberservice.chat.entity.ChatRoomMember;
 import com.example.memberservice.global.entity.BaseTimeEntity;
 import com.example.memberservice.member.dto.MemberDto;
-import com.example.memberservice.member.entity.profile.Profile;
-import com.example.memberservice.member.entity.profile.ProfileType;
+import com.example.memberservice.member.dto.UpdateProfileDto;
+import com.example.memberservice.profile.dto.ProfileDto;
+import com.example.memberservice.profile.dto.ProfileType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,7 +14,6 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Entity
 @Getter
@@ -45,18 +45,29 @@ public class Member extends BaseTimeEntity {
     private String wallpaperImage;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
-    private List<Profile> profileList = new ArrayList<>();
-
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     private List<ChatRoomMember> chatRoomMemberList = new ArrayList<>();
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "friends", joinColumns = @JoinColumn(name = "id"))
     @Column(name = "friends")
-    private List<Long> Friends;
+    private List<Long> friends;
 
-    public void insertProfile(Profile profile) {
-        this.profileList.add(profile);
+    @ElementCollection(fetch = FetchType.LAZY)
+    private List<Long> profiles;
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    private List<Long> chatRoomMembers;
+
+    public void addProfile(Long id) {
+        this.profiles.add(id);
+    }
+
+    public void addChatRoom(Long id) {
+        this.chatRoomMembers.add(id);
+    }
+
+    public void delChatRoom(Long id) {
+        this.chatRoomMembers.remove(id);
     }
 
     @Override
@@ -64,44 +75,25 @@ public class Member extends BaseTimeEntity {
         return getUserId() + ", " + getUsername() + "," + getEmail() + "," + getAuth() + "," + getStatusMessage() + "," + getProfileImage();
     }
 
-    public void updateProfile(MemberDto memberDto) {
-        if (!getStatusMessage().equals(memberDto.getStatusMessage())) {
-            Profile profile = getProfileList().stream()
-                    .filter(p -> p.getProfileType().equals(ProfileType.PROFILE_STATUS_MESSAGE) && p.getValue().equals(memberDto.getStatusMessage()))
-                    .findFirst().orElse(null);
-
-            if (profile != null) {
-                getProfileList().remove(profile);
-            }
-
-            this.statusMessage = memberDto.getStatusMessage();
-            profile = new Profile(ProfileType.PROFILE_STATUS_MESSAGE, memberDto.getStatusMessage());
-            profile.setMember(this);
-            insertProfile(profile);
-        }
-
-        if (!getProfileImage().equals(memberDto.getProfileImage())) {
-            this.profileImage = memberDto.getProfileImage();;
-            Profile profile = new Profile(ProfileType.PROFILE_IMAGE, memberDto.getProfileImage());
-            profile.setMember(this);
-            insertProfile(profile);
-        }
-
-        if (!getWallpaperImage().equals(memberDto.getWallpaperImage())) {
-            this.wallpaperImage = memberDto.getWallpaperImage();
-            Profile profile = new Profile(ProfileType.PROFILE_WALLPAPER, memberDto.getWallpaperImage());
-            profile.setMember(this);
-            insertProfile(profile);
+    public void updateMemberInfo(ProfileDto profileDto) {
+        if (profileDto.getProfileType() == ProfileType.PROFILE_STATUS_MESSAGE) {
+            this.statusMessage = profileDto.getValue();
+        } else if (profileDto.getProfileType() == ProfileType.PROFILE_IMAGE) {
+            this.profileImage = profileDto.getValue();
+        } else if (profileDto.getProfileType() == ProfileType.PROFILE_WALLPAPER) {
+            this.wallpaperImage = profileDto.getValue();
         }
     }
 
-    public void updateMember(MemberDto memberDto) {
-        this.username = memberDto.getUsername();
-        this.statusMessage = memberDto.getStatusMessage();
-        this.profileImage = memberDto.getProfileImage();
-        this.wallpaperImage = memberDto.getWallpaperImage();
+    public void updateProfile(UpdateProfileDto updateProfileDto) {
+        this.username = updateProfileDto.getUsername();
+        this.statusMessage = updateProfileDto.getStatusMessage();
+        this.profileImage = updateProfileDto.getProfileImage();
+        this.wallpaperImage = updateProfileDto.getWallpaperImage();
+    }
 
-        this.updateProfile(memberDto);
+    public void addFriends(Long id) {
+        this.friends.add(id);
     }
 
     public Member(MemberDto memberDto) {
@@ -113,8 +105,9 @@ public class Member extends BaseTimeEntity {
         this.statusMessage = memberDto.getStatusMessage();
         this.profileImage = memberDto.getProfileImage();
         this.wallpaperImage = memberDto.getWallpaperImage();
-        this.profileList = memberDto.getProfileDtoList().stream().map(Profile::new).collect(Collectors.toList());
-        this.Friends = new ArrayList<>();
+        this.friends = new ArrayList<>();
+        this.profiles = new ArrayList<>();
+        this.chatRoomMembers = new ArrayList<>();
     }
 
     public Member(String userId) {

@@ -23,11 +23,8 @@ public interface RetrofitChatRoomAPI {
     @GET("chat-service/chat/search/{roomName}")
     Call<List<ChatRoomDto>> RequestSearchChatRooms(@Path("roomName") String roomName);
 
-    @POST("chat-service/chat/room/member")
-    Call<ChatRoomDto> RequestCheckChatRoom(@Body List<String> userIds);
-
     @POST("chat-service/chat/chat/room")
-    Call<ChatRoomDto> RequestCreateChatRoom(@Body List<String> userIds);
+    Call<ChatRoomDto> RequestCreateChatRoom(@Body List<Long> ids);
 
     @DELETE("chat-service/chat/{roomId}/{userId}")
     Call<ChatRoomDto> RequestExitChatRoom(@Path("roomId") String roomId, @Path("userId") String userId);

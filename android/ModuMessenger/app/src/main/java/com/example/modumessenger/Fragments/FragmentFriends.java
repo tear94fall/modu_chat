@@ -1,7 +1,7 @@
 package com.example.modumessenger.Fragments;
 
+import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
 import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
-import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -148,7 +148,7 @@ public class FragmentFriends extends Fragment {
     }
 
     private void getData() {
-        member = getSharedObjectMember();
+        member = getDataStoreMember();
     }
 
     private void setData() {
@@ -158,8 +158,7 @@ public class FragmentFriends extends Fragment {
     private void setButtonClickEvent() {
         myProfileCard.setOnClickListener(view -> {
             Intent intent = new Intent(view.getContext(), ProfileActivity.class);
-            intent.putExtra("email", member.getEmail());
-            intent.putExtra("userId", member.getUserId());
+            intent.putExtra("memberId", String.valueOf(member.getId()));
 
             view.getContext().startActivity(intent);
         });
@@ -205,7 +204,10 @@ public class FragmentFriends extends Fragment {
                         MemberDto memberDto = response.body();
 
                         myName.setText(memberDto.getUsername());
-                        myStatusMessage.setText(memberDto.getStatusMessage());
+
+                        String statusMessage = memberDto.getStatusMessage().length() > 15 ? memberDto.getStatusMessage().substring(0, 12) + "..." : memberDto.getStatusMessage();
+                        myStatusMessage.setText(statusMessage);
+
                         setProfileImage(myProfileImage, memberDto.getProfileImage());
 
                         if(email.equals(memberDto.getEmail())){

@@ -26,6 +26,12 @@ public class ChatController {
         return ResponseEntity.ok().body(chatDto);
     }
 
+    @GetMapping("/chat")
+    public ResponseEntity<List<ChatDto>> getChatList(@Valid @RequestParam("ids") List<String> ids) {
+        List<ChatDto> chatDtoList = chatService.searchChatListById(ids);
+        return ResponseEntity.ok().body(chatDtoList);
+    }
+
     @GetMapping("/chat/{roomId}/chats")
     public ResponseEntity<List<ChatDto>> getChatRoomHistory(@Valid @PathVariable("roomId") String roomId) {
         List<ChatDto> chatDtoList = chatService.searchChatByRoomId(roomId);

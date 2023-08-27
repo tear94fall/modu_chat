@@ -4,7 +4,6 @@ import com.example.chatservice.chat.dto.ChatRoomDto;
 import com.example.chatservice.chat.service.ChatRoomService;
 import com.example.chatservice.common.exception.CustomException;
 import com.example.chatservice.common.exception.ErrorCode;
-import com.example.chatservice.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +15,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ChatRoomController {
     private final ChatRoomService chatRoomService;
-    private final MemberService memberService;
 
     @GetMapping("/chat/{userId}/rooms")
     public ResponseEntity<List<ChatRoomDto>> chatRoomList(@Valid @PathVariable("userId") String userId) {
@@ -31,8 +29,8 @@ public class ChatRoomController {
     }
 
     @PostMapping("/chat/chat/room")
-    public ResponseEntity<ChatRoomDto> createChatRoom(@Valid @RequestBody List<String> userIds) {
-        ChatRoomDto chatRoomDto = chatRoomService.createChatRoom(userIds);
+    public ResponseEntity<ChatRoomDto> createChatRoom(@Valid @RequestBody List<Long> ids) {
+        ChatRoomDto chatRoomDto = chatRoomService.createChatRoom(ids);
         return ResponseEntity.ok().body(chatRoomDto);
     }
 
@@ -48,7 +46,7 @@ public class ChatRoomController {
 
     @DeleteMapping("/chat/{roomId}/{userId}")
     public ResponseEntity<ChatRoomDto> removeChatRoomMember(@Valid @PathVariable("roomId") String roomId, @PathVariable("userId") String userId) {
-        ChatRoomDto chatRoomDto = chatRoomService.removeChatRoomMember(roomId, userId);
+        ChatRoomDto chatRoomDto = chatRoomService.exitChatRoomMember(roomId, userId);
         return ResponseEntity.ok().body(chatRoomDto);
     }
 

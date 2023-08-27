@@ -6,8 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 @Data
 @Builder
@@ -23,5 +21,4 @@ public class MemberDto implements Serializable {
     private String statusMessage;
     private String profileImage;
     private String wallpaperImage;
-    private List<ProfileDto> profileDtoList = new ArrayList<>();
 }

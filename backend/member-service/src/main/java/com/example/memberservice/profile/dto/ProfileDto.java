@@ -1,4 +1,4 @@
-package com.example.wsservice.member.dto;
+package com.example.memberservice.profile.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,6 +13,10 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class ProfileDto implements Serializable {
 
+    private Long id;
+    private Long memberId;
     private ProfileType profileType;
     private String value;
+    private String createdDate;
+    private String updatedDate;
 }

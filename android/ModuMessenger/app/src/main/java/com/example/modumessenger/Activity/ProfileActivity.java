@@ -1,7 +1,8 @@
 package com.example.modumessenger.Activity;
 
+import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
 import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
-import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+import static com.example.modumessenger.entity.ProfileType.*;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -10,6 +11,7 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -25,15 +27,12 @@ import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.example.modumessenger.dto.MemberDto;
 import com.example.modumessenger.entity.Member;
-import com.example.modumessenger.entity.Profile;
 import com.example.modumessenger.entity.ProfileType;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -41,15 +40,14 @@ import retrofit2.Response;
 
 public class ProfileActivity extends AppCompatActivity {
 
-    String userId;
-    String email;
-    Member myInfo;
+    Long memberId;
     Member member;
     boolean isMyInfo = true;
 
     ImageView profileImageView, wallpaperImageView;
     TextView usernameTextView, statusMessageTextView;
     Button profileEditButton, profileCloseButton, createChatRoomButton;
+    ImageButton profileHistoryButton;
     GestureDetector gestureDetector;
 
     RetrofitMemberAPI retrofitMemberAPI;
@@ -70,21 +68,23 @@ public class ProfileActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        if(email != null && !email.equals("")) {
+
+        String email = member.getEmail();
+        if (email != null && !email.equals("")) {
             getUserInfo(email);
         }
     }
 
     private void setGestureDetector() {
-        gestureDetector = new GestureDetector(this, new OnSwipeListener(){
+        gestureDetector = new GestureDetector(this, new OnSwipeListener() {
             @Override
             public boolean onSwipe(Direction direction) {
-                if (direction==Direction.up){
+                if (direction == Direction.up) {
                     //do your stuff
                     Log.d("Swipe Up", "onSwipe: up");
                 }
 
-                if (direction==Direction.down){
+                if (direction == Direction.down) {
                     //do your stuff
                     Log.d("Swipe Down", "onSwipe: down");
                     finish();
@@ -108,25 +108,26 @@ public class ProfileActivity extends AppCompatActivity {
         profileCloseButton = findViewById(R.id.profile_close_button);
         createChatRoomButton = findViewById(R.id.start_chat_button);
 
+        profileHistoryButton = findViewById(R.id.profile_image_history_button);
+
         profileEditButton.setVisibility(View.INVISIBLE);
     }
 
     private void getData() {
-        myInfo = getSharedObjectMember();
-        userId = getIntent().getStringExtra("userId");
-        email = getIntent().getStringExtra("email");
+        member = getDataStoreMember();
+        memberId = Long.parseLong(getIntent().getStringExtra("memberId"));
     }
 
     private void setData() {
         retrofitMemberAPI = RetrofitClient.createMemberApiService();
         retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
 
-        if (myInfo.getEmail().equals(email)) {
-            setUserProfile(myInfo);
+        if (member.getId().equals(memberId)) {
+            setUserProfile(member);
             profileEditButton.setVisibility(View.VISIBLE);
             createChatRoomButton.setText("나와 채팅 하기");
         } else {
-            getUserInfo(email);
+            getUserInfo(member.getEmail());
             createChatRoomButton.setText("친구와 채팅 하기");
             isMyInfo = false;
         }
@@ -140,18 +141,7 @@ public class ProfileActivity extends AppCompatActivity {
         });
 
         wallpaperImageView.setOnClickListener(v -> {
-            Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
-            intent.putExtra("email", email);
-
-            List<String> imageFileList = member.getProfileList()
-                    .stream()
-                    .filter(profile -> profile.getProfileType().equals(ProfileType.PROFILE_WALLPAPER))
-                    .sorted(Comparator.comparing(Profile::getLastModifiedDateTime).reversed())
-                    .map(Profile::getValue)
-                    .collect(Collectors.toList());
-
-            intent.putStringArrayListExtra("imageFileList", new ArrayList<>(imageFileList));
-            startActivity(intent);
+            profileImageIntent(v, PROFILE_WALLPAPER);
         });
 
         profileImageView.setOnTouchListener((v, event) -> {
@@ -160,18 +150,7 @@ public class ProfileActivity extends AppCompatActivity {
         });
 
         profileImageView.setOnClickListener(v -> {
-            Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
-            intent.putExtra("email", member.getEmail());
-
-            List<String> imageFileList = member.getProfileList()
-                    .stream()
-                    .filter(profile -> profile.getProfileType().equals(ProfileType.PROFILE_IMAGE))
-                    .sorted(Comparator.comparing(Profile::getLastModifiedDateTime).reversed())
-                    .map(Profile::getValue)
-                    .collect(Collectors.toList());
-
-            intent.putStringArrayListExtra("imageFileList", new ArrayList<>(imageFileList));
-            startActivity(intent);
+            profileImageIntent(v, PROFILE_IMAGE);
         });
 
         profileEditButton.setOnClickListener(v -> {
@@ -184,35 +163,36 @@ public class ProfileActivity extends AppCompatActivity {
         createChatRoomButton.setOnClickListener(view -> {
             // exist chat room
             // if not, create chat room
-            List<String> userIds = new ArrayList<>(Collections.singletonList(userId));
+            List<Long> ids = new ArrayList<>(Collections.singletonList(member.getId()));
 
-            if(!isMyInfo) {
-                userIds.add(myInfo.getUserId());
+            if (!isMyInfo) {
+                ids.add(memberId);
             }
 
-            createChatRoom(userIds);
+            createChatRoom(ids);
+        });
+
+        profileHistoryButton.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), ProfileHistoryActivity.class);
+            intent.putExtra("memberId", String.valueOf(member.getId()));
+            startActivity(intent);
         });
     }
 
-    private boolean getIntentExtra(String key) {
-        return getIntent().hasExtra(key);
-    }
+    private void profileImageIntent(View v, ProfileType type) {
+        Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
+        intent.putExtra("memberId", String.valueOf(member.getId()));
+        intent.putExtra("profileId", "");
+        intent.putExtra("type", type.name());
 
-    private void setTextOnView(TextView view, String value) {
-        if(value != null && !value.equals("")) {
-            view.setText(value);
-        } else {
-            view.setText("");
-        }
-    }
-
-    private void setImageOnView(ImageView view, int value) {
-        view.setImageResource(value);
+        startActivity(intent);
     }
 
     private void setUserProfile(Member member) {
         usernameTextView.setText(member.getUsername());
-        statusMessageTextView.setText(member.getStatusMessage());
+
+        String statusMessage = member.getStatusMessage().length() > 15 ? member.getStatusMessage().substring(0, 12) + "..." : member.getStatusMessage();
+        statusMessageTextView.setText(statusMessage);
 
         setProfileImage(profileImageView, member.getProfileImage());
         setProfileImage(wallpaperImageView, member.getWallpaperImage());
@@ -227,10 +207,14 @@ public class ProfileActivity extends AppCompatActivity {
         call.enqueue(new Callback<MemberDto>() {
             @Override
             public void onResponse(@NonNull Call<MemberDto> call, @NonNull Response<MemberDto> response) {
-                if(response.isSuccessful()) {
-                    if(response.body() != null) {
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
                         MemberDto memberDto = response.body();
                         member = new Member(memberDto);
+
+                        if (member.getProfiles().size() == 0) {
+                            profileHistoryButton.setVisibility(View.GONE);
+                        }
 
                         setUserProfile(member);
                     }
@@ -246,13 +230,13 @@ public class ProfileActivity extends AppCompatActivity {
         });
     }
 
-    public void createChatRoom(List<String> userIds) {
-        Call<ChatRoomDto> call = retrofitChatRoomAPI.RequestCreateChatRoom(userIds);
+    public void createChatRoom(List<Long> ids) {
+        Call<ChatRoomDto> call = retrofitChatRoomAPI.RequestCreateChatRoom(ids);
 
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override
             public void onResponse(@NonNull Call<ChatRoomDto> call, @NonNull Response<ChatRoomDto> response) {
-                if(!response.isSuccessful()){
+                if (!response.isSuccessful()) {
                     Log.e("연결이 비정상적 : ", "error code : " + response.code() + ", body : " + response.body());
                     return;
                 }

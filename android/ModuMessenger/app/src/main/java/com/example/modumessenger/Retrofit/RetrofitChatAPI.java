@@ -9,8 +9,15 @@ import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
+import retrofit2.http.Query;
 
 public interface RetrofitChatAPI {
+
+    @GET("chat-service/chat/{chatId}")
+    Call<ChatDto> RequestGetChat(@Path("chatId") String chatId);
+
+    @GET("chat-service/chat")
+    Call<List<ChatDto>> RequestChatList(@Query("ids") List<String> ids);
 
     @PUT("chat-service/chat/{userId}/token")
     Call<String> RequestFcmToken(@Path("userId") String userId, @Body String fcmToken);

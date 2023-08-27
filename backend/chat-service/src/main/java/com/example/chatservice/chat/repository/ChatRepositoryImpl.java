@@ -9,21 +9,11 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 import static com.example.chatservice.chat.entity.QChat.chat;
-import static com.example.chatservice.chat.entity.QChatRoom.chatRoom;
 
 @RequiredArgsConstructor
 public class ChatRepositoryImpl implements ChatCustomRepository {
 
     private final JPAQueryFactory queryFactory;
-
-    @Override
-    public List<Chat> findAllQueryDsl() {
-        return queryFactory
-                .selectFrom(chat)
-                .leftJoin(chat.chatRoom, chatRoom)
-                .fetchJoin()
-                .fetch();
-    }
 
     @Override
     public Chat findByRoomIdAndChatId(String roomId, Long chatId) {
@@ -32,6 +22,15 @@ public class ChatRepositoryImpl implements ChatCustomRepository {
                 .where(chat.roomId.eq(roomId).and(chat.id.eq(chatId)))
                 .fetchOne();
     }
+
+    @Override
+    public List<Chat> findByIds(List<Long> ids) {
+        return queryFactory
+                .selectFrom(chat)
+                .where(chat.id.in(ids))
+                .fetch();
+    }
+
 
     @Override
     public List<Chat> findByMessage(String roomId, String message) {

@@ -1,8 +1,5 @@
 package com.example.modumessenger.Retrofit;
 
-import android.text.TextUtils;
-
-import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.util.concurrent.TimeUnit;
@@ -50,5 +47,6 @@ public class RetrofitClient {
     public static RetrofitCommonDataAPI createCommonApiService(){ return createService(RetrofitCommonDataAPI.class); }
     public static RetrofitImageAPI createImageApiService(){ return createService(RetrofitImageAPI.class); }
     public static RetrofitAuthAPI createAuthApiService(){ return createService(RetrofitAuthAPI.class); }
+    public static RetrofitProfileAPI createProfileApiService() { return createService(RetrofitProfileAPI.class); }
 }
 

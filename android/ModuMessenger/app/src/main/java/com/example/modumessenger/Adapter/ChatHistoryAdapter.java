@@ -1,8 +1,8 @@
 package com.example.modumessenger.Adapter;
 
 import static com.example.modumessenger.Adapter.ChatBubbleType.*;
+import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
 import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
-import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
 import static com.example.modumessenger.dto.ChatType.*;
 
 import android.annotation.SuppressLint;
@@ -17,8 +17,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.modumessenger.Activity.ChatImageActivity;
 import com.example.modumessenger.Activity.ProfileActivity;
-import com.example.modumessenger.Activity.ProfileImageActivity;
 import com.example.modumessenger.R;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.RoomDatabase.Database.ChatDatabase;
@@ -42,7 +42,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public ChatHistoryAdapter(List<ChatBubble> chatList, List<Member> memberList) {
         this.memberList = (memberList == null || memberList.size() == 0) ? new ArrayList<>() : memberList;
         this.chatList = chatList;
-        this.myInfo = getSharedObjectMember();
+        myInfo = getDataStoreMember();
 
         sortChatBubble();
     }
@@ -342,8 +342,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public void startProfileActivity(View view, Member member) {
         Intent intent = new Intent(view.getContext(), ProfileActivity.class);
-        intent.putExtra("email", member.getEmail());
-        intent.putExtra("userId", member.getUserId());
+        intent.putExtra("memberId", String.valueOf(member.getId()));
 
         view.getContext().startActivity(intent);
     }
@@ -432,11 +431,11 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         public void setChatImageClickEvent(ChatBubble chat) {
             this.chatImage.setOnClickListener(v -> {
-                Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
+                Intent intent = new Intent(v.getContext(), ChatImageActivity.class);
 
                 ArrayList<String> imageFileList = new ArrayList<>();
-                imageFileList.add(chat.getChatMsg());
-                intent.putStringArrayListExtra("imageFileList", imageFileList);
+                imageFileList.add(Long.toString(chat.getId()));
+                intent.putStringArrayListExtra("chatImageList", imageFileList);
 
                 v.getContext().startActivity(intent);
             });
@@ -473,11 +472,11 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         public void setChatImageClickEvent(ChatBubble chat) {
             this.chatImage.setOnClickListener(v -> {
-                Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
+                Intent intent = new Intent(v.getContext(), ChatImageActivity.class);
 
                 ArrayList<String> imageFileList = new ArrayList<>();
-                imageFileList.add(chat.getChatMsg());
-                intent.putStringArrayListExtra("imageFileList", imageFileList);
+                imageFileList.add(Long.toString(chat.getId()));
+                intent.putStringArrayListExtra("chatImageList", imageFileList);
 
                 v.getContext().startActivity(intent);
             });
@@ -532,11 +531,11 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         public void setChatImageClickEvent(ChatBubble chat) {
             this.chatImage.setOnClickListener(v -> {
-                Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
+                Intent intent = new Intent(v.getContext(), ChatImageActivity.class);
 
                 ArrayList<String> imageFileList = new ArrayList<>();
-                imageFileList.add(chat.getChatMsg());
-                intent.putStringArrayListExtra("imageFileList", imageFileList);
+                imageFileList.add(Long.toString(chat.getId()));
+                intent.putStringArrayListExtra("chatImageList", imageFileList);
 
                 v.getContext().startActivity(intent);
             });

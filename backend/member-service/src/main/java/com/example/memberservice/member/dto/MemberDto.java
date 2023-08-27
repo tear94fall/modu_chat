@@ -2,16 +2,12 @@ package com.example.memberservice.member.dto;
 
 import com.example.memberservice.member.entity.Member;
 import com.example.memberservice.member.entity.Role;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 
@@ -22,6 +18,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 @AllArgsConstructor
 public class MemberDto implements Serializable {
 
+    private Long id;
     private String userId;
     private String auth;
     private Role role;
@@ -30,9 +27,9 @@ public class MemberDto implements Serializable {
     private String statusMessage;
     private String profileImage;
     private String wallpaperImage;
-    private List<ProfileDto> profileDtoList = new ArrayList<>();
 
     public MemberDto(Member member) {
+        setId(member.getId());
         setUserId(member.getUserId());
         setAuth(member.getAuth());
         setRole(member.getRole());
@@ -41,7 +38,6 @@ public class MemberDto implements Serializable {
         setStatusMessage(member.getStatusMessage());
         setProfileImage(member.getProfileImage());
         setWallpaperImage(member.getWallpaperImage());
-        setProfileDtoList(member.getProfileList().stream().map(ProfileDto::new).collect(Collectors.toList()));
     }
 
     public MemberDto(Payload payload) {

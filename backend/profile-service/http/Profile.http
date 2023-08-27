@@ -1,11 +1,17 @@
 ### 프로필 조회 요청
 GET http://localhost:8880/api/v1/profile/1
 
+### 프로필 조회 요청 - 단건
+GET http://localhost:8880/api/v1/profile/1/25
+
+### 프로필 조회 요청 - 오프셋
+GET http://localhost:8880/api/v1/profile/1/30/3
+
 ### 프로필 추가 요청
-POST http://localhost:8880/api/v1/profile
+POST http://localhost:8880/profile
 Content-Type: application/json
 
 < ./Profile.json
 
 ### 프로필 삭제 요청
-DELETE http://localhost:8880/api/v1/profile/1/No Value
+DELETE http://localhost:8880/api/v1/profile/1/29

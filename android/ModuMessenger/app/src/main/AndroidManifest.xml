@@ -34,7 +34,9 @@
         <activity android:name=".Activity.SetupActivity" />
         <activity android:name=".Activity.NotificationActivity" />
         <activity android:name=".Activity.ProfileImageActivity" />
+        <activity android:name=".Activity.ProfileHistoryActivity" />
         <activity android:name=".Activity.SetAccountActivity" />
+        <activity android:name=".Activity.ChatImageActivity" />
 
         <activity
             android:name=".Activity.SplashActivity"

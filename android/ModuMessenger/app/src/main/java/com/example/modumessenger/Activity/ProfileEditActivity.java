@@ -1,9 +1,8 @@
 package com.example.modumessenger.Activity;
 
 import static com.example.modumessenger.Activity.ProfileEditBottomSheetFragment.*;
+import static com.example.modumessenger.Global.DataStoreHelper.*;
 import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
-import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
-import static com.example.modumessenger.Global.SharedPrefHelper.setSharedObject;
 
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -30,9 +29,14 @@ import com.example.modumessenger.Global.ScopedStorageUtil;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitImageAPI;
 import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
+import com.example.modumessenger.Retrofit.RetrofitProfileAPI;
+import com.example.modumessenger.dto.CreateProfileDto;
+import com.example.modumessenger.dto.ProfileDto;
+import com.example.modumessenger.dto.UpdateProfileDto;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.MemberDto;
+import com.example.modumessenger.entity.ProfileType;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -58,6 +62,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
     ScopedStorageUtil scopedStorageUtil;
 
     RetrofitMemberAPI retrofitMemberAPI;
+    RetrofitProfileAPI retrofitProfileAPI;
     RetrofitImageAPI retrofitImageAPI;
 
     @Override
@@ -110,7 +115,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
                 member.setWallpaperImage("");
             }
 
-            updateMyInfo(new MemberDto(member));
+            updateProfile(new UpdateProfileDto(member));
 
             if(event == PROFILE_EVENT.PROFILE_DEFAULT.getEvent()) {
                 setProfileImage(profileImageView, member.getProfileImage());
@@ -170,11 +175,12 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
     }
 
     private void getData() {
-        member = getSharedObjectMember();
+        member = getDataStoreMember();
     }
 
     private void setData() {
         retrofitMemberAPI = RetrofitClient.createMemberApiService();
+        retrofitProfileAPI = RetrofitClient.createProfileApiService();
         retrofitImageAPI = RetrofitClient.createImageApiService();
 
         scopedStorageUtil = new ScopedStorageUtil();
@@ -184,13 +190,27 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
 
     private void setButtonClickEvent() {
         myProfileSaveButton.setOnClickListener(v -> {
-            if(!member.getUsername().equals(myProfileName.getText().toString()) ||
-                    !member.getStatusMessage().equals(myStatusMessage.getText().toString())) {
+            boolean isUpdate = false;
+            String username = myProfileName.getText().toString();
+            String statusMessage = myStatusMessage.getText().toString();
 
-                member.setUsername(myProfileName.getText().toString());
-                member.setStatusMessage(myStatusMessage.getText().toString());
+            if (!member.getUsername().equals(username)) {
+                isUpdate = true;
+            }
 
-                updateMyInfo(new MemberDto(member));
+            if (!member.getStatusMessage().equals(statusMessage)) {
+                isUpdate = true;
+
+                if (!statusMessage.equals("")) {
+                    addProfile(new CreateProfileDto(member.getId(), ProfileType.PROFILE_STATUS_MESSAGE, statusMessage));
+                }
+            }
+
+            if (isUpdate) {
+                member.setUsername(username);
+                member.setStatusMessage(statusMessage);
+
+                updateProfile(new UpdateProfileDto(member));
             }
         });
 
@@ -242,8 +262,30 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
     }
 
     // Retrofit function
-    public void updateMyInfo(MemberDto memberDto) {
-        Call<MemberDto> call = retrofitMemberAPI.RequestUpdate(member.getUserId(), memberDto);
+    public void addProfile(CreateProfileDto createProfileDto) {
+        Call<ProfileDto> profileDtoCall = retrofitProfileAPI.RequestCreateProfile(createProfileDto);
+
+        profileDtoCall.enqueue(new Callback<ProfileDto>() {
+            @Override
+            public void onResponse(@NonNull Call<ProfileDto> call, @NonNull Response<ProfileDto> response) {
+                if (response.isSuccessful()) {
+                    if(response.body() != null) {
+                        updateProfile(new UpdateProfileDto(member));
+
+                        Log.d("프로필 생성 요청 : ", response.body().toString());
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ProfileDto> call, @NonNull Throwable t) {
+                Log.e("연결 실패", t.getMessage());
+            }
+        });
+    }
+
+    public void updateProfile(UpdateProfileDto updateProfileDto) {
+        Call<MemberDto> call = retrofitMemberAPI.RequestUpdateProfile(member.getUserId(), updateProfileDto);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override
@@ -256,7 +298,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
                         setUserProfile(member);
 
                         String json = new Gson().toJson(myInfo);
-                        setSharedObject("member", json);
+                        setDataStoreObject("member", json);
 
                         Toast.makeText(getApplicationContext(), "프로필 정보가 업데이트 되었습니다.", Toast.LENGTH_SHORT).show();
                         Log.d("내정보 업데이트 요청 : ", response.body().toString());
@@ -287,7 +329,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
                         setUserProfile(member);
 
                         String json = new Gson().toJson(member);
-                        setSharedObject("member", json);
+                        setDataStoreObject("member", json);
 
                         Log.d("내 정보 가져오기 요청 : ", response.body().toString());
                     }
@@ -316,6 +358,14 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
                         String username = String.valueOf(myProfileName.getText());
                         String statusMessage = String.valueOf(myStatusMessage.getText());
 
+                        ProfileType type = null;
+
+                        if (event == PROFILE_EVENT.PROFILE_CHANGE.getEvent()) {
+                            type = ProfileType.PROFILE_IMAGE;
+                        } else if(event == PROFILE_EVENT.WALLPAPER_CHANGE.getEvent()) {
+                            type = ProfileType.PROFILE_WALLPAPER;
+                        }
+
                         member.updateProfile(
                                 username.equals("null") ? null : username,
                                 statusMessage.equals("null") ? null : statusMessage,
@@ -323,7 +373,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
                                 event == PROFILE_EVENT.WALLPAPER_CHANGE.getEvent() ? fileName : member.getWallpaperImage()
                         );
 
-                        updateMyInfo(new MemberDto(member));
+                        addProfile(new CreateProfileDto(member.getId(), type, fileName));
 
                         Log.d("프로필 이미지 업로드 요청 : ", response.body());
                     }

@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,6 +17,7 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ChatRoomDto implements Serializable{
+    private Long id;
     private String roomId;
     private String roomName;
     private String roomImage;
@@ -26,17 +26,15 @@ public class ChatRoomDto implements Serializable{
     private String lastChatTime;
     private List<MemberDto> members = new ArrayList<>();
 
-    public ChatRoomDto(ChatRoom chatRoom) {
+    public ChatRoomDto(ChatRoom chatRoom, List<MemberDto> members) {
+        setId(chatRoom.getId());
         setRoomId(chatRoom.getRoomId());
         setRoomName(chatRoom.getRoomName());
         setRoomImage(chatRoom.getRoomImage());
         setLastChatMsg(chatRoom.getLastChatMsg());
         setLastChatId(chatRoom.getLastChatId());
         setLastChatTime(chatRoom.getLastChatTime());
-
-        chatRoom.getChatRoomMemberList().forEach(chatRoomMember -> {
-            members.add(new MemberDto(chatRoomMember.getMember()));
-        });
+        setMembers(members);
     }
 
     public void updateLastChat(String chatId, ChatDto chatDto) {

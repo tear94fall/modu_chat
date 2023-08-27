@@ -1,6 +1,6 @@
 package com.example.modumessenger.Activity;
 
-import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -35,7 +35,7 @@ public class CreateRoomActivity extends AppCompatActivity {
 
     Button inviteButton;
 
-    List<String> addChatList;
+    List<Long> addChatList;
     List<MemberDto> friendsList;
 
     Member member;
@@ -72,7 +72,7 @@ public class CreateRoomActivity extends AppCompatActivity {
         retrofitMemberAPI = RetrofitClient.createMemberApiService();
         retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
 
-        member = getSharedObjectMember();
+        member = getDataStoreMember();
         getFriendsList(member);
 
         addChatList = new ArrayList<>();
@@ -82,7 +82,7 @@ public class CreateRoomActivity extends AppCompatActivity {
         inviteButton.setOnClickListener(v -> {
             if (addChatList.size()!=0) {
                 Toast.makeText(getApplicationContext(), "채팅방을 생성합니다.", Toast.LENGTH_SHORT).show();
-                addChatList.add(member.getUserId());
+                addChatList.add(member.getId());
                 // exist chat room
                 // if not, create chat room
                 createChatRoom(addChatList);
@@ -92,15 +92,15 @@ public class CreateRoomActivity extends AppCompatActivity {
         });
     }
 
-    public void addUserIdOnAddChatList(String userId) {
-        if(!member.getUserId().equals(userId)) {
-            this.addChatList.add(userId);
+    public void addUserIdOnAddChatList(Long id) {
+        if(!member.getId().equals(id)) {
+            this.addChatList.add(id);
         }
     }
 
-    public void removeUserIdOnAddChatList(String userId) {
-        if(!member.getUserId().equals(userId)) {
-            this.addChatList.remove(userId);
+    public void removeUserIdOnAddChatList(Long id) {
+        if(!member.getId().equals(id)) {
+            this.addChatList.remove(id);
         }
     }
 
@@ -131,8 +131,8 @@ public class CreateRoomActivity extends AppCompatActivity {
         });
     }
 
-    public void createChatRoom(List<String> userIds) {
-        Call<ChatRoomDto> call = retrofitChatRoomAPI.RequestCreateChatRoom(userIds);
+    public void createChatRoom(List<Long> ids) {
+        Call<ChatRoomDto> call = retrofitChatRoomAPI.RequestCreateChatRoom(ids);
 
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override

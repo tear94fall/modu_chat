@@ -1,6 +1,6 @@
 package com.example.modumessenger.Activity;
 
-import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
+import static com.example.modumessenger.Global.DataStoreHelper.*;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -32,7 +32,7 @@ import com.example.modumessenger.Adapter.ChatBubble;
 import com.example.modumessenger.Adapter.ChatHistoryAdapter;
 import com.example.modumessenger.Adapter.ChatRoomMemberAdapter;
 import com.example.modumessenger.Global.ActivityStack;
-import com.example.modumessenger.Global.PreferenceManager;
+import com.example.modumessenger.Global.DataStoreHelper;
 import com.example.modumessenger.Grid.RecentChatImageGridAdapter;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitChatAPI;
@@ -171,7 +171,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         retrofitChatAPI = RetrofitClient.createChatApiService();
         retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
 
-        member = getSharedObjectMember();
+        member = getDataStoreMember();
 
         roomId = getIntent().getStringExtra("roomId");
         if(roomId != null && !roomId.equals("")) {
@@ -268,21 +268,27 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_baseline_arrow_back_24);
 
-        DrawerLayout drawLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        DrawerLayout drawLayout = findViewById(R.id.drawer_layout);
+        NavigationView navigationView = findViewById(R.id.nav_view);
 
         ConstraintLayout recentImageView = navigationView.findViewById(R.id.recentImageConstraintLayout);
 
         recentImageView.setOnClickListener(v -> {
             if(recentImageList.size() != 0) {
-                Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
-                intent.putStringArrayListExtra("imageFileList", recentImageList);
+                Intent intent = new Intent(v.getContext(), ChatImageActivity.class);
+                intent.putStringArrayListExtra("chatImageList", recentImageList);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
                 v.getContext().startActivity(intent);
             } else {
                 Toast.makeText(this.getApplicationContext(),"채팅방에 전송된 사진이 없습니다.", Toast.LENGTH_SHORT).show();
             }
+        });
+
+        ConstraintLayout chatRoomMemberView = navigationView.findViewById(R.id.chatRoomMemberConstraintLayout);
+
+        chatRoomMemberView.setOnClickListener(v -> {
+            // need to implementation
         });
 
         Button ExitButton = navigationView.findViewById(R.id.nav_exit_button);
@@ -561,7 +567,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                         .Builder()
                         .url("ws://192.168.0.3:8000/ws-service/modu-chat/" + roomId)
                         .addHeader("userId", member.getUserId())
-                        .addHeader("Authorization", PreferenceManager.getString("access-token"))
+                        .addHeader("Authorization", DataStoreHelper.getDataStoreStr("access-token"))
                         .build();
                 listener = new ChatWebSocketListener();
                 webSocket = client.newWebSocket(request, listener);
@@ -686,7 +692,10 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 List<ChatDto> imageChatList = response.body();
                 assert imageChatList != null;
 
-                recentImageList = imageChatList.stream().map(ChatDto::getMessage).collect(Collectors.toCollection(ArrayList::new));
+                recentImageList = imageChatList
+                        .stream()
+                        .map(chatDto -> Long.toString(chatDto.getId()))
+                        .collect(Collectors.toCollection(ArrayList::new));
 
                 GridView recent_chat_images = view.findViewById(R.id.chat_room_chat_image_grid_layout);
                 View recent_chat_images_view = view.findViewById(R.id.view2);
@@ -696,9 +705,9 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 recentChatImageGridAdapter.setGridItems(imageChatList);
 
                 recent_chat_images.setOnItemClickListener((parent, v, position, id) -> {
-                    Intent intent = new Intent(v.getContext(), ProfileImageActivity.class);
+                    Intent intent = new Intent(v.getContext(), ChatImageActivity.class);
                     ArrayList<String> imageFileList = imageChatList.stream().skip(position).map(ChatDto::getMessage).collect(Collectors.toCollection(ArrayList::new));
-                    intent.putStringArrayListExtra("imageFileList", imageFileList);
+                    intent.putStringArrayListExtra("chatImageList", imageFileList);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
                     v.getContext().startActivity(intent);

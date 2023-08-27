@@ -4,6 +4,7 @@ import com.example.modumessenger.dto.GoogleLoginRequest;
 import com.example.modumessenger.dto.MemberDto;
 import com.example.modumessenger.dto.RequestLoginDto;
 import com.example.modumessenger.dto.SignUpDto;
+import com.example.modumessenger.dto.UpdateProfileDto;
 
 import java.util.List;
 
@@ -22,14 +23,17 @@ public interface RetrofitMemberAPI {
     @GET("member-service/member/{email}")
     Call<MemberDto> RequestUserInfo(@Path("email") String email);
 
+    @GET("member-service/member/member/{id}")
+    Call<MemberDto> RequestMemberById(@Path("id") Long id);
+
     @POST("member-service/member/{userId}")
-    Call<MemberDto> RequestUpdate(@Path("userId") String userId, @Body MemberDto memberDto);
+    Call<MemberDto> RequestUpdateProfile(@Path("userId") String userId, @Body UpdateProfileDto updateProfileDto);
 
     @GET("member-service/member/{userId}/friends")
     Call<List<MemberDto>> RequestFriends(@Path("userId") String userId);
 
     @POST("member-service/member/{userId}/friends")
-    Call<MemberDto> RequestAddFriends(@Path("userId") String userId, @Body MemberDto memberDto);
+    Call<MemberDto> RequestAddFriends(@Path("userId") String userId, @Body String email);
 
     @GET("member-service/member/friends/{email}")
     Call<List<MemberDto>> RequestFriend(@Path("email") String email);

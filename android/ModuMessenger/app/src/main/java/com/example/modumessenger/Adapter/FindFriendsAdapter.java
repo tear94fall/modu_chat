@@ -1,7 +1,7 @@
 package com.example.modumessenger.Adapter;
 
+import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
 import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
-import static com.example.modumessenger.Global.SharedPrefHelper.getSharedObjectMember;
 
 import android.content.Intent;
 import android.view.LayoutInflater;
@@ -45,7 +45,7 @@ public class FindFriendsAdapter extends RecyclerView.Adapter<FindFriendsAdapter.
         holder.setUserClickEvent(memberDto);
         holder.setAddFriendsButton(memberDto);
 
-        member = getSharedObjectMember();
+        member = getDataStoreMember();
 
         findFriendsList.forEach(m -> {
             if(member.getUserId().equals(memberDto.getUserId())) {
@@ -84,8 +84,7 @@ public class FindFriendsAdapter extends RecyclerView.Adapter<FindFriendsAdapter.
         public void setUserClickEvent(MemberDto member) {
             this.cardViewLayout.setOnClickListener(v -> {
                 Intent intent = new Intent(v.getContext(), ProfileActivity.class);
-                intent.putExtra("email", member.getEmail());
-                intent.putExtra("userId", member.getUserId());
+                intent.putExtra("memberId", String.valueOf(member.getId()));
 
                 v.getContext().startActivity(intent);
             });

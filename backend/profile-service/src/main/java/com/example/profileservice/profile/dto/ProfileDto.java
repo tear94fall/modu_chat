@@ -11,6 +11,7 @@ import java.time.format.DateTimeFormatter;
 @NoArgsConstructor
 public class ProfileDto {
 
+    private Long id;
     private Long memberId;
     private ProfileType profileType;
     private String value;
@@ -18,6 +19,7 @@ public class ProfileDto {
     private String updatedDate;
 
     public ProfileDto(Profile profile) {
+        this.id = profile.getId();
         this.memberId = profile.getMemberId();
         this.profileType = profile.getProfileType();
         this.value = profile.getValue();

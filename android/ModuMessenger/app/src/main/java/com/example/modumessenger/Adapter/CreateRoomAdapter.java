@@ -56,7 +56,7 @@ public class CreateRoomAdapter extends RecyclerView.Adapter<CreateRoomAdapter.Ad
         TextView username;
         TextView statusMessage;
         ImageView profileImage;
-        CheckBox addCHatCheck;
+        CheckBox addChatCheck;
         ConstraintLayout addChatCardViewLayout;
 
         public AddChatViewHolder(Context context, @NonNull View itemView) {
@@ -66,7 +66,7 @@ public class CreateRoomAdapter extends RecyclerView.Adapter<CreateRoomAdapter.Ad
             username = itemView.findViewById(R.id.add_user_name);
             statusMessage = itemView.findViewById(R.id.add_status_message);
             profileImage = itemView.findViewById(R.id.add_profile_image);
-            addCHatCheck = itemView.findViewById(R.id.invite_check_button);
+            addChatCheck = itemView.findViewById(R.id.invite_check_button);
             addChatCardViewLayout = itemView.findViewById(R.id.addChatCardViewLayout);
         }
 
@@ -79,21 +79,20 @@ public class CreateRoomAdapter extends RecyclerView.Adapter<CreateRoomAdapter.Ad
         public void setUserClickEvent(MemberDto member) {
             this.addChatCardViewLayout.setOnClickListener(v -> {
                 Intent intent = new Intent(v.getContext(), ProfileActivity.class);
-                intent.putExtra("email", member.getEmail());
-                intent.putExtra("userId", member.getUserId());
+                intent.putExtra("memberId", String.valueOf(member.getId()));
 
                 v.getContext().startActivity(intent);
             });
         }
 
         public void setAddChatButton(MemberDto member) {
-            this.addCHatCheck.setOnClickListener(view -> {
+            this.addChatCheck.setOnClickListener(view -> {
                 boolean checked = ((CheckBox) view).isChecked();
 
                 if(checked) {
-                    ((CreateRoomActivity) this.context).addUserIdOnAddChatList(member.getUserId());
+                    ((CreateRoomActivity) this.context).addUserIdOnAddChatList(member.getId());
                 } else {
-                    ((CreateRoomActivity) this.context).removeUserIdOnAddChatList(member.getUserId());
+                    ((CreateRoomActivity) this.context).removeUserIdOnAddChatList(member.getId());
                 }
             });
         }

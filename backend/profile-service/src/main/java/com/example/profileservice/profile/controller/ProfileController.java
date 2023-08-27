@@ -1,5 +1,6 @@
 package com.example.profileservice.profile.controller;
 
+import com.example.profileservice.profile.dto.CreateProfileDto;
 import com.example.profileservice.profile.dto.ProfileDto;
 import com.example.profileservice.profile.service.ProfileService;
 import lombok.RequiredArgsConstructor;
@@ -10,23 +11,42 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1")
 public class ProfileController {
 
     private final ProfileService profileService;
 
+    @GetMapping("/profile/{memberId}/{id}")
+    public ResponseEntity<ProfileDto> getProfile(@PathVariable("memberId") String memberId, @PathVariable("id") String id) {
+        return ResponseEntity.ok().body(profileService.getMemberProfile(memberId, id));
+    }
+
     @GetMapping("/profile/{memberId}")
-    public ResponseEntity<List<ProfileDto>> getProfiles(@PathVariable String memberId) {
+    public ResponseEntity<List<ProfileDto>> getProfiles(@PathVariable("memberId") Long memberId) {
         return ResponseEntity.ok().body(profileService.getMemberProfiles(memberId));
     }
 
-    @PostMapping("/profile")
-    public ResponseEntity<ProfileDto> createProfile(@RequestBody ProfileDto profileDto) {
-        return ResponseEntity.ok().body(profileService.registerProfile(profileDto));
+    @GetMapping("/profile/latest/{memberId}")
+    public ResponseEntity<ProfileDto> getLatestProfile(@PathVariable("memberId") String memberId) {
+        return ResponseEntity.ok().body(profileService.getMemberLatestProfile(memberId));
     }
 
-    @DeleteMapping("/profile/{memberId}/{value}")
-    public ResponseEntity<Long> removeProfile(@PathVariable String memberId, @PathVariable String value) {
-        return ResponseEntity.ok().body(profileService.deleteProfile(memberId, value));
+    @GetMapping("/profile/{memberId}/{id}/{count}")
+    public ResponseEntity<List<ProfileDto>> getProfilesOffset(@PathVariable("memberId") String memberId, @PathVariable("id") String id, @PathVariable("count") String count) {
+        return ResponseEntity.ok().body(profileService.getMemberProfileOffset(memberId, id, count));
+    }
+
+    @GetMapping("/profile/total/count/{memberId}")
+    public ResponseEntity<Long> getTotalProfileCount(@PathVariable("memberId") String memberId) {
+        return ResponseEntity.ok().body(profileService.getMemberProfileTotalCount(memberId));
+    }
+
+    @PostMapping("/profile")
+    public ResponseEntity<ProfileDto> createProfile(@RequestBody CreateProfileDto createProfileDto) {
+        return ResponseEntity.ok().body(profileService.registerProfile(createProfileDto));
+    }
+
+    @DeleteMapping("/profile/{memberId}/{id}")
+    public ResponseEntity<Long> removeProfile(@PathVariable("memberId") String memberId, @PathVariable("id") String id) {
+        return ResponseEntity.ok().body(profileService.deleteProfile(memberId, id));
     }
 }

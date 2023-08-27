@@ -80,6 +80,20 @@ public class ChatService {
         return modelMapper.map(chat, ChatDto.class);
     }
 
+    public List<ChatDto> searchChatListById(List<String> chatIdList) {
+        List<Long> chatIds = chatIdList
+                .stream()
+                .map(Long::parseLong)
+                .collect(Collectors.toList());
+
+        List<Chat> chatList = chatRepository.findByIds(chatIds);
+
+        return chatList
+                .stream()
+                .map(c -> modelMapper.map(c, ChatDto.class))
+                .collect(Collectors.toList());
+    }
+
     public Long saveChat(ChatDto chatDto) {
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(chatDto.getRoomId())
                 .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND_ERROR, chatDto.getRoomId()));

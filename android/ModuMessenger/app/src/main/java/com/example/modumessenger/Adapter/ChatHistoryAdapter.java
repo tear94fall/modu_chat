@@ -434,8 +434,8 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 Intent intent = new Intent(v.getContext(), ChatImageActivity.class);
 
                 ArrayList<String> imageFileList = new ArrayList<>();
-                imageFileList.add(chat.getChatMsg());
-                intent.putStringArrayListExtra("imageFileList", imageFileList);
+                imageFileList.add(Long.toString(chat.getId()));
+                intent.putStringArrayListExtra("chatImageList", imageFileList);
 
                 v.getContext().startActivity(intent);
             });
@@ -475,8 +475,8 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 Intent intent = new Intent(v.getContext(), ChatImageActivity.class);
 
                 ArrayList<String> imageFileList = new ArrayList<>();
-                imageFileList.add(chat.getChatMsg());
-                intent.putStringArrayListExtra("imageFileList", imageFileList);
+                imageFileList.add(Long.toString(chat.getId()));
+                intent.putStringArrayListExtra("chatImageList", imageFileList);
 
                 v.getContext().startActivity(intent);
             });
@@ -534,8 +534,8 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 Intent intent = new Intent(v.getContext(), ChatImageActivity.class);
 
                 ArrayList<String> imageFileList = new ArrayList<>();
-                imageFileList.add(chat.getChatMsg());
-                intent.putStringArrayListExtra("imageFileList", imageFileList);
+                imageFileList.add(Long.toString(chat.getId()));
+                intent.putStringArrayListExtra("chatImageList", imageFileList);
 
                 v.getContext().startActivity(intent);
             });

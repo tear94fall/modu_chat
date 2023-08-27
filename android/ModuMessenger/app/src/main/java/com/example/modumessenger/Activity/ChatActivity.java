@@ -276,7 +276,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         recentImageView.setOnClickListener(v -> {
             if(recentImageList.size() != 0) {
                 Intent intent = new Intent(v.getContext(), ChatImageActivity.class);
-                intent.putStringArrayListExtra("imageFileList", recentImageList);
+                intent.putStringArrayListExtra("chatImageList", recentImageList);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
                 v.getContext().startActivity(intent);
@@ -692,7 +692,10 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 List<ChatDto> imageChatList = response.body();
                 assert imageChatList != null;
 
-                recentImageList = imageChatList.stream().map(ChatDto::getMessage).collect(Collectors.toCollection(ArrayList::new));
+                recentImageList = imageChatList
+                        .stream()
+                        .map(chatDto -> Long.toString(chatDto.getId()))
+                        .collect(Collectors.toCollection(ArrayList::new));
 
                 GridView recent_chat_images = view.findViewById(R.id.chat_room_chat_image_grid_layout);
                 View recent_chat_images_view = view.findViewById(R.id.view2);
@@ -704,7 +707,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 recent_chat_images.setOnItemClickListener((parent, v, position, id) -> {
                     Intent intent = new Intent(v.getContext(), ChatImageActivity.class);
                     ArrayList<String> imageFileList = imageChatList.stream().skip(position).map(ChatDto::getMessage).collect(Collectors.toCollection(ArrayList::new));
-                    intent.putStringArrayListExtra("imageFileList", imageFileList);
+                    intent.putStringArrayListExtra("chatImageList", imageFileList);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
                     v.getContext().startActivity(intent);

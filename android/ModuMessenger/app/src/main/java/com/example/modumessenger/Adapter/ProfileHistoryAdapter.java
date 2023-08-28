@@ -25,6 +25,7 @@ import java.util.List;
 
 public class ProfileHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
+    boolean showMenu;
     Member member;
     List<Profile> profileList;
 
@@ -43,7 +44,8 @@ public class ProfileHistoryAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         this.listener = listener;
     }
 
-    public ProfileHistoryAdapter(Member member) {
+    public ProfileHistoryAdapter(Member member, boolean showMenu) {
+        this.showMenu = showMenu;
         this.member = member;
         this.profileList = member.getProfiles() != null ? member.getAllProfileListDesc() : new ArrayList<>();
     }
@@ -73,10 +75,12 @@ public class ProfileHistoryAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             ImageProfileHistoryViewHolder viewHolder = ((ImageProfileHistoryViewHolder) holder);
             viewHolder.setProfileInfo(member, profile);
             viewHolder.setClickEvent(profile, listener);
+            viewHolder.setShowProfileMenu(showMenu);
         } else if (holder instanceof TextProfileHistoryViewHolder) {
             TextProfileHistoryViewHolder viewHolder = ((TextProfileHistoryViewHolder) holder);
             viewHolder.setProfileInfo(member, profile);
             viewHolder.setClickEvent(profile, listener);
+            viewHolder.setShowProfileMenu(showMenu);
         }
     }
 
@@ -127,6 +131,12 @@ public class ProfileHistoryAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             profileHistoryImage.setOnClickListener(v -> openProfileImageActivityIntent(v, profile));
             profileMenu.setOnClickListener(v -> listener.onItemLongClick(v, profile));
         }
+
+        public void setShowProfileMenu(boolean showMenu) {
+            if (!showMenu) {
+                profileMenu.setVisibility(View.INVISIBLE);
+            }
+        }
     }
 
     public static class TextProfileHistoryViewHolder extends RecyclerView.ViewHolder {
@@ -157,6 +167,12 @@ public class ProfileHistoryAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         public void setClickEvent(Profile profile, ProfileMenuClickListener listener) {
             profileImage.setOnClickListener(v -> openProfileActivityIntent(v, profile.getMemberId()));
             profileMenu.setOnClickListener(v -> listener.onItemLongClick(v, profile));
+        }
+
+        public void setShowProfileMenu(boolean showMenu) {
+            if (!showMenu) {
+                profileMenu.setVisibility(View.INVISIBLE);
+            }
         }
     }
 

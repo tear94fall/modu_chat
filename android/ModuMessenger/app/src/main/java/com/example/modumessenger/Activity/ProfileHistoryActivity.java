@@ -73,7 +73,7 @@ public class ProfileHistoryActivity extends AppCompatActivity {
         member = getDataStoreMember();
         memberId = Long.parseLong(getIntent().getStringExtra("memberId"));
 
-        getMemberInfoById(memberId);
+        getMemberInfoById(member.getId(), memberId);
     }
 
     private void setEvents() {
@@ -92,8 +92,8 @@ public class ProfileHistoryActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void getMemberInfoById(Long id) {
-        getProfileHistory(id);
+    public void getMemberInfoById(Long myId, Long id) {
+        getProfileHistory(myId, id);
     }
 
     public void OpenProfilePopupMenu(View view, Profile profile) {
@@ -124,7 +124,7 @@ public class ProfileHistoryActivity extends AppCompatActivity {
     }
 
     // Retrofit function
-    public void getProfileHistory(Long id) {
+    public void getProfileHistory(Long myId, Long id) {
         Call<MemberDto> call = retrofitMemberAPI.RequestMemberById(id);
 
         call.enqueue(new Callback<MemberDto>() {
@@ -137,7 +137,7 @@ public class ProfileHistoryActivity extends AppCompatActivity {
 
                         setTitle(member.getUsername());
 
-                        profileHistoryAdapter = new ProfileHistoryAdapter(member);
+                        profileHistoryAdapter = new ProfileHistoryAdapter(member, myId.equals(id));
                         profileHistoryAdapter.setProfileMenuClickListener((view, profile) -> OpenProfilePopupMenu(view, profile));
 
                         recyclerView.setAdapter(profileHistoryAdapter);

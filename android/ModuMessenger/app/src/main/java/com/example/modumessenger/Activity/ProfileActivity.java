@@ -69,9 +69,9 @@ public class ProfileActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
 
-        String email = member.getEmail();
-        if (email != null && !email.equals("")) {
-            getUserInfo(email);
+        Long id = member.getId();
+        if (id != null) {
+            getUserInfo(id);
         }
     }
 
@@ -127,7 +127,7 @@ public class ProfileActivity extends AppCompatActivity {
             profileEditButton.setVisibility(View.VISIBLE);
             createChatRoomButton.setText("나와 채팅 하기");
         } else {
-            getUserInfo(member.getEmail());
+            getUserInfo(memberId);
             createChatRoomButton.setText("친구와 채팅 하기");
             isMyInfo = false;
         }
@@ -201,8 +201,8 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     // Retrofit function
-    public void getUserInfo(String email) {
-        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(email);
+    public void getUserInfo(Long id) {
+        Call<MemberDto> call = retrofitMemberAPI.RequestMemberById(id);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override
@@ -220,7 +220,7 @@ public class ProfileActivity extends AppCompatActivity {
                     }
                 }
 
-                Log.d("유저 정보 가져오기 요청 : ", email);
+                Log.d("유저 정보 가져오기 요청 : ", Long.toString(id));
             }
 
             @Override

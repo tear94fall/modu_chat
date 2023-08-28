@@ -17,6 +17,7 @@ import com.example.modumessenger.Adapter.SearchFriendsAdapter;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
+import com.example.modumessenger.dto.AddFriendDto;
 import com.example.modumessenger.dto.MemberDto;
 import com.example.modumessenger.entity.Member;
 
@@ -131,7 +132,8 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     public void addFriend(String userId, MemberDto friend) {
-        Call<MemberDto> call = retrofitMemberAPI.RequestAddFriends(userId, friend.getEmail());
+        AddFriendDto addFriendDto = new AddFriendDto(friend.getEmail());
+        Call<MemberDto> call = retrofitMemberAPI.RequestAddFriends(userId, addFriendDto);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override

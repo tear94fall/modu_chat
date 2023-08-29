@@ -16,9 +16,9 @@ import java.util.List;
 public class ChatRoomController {
     private final ChatRoomService chatRoomService;
 
-    @GetMapping("/chat/{userId}/rooms")
-    public ResponseEntity<List<ChatRoomDto>> chatRoomList(@Valid @PathVariable("userId") String userId) {
-        List<ChatRoomDto> chatRoomList = chatRoomService.searchChatRoomByUserId(userId);
+    @GetMapping("/chat/{memberId}/rooms")
+    public ResponseEntity<List<ChatRoomDto>> chatRoomList(@Valid @PathVariable("memberId") String memberId) {
+        List<ChatRoomDto> chatRoomList = chatRoomService.searchChatRoomByUserId(memberId);
         return ResponseEntity.ok().body(chatRoomList);
     }
 

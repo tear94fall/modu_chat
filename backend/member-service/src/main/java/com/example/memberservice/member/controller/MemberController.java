@@ -81,8 +81,8 @@ public class MemberController {
     }
 
     @PostMapping("/member/{userId}/friends")
-    public ResponseEntity<ResponseFriendDto> addFriends(@Valid @PathVariable("userId") String userId, @RequestBody String email) {
-        return ResponseEntity.ok().body(modelMapper.map(memberService.addFriends(userId, email), ResponseFriendDto.class));
+    public ResponseEntity<ResponseFriendDto> addFriends(@Valid @PathVariable("userId") String userId, @RequestBody AddFriendDto addFriendDto) {
+        return ResponseEntity.ok().body(modelMapper.map(memberService.addFriends(userId, addFriendDto.getEmail()), ResponseFriendDto.class));
     }
 
     @GetMapping("/member/friends/{email}")

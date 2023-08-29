@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ResponseFriendDto {
 
+    private Long id;
     private String userId;
     private String auth;
     private Role role;
@@ -23,6 +24,7 @@ public class ResponseFriendDto {
     private String wallpaperImage;
 
     public ResponseFriendDto(MemberDto memberDto) {
+        this.id = memberDto.getId();
         this.userId = memberDto.getUserId();
         this.auth = memberDto.getAuth();
         this.role = memberDto.getRole();

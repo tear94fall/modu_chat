@@ -40,6 +40,7 @@ import retrofit2.Response;
 
 public class ProfileActivity extends AppCompatActivity {
 
+    Long myId;
     Long memberId;
     Member member;
     boolean isMyInfo = true;
@@ -69,9 +70,8 @@ public class ProfileActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
 
-        Long id = member.getId();
-        if (id != null) {
-            getUserInfo(id);
+        if (memberId != null) {
+            getUserInfo(memberId);
         }
     }
 
@@ -116,6 +116,7 @@ public class ProfileActivity extends AppCompatActivity {
     private void getData() {
         member = getDataStoreMember();
         memberId = Long.parseLong(getIntent().getStringExtra("memberId"));
+        myId = member.getId();
     }
 
     private void setData() {
@@ -163,7 +164,7 @@ public class ProfileActivity extends AppCompatActivity {
         createChatRoomButton.setOnClickListener(view -> {
             // exist chat room
             // if not, create chat room
-            List<Long> ids = new ArrayList<>(Collections.singletonList(member.getId()));
+            List<Long> ids = new ArrayList<>(Collections.singletonList(myId));
 
             if (!isMyInfo) {
                 ids.add(memberId);

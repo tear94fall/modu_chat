@@ -14,8 +14,8 @@ import retrofit2.http.Path;
 
 public interface RetrofitChatRoomAPI {
 
-    @GET("chat-service/chat/{userId}/rooms")
-    Call<List<ChatRoomDto>> RequestChatRooms(@Path("userId") String userId);
+    @GET("chat-service/chat/{memberId}/rooms")
+    Call<List<ChatRoomDto>> RequestChatRooms(@Path("memberId") String memberId);
 
     @GET("chat-service/chat/{roomId}/room")
     Call<ChatRoomDto> RequestChatRoom(@Path("roomId") String roomId);

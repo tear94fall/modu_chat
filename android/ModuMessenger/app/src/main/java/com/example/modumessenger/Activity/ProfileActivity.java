@@ -40,6 +40,7 @@ import retrofit2.Response;
 
 public class ProfileActivity extends AppCompatActivity {
 
+    Long myId;
     Long memberId;
     Member member;
     boolean isMyInfo = true;
@@ -69,9 +70,8 @@ public class ProfileActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
 
-        String email = member.getEmail();
-        if (email != null && !email.equals("")) {
-            getUserInfo(email);
+        if (memberId != null) {
+            getUserInfo(memberId);
         }
     }
 
@@ -116,6 +116,7 @@ public class ProfileActivity extends AppCompatActivity {
     private void getData() {
         member = getDataStoreMember();
         memberId = Long.parseLong(getIntent().getStringExtra("memberId"));
+        myId = member.getId();
     }
 
     private void setData() {
@@ -127,7 +128,7 @@ public class ProfileActivity extends AppCompatActivity {
             profileEditButton.setVisibility(View.VISIBLE);
             createChatRoomButton.setText("나와 채팅 하기");
         } else {
-            getUserInfo(member.getEmail());
+            getUserInfo(memberId);
             createChatRoomButton.setText("친구와 채팅 하기");
             isMyInfo = false;
         }
@@ -163,7 +164,7 @@ public class ProfileActivity extends AppCompatActivity {
         createChatRoomButton.setOnClickListener(view -> {
             // exist chat room
             // if not, create chat room
-            List<Long> ids = new ArrayList<>(Collections.singletonList(member.getId()));
+            List<Long> ids = new ArrayList<>(Collections.singletonList(myId));
 
             if (!isMyInfo) {
                 ids.add(memberId);
@@ -201,8 +202,8 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     // Retrofit function
-    public void getUserInfo(String email) {
-        Call<MemberDto> call = retrofitMemberAPI.RequestUserInfo(email);
+    public void getUserInfo(Long id) {
+        Call<MemberDto> call = retrofitMemberAPI.RequestMemberById(id);
 
         call.enqueue(new Callback<MemberDto>() {
             @Override
@@ -220,7 +221,7 @@ public class ProfileActivity extends AppCompatActivity {
                     }
                 }
 
-                Log.d("유저 정보 가져오기 요청 : ", email);
+                Log.d("유저 정보 가져오기 요청 : ", Long.toString(id));
             }
 
             @Override

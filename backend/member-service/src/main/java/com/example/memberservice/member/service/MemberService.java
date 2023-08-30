@@ -33,7 +33,6 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
@@ -153,7 +152,7 @@ public class MemberService implements UserDetailsService {
         Member member = memberRepository.findByUserId(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userId));
 
-        Member friend = memberRepository.findByEmail(member.getEmail())
+        Member friend = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND, email));
 
         member.addFriends(friend.getId());
@@ -163,7 +162,7 @@ public class MemberService implements UserDetailsService {
 
     public List<MemberDto> findFriend(String email) {
         if(!memberRepository.existsByEmail(email)) {
-            throw new CustomException(ErrorCode.EMAIL_NOT_FOUND, email);
+            return new ArrayList<>();
         }
 
         List<Member> memberList = memberRepository.findFriendsByEmail(email)

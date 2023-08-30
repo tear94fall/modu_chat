@@ -95,23 +95,15 @@ public class FindFriendsActivity extends AppCompatActivity {
         call.enqueue(new Callback<List<MemberDto>>() {
             @Override
             public void onResponse(@NonNull Call<List<MemberDto>> call, @NonNull Response<List<MemberDto>> response) {
-                if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
+                if (!response.isSuccessful()) {
+                    if (response.body() != null) {
+                        Toast.makeText(getApplicationContext(), email + " 을 검색 했습니다.", Toast.LENGTH_SHORT).show();
+                        findFriendList = response.body();
+                        findFriendRecyclerView.setAdapter(new FindFriendsAdapter(findFriendList));
+                    }
                 }
 
-                try {
-                    assert response.body() != null;
-                    Log.d("친구 검색 요청 : ", response.body().toString());
-                    Toast.makeText(getApplicationContext(), email + " 을 검색하였습니다.", Toast.LENGTH_SHORT).show();
-
-                    assert response.body() != null;
-                    findFriendList = response.body();
-                    findFriendRecyclerView.setAdapter(new FindFriendsAdapter(findFriendList));
-
-                } catch (Exception e) {
-                    Log.e("오류 발생 : ", e.getMessage());
-                }
+                Log.d("친구 검색 요청 : ", response.body().toString());
             }
 
             @Override

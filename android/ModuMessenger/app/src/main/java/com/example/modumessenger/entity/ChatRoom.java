@@ -48,9 +48,7 @@ public class ChatRoom {
         setLastChatMsg(chatRoomDto.getLastChatMsg());
         setLastChatId(chatRoomDto.getLastChatId());
         setLastChatTime(chatRoomDto.getLastChatTime());
-        chatRoomDto.getMembers().forEach(member -> {
-            members.add(new Member(member));
-        });
+        chatRoomDto.getMembers().forEach(member -> members.add(new Member(member)));
     }
 
     public ChatRoom(ChatRoomEntity chatRoomEntity) {

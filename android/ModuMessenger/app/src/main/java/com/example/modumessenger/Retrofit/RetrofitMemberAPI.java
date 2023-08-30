@@ -1,5 +1,6 @@
 package com.example.modumessenger.Retrofit;
 
+import com.example.modumessenger.dto.AddFriendDto;
 import com.example.modumessenger.dto.GoogleLoginRequest;
 import com.example.modumessenger.dto.MemberDto;
 import com.example.modumessenger.dto.RequestLoginDto;
@@ -33,7 +34,7 @@ public interface RetrofitMemberAPI {
     Call<List<MemberDto>> RequestFriends(@Path("userId") String userId);
 
     @POST("member-service/member/{userId}/friends")
-    Call<MemberDto> RequestAddFriends(@Path("userId") String userId, @Body String email);
+    Call<MemberDto> RequestAddFriends(@Path("userId") String userId, @Body AddFriendDto addFriendDto);
 
     @GET("member-service/member/friends/{email}")
     Call<List<MemberDto>> RequestFriend(@Path("email") String email);

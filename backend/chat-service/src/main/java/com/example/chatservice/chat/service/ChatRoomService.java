@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Transactional
@@ -30,20 +31,40 @@ public class ChatRoomService {
     private final MemberFeignClient memberFeignClient;
     private final ModelMapper modelMapper;
 
-    public List<ChatRoomDto> searchChatRoomByUserId(String userId) {
-        MemberDto member = memberFeignClient.getMember(userId);
-        List<ChatRoomMember> chatRoomMemberList = chatRoomMemberRepository.findAllByMemberUserId(member.getId());
+    public List<ChatRoomDto> searchChatRoomByUserId(String memberId) {
+        List<ChatRoomMember> chatRoomMemberList = chatRoomMemberRepository.findAllByMemberUserId(Long.valueOf(memberId));
 
-        List<Long> chatRoomMemberIds = chatRoomMemberList
+        List<ChatRoom> chatRooms = chatRoomMemberList
                 .stream()
-                .map(ChatRoomMember::getMemberId)
+                .map(ChatRoomMember::getChatRoom)
                 .collect(Collectors.toList());
 
-        List<MemberDto> members = memberFeignClient.getMembersById(chatRoomMemberIds);
-
-        return chatRoomMemberList.stream()
-                .map(chatRoomMember -> new ChatRoomDto(chatRoomMember.getChatRoom(), members))
+        List<Long> memberIds = chatRooms
+                .stream()
+                .map(chatRoom ->
+                        chatRoom.getChatRoomMemberList()
+                                .stream()
+                                .map(ChatRoomMember::getMemberId)
+                                .collect(Collectors.toList())
+                ).collect(Collectors.toList())
+                .stream()
+                .flatMap(List::stream)
                 .collect(Collectors.toList());
+
+        List<MemberDto> memberDtoList = memberFeignClient.getMembersById(memberIds);
+
+        return chatRooms
+                .stream()
+                .map(chatRoom -> {
+                    List<MemberDto> members = memberDtoList
+                            .stream()
+                            .filter(m -> chatRoom.getChatRoomMemberList()
+                                    .stream()
+                                    .anyMatch(c -> c.getMemberId().equals(m.getId())))
+                            .collect(Collectors.toList());
+
+                    return new ChatRoomDto(chatRoom, members);
+                }).collect(Collectors.toList());
     }
 
     public ChatRoomDto searchChatRoomByRoomId(String roomId) {

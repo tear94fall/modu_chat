@@ -83,7 +83,7 @@ public class FragmentChat extends Fragment {
         Log.e("DEBUG", "onResume of FragmentFriends");
 
         requireActivity().invalidateOptionsMenu();
-        getChatRoomList(member.getUserId());
+        getChatRoomList(member.getId());
     }
 
     @Override
@@ -165,8 +165,8 @@ public class FragmentChat extends Fragment {
     }
 
     // Retrofit function
-    public void getChatRoomList(String userId) {
-        Call<List<ChatRoomDto>> call = retrofitChatRoomAPI.RequestChatRooms(userId);
+    public void getChatRoomList(Long memberId) {
+        Call<List<ChatRoomDto>> call = retrofitChatRoomAPI.RequestChatRooms(Long.toString(memberId));
 
         call.enqueue(new Callback<List<ChatRoomDto>>() {
             @Override

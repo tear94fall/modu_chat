@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
             if(task.isSuccessful()) {
                 setDataStoreObject("fcm-token", task.getResult());
                 SendFcmToken(member.getUserId(), getDataStoreStr("fcm-token"));
-                getChatRoomList(member.getUserId());
+                getChatRoomList(member.getId());
             } else {
                 System.out.println("fcm get token error");
             }
@@ -191,17 +191,15 @@ public class MainActivity extends AppCompatActivity {
         call.enqueue(new Callback<String>() {
             @Override
             public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
-                if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
+                        if(!response.body().equals(token)) {
+                            Toast.makeText(getApplicationContext(), "메시지 알림 서버와의 연결이 불안정합니다.", Toast.LENGTH_SHORT).show();
+                        }
+                    }
                 }
 
-                String result = response.body();
-                assert result != null;
-
-                if(!result.equals(token)) {
-                    Toast.makeText(getApplicationContext(), "메시지 알림 서버와의 연결이 불안정합니다.", Toast.LENGTH_SHORT).show();
-                }
+                Log.d("채팅방 fcm 토큰 전송 요청 : ", token);
             }
 
             @Override
@@ -211,24 +209,20 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void getChatRoomList(String userId) {
-        Call<List<ChatRoomDto>> call = retrofitChatRoomAPI.RequestChatRooms(userId);
+    public void getChatRoomList(Long memberId) {
+        Call<List<ChatRoomDto>> call = retrofitChatRoomAPI.RequestChatRooms(Long.toString(memberId));
 
         call.enqueue(new Callback<List<ChatRoomDto>>() {
             @Override
             public void onResponse(@NonNull Call<List<ChatRoomDto>> call, @NonNull Response<List<ChatRoomDto>> response) {
-                if (!response.isSuccessful()) {
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
+                        List<ChatRoomDto> chatRoomDtoList = response.body();
+                        chatRoomDtoList.forEach(chatRoomDto -> FirebaseMessaging.getInstance().subscribeToTopic(chatRoomDto.getRoomId()));
+                    }
                 }
 
-                assert response.body() != null;
-                List<ChatRoomDto> chatRoomDtoList = response.body();
-                chatRoomDtoList.forEach(chatRoomDto -> {
-                    FirebaseMessaging.getInstance().subscribeToTopic(chatRoomDto.getRoomId());
-                });
-
-                Log.d("채팅방 fcm 토픽 설정 : ", response.body().toString());
+                Log.d("채팅방 리스트 가져오기 요청 : ", Long.toString(memberId));
             }
 
             @Override

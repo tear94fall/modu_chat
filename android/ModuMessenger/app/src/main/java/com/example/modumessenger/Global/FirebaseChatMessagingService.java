@@ -21,6 +21,7 @@ import androidx.core.app.NotificationCompat;
 
 import com.example.modumessenger.Activity.ChatActivity;
 import com.example.modumessenger.R;
+import com.example.modumessenger.dto.ChatType;
 import com.example.modumessenger.dto.FcmMessageDto;
 import com.example.modumessenger.entity.Member;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -78,8 +79,15 @@ public class FirebaseChatMessagingService extends FirebaseMessagingService {
     @SuppressLint("ObsoleteSdkInt")
     private void sendNotification(RemoteMessage remoteMessage) {
 
+        String type = remoteMessage.getData().get("type");
         String title = remoteMessage.getData().get("title");
         String message = remoteMessage.getData().get("message");
+
+        int chatType = Integer.parseInt(type);
+
+        if (chatType == ChatType.CHAT_TYPE_IMAGE) {
+            message = "새로운 사진";
+        }
 
         Intent intent = new Intent(this, ChatActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);

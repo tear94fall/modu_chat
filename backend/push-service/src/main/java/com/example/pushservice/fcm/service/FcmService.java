@@ -54,6 +54,7 @@ public class FcmService {
         Notification notification = Notification.builder().setTitle(fcmMessageDto.getTitle()).setBody(fcmMessageDto.getBody()).setImage(fcmMessageDto.getImage()).build();
         Message message = Message.builder()
                 .setTopic(fcmMessageDto.getTopic())
+                .putData("type", String.valueOf(fcmMessageDto.getType()))
                 .putData("title", fcmMessageDto.getTitle())
                 .putData("message", fcmMessageDto.getBody())
                 .putAllData(fcmMessageDto.getData())

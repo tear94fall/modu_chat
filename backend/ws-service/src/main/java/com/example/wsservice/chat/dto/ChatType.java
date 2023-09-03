@@ -1,8 +1,11 @@
 package com.example.wsservice.chat.dto;
 
+import lombok.Getter;
+
 import java.util.HashMap;
 import java.util.Map;
 
+@Getter
 public enum ChatType {
     TEXT(1, ""),
     IMAGE(2, "image"),
@@ -24,10 +27,6 @@ public enum ChatType {
         this.chatType = chatType;
         this.chatTypeStr = chatTypeStr;
     }
-
-    public int getChatType() { return this.chatType; }
-    public String getChatTypeStr() { return this.chatTypeStr; }
-
 
     public static ChatType fromChatType(int type) {
         return chatTypeMap.get(type);

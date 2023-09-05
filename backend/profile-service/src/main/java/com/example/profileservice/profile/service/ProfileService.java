@@ -8,13 +8,17 @@ import com.example.profileservice.profile.entity.Profile;
 import com.example.profileservice.profile.entity.ProfileType;
 import com.example.profileservice.profile.repository.ProfileRepository;
 import com.example.profileservice.storage.client.StorageFeignClient;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -24,12 +28,18 @@ public class ProfileService {
     private final MemberFeignClient memberFeignClient;
     private final StorageFeignClient storageFeignClient;
 
+    @CircuitBreaker(name="memberProfileCircuitBreaker",fallbackMethod = "fallbackGetMemberProfile")
     public List<ProfileDto> getMemberProfiles(Long memberId) {
         List<Profile> profileList = profileRepository.findByMemberId(memberId);
 
         return profileList.stream()
                 .map(ProfileDto::new)
                 .collect(Collectors.toList());
+    }
+
+    private List<ProfileDto> fallbackGetMemberProfile(Throwable e) {
+        log.info("fallbackGetMemberProfile Method Running and Error is " + e.getMessage());
+        return new ArrayList<>();
     }
 
     public ProfileDto getMemberLatestProfile(String memberId) {

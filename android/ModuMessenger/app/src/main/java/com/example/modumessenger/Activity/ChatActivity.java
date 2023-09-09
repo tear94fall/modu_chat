@@ -46,6 +46,9 @@ import com.example.modumessenger.dto.ChatType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.android.material.navigation.NavigationView;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -56,6 +59,7 @@ import org.json.JSONObject;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -495,21 +499,14 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
             Log.d("onMessage", "WebSocket receive text message");
             System.out.println(text);
 
-            try {
-                JSONObject jsonObject = new JSONObject(text);
+            JsonParser parser = new JsonParser();
+            JsonElement mJson =  parser.parse(text);
+            Gson gson = new Gson();
+            ChatDto chatDto = gson.fromJson(mJson, ChatDto.class);
 
-                String roomId = (String) jsonObject.get("roomId");
-                String message = (String) jsonObject.get("message");
-                String chatTime = (String) jsonObject.get("chatTime");
-                String sender = (String) jsonObject.get("sender");
-                int chatType = (int) jsonObject.get("chatType");
+            ChatBubble chatBubble = new ChatBubble(chatDto);
 
-                ChatBubble chatBubble = new ChatBubble(roomId, message, chatTime, sender, chatType);
-
-                EventBus.getDefault().post(new MessageEvent(chatBubble));
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+            EventBus.getDefault().post(new MessageEvent(chatBubble));
         }
 
         @Override
@@ -684,41 +681,40 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         call.enqueue(new Callback<List<ChatDto>>() {
             @Override
             public void onResponse(@NonNull Call<List<ChatDto>> call, @NonNull Response<List<ChatDto>> response) {
-                if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
+                        List<ChatDto> imageChatList = response.body();
+
+                        recentImageList = imageChatList
+                                .stream()
+                                .map(chatDto -> Long.toString(chatDto.getId()))
+                                .collect(Collectors.toCollection(ArrayList::new));
+
+                        GridView recent_chat_images = view.findViewById(R.id.chat_room_chat_image_grid_layout);
+                        View recent_chat_images_view = view.findViewById(R.id.view2);
+                        RecentChatImageGridAdapter recentChatImageGridAdapter = new RecentChatImageGridAdapter(getApplicationContext());
+                        recent_chat_images.setAdapter(recentChatImageGridAdapter);
+
+                        recentChatImageGridAdapter.setGridItems(imageChatList);
+                        recentChatImageGridAdapter.setRecentImageList(recentImageList);
+
+                        recent_chat_images.setOnItemClickListener((parent, v, position, id) -> {
+                            Intent intent = new Intent(v.getContext(), ChatImageActivity.class);
+                            ArrayList<String> imageFileList = imageChatList.stream().skip(position).map(ChatDto::getMessage).collect(Collectors.toCollection(ArrayList::new));
+                            intent.putStringArrayListExtra("chatImageList", imageFileList);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                            v.getContext().startActivity(intent);
+                        });
+
+                        if(imageChatList.size() == 0) {
+                            recent_chat_images.setVisibility(View.GONE);
+                            recent_chat_images_view.setVisibility(View.GONE);
+                        }
+                    }
                 }
 
-                List<ChatDto> imageChatList = response.body();
-                assert imageChatList != null;
-
-                recentImageList = imageChatList
-                        .stream()
-                        .map(chatDto -> Long.toString(chatDto.getId()))
-                        .collect(Collectors.toCollection(ArrayList::new));
-
-                GridView recent_chat_images = view.findViewById(R.id.chat_room_chat_image_grid_layout);
-                View recent_chat_images_view = view.findViewById(R.id.view2);
-                RecentChatImageGridAdapter recentChatImageGridAdapter = new RecentChatImageGridAdapter(getApplicationContext());
-                recent_chat_images.setAdapter(recentChatImageGridAdapter);
-
-                recentChatImageGridAdapter.setGridItems(imageChatList);
-
-                recent_chat_images.setOnItemClickListener((parent, v, position, id) -> {
-                    Intent intent = new Intent(v.getContext(), ChatImageActivity.class);
-                    ArrayList<String> imageFileList = imageChatList.stream().skip(position).map(ChatDto::getMessage).collect(Collectors.toCollection(ArrayList::new));
-                    intent.putStringArrayListExtra("chatImageList", imageFileList);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-                    v.getContext().startActivity(intent);
-                });
-
-                if(imageChatList.size() == 0) {
-                    recent_chat_images.setVisibility(View.GONE);
-                    recent_chat_images_view.setVisibility(View.GONE);
-                }
-
-                Log.d("채팅 내역 가져오기 요청 : ", chatRoom.getRoomId());
+                Log.d("채팅 내역 가져 오기 요청 : ", chatRoom.getRoomId());
             }
 
             @Override
@@ -734,20 +730,18 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         call.enqueue(new Callback<ChatRoomDto>() {
             @Override
             public void onResponse(@NonNull Call<ChatRoomDto> call, @NonNull Response<ChatRoomDto> response) {
-                if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
-                }
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
+                        ChatRoomDto chatRoomDto = response.body();
 
-                assert response.body() != null;
-                ChatRoomDto chatRoomDto = response.body();
-
-                if(chatRoomDto.getRoomId().equals(roomId)) {
-                    chatRoomDto.getMembers().forEach(memberDto -> {
-                        if(memberDto.getUserId().equals(userId)){
-                            finish();
+                        if(chatRoomDto.getRoomId().equals(roomId)) {
+                            chatRoomDto.getMembers().forEach(memberDto -> {
+                                if(memberDto.getUserId().equals(userId)){
+                                    finish();
+                                }
+                            });
                         }
-                    });
+                    }
                 }
 
                 Log.d("채팅방 나가기 요청 : ", response.body().toString());

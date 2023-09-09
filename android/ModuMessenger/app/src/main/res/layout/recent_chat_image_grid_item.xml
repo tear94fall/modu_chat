@@ -14,6 +14,7 @@
         android:minWidth="90dp"
         android:minHeight="90dp"
         android:maxHeight="90dp"
+        android:scaleType="centerCrop"
         android:adjustViewBounds="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

@@ -5,6 +5,7 @@ import com.example.wsservice.chat.dto.ChatMessage;
 import com.example.wsservice.chat.dto.ChatRoomDto;
 import com.example.wsservice.chat.service.ChatRoomService;
 import com.example.wsservice.chat.service.ChatService;
+import com.example.wsservice.config.RabbitmqConfig;
 import com.example.wsservice.fcm.dto.FcmMessageDto;
 import com.example.wsservice.fcm.service.FcmService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -30,6 +32,12 @@ import static com.example.wsservice.util.TimeUtil.calculateTime;
 @Component
 @RequiredArgsConstructor
 public class WebSocketHandler extends TextWebSocketHandler {
+
+    @Value("${rabbitmq.exchange.name}")
+    private String exchangeName;
+
+    @Value("${rabbitmq.routing.key}")
+    private String routingKey;
 
     private final ObjectMapper objectMapper;
     private final RabbitTemplate rabbitTemplate;
@@ -92,10 +100,10 @@ public class WebSocketHandler extends TextWebSocketHandler {
     }
 
     public void producerMessage(ChatMessage chatMessage) throws JsonProcessingException {
-        rabbitTemplate.convertAndSend("modu-chat.exchange", "modu-chat.key", objectMapper.writeValueAsString(chatMessage));
+        rabbitTemplate.convertAndSend(exchangeName, routingKey, objectMapper.writeValueAsString(chatMessage));
     }
 
-    @RabbitListener(queues = "modu-chat.queue")
+    @RabbitListener(queues = "${rabbitmq.queue.name}")
     public void consumeMessage(String message) throws JsonProcessingException {
         ChatMessage chatMessage = objectMapper.readValue(message, ChatMessage.class);
         log.info("[consumer][message] {}", chatMessage);

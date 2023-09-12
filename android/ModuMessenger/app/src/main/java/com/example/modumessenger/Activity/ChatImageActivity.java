@@ -14,6 +14,7 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.modumessenger.Adapter.ChatImageSliderAdapter;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Retrofit.APIHelper;
 import com.example.modumessenger.Retrofit.RetrofitChatAPI;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatDto;
@@ -102,9 +103,9 @@ public class ChatImageActivity extends AppCompatActivity {
 
     // Retrofit function
     public void getChatList(List<String> chatImageList) {
-        Call<List<ChatDto>> chatDtoCall = retrofitChatAPI.RequestChatList(chatImageList);
+        Call<List<ChatDto>> call = retrofitChatAPI.RequestChatList(chatImageList);
 
-        chatDtoCall.enqueue(new Callback<List<ChatDto>>() {
+        APIHelper.enqueueWithRetry(call, 5, new Callback<List<ChatDto>>() {
             @Override
             public void onResponse(@NonNull Call<List<ChatDto>> call, @NonNull Response<List<ChatDto>> response) {
                 if (response.isSuccessful()) {

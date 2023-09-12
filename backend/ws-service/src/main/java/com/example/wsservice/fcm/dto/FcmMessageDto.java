@@ -12,6 +12,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class FcmMessageDto {
     private String topic;
+    private int type;
     private String title;
     private String body;
     private String image;
@@ -19,6 +20,7 @@ public class FcmMessageDto {
 
     public FcmMessageDto(ChatRoomDto chatRoomDto, ChatDto chatDto) {
         setTopic(chatRoomDto.getRoomId());
+        setType(chatDto.getChatType());
         setTitle(chatRoomDto.getRoomName());
         setBody(chatDto.getMessage());
         setImage(null);
@@ -31,8 +33,9 @@ public class FcmMessageDto {
         };
     }
 
-    public FcmMessageDto(String topic, String title, String body, String image, String sender) {
+    public FcmMessageDto(String topic, int type, String title, String body, String image, String sender) {
         setTopic(topic);
+        setType(type);
         setTopic(title);
         setBody(body);
         setImage(image);

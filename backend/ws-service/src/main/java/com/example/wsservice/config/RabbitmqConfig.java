@@ -28,26 +28,28 @@ public class RabbitmqConfig {
     @Value("${spring.rabbitmq.port}")
     private int port;
 
+    @Value("${rabbitmq.queue.name}")
+    private String queueName;
+
+    @Value("${rabbitmq.exchange.name}")
+    private String exchangeName;
+
+    @Value("${rabbitmq.routing.key}")
+    private String routingKey;
+
     @Bean
     Queue queue() {
-        return new Queue("modu-chat.queue", false);
+        return new Queue(queueName);
     }
 
     @Bean
     DirectExchange directExchange() {
-        return new DirectExchange("modu-chat.exchange");
+        return new DirectExchange(exchangeName);
     }
 
     @Bean
     Binding binding(DirectExchange directExchange, Queue queue) {
-        return BindingBuilder.bind(queue).to(directExchange).with("modu-chat.key");
-    }
-
-    @Bean
-    RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory, MessageConverter messageConverter) {
-        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-        rabbitTemplate.setMessageConverter(messageConverter);
-        return rabbitTemplate;
+        return BindingBuilder.bind(queue).to(directExchange).with(routingKey);
     }
 
     @Bean
@@ -58,6 +60,13 @@ public class RabbitmqConfig {
         connectionFactory.setUsername(username);
         connectionFactory.setPassword(password);
         return connectionFactory;
+    }
+
+    @Bean
+    RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory, MessageConverter messageConverter) {
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+        rabbitTemplate.setMessageConverter(messageConverter);
+        return rabbitTemplate;
     }
 
     @Bean

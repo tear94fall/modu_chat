@@ -8,7 +8,10 @@
     <ImageView
         android:id="@+id/profile_wallpaper_image"
         android:layout_width="0dp"
-        android:layout_height="410dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="50dp"
+        android:scaleType="centerCrop"
+        app:layout_constraintBottom_toBottomOf="@+id/my_profile_activity_image"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
@@ -19,10 +22,10 @@
         android:id="@+id/my_profile_activity_image"
         android:layout_width="100dp"
         android:layout_height="100dp"
-        android:layout_marginTop="-50dp"
+        android:layout_marginBottom="12dp"
+        app:layout_constraintBottom_toTopOf="@+id/my_profile_name"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/view"
         tools:srcCompat="@tools:sample/avatars" />
 
     <Button
@@ -39,18 +42,18 @@
         android:id="@+id/my_profile_save_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginBottom="56dp"
         android:text="저장"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/my_status_message" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <EditText
         android:id="@+id/my_profile_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="30dp"
+        android:layout_marginBottom="12dp"
         android:autoSizeMaxTextSize="100sp"
         android:autoSizeMinTextSize="12sp"
         android:autoSizeStepGranularity="2sp"
@@ -58,27 +61,27 @@
         android:inputType="textPersonName"
         android:maxWidth="200sp"
         android:text="사용자 이름"
+        app:layout_constraintBottom_toTopOf="@+id/my_status_message"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.502"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/my_profile_activity_image" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <EditText
         android:id="@+id/my_status_message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:inputType="textPersonName"
-        android:text="상테 메세지"
-        android:maxWidth="350sp"
-        android:autoSizeTextType="uniform"
-        android:autoSizeMinTextSize="12sp"
+        android:layout_marginBottom="12dp"
         android:autoSizeMaxTextSize="100sp"
+        android:autoSizeMinTextSize="12sp"
         android:autoSizeStepGranularity="2sp"
+        android:autoSizeTextType="uniform"
+        android:inputType="textPersonName"
+        android:maxWidth="350sp"
+        android:text="상테 메세지"
+        app:layout_constraintBottom_toTopOf="@+id/my_profile_save_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.497"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/my_profile_name" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <View
         android:id="@+id/view"

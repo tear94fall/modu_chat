@@ -69,9 +69,8 @@
 
                 <EditText
                     android:id="@+id/chat_message_edit_text"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:ems="11"
                     android:hint="Message"
                     android:inputType="textPersonName"
                     android:windowSoftInputMode="adjustResize"

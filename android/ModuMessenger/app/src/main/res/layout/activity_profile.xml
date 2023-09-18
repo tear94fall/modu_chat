@@ -8,7 +8,10 @@
     <ImageView
         android:id="@+id/profile_wallpaper_image"
         android:layout_width="0dp"
-        android:layout_height="410dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="50dp"
+        android:scaleType="centerCrop"
+        app:layout_constraintBottom_toBottomOf="@+id/profile_activity_image"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
@@ -19,47 +22,47 @@
         android:id="@+id/profile_activity_image"
         android:layout_width="100dp"
         android:layout_height="100dp"
-        android:layout_marginTop="-50dp"
+        android:layout_marginBottom="12dp"
+        app:layout_constraintBottom_toTopOf="@+id/profile_activity_username"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/profile_wallpaper_image"
         tools:srcCompat="@tools:sample/avatars" />
 
     <TextView
         android:id="@+id/profile_activity_username"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:maxWidth="120dp"
+        android:layout_marginBottom="12dp"
+        android:maxWidth="480dp"
         android:text="이름"
         android:textSize="35dp"
+        app:layout_constraintBottom_toTopOf="@+id/profile_activity_status_message"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/profile_activity_image" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/profile_activity_status_message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginBottom="12dp"
         android:text="상태 메세지"
         android:textSize="18dp"
+        app:layout_constraintBottom_toTopOf="@+id/profile_edit_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/profile_activity_username" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/profile_edit_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginBottom="12dp"
         android:text="프로필 편집"
+        app:layout_constraintBottom_toTopOf="@+id/start_chat_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/profile_activity_status_message" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/profile_close_button"

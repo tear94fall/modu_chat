@@ -2,18 +2,15 @@ package com.example.chatservice.chat.entity;
 
 import com.example.chatservice.chat.dto.ChatDto;
 import com.example.chatservice.common.domain.BaseTimeEntity;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 import javax.persistence.*;
 
 @Getter
-@Setter
 @Entity
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Chat extends BaseTimeEntity {
+    
     @Id
     @Column(name = "chat_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,6 +26,10 @@ public class Chat extends BaseTimeEntity {
     @JoinColumn(name = "chat_room_id")
     @ToString.Exclude
     private ChatRoom chatRoom;
+
+    public void addChatRoom(ChatRoom chatRoom) {
+        this.chatRoom = chatRoom;
+    }
 
     public Chat(String msg) { this.message = msg; }
 
@@ -47,10 +48,10 @@ public class Chat extends BaseTimeEntity {
     }
 
     public Chat(ChatDto chatDto) {
-        setMessage(chatDto.getMessage());
-        setRoomId(chatDto.getRoomId());
-        setSender(chatDto.getSender());
-        setChatTime(chatDto.getChatTime());
-        setChatType(chatDto.getChatType());
+        this.message = chatDto.getMessage();
+        this.roomId = chatDto.getRoomId();
+        this.sender = chatDto.getSender();
+        this.chatTime = chatDto.getChatTime();
+        this.chatType = chatDto.getChatType();
     }
 }

@@ -2,6 +2,9 @@ server:
   port: 8000
 
 eureka:
+  instance:
+    instance-id: gateway-service
+
   client:
     fetch-registry: true
     register-with-eureka: true

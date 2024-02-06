@@ -1,12 +1,11 @@
 package com.example.memberservice.member.entity;
 
-import com.example.memberservice.chat.entity.ChatRoomMember;
 import com.example.memberservice.global.entity.BaseTimeEntity;
 import com.example.memberservice.member.dto.MemberDto;
 import com.example.memberservice.member.dto.UpdateProfileDto;
 import com.example.memberservice.profile.dto.ProfileDto;
 import com.example.memberservice.profile.dto.ProfileType;
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -17,8 +16,7 @@ import java.util.List;
 
 @Entity
 @Getter
-@AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member extends BaseTimeEntity {
 
     @Id
@@ -43,9 +41,6 @@ public class Member extends BaseTimeEntity {
     private String statusMessage;
     private String profileImage;
     private String wallpaperImage;
-
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
-    private List<ChatRoomMember> chatRoomMemberList = new ArrayList<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "friends", joinColumns = @JoinColumn(name = "id"))

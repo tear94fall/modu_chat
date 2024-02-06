@@ -1,8 +1,8 @@
 package com.example.chatservice.chat.entity;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import javax.persistence.*;
 
@@ -10,8 +10,7 @@ import static javax.persistence.FetchType.LAZY;
 
 @Entity
 @Getter
-@Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatRoomMember {
 
     @Id
@@ -26,7 +25,7 @@ public class ChatRoomMember {
     private ChatRoom chatRoom;
 
     public ChatRoomMember(Long memberId, ChatRoom chatRoom) {
-        setMemberId(memberId);
-        setChatRoom(chatRoom);
+        this.memberId = memberId;
+        this.chatRoom = chatRoom;
     }
 }

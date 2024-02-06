@@ -19,7 +19,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @Transactional
@@ -37,7 +36,7 @@ public class ChatRoomService {
         List<ChatRoom> chatRooms = chatRoomMemberList
                 .stream()
                 .map(ChatRoomMember::getChatRoom)
-                .collect(Collectors.toList());
+                .toList();
 
         List<Long> memberIds = chatRooms
                 .stream()
@@ -46,7 +45,7 @@ public class ChatRoomService {
                                 .stream()
                                 .map(ChatRoomMember::getMemberId)
                                 .collect(Collectors.toList())
-                ).collect(Collectors.toList())
+                ).toList()
                 .stream()
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
@@ -92,11 +91,11 @@ public class ChatRoomService {
                 .filter(chatRoom -> {
                     List<Long> roomMemberId = chatRoom.getChatRoomMemberList().stream()
                             .map(ChatRoomMember::getMemberId)
-                            .collect(Collectors.toList());
+                            .toList();
 
                     return roomMemberId.size() == 2 && roomMemberId.contains(members.get(0).getId()) && roomMemberId.contains(members.get(1).getId());
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         return chatRoomList.stream()
                 .map(chatRoom -> {
@@ -107,7 +106,7 @@ public class ChatRoomService {
 
     public ChatRoomDto createChatRoom(List<Long> ids) {
         List<MemberDto> members = memberFeignClient.getMembersById(ids);
-        if(members.size() == 0) {
+        if(members.isEmpty()) {
             throw new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, ids.toString());
         }
 
@@ -122,7 +121,7 @@ public class ChatRoomService {
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
                 .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND_ERROR, roomId));
         List<MemberDto> members = memberFeignClient.getMembersByUserId(new ArrayList<>(Collections.singletonList(userId)));
-        if(members.size() == 0) {
+        if(members.isEmpty()) {
             throw new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userId);
         }
 
@@ -139,11 +138,7 @@ public class ChatRoomService {
         ChatRoom findChatRoom = chatRoomRepository.findByRoomId(roomId)
                 .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND_ERROR, roomId));
 
-        findChatRoom.setRoomName(chatRoomDto.getRoomName());
-        findChatRoom.setRoomImage(chatRoomDto.getRoomImage());
-        findChatRoom.setLastChatMsg(chatRoomDto.getLastChatMsg());
-        findChatRoom.setLastChatId(chatRoomDto.getLastChatId());
-        findChatRoom.setLastChatTime(chatRoomDto.getLastChatTime());
+        findChatRoom.updateChatRoom(chatRoomDto);
 
         ChatRoom updateChatRoom = chatRoomRepository.save(findChatRoom);
         return modelMapper.map(updateChatRoom, ChatRoomDto.class);
@@ -153,7 +148,7 @@ public class ChatRoomService {
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
                 .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND_ERROR, roomId));
         List<MemberDto> members = memberFeignClient.getMembersByUserId(userIds);
-        if(members.size() == 0) {
+        if(members.isEmpty()) {
             throw new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userIds.toString());
         }
 

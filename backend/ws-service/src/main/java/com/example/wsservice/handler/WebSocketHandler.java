@@ -5,7 +5,6 @@ import com.example.wsservice.chat.dto.ChatMessage;
 import com.example.wsservice.chat.dto.ChatRoomDto;
 import com.example.wsservice.chat.service.ChatRoomService;
 import com.example.wsservice.chat.service.ChatService;
-import com.example.wsservice.config.RabbitmqConfig;
 import com.example.wsservice.fcm.dto.FcmMessageDto;
 import com.example.wsservice.fcm.service.FcmService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -59,13 +58,13 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
         chatRoomDto.updateLastChat(chatId.toString(), recvChatDto);
 
-        chatRoomService.updateChatRoom(chatRoomDto.getRoomId(), chatRoomDto);
+        ChatRoomDto updateChatRoomDto = chatRoomService.updateChatRoom(chatRoomDto.getRoomId(), chatRoomDto);
 
-        ChatMessage chatMessage = new ChatMessage(BROAD_CAST, chatRoomDto.getRoomId(), chatId.toString());
+        ChatMessage chatMessage = new ChatMessage(BROAD_CAST, updateChatRoomDto.getRoomId(), chatId.toString());
 
         producerMessage(chatMessage);
 
-        FcmMessageDto fcmMessageDto = new FcmMessageDto(chatRoomDto, recvChatDto);
+        FcmMessageDto fcmMessageDto = new FcmMessageDto(updateChatRoomDto, recvChatDto);
         fcmService.sendFcmMessage(fcmMessageDto);
     }
 

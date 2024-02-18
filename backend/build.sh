@@ -54,7 +54,7 @@ function print_log()
 # find service in directories
 function find_service()
 {
-    local excludes="README.md docker-compose.yml build.sh"
+    local excludes="ModuMessenger README.md docker-compose.yml build.sh"
     local list=`ls`
     local result=""
 

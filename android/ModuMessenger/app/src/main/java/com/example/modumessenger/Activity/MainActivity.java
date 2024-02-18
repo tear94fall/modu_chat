@@ -24,6 +24,7 @@ import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitChatAPI;
 import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
 import com.example.modumessenger.Retrofit.RetrofitClient;
+import com.example.modumessenger.Retrofit.RetrofitPushAPI;
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.example.modumessenger.entity.Member;
 import com.google.android.material.badge.BadgeDrawable;
@@ -45,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
     BadgeDrawable badgeDrawable;
     private ViewPager2 viewPager2;
 
-    RetrofitChatAPI retrofitChatAPI;
+    RetrofitPushAPI retrofitPushAPI;
     RetrofitChatRoomAPI retrofitChatRoomAPI;
 
     @Override
@@ -65,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setData() {
-        retrofitChatAPI = RetrofitClient.createChatApiService();
+        retrofitPushAPI = RetrofitClient.createPushApiService();
         retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
     }
 
@@ -186,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Retrofit function
     public void SendFcmToken(String userId, String token) {
-        Call<String> call = retrofitChatAPI.RequestFcmToken(userId, token);
+        Call<String> call = retrofitPushAPI.RequestFcmToken(userId, token);
 
         call.enqueue(new Callback<String>() {
             @Override

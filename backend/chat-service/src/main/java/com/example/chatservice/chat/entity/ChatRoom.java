@@ -10,9 +10,7 @@ import java.util.List;
 
 @Entity
 @Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatRoom extends BaseTimeEntity {
 
     @Id
@@ -45,6 +43,18 @@ public class ChatRoom extends BaseTimeEntity {
     @ToString.Exclude
     private List<Chat> chat = new ArrayList<>();
 
+    public void addChatting(Chat chat) {
+        this.chat.add(chat);
+    }
+
+    public void updateChatRoom(ChatRoomDto chatRoomDto) {
+        this.roomName = chatRoomDto.getRoomName();
+        this.roomImage = chatRoomDto.getRoomImage();
+        this.lastChatMsg = chatRoomDto.getLastChatMsg();
+        this.lastChatId = chatRoomDto.getLastChatId();
+        this.lastChatTime = chatRoomDto.getLastChatTime();
+    }
+
     public ChatRoom(String roomName) { this.roomName = roomName; }
 
     public ChatRoom(String roomId, String roomName, String roomImage, String lastChatMsg, String lastChatId, String lastChatTime) {
@@ -57,11 +67,11 @@ public class ChatRoom extends BaseTimeEntity {
     }
 
     public ChatRoom(ChatRoomDto chatRoomDto) {
-        setRoomId(chatRoomDto.getRoomId());
-        setRoomName(chatRoomDto.getRoomName());
-        setRoomImage(chatRoomDto.getRoomImage());
-        setLastChatMsg(chatRoomDto.getLastChatMsg());
-        setLastChatId(chatRoomDto.getLastChatId());
-        setLastChatTime(chatRoomDto.getLastChatTime());
+        this.roomId = chatRoomDto.getRoomId();
+        this.roomName = chatRoomDto.getRoomName();
+        this.roomImage = chatRoomDto.getRoomImage();
+        this.lastChatMsg = chatRoomDto.getLastChatMsg();
+        this.lastChatId = chatRoomDto.getLastChatId();
+        this.lastChatTime = chatRoomDto.getLastChatTime();
     }
 }

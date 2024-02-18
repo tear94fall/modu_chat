@@ -16,7 +16,6 @@ spring:
 
   datasource:
     url: jdbc:mysql://localhost:3306/modu-chat?serverTimezone=Asia/Seoul
-    #    url: jdbc:mysql://database:3306/modu-chat
     username: root
     password: root1234
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -76,6 +75,14 @@ resilience4j:
 logging:
   level:
     org.hibernate.SQL: debug
+
+management:
+  server:
+    port: 8082
+  endpoints:
+    web:
+      exposure:
+        include: "*"
 
 eureka:
   instance:

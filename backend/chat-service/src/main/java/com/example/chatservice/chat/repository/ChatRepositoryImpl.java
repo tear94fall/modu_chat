@@ -24,15 +24,6 @@ public class ChatRepositoryImpl implements ChatCustomRepository {
     }
 
     @Override
-    public List<Chat> findByIds(List<Long> ids) {
-        return queryFactory
-                .selectFrom(chat)
-                .where(chat.id.in(ids))
-                .fetch();
-    }
-
-
-    @Override
     public List<Chat> findByMessage(String roomId, String message) {
         return queryFactory
                 .selectFrom(chat)

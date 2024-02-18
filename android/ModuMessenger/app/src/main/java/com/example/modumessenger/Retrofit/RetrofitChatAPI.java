@@ -19,9 +19,6 @@ public interface RetrofitChatAPI {
     @GET("chat-service/chat")
     Call<List<ChatDto>> RequestChatList(@Query("ids") List<String> ids);
 
-    @PUT("chat-service/chat/{userId}/token")
-    Call<String> RequestFcmToken(@Path("userId") String userId, @Body String fcmToken);
-
     @GET("chat-service/chat/{roomId}/chats")
     Call<List<ChatDto>> RequestChatHistory(@Path("roomId") String roomId);
 

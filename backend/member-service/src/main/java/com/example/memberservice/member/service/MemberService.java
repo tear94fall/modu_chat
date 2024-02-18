@@ -120,7 +120,7 @@ public class MemberService implements UserDetailsService {
     }
 
     public MemberDto updateMemberProfile(String userId, UpdateProfileDto updateProfileDto) {
-        Member member = memberRepository.searchMemberByUserId(userId)
+        Member member = memberRepository.findByUserId(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userId));
 
         member.updateProfile(updateProfileDto);
@@ -133,8 +133,7 @@ public class MemberService implements UserDetailsService {
         Member member = memberRepository.findByUserId(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userId));
 
-        List<Member> friendList = memberRepository.findAllFriends(member.getFriends())
-                .orElseThrow(() -> new CustomException(ErrorCode.USERID_FRIENDS_NOT_FOUND_ERROR, userId));
+        List<Member> friendList = memberRepository.findAllByIdIn(member.getFriends());
 
         return friendList
                 .stream()
@@ -165,8 +164,7 @@ public class MemberService implements UserDetailsService {
             return new ArrayList<>();
         }
 
-        List<Member> memberList = memberRepository.findFriendsByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_EMAIL_FRIENDS_NOT_FOUND_ERROR, email));
+        List<Member> memberList = memberRepository.findAllByEmail(email);
 
         return memberList
                 .stream()
@@ -188,7 +186,7 @@ public class MemberService implements UserDetailsService {
     }
 
     public List<MemberDto> findMembers(List<String> userIds) {
-        List<Member> members = memberRepository.findAllByUserIds(userIds).orElseGet(ArrayList::new);
+        List<Member> members = memberRepository.findAllByUserIdIn(userIds);
 
         return members
                 .stream()
@@ -217,7 +215,7 @@ public class MemberService implements UserDetailsService {
         List<Member> inviteMembers = members
                 .stream()
                 .peek(member -> member.addChatRoom(chatRoomId))
-                .collect(Collectors.toList());
+                .toList();
 
         return inviteMembers
                 .stream()
@@ -238,7 +236,7 @@ public class MemberService implements UserDetailsService {
         List<Member> exitMembers = members
                 .stream()
                 .peek(member -> member.delChatRoom(chatRoomId))
-                .collect(Collectors.toList());
+                .toList();
 
         return exitMembers
                 .stream()

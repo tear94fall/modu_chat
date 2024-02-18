@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -86,7 +85,7 @@ public class ChatService {
                 .map(Long::parseLong)
                 .collect(Collectors.toList());
 
-        List<Chat> chatList = chatRepository.findByIds(chatIds);
+        List<Chat> chatList = chatRepository.findAllByIdIn(chatIds);
 
         return chatList
                 .stream()
@@ -97,8 +96,10 @@ public class ChatService {
     public Long saveChat(ChatDto chatDto) {
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(chatDto.getRoomId())
                 .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND_ERROR, chatDto.getRoomId()));
+
         Chat chat = new Chat(chatDto);
-        chat.setChatRoom(chatRoom);
+        chat.addChatRoom(chatRoom);
+        chatRoom.addChatting(chat);
         Chat saveChat = chatRepository.save(chat);
 
         return saveChat.getId();

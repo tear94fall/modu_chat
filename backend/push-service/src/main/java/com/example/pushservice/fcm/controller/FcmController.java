@@ -35,7 +35,7 @@ public class FcmController {
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/chat/{userId}/token")
+    @PutMapping("/push/{userId}/token")
     public ResponseEntity<String> registerFcmToken(@PathVariable("userId") String userId, @RequestBody String token) {
         FcmToken fcmToken = new FcmToken(userId, token);
         FcmToken saveToken = fcmService.saveFcmToken(fcmToken);

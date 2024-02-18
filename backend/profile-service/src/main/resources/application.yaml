@@ -14,8 +14,7 @@ spring:
       on-profile: local
 
   datasource:
-    url: jdbc:mysql://localhost:3306/modu-chat?serverTimezone=Asia/Seoul
-    #    url: jdbc:mysql://database:3306/modu-chat
+    url: jdbc:mysql://localhost:3309/modu-chat?serverTimezone=Asia/Seoul
     username: root
     password: root1234
     driver-class-name: com.mysql.cj.jdbc.Driver

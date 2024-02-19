@@ -79,4 +79,9 @@ public class ChatController {
         List<ChatDto> chatDtoList = chatService.searchChatByMessage(roomId, message);
         return ResponseEntity.ok().body(chatDtoList);
     }
+
+    @DeleteMapping("/chat/{roomId}/{chatId}")
+    public ResponseEntity<ChatDto> deleteChat(@Valid @PathVariable("roomId") String roomId, @Valid @PathVariable("chatId") String chatId) {
+        return ResponseEntity.ok().body(chatService.deleteChat(roomId, chatId));
+    }
 }

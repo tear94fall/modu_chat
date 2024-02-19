@@ -105,6 +105,20 @@ public class ChatService {
         return saveChat.getId();
     }
 
+    public ChatDto deleteChat(String roomId, String chatId) {
+        ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND_ERROR, roomId));
+
+        Chat chat = chatRepository.findById(Long.parseLong(chatId))
+                .orElseThrow(() -> new CustomException(ErrorCode.CHAT_NOT_FOUND_ERROR, chatId));
+
+        chatRoom.removeChat(chat);
+
+        chatRepository.deleteById(chat.getId());
+
+        return modelMapper.map(chat, ChatDto.class);
+    }
+
     public ChatDto searchChatByRoomIdAndChatId(String chatId, String roomId) {
         Long id = Long.parseLong(chatId);
         Chat chat = chatRepository.findByRoomIdAndChatId(roomId, id);

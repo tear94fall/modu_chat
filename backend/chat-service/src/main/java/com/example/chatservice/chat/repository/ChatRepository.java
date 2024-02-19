@@ -19,4 +19,6 @@ public interface ChatRepository extends JpaRepository<Chat, Long>, ChatCustomRep
     List<Chat> findAll();
 
     Long countByRoomId(String roomId);
+
+    void deleteById(Long id);
 }

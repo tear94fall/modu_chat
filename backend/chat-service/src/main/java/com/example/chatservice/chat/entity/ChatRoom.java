@@ -45,6 +45,14 @@ public class ChatRoom extends BaseTimeEntity {
 
     public void addChatting(Chat chat) {
         this.chat.add(chat);
+        this.lastChatId = chat.getId().toString();
+        this.lastChatMsg = chat.getMessage();
+    }
+
+    public void removeChat(Chat chat) {
+        this.chat.remove(chat);
+        this.lastChatId = !this.chat.isEmpty() ? this.chat.get(this.chat.size() - 1).toString() : "";
+        this.lastChatMsg = "삭제된 메시지 입니다.";
     }
 
     public void updateChatRoom(ChatRoomDto chatRoomDto) {

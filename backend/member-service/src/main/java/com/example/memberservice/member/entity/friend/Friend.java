@@ -2,7 +2,7 @@ package com.example.memberservice.member.entity.friend;
 
 import com.example.memberservice.member.entity.Member;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 

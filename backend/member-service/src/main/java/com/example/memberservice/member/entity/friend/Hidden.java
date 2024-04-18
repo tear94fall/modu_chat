@@ -3,7 +3,7 @@ package com.example.memberservice.member.entity.friend;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.Entity;
+import jakarta.persistence.Entity;
 
 @Entity
 @Getter

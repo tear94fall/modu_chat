@@ -2,6 +2,7 @@ package com.example.memberservice.member.service;
 
 import com.example.memberservice.global.exception.CustomException;
 import com.example.memberservice.global.exception.ErrorCode;
+import com.example.memberservice.global.lock.DistributedLock;
 import com.example.memberservice.global.properties.GoogleOauthProperties;
 import com.example.memberservice.member.dto.GoogleLoginRequest;
 import com.example.memberservice.member.dto.MemberDto;
@@ -64,6 +65,7 @@ public class MemberService implements UserDetailsService {
         return modelMapper.map(member, MemberDto.class);
     }
 
+    @DistributedLock(key = "#googleLoginRequest.getAuthType().concat('-').concat(#googleLoginRequest.getIdToken())")
     public MemberDto registerMember(GoogleLoginRequest googleLoginRequest) {
         Payload payload = GoogleIdTokenVerifier(googleLoginRequest.getIdToken());
         if (payload == null) {

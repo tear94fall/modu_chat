@@ -22,11 +22,11 @@ repositories {
 }
 
 ext {
-	set('springCloudVersion', "2023.0.0")
+	set('springCloudVersion', "2023.0.1")
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot:3.2.1'
+	implementation 'org.springframework.boot:spring-boot:3.2.4'
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.security:spring-security-test'

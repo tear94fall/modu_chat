@@ -4,7 +4,7 @@ import com.example.chatservice.chat.dto.ChatDto;
 import com.example.chatservice.common.domain.BaseTimeEntity;
 import lombok.*;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Getter
 @Entity

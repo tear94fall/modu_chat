@@ -4,7 +4,7 @@ import com.example.chatservice.chat.dto.ChatRoomDto;
 import com.example.chatservice.common.domain.BaseTimeEntity;
 import lombok.*;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -5,7 +5,7 @@ import com.example.chatservice.member.dto.MemberDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.util.List;
 
 @FeignClient("member-service")

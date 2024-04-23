@@ -1,4 +1,4 @@
-FROM openjdk:14-jdk-alpine
+FROM openjdk:17-alpine
 
 ARG JAR_FILE=build/libs/member-service-0.0.1-SNAPSHOT.jar
 

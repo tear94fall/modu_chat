@@ -7,7 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -78,5 +78,10 @@ public class ChatController {
     public ResponseEntity<List<ChatDto>> getChatByMessage(@Valid @PathVariable("roomId") String roomId, @Valid @RequestParam String message) {
         List<ChatDto> chatDtoList = chatService.searchChatByMessage(roomId, message);
         return ResponseEntity.ok().body(chatDtoList);
+    }
+
+    @DeleteMapping("/chat/{roomId}/{chatId}")
+    public ResponseEntity<ChatDto> deleteChat(@Valid @PathVariable("roomId") String roomId, @Valid @PathVariable("chatId") String chatId) {
+        return ResponseEntity.ok().body(chatService.deleteChat(roomId, chatId));
     }
 }

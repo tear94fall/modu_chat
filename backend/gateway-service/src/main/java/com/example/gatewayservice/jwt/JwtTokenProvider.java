@@ -1,6 +1,7 @@
 package com.example.gatewayservice.jwt;
 
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,6 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
+
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Component
@@ -40,7 +44,7 @@ public class JwtTokenProvider {
                 .setClaims(claims)
                 .setIssuedAt(now)
                 .setExpiration(expiration)
-                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .signWith(getSecretKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -55,43 +59,50 @@ public class JwtTokenProvider {
                 .setClaims(claims)
                 .setIssuedAt(now)
                 .setExpiration(expiration)
-                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .signWith(getSecretKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public Claims getClaimsFromJwtToken(String jwtToken) {
-        try {
-            return Jwts.parser()
-                    .setSigningKey(secretKey)
-                    .parseClaimsJws(jwtToken)
-                    .getBody();
+    public SecretKey getSecretKey() {
+        return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+    }
 
+    public Claims getClaims(String token) {
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(getSecretKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
         } catch (ExpiredJwtException e) {
             return e.getClaims();
         }
     }
 
     public String getRefreshToKenUUID(String refreshToken) {
-        return getClaimsFromJwtToken(refreshToken).get("uuid").toString();
+        return getClaims(refreshToken).get("uuid").toString();
     }
 
     public String getRolesToken(String token) {
-        return getClaimsFromJwtToken(token).get("roles").toString();
+        return getClaims(token).get("roles").toString();
     }
 
     public String findUserIdByJwt(String token) {
-        return getClaimsFromJwtToken(token).getSubject();
+        return getClaims(token).getSubject();
     }
 
     public List<String> getAuthentication(String token) {
-        return (List<String>) getClaimsFromJwtToken(token).get("roles");
+        return (List<String>) getClaims(token).get("roles");
     }
 
-    public boolean validateToken(String token) {
+    public void validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
-            return true;
-        } catch (SignatureException ex) {
+            Jwts.parserBuilder()
+                    .setSigningKey(getSecretKey())
+                    .build()
+                    .parseClaimsJws(token);
+
+        } catch (SecurityException ex) {
             log.error("Invalid JWT signature");
         } catch (MalformedJwtException ex) {
             log.error("Invalid JWT token");
@@ -104,8 +115,5 @@ public class JwtTokenProvider {
         } catch (NullPointerException ex) {
             log.error("JWT RefreshToken is empty");
         }
-        return false;
     }
 }
-
-

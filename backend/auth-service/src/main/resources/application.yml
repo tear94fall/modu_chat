@@ -31,7 +31,6 @@ security:
       access-expired: 3600000
       refresh-expired: 604800000
       secret-key: 98FB6A50D8BE83F0521F6EDA48903D718DE1C41BF09D4D3671A5E3A6E4E0910A
-      expire-length: 3600000
 
 eureka:
   instance:

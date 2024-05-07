@@ -25,6 +25,12 @@ spring:
         default_batch_fetch_size: 1000
     open-in-view: false
 
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
   sleuth:
     sampler:
       probability: 1.0
@@ -44,3 +50,20 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: http://localhost:8761/eureka
+
+rabbitmq:
+  queue:
+    queue1:
+      name: modu-chat.queue
+      exchange: modu-chat.exchange
+    queue2:
+      name: modu-chat-ws.queue
+      exchange: modu-chat-ws.exchange
+    queue3:
+      name: modu-chat-st.queue
+      exchange: modu-chat-st.exchange
+    routing:
+      key:
+        queue1: modu-chat.key
+        queue2: modu-chat-ws.key
+        queue3: modu-chat-st.key

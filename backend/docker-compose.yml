@@ -198,6 +198,7 @@ services:
       - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
       - spring.zipkin.base-url=http://zipkin:9411
       - spring.redis.host=redis
+      - spring.rabbitmq.host=rabbitmq
     depends_on:
       - mysql-chat
       - discovery-service

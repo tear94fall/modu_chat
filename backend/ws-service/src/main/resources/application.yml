@@ -29,8 +29,13 @@ eureka:
 
 rabbitmq:
   queue:
-    name: modu-chat.queue
-  exchange:
-    name: modu-chat.exchange
-  routing:
-    key: modu-chat.key
+    queue1:
+      name: modu-chat.queue
+      exchange: modu-chat.exchange
+    queue2:
+      name: modu-chat-ws.queue
+      exchange: modu-chat-ws.exchange
+    routing:
+      key:
+        queue1: modu-chat.key
+        queue2: modu-chat-ws.key

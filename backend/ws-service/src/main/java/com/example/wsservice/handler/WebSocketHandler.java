@@ -15,6 +15,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -32,11 +33,24 @@ import static com.example.wsservice.util.TimeUtil.calculateTime;
 @RequiredArgsConstructor
 public class WebSocketHandler extends TextWebSocketHandler {
 
-    @Value("${rabbitmq.exchange.name}")
+    @Value("${rabbitmq.queue.queue1.name}")
+    private String queueName;
+
+    @Value("${rabbitmq.queue.queue2.name}")
+    private String wsQueueName;
+
+    @Value("${rabbitmq.queue.queue1.exchange}")
     private String exchangeName;
 
-    @Value("${rabbitmq.routing.key}")
+    @Value("${rabbitmq.queue.queue2.exchange}")
+    private String wsExchangeName;
+
+    @Value("${rabbitmq.queue.routing.key.queue1}")
     private String routingKey;
+
+    @Value("${rabbitmq.queue.routing.key.queue2}")
+    private String wsRoutingKey;
+
 
     private final ObjectMapper objectMapper;
     private final RabbitTemplate rabbitTemplate;
@@ -76,7 +90,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
         String roomId = url.split("/modu-chat/")[1];
         String userId = Objects.requireNonNull(session.getHandshakeHeaders().get("userId")).get(0);
 
-        if(roomId!=null) {
+        if (roomId != null) {
             CLIENTS.put(userId, session);
         }
     }
@@ -89,7 +103,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
         String roomId = url.split("/modu-chat/")[1];
         String userId = Objects.requireNonNull(session.getHandshakeHeaders().get("userId")).get(0);
 
-        if(CLIENTS.get(userId)!=null) {
+        if (CLIENTS.get(userId) != null) {
             CLIENTS.remove(userId);
         }
     }
@@ -102,7 +116,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
         rabbitTemplate.convertAndSend(exchangeName, routingKey, objectMapper.writeValueAsString(chatMessage));
     }
 
-    @RabbitListener(queues = "${rabbitmq.queue.name}")
+    @Transactional
+    @RabbitListener(queues = "${rabbitmq.queue.queue2.name}")
     public void consumeMessage(String message) throws JsonProcessingException {
         ChatMessage chatMessage = objectMapper.readValue(message, ChatMessage.class);
         log.info("[consumer][message] {}", chatMessage);
@@ -110,7 +125,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
         ChatRoomDto chatRoomDto = chatRoomService.getChatRoom(chatMessage.getRoomId());
         ChatDto chatDto = chatService.getChat(chatMessage.getChatId());
 
-        if(chatRoomDto.getRoomId().equals(chatDto.getRoomId())) {
+        if (chatRoomDto.getRoomId().equals(chatDto.getRoomId())) {
             String payload = objectMapper.writeValueAsString(chatDto);
 
             TextMessage textMessage = new TextMessage(payload);

@@ -99,8 +99,9 @@ public class ChatService {
 
         Chat chat = new Chat(chatDto);
         chat.addChatRoom(chatRoom);
-        chatRoom.addChatting(chat);
         Chat saveChat = chatRepository.save(chat);
+
+        chatRoom.addChatting(chat);
 
         return saveChat.getId();
     }

@@ -1,0 +1,46 @@
+server:
+  port: 8100
+
+spring:
+  application:
+    name: chat-store-service
+
+  data:
+    mongodb:
+#      host: localhost
+#      port: 27017
+#      username: admim
+#      password: rootpass
+#      authentication-database: admin
+#      database: modu-chat
+      uri: mongodb://admin:rootpass@localhost:27017/modu-chat?retryWrites=true&w=majority&authSource=admin
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+  sleuth:
+    sampler:
+      probability: 1.0
+  zipkin:
+    base-url: http://localhost:9411
+
+eureka:
+  instance:
+    instance-id: chat-store-service
+
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+rabbitmq:
+  queue:
+    name: modu-chat-st.queue
+  exchange:
+    name: modu-chat-st.exchange
+  routing:
+    key: modu-chat-st.key

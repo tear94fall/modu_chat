@@ -3,7 +3,6 @@ package com.example.chatservice.chat.dto;
 import com.example.chatservice.member.dto.MemberDto;
 import com.example.chatservice.chat.entity.ChatRoom;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -13,10 +12,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ChatRoomDto implements Serializable{
+
     private Long id;
     private String roomId;
     private String roomName;

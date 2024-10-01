@@ -34,26 +34,17 @@ public class RabbitmqConfig {
     @Value("${rabbitmq.queue.queue2.name}")
     private String wsQueueName;
 
-    @Value("${rabbitmq.queue.queue3.name}")
-    private String stQueueName;
-
     @Value("${rabbitmq.queue.queue1.exchange}")
     private String exchangeName;
 
     @Value("${rabbitmq.queue.queue2.exchange}")
     private String wsExchangeName;
 
-    @Value("${rabbitmq.queue.queue3.exchange}")
-    private String stExchangeName;
-
     @Value("${rabbitmq.queue.routing.key.queue1}")
     private String routingKey;
 
     @Value("${rabbitmq.queue.routing.key.queue2}")
     private String wsRoutingKey;
-
-    @Value("${rabbitmq.queue.routing.key.queue3}")
-    private String stRoutingKey;
 
     @Bean
     Queue queue() {
@@ -63,11 +54,6 @@ public class RabbitmqConfig {
     @Bean
     Queue wsQueue() {
         return new Queue(wsQueueName);
-    }
-
-    @Bean
-    Queue stQueue() {
-        return new Queue(stQueueName);
     }
 
     @Bean
@@ -81,11 +67,6 @@ public class RabbitmqConfig {
     }
 
     @Bean
-    DirectExchange stDirectExchange() {
-        return new DirectExchange(stExchangeName);
-    }
-
-    @Bean
     Binding binding(DirectExchange directExchange, Queue queue) {
         return BindingBuilder.bind(queue).to(directExchange).with(routingKey);
     }
@@ -93,11 +74,6 @@ public class RabbitmqConfig {
     @Bean
     Binding wsBinding(DirectExchange wsDirectExchange, Queue wsQueue) {
         return BindingBuilder.bind(wsQueue).to(wsDirectExchange).with(wsRoutingKey);
-    }
-
-    @Bean
-    Binding stBinding(DirectExchange stDirectExchange, Queue stQueue) {
-        return BindingBuilder.bind(stQueue).to(stDirectExchange).with(stRoutingKey);
     }
 
     @Bean

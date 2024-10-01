@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient("localhost:9090")
+@FeignClient("chat-service")
 public interface ChatFeignClient {
 
     @GetMapping("/chat/{chatId}")

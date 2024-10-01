@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Data
 @Builder
@@ -33,8 +32,8 @@ public class ChatRoomDto implements Serializable {
     public boolean checkChatRoomMember(String userId) {
         List<MemberDto> chatRoomMembers = members.stream()
                 .filter(memberDto -> memberDto.getUserId().equals(userId))
-                .collect(Collectors.toList());
+                .toList();
 
-        return chatRoomMembers.size() == 0;
+        return chatRoomMembers.isEmpty();
     }
 }

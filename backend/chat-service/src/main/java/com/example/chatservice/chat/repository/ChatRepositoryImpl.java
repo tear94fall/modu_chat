@@ -8,7 +8,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
-import static com.example.chatservice.chat.entity.QChat.chat;
+import static com.example.chatservice.chat.entity.QChat.*;
 
 @RequiredArgsConstructor
 public class ChatRepositoryImpl implements ChatCustomRepository {

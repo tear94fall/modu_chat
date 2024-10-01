@@ -21,4 +21,6 @@ public interface ChatRepository extends JpaRepository<Chat, Long>, ChatCustomRep
     Long countByRoomId(String roomId);
 
     void deleteById(Long id);
+
+    Long countByRoomIdAndIdBetween(String roomId, Long startId, Long endId);
 }

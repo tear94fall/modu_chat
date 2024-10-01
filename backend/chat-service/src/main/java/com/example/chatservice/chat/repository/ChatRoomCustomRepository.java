@@ -9,4 +9,6 @@ public interface ChatRoomCustomRepository {
     List<ChatRoom> findAllQueryDsl();
 
     Long countAll();
+
+    List<ChatRoom> findAllByMemberId(Long memberId);
 }

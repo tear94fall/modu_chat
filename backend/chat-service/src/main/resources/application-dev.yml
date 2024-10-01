@@ -59,11 +59,7 @@ rabbitmq:
     queue2:
       name: modu-chat-ws.queue
       exchange: modu-chat-ws.exchange
-    queue3:
-      name: modu-chat-st.queue
-      exchange: modu-chat-st.exchange
     routing:
       key:
         queue1: modu-chat.key
         queue2: modu-chat-ws.key
-        queue3: modu-chat-st.key

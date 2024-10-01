@@ -13,5 +13,4 @@ public class ChatStoreServiceApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ChatStoreServiceApplication.class, args);
 	}
-
 }

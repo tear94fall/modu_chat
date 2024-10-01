@@ -1,6 +1,7 @@
 package com.example.chatservice.chat.repository;
 
 import com.example.chatservice.chat.entity.ChatRoom;
+import com.example.chatservice.chat.entity.QChatRoomMember;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
@@ -8,6 +9,7 @@ import java.util.List;
 
 import static com.example.chatservice.chat.entity.QChat.*;
 import static com.example.chatservice.chat.entity.QChatRoom.chatRoom;
+import static com.example.chatservice.chat.entity.QChatRoomMember.*;
 
 @RequiredArgsConstructor
 public class ChatRoomRepositoryImpl implements ChatRoomCustomRepository {
@@ -29,5 +31,15 @@ public class ChatRoomRepositoryImpl implements ChatRoomCustomRepository {
                 .select(chatRoom.count())
                 .from(chatRoom)
                 .fetchOne();
+    }
+
+    @Override
+    public List<ChatRoom> findAllByMemberId(Long memberId) {
+        return queryFactory
+                .select(chatRoom)
+                .leftJoin(chatRoom.chatRoomMemberList, chatRoomMember)
+                .where(chatRoomMember.memberId.eq(memberId))
+                .fetchJoin()
+                .fetch();
     }
 }

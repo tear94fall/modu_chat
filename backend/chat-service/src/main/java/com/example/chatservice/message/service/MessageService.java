@@ -1,6 +1,5 @@
 package com.example.chatservice.message.service;
 
-import com.example.chatservice.chat.repository.ChatRepository;
 import com.example.chatservice.message.entity.ChatMessage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class MessageService {
 
     private final RabbitTemplate rabbitTemplate;
-    private final ChatRepository chatRepository;
     private final ObjectMapper objectMapper;
 
     @Value("${rabbitmq.queue.queue2.exchange}")
@@ -26,12 +24,6 @@ public class MessageService {
 
     @Value("${rabbitmq.queue.routing.key.queue2}")
     private String wsRoutingKey;
-
-    @Value("${rabbitmq.queue.queue3.exchange}")
-    private String stExchangeName;
-
-    @Value("${rabbitmq.queue.routing.key.queue3}")
-    private String stRoutingKey;
 
     public void produceMessage(String exchangeName, String routingKey, String message) {
         log.info("message sent: {}", message);
@@ -44,7 +36,6 @@ public class MessageService {
         ChatMessage chatMessage = objectMapper.readValue(message, ChatMessage.class);
 
         produceMessage(wsExchangeName, wsRoutingKey, objectMapper.writeValueAsString(chatMessage));
-        produceMessage(stExchangeName, stRoutingKey, objectMapper.writeValueAsString(chatMessage));
 
         log.info("Received message: {}", chatMessage.toString());
     }

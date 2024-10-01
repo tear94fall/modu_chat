@@ -15,11 +15,14 @@ spring:
 #      database: modu-chat
       uri: mongodb://admin:rootpass@localhost:27017/modu-chat?retryWrites=true&w=majority&authSource=admin
 
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
+  kafka:
+    consumer:
+      bootstrap-servers: localhost:29092
+      group-id: chat-store
+      auto-offset-reset: latest
+      enable-auto-commit: false
+    template:
+      default-topic: modu.modu-chat.chat
 
   sleuth:
     sampler:
@@ -36,11 +39,3 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: http://localhost:8761/eureka
-
-rabbitmq:
-  queue:
-    name: modu-chat-st.queue
-  exchange:
-    name: modu-chat-st.exchange
-  routing:
-    key: modu-chat-st.key

@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface ChatRoomMemberCustomRepository {
 
-    List<ChatRoomMember> findAllByMemberUserId(Long memberId);
+    List<ChatRoomMember> findAllByMemberId(Long memberId);
 }

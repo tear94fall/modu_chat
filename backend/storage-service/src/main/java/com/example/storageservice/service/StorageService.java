@@ -2,6 +2,7 @@ package com.example.storageservice.service;
 
 import com.example.storageservice.util.Sha256;
 import io.minio.*;
+import io.minio.errors.*;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Path;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 
@@ -80,16 +82,19 @@ public class StorageService {
         }
     }
 
-    @SneakyThrows
     public byte[] view(String name) {
-        InputStream inputStream = minioClient
-                .getObject(GetObjectArgs
-                        .builder()
-                        .bucket(bucket)
-                        .object(name)
-                        .build());
+        try {
+            InputStream inputStream = minioClient
+                    .getObject(GetObjectArgs
+                            .builder()
+                            .bucket(bucket)
+                            .object(name)
+                            .build());
 
-        return inputStream.readAllBytes();
+            return inputStream.readAllBytes();
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     public void delete(String name) {

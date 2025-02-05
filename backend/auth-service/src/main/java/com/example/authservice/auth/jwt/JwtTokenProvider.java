@@ -1,5 +1,6 @@
 package com.example.authservice.auth.jwt;
 
+import com.example.authservice.member.service.MemberService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
@@ -12,14 +13,13 @@ import jakarta.annotation.PostConstruct;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Component
 @RequiredArgsConstructor
 public class JwtTokenProvider {
+
+    private final MemberService memberService;
 
     private static Logger log = LoggerFactory.getLogger(JwtTokenProvider.class);
 
@@ -40,13 +40,12 @@ public class JwtTokenProvider {
     public String createJwtAccessToken(String userId, List<String> roles) {
         Claims claims = Jwts.claims().setSubject(userId);
         claims.put("roles", roles);
-        Date now = new Date();
-        Date expiration = new Date(now.getTime() + ACCESS_TOKEN_EXPIRED_TIME);
 
         return Jwts.builder()
                 .setClaims(claims)
-                .setIssuedAt(now)
-                .setExpiration(expiration)
+                .setIssuer("modu-chat")
+                .setIssuedAt(new Date())
+                .setExpiration(createExpiredDate())
                 .signWith(getSecretKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -55,19 +54,23 @@ public class JwtTokenProvider {
         Claims claims = Jwts.claims();
         claims.put("uuid", UUID.randomUUID());
         claims.put("roles", roles);
-        Date now = new Date();
-        Date expiration = new Date(now.getTime() + REFRESH_TOKEN_EXPIRED_TIME);
 
         return Jwts.builder()
                 .setClaims(claims)
-                .setIssuedAt(now)
-                .setExpiration(expiration)
+                .setIssuer("modu-chat")
+                .setIssuedAt(new Date())
+                .setExpiration(createExpiredDate())
                 .signWith(getSecretKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public SecretKey getSecretKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public Date createExpiredDate() {
+        Date now = new Date();
+        return new Date(now.getTime() + REFRESH_TOKEN_EXPIRED_TIME);
     }
 
     public Claims getClaims(String token) {

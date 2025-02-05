@@ -1,6 +1,7 @@
 package com.example.memberservice.member.controller;
 
 import com.example.memberservice.member.dto.*;
+import com.example.memberservice.member.entity.Role;
 import com.example.memberservice.member.service.MemberService;
 import com.example.memberservice.profile.client.ProfileFeignClient;
 import com.example.memberservice.profile.dto.AddProfileDto;
@@ -117,5 +118,11 @@ public class MemberController {
     public ResponseEntity<List<MemberDto>> exitMembers(@Valid @RequestBody ChatRoomMemberDto chatRoomMemberDto) {
         List<MemberDto> exitMembers = memberService.exitMembers(chatRoomMemberDto);
         return ResponseEntity.ok().body(exitMembers);
+    }
+
+    @GetMapping("/member/{userId}/role")
+    public ResponseEntity<Role> getUserRole(@PathVariable("userId") String userId) {
+        MemberDto memberDto = memberService.getUserById(userId);
+        return ResponseEntity.ok().body(memberDto.getRole());
     }
 }

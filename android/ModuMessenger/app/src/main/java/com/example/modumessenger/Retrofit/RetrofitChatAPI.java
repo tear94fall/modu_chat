@@ -6,6 +6,7 @@ import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
@@ -30,4 +31,7 @@ public interface RetrofitChatAPI {
 
     @GET("chat-service/chat/{roomId}/images/{size}")
     Call<List<ChatDto>> RequestImageChatListSize(@Path("roomId") String roomId, @Path("size") String size);
+
+    @DELETE("chat-service/chat/{roomId}/{chatId}")
+    Call<ChatDto> RequestDeleteChat(@Path("roomId") String roomId, @Path("chatId") String chatId);
 }

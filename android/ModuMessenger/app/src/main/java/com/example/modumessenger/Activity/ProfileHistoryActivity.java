@@ -101,22 +101,16 @@ public class ProfileHistoryActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.menu_profile_list, popup.getMenu());
 
         popup.setOnMenuItemClickListener(item -> {
-            switch (item.getItemId()) {
-                case R.id.set_profile:
-                    Toast.makeText(getApplicationContext(), "프로필로 설정 하기: " + profile.getId(), Toast.LENGTH_LONG).show();
-                    break;
+            int itemId = item.getItemId();
 
-                case R.id.save_profile:
-                    Toast.makeText(getApplicationContext(), "프로필 저장 하기: " + profile.getId(), Toast.LENGTH_LONG).show();
-                    break;
-
-                case R.id.delete_profile:
-                    deleteProfile(profile);
-                    break;
-
-                default:
-                    break;
+            if (itemId == R.id.set_profile) {
+                Toast.makeText(getApplicationContext(), "프로필로 설정 하기: " + profile.getId(), Toast.LENGTH_LONG).show();
+            } else if (itemId == R.id.save_profile) {
+                Toast.makeText(getApplicationContext(), "프로필 저장 하기: " + profile.getId(), Toast.LENGTH_LONG).show();
+            } else if (itemId == R.id.delete_profile) {
+                deleteProfile(profile);
             }
+
             return false;
         });
 

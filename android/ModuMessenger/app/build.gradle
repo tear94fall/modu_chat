@@ -4,12 +4,13 @@ plugins {
 }
 
 android {
-    compileSdk 31
+    namespace 'com.example.modumessenger'
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.example.modumessenger"
         minSdk 28
-        targetSdk 31
+        targetSdk 34
         versionCode 1
         versionName "1.0.0"
 

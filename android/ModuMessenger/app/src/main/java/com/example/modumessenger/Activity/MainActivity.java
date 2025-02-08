@@ -136,20 +136,19 @@ public class MainActivity extends AppCompatActivity {
         @SuppressLint("NonConstantResourceId")
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
-            switch (menuItem.getItemId()) {
-                case R.id.friendsItem:
-                    setTitle("친구");
-                    viewPager2.setCurrentItem(0);
-                    break;
-                case R.id.chatItem:
-                    setTitle("채팅");
-                    viewPager2.setCurrentItem(1);
-                    break;
-                case R.id.settingItem:
-                    setTitle("설정");
-                    viewPager2.setCurrentItem(2);
-                    break;
+            int itemId = menuItem.getItemId();
+
+            if (itemId == R.id.friendsItem) {
+                setTitle("친구");
+                viewPager2.setCurrentItem(0);
+            } else if (itemId == R.id.chatItem) {
+                setTitle("채팅");
+                viewPager2.setCurrentItem(1);
+            } else if (itemId == R.id.settingItem) {
+                setTitle("설정");
+                viewPager2.setCurrentItem(2);
             }
+
             return true;
         }
     }

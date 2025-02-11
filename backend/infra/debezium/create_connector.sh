@@ -22,6 +22,7 @@ curl -s --location 'http://localhost:8083/connectors' \
         "transforms.createdAt.target.type": "string",
         "transforms.createdAt.field": "created_date",
         "transforms.createdAt.format": "yyyy-MM-dd HH:mm:ss",
-        "time.precision.mode": "connect"
+        "time.precision.mode": "connect",
+        "snapshot.mode": "when_needed"
     }
 }' | python3 -m json.tool

@@ -1,5 +1,6 @@
 package com.example.profileservice.profile.service;
 
+import com.example.profileservice.kafka.producer.KafkaProducerService;
 import com.example.profileservice.member.client.MemberFeignClient;
 import com.example.profileservice.member.dto.AddProfileDto;
 import com.example.profileservice.profile.dto.CreateProfileDto;
@@ -27,6 +28,7 @@ public class ProfileService {
     private final ProfileRepository profileRepository;
     private final MemberFeignClient memberFeignClient;
     private final StorageFeignClient storageFeignClient;
+    private final KafkaProducerService kafkaProducerService;
 
     @CircuitBreaker(name="memberProfileCircuitBreaker",fallbackMethod = "fallbackGetMemberProfile")
     public List<ProfileDto> getMemberProfiles(Long memberId) {
@@ -67,8 +69,15 @@ public class ProfileService {
     public ProfileDto registerProfile(CreateProfileDto createProfileDto) {
         Profile profile = new Profile(createProfileDto);
 
-        profileRepository.save(profile);
-        memberFeignClient.addMemberProfile(new AddProfileDto(profile));
+        try {
+            profileRepository.save(profile);
+            memberFeignClient.addMemberProfile(new AddProfileDto(profile));
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        } finally {
+            ProfileDto profileDto = new ProfileDto(profile);
+            kafkaProducerService.sendMessage(profile.getMemberId().toString(), profileDto);
+        }
 
         return new ProfileDto(profile);
     }

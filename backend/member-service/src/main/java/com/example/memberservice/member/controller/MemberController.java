@@ -27,48 +27,36 @@ public class MemberController {
     public ResponseEntity<ResponseMemberDto> userId(@Valid @PathVariable("email") String email) {
         MemberDto memberDto = memberService.getMemberByEmail(email);
         List<ProfileDto> profiles = profileFeignClient.getMemberProfiles(memberDto.getId()).getBody();
-
-        ResponseMemberDto responseMemberDto = new ResponseMemberDto(memberDto, profiles);
-        return ResponseEntity.ok().body(responseMemberDto);
+        return ResponseEntity.ok().body(ResponseMemberDto.from(memberDto, profiles));
     }
 
     @GetMapping("/member/member/{id}")
     public ResponseEntity<ResponseMemberDto> getMemberById(@Valid @PathVariable("id") Long id) {
         MemberDto memberDto = memberService.getMemberById(id);
         List<ProfileDto> profiles = profileFeignClient.getMemberProfiles(memberDto.getId()).getBody();
-
-        return ResponseEntity.ok().body(new ResponseMemberDto(memberDto, profiles));
+        return ResponseEntity.ok().body(ResponseMemberDto.from(memberDto, profiles));
     }
 
     @GetMapping("/member/id/{userId}")
     public ResponseEntity<MemberDto> getMember(@Valid @PathVariable("userId") String userId) {
-        MemberDto memberDto = memberService.getUserById(userId);
-        return ResponseEntity.ok().body(memberDto);
+        return ResponseEntity.ok().body(memberService.getUserById(userId));
     }
 
     @PostMapping("/member/signup")
     public ResponseEntity<ResponseMemberDto> createMember(@Valid @RequestBody GoogleLoginRequest googleLoginRequest) {
-        MemberDto memberDto = memberService.registerMember(googleLoginRequest);
-        MemberDto updateMemberDto = memberService.addProfileImage(memberDto);
-        List<ProfileDto> profiles = profileFeignClient.getMemberProfiles(memberDto.getId()).getBody();
-
-        ResponseMemberDto responseMemberDto = new ResponseMemberDto(updateMemberDto, profiles);
-        return ResponseEntity.ok().body(responseMemberDto);
+        return ResponseEntity.ok().body(memberService.createMember(googleLoginRequest));
     }
 
     @PostMapping("/member/profile")
     public ResponseEntity<Long> addMemberProfile(@RequestBody AddProfileDto addProfileDto) {
-        Long profileId = memberService.addMemberProfile(addProfileDto);
-        return ResponseEntity.ok().body(profileId);
+        return ResponseEntity.ok().body(memberService.addMemberProfile(addProfileDto));
     }
 
     @PostMapping("/member/{userId}")
     private ResponseEntity<ResponseMemberDto> updateMemberProfileInfo(@Valid @PathVariable("userId") String userId, @RequestBody UpdateProfileDto updateProfileDto) {
         MemberDto memberDto = memberService.updateMemberProfile(userId, updateProfileDto);
         List<ProfileDto> profiles = profileFeignClient.getMemberProfiles(memberDto.getId()).getBody();
-
-        ResponseMemberDto responseMemberDto = new ResponseMemberDto(memberDto, profiles);
-        return ResponseEntity.ok().body(responseMemberDto);
+        return ResponseEntity.ok().body(ResponseMemberDto.from(memberDto, profiles));
     }
 
     @GetMapping("/member/{userId}/friends")

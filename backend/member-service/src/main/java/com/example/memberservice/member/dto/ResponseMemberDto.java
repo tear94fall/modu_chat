@@ -40,4 +40,19 @@ public class ResponseMemberDto implements Serializable {
         this.wallpaperImage = memberDto.getWallpaperImage();
         this.profiles = profiles;
     }
+
+    public static ResponseMemberDto from(MemberDto memberDto, List<ProfileDto> profiles) {
+        return ResponseMemberDto.builder()
+                .id(memberDto.getId())
+                .userId(memberDto.getUserId())
+                .auth(memberDto.getAuth())
+                .role(memberDto.getRole())
+                .email(memberDto.getEmail())
+                .username(memberDto.getUsername())
+                .statusMessage(memberDto.getStatusMessage())
+                .profileImage(memberDto.getProfileImage())
+                .wallpaperImage(memberDto.getWallpaperImage())
+                .profiles(profiles)
+                .build();
+    }
 }

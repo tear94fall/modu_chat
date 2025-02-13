@@ -4,7 +4,6 @@ import com.example.storageservice.util.Sha256;
 import io.minio.*;
 import io.minio.errors.*;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
@@ -15,7 +14,6 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Path;
-import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 
@@ -78,6 +76,21 @@ public class StorageService {
             InputStream inputStream = minioClient.getObject(args);
             return new InputStreamResource(inputStream);
         } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public boolean exist(String name) {
+        try {
+            minioClient.statObject(StatObjectArgs.builder()
+                    .bucket(bucket)
+                    .object(name).build());
+            return true;
+        } catch (ErrorResponseException e) {
+            log.error(e.getMessage());
+            return false;
+        } catch (Exception e) {
+            log.error(e.getMessage());
             throw new RuntimeException(e.getMessage());
         }
     }

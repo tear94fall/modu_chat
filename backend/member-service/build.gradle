@@ -39,6 +39,7 @@ dependencies {
 	implementation 'org.springframework.cloud:spring-cloud-starter-sleuth'
 	implementation 'org.springframework.cloud:spring-cloud-starter-zipkin:2.2.3.RELEASE'
 	implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
+	implementation 'org.springframework.kafka:spring-kafka'
 	implementation 'org.redisson:redisson-spring-boot-starter:3.18.0'
 	implementation 'com.google.api-client:google-api-client:1.31.2'
 	implementation 'org.modelmapper:modelmapper:3.1.0'
@@ -59,6 +60,7 @@ dependencies {
 	testAnnotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'com.github.codemonstur:embedded-redis:1.4.3'
+	testImplementation 'org.springframework.kafka:spring-kafka-test'
 }
 
 dependencyManagement {

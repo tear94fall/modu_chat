@@ -41,6 +41,11 @@ spring:
       host: localhost
       port: 6379
 
+  kafka:
+    consumer:
+      bootstrap-servers: localhost:29092
+      group-id: member-service-group
+
 feign:
   client:
     config:

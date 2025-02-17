@@ -308,6 +308,8 @@ services:
       - spring.zipkin.base-url=http://zipkin:9411
       - spring.redis.host=redis
       - spring.rabbitmq.host=rabbitmq
+      - spring.kafka.producer.bootstrap-servers=kafka:9092
+      - spring.kafka.consumer.bootstrap-servers=kafka:9092
     depends_on:
       - mysql-chat
       - discovery-service
@@ -331,6 +333,7 @@ services:
       - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
       - spring.zipkin.base-url=http://zipkin:9411
       - spring.data.redis.host=redis
+      - spring.kafka.consumer.bootstrap-servers=kafka:9092
     depends_on:
       - mysql-member
       - discovery-service
@@ -354,6 +357,7 @@ services:
       - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
       - spring.zipkin.base-url=http://zipkin:9411
       - spring.redis.host=redis
+      - spring.kafka.producer.bootstrap-servers=kafka:9092
     depends_on:
       - mysql-profile
       - discovery-service
@@ -400,6 +404,8 @@ services:
       - spring.zipkin.base-url=http://zipkin:9411
       - spring.redis.host=redis
       - minio.endpoint=http://minio:9000
+      - spring.kafka.producer.bootstrap-servers=kafka:9092
+      - spring.kafka.consumer.bootstrap-servers=kafka:9092
     depends_on:
       - minio
       - discovery-service
@@ -426,6 +432,8 @@ services:
       - spring.zipkin.base-url=http://zipkin:9411
       - spring.redis.host=redis
       - spring.rabbitmq.host=rabbitmq
+      - spring.kafka.producer.bootstrap-servers=kafka:9092
+      - spring.kafka.consumer.bootstrap-servers=kafka:9092
     depends_on:
       - mysql-chat
       - discovery-service

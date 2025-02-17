@@ -1,9 +1,11 @@
 package com.example.chatservice.message.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.*;
 
 @Data
+@Getter
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
 public class ChatMessage {
     private SubscribeType type;

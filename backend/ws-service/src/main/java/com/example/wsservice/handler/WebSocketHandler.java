@@ -7,6 +7,7 @@ import com.example.wsservice.chat.service.ChatRoomService;
 import com.example.wsservice.chat.service.ChatService;
 import com.example.wsservice.fcm.dto.FcmMessageDto;
 import com.example.wsservice.fcm.service.FcmService;
+import com.example.wsservice.kafka.producer.KafkaProducerService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -57,6 +58,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     private final ChatService chatService;
     private final ChatRoomService chatRoomService;
     private final FcmService fcmService;
+    private final KafkaProducerService kafkaProducerService;
 
     private static final ConcurrentHashMap<String, WebSocketSession> CLIENTS = new ConcurrentHashMap<String, WebSocketSession>();
 
@@ -76,7 +78,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
         ChatMessage chatMessage = new ChatMessage(BROAD_CAST, updateChatRoomDto.getRoomId(), chatId.toString());
 
-        producerMessage(chatMessage);
+        kafkaProducerService.sendMessage(chatMessage.getRoomId(), chatMessage);
 
         FcmMessageDto fcmMessageDto = new FcmMessageDto(updateChatRoomDto, recvChatDto);
         fcmService.sendFcmMessage(fcmMessageDto);
@@ -110,6 +112,10 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
+    }
+
+    public ConcurrentHashMap<String, WebSocketSession> getClients() {
+        return CLIENTS;
     }
 
     public void producerMessage(ChatMessage chatMessage) throws JsonProcessingException {

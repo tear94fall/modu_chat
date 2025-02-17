@@ -19,4 +19,15 @@ public class ProfileDto implements Serializable {
     private String value;
     private String createdDate;
     private String updatedDate;
+
+    public static ProfileDto from(Long id, Long memberId, ProfileType profileType, String value, String createdDate, String updatedDate) {
+        return ProfileDto.builder()
+                .id(id)
+                .memberId(memberId)
+                .profileType(profileType)
+                .value(value)
+                .createdDate(createdDate)
+                .updatedDate(updatedDate)
+                .build();
+    }
 }

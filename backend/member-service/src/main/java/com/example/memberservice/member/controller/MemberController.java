@@ -1,6 +1,7 @@
 package com.example.memberservice.member.controller;
 
 import com.example.memberservice.member.dto.*;
+import com.example.memberservice.member.entity.Role;
 import com.example.memberservice.member.service.MemberService;
 import com.example.memberservice.profile.client.ProfileFeignClient;
 import com.example.memberservice.profile.dto.AddProfileDto;
@@ -26,48 +27,36 @@ public class MemberController {
     public ResponseEntity<ResponseMemberDto> userId(@Valid @PathVariable("email") String email) {
         MemberDto memberDto = memberService.getMemberByEmail(email);
         List<ProfileDto> profiles = profileFeignClient.getMemberProfiles(memberDto.getId()).getBody();
-
-        ResponseMemberDto responseMemberDto = new ResponseMemberDto(memberDto, profiles);
-        return ResponseEntity.ok().body(responseMemberDto);
+        return ResponseEntity.ok().body(ResponseMemberDto.from(memberDto, profiles));
     }
 
     @GetMapping("/member/member/{id}")
     public ResponseEntity<ResponseMemberDto> getMemberById(@Valid @PathVariable("id") Long id) {
         MemberDto memberDto = memberService.getMemberById(id);
         List<ProfileDto> profiles = profileFeignClient.getMemberProfiles(memberDto.getId()).getBody();
-
-        return ResponseEntity.ok().body(new ResponseMemberDto(memberDto, profiles));
+        return ResponseEntity.ok().body(ResponseMemberDto.from(memberDto, profiles));
     }
 
     @GetMapping("/member/id/{userId}")
     public ResponseEntity<MemberDto> getMember(@Valid @PathVariable("userId") String userId) {
-        MemberDto memberDto = memberService.getUserById(userId);
-        return ResponseEntity.ok().body(memberDto);
+        return ResponseEntity.ok().body(memberService.getUserById(userId));
     }
 
     @PostMapping("/member/signup")
     public ResponseEntity<ResponseMemberDto> createMember(@Valid @RequestBody GoogleLoginRequest googleLoginRequest) {
-        MemberDto memberDto = memberService.registerMember(googleLoginRequest);
-        MemberDto updateMemberDto = memberService.addProfileImage(memberDto);
-        List<ProfileDto> profiles = profileFeignClient.getMemberProfiles(memberDto.getId()).getBody();
-
-        ResponseMemberDto responseMemberDto = new ResponseMemberDto(updateMemberDto, profiles);
-        return ResponseEntity.ok().body(responseMemberDto);
+        return ResponseEntity.ok().body(memberService.createMember(googleLoginRequest));
     }
 
     @PostMapping("/member/profile")
     public ResponseEntity<Long> addMemberProfile(@RequestBody AddProfileDto addProfileDto) {
-        Long profileId = memberService.addMemberProfile(addProfileDto);
-        return ResponseEntity.ok().body(profileId);
+        return ResponseEntity.ok().body(memberService.addMemberProfile(addProfileDto));
     }
 
     @PostMapping("/member/{userId}")
     private ResponseEntity<ResponseMemberDto> updateMemberProfileInfo(@Valid @PathVariable("userId") String userId, @RequestBody UpdateProfileDto updateProfileDto) {
         MemberDto memberDto = memberService.updateMemberProfile(userId, updateProfileDto);
         List<ProfileDto> profiles = profileFeignClient.getMemberProfiles(memberDto.getId()).getBody();
-
-        ResponseMemberDto responseMemberDto = new ResponseMemberDto(memberDto, profiles);
-        return ResponseEntity.ok().body(responseMemberDto);
+        return ResponseEntity.ok().body(ResponseMemberDto.from(memberDto, profiles));
     }
 
     @GetMapping("/member/{userId}/friends")
@@ -117,5 +106,11 @@ public class MemberController {
     public ResponseEntity<List<MemberDto>> exitMembers(@Valid @RequestBody ChatRoomMemberDto chatRoomMemberDto) {
         List<MemberDto> exitMembers = memberService.exitMembers(chatRoomMemberDto);
         return ResponseEntity.ok().body(exitMembers);
+    }
+
+    @GetMapping("/member/{userId}/role")
+    public ResponseEntity<Role> getUserRole(@PathVariable("userId") String userId) {
+        MemberDto memberDto = memberService.getUserById(userId);
+        return ResponseEntity.ok().body(memberDto.getRole());
     }
 }

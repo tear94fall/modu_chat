@@ -1,6 +1,8 @@
 package com.example.authservice.auth.jwt;
 
+import com.example.authservice.member.service.MemberService;
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,21 +10,21 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
-import java.util.Base64;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 @Component
 @RequiredArgsConstructor
 public class JwtTokenProvider {
 
+    private final MemberService memberService;
+
     private static Logger log = LoggerFactory.getLogger(JwtTokenProvider.class);
 
     @Value("${security.jwt.token.secret-key}")
     private String secretKey;
-    @Value("${security.jwt.token.expire-length:200000}")
-    private long validityInMilliseconds;
 
     @Value("${security.jwt.token.access-expired}")
     private Long ACCESS_TOKEN_EXPIRED_TIME;
@@ -38,14 +40,13 @@ public class JwtTokenProvider {
     public String createJwtAccessToken(String userId, List<String> roles) {
         Claims claims = Jwts.claims().setSubject(userId);
         claims.put("roles", roles);
-        Date now = new Date();
-        Date expiration = new Date(now.getTime() + ACCESS_TOKEN_EXPIRED_TIME);
 
         return Jwts.builder()
                 .setClaims(claims)
-                .setIssuedAt(now)
-                .setExpiration(expiration)
-                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .setIssuer("modu-chat")
+                .setIssuedAt(new Date())
+                .setExpiration(createExpiredDate())
+                .signWith(getSecretKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -53,46 +54,62 @@ public class JwtTokenProvider {
         Claims claims = Jwts.claims();
         claims.put("uuid", UUID.randomUUID());
         claims.put("roles", roles);
-        Date now = new Date();
-        Date expiration = new Date(now.getTime() + REFRESH_TOKEN_EXPIRED_TIME);
 
         return Jwts.builder()
                 .setClaims(claims)
-                .setIssuedAt(now)
-                .setExpiration(expiration)
-                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .setIssuer("modu-chat")
+                .setIssuedAt(new Date())
+                .setExpiration(createExpiredDate())
+                .signWith(getSecretKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public Claims getClaimsFromJwtToken(String jwtToken) {
-        try {
-            return Jwts.parser()
-                    .setSigningKey(secretKey)
-                    .parseClaimsJws(jwtToken)
-                    .getBody();
+    public SecretKey getSecretKey() {
+        return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+    }
 
+    public Date createExpiredDate() {
+        Date now = new Date();
+        return new Date(now.getTime() + REFRESH_TOKEN_EXPIRED_TIME);
+    }
+
+    public Claims getClaims(String token) {
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(getSecretKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
         } catch (ExpiredJwtException e) {
             return e.getClaims();
         }
     }
 
     public String getRefreshToKenUUID(String refreshToken) {
-        return getClaimsFromJwtToken(refreshToken).get("uuid").toString();
+        return getClaims(refreshToken).get("uuid").toString();
+    }
+
+    public String getRolesToken(String token) {
+        return getClaims(token).get("roles").toString();
     }
 
     public String findUserIdByJwt(String token) {
-        return getClaimsFromJwtToken(token).getSubject();
+        return getClaims(token).getSubject();
     }
 
     public List<String> getAuthentication(String token) {
-        return (List<String>) getClaimsFromJwtToken(token).get("roles");
+        return (List<String>) getClaims(token).get("roles");
     }
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
+            Jwts.parserBuilder()
+                    .setSigningKey(getSecretKey())
+                    .build()
+                    .parseClaimsJws(token);
+
             return true;
-        } catch (SignatureException ex) {
+        } catch (SecurityException ex) {
             log.error("Invalid JWT signature");
         } catch (MalformedJwtException ex) {
             log.error("Invalid JWT token");

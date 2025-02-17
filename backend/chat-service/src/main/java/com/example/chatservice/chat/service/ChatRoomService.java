@@ -1,8 +1,10 @@
 package com.example.chatservice.chat.service;
 
 import com.example.chatservice.chat.dto.ChatRoomDto;
+import com.example.chatservice.chat.dto.ChatRoomLastReadChatDto;
 import com.example.chatservice.chat.entity.ChatRoom;
 import com.example.chatservice.chat.entity.ChatRoomMember;
+import com.example.chatservice.chat.repository.ChatRepository;
 import com.example.chatservice.chat.repository.ChatRoomMemberRepository;
 import com.example.chatservice.chat.repository.ChatRoomRepository;
 import com.example.chatservice.common.exception.CustomException;
@@ -27,11 +29,12 @@ public class ChatRoomService {
 
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final ChatRepository chatRepository;
     private final MemberFeignClient memberFeignClient;
     private final ModelMapper modelMapper;
 
     public List<ChatRoomDto> searchChatRoomByUserId(String memberId) {
-        List<ChatRoomMember> chatRoomMemberList = chatRoomMemberRepository.findAllByMemberUserId(Long.valueOf(memberId));
+        List<ChatRoomMember> chatRoomMemberList = chatRoomMemberRepository.findAllByMemberId(Long.valueOf(memberId));
 
         List<ChatRoom> chatRooms = chatRoomMemberList
                 .stream()
@@ -84,7 +87,7 @@ public class ChatRoomService {
         MemberDto member = memberFeignClient.getMember(userId);
         List<MemberDto> members = memberFeignClient.getMembersByUserId(new ArrayList<>(Arrays.asList(userId, roomUserId)));
 
-        List<ChatRoomMember> chatRoomMemberList = chatRoomMemberRepository.findAllByMemberUserId(member.getId());
+        List<ChatRoomMember> chatRoomMemberList = chatRoomMemberRepository.findAllByMemberId(member.getId());
         List<ChatRoom> chatRoomList = chatRoomMemberList.stream()
 //                .filter(ChatRoomMember::isOneOnOne)
                 .map(ChatRoomMember::getChatRoom)
@@ -161,10 +164,46 @@ public class ChatRoomService {
         return addNewChatRoomMember(chatRoom, invited);
     }
 
+    public List<ChatRoomLastReadChatDto> searchUnreadChatRoom(String userId) {
+        List<ChatRoomMember> chatRoomMemberList = chatRoomMemberRepository.findAllByMemberId(Long.valueOf(userId));
+
+        return chatRoomMemberList.stream()
+                .map(chatRoomMember -> {
+                    String roomId = chatRoomMember.getChatRoom().getRoomId();
+                    Long lastReadChatId = Long.valueOf(chatRoomMember.getLastReadChatId());
+                    Long lastSendChatId = Long.valueOf(chatRoomMember.getChatRoom().getLastChatId());
+                    Long unreadChatCount = 0L;
+
+                    ChatRoomLastReadChatDto chatRoomLastReadChatDto = ChatRoomLastReadChatDto.createChatRoomLastReadChatDto(roomId, lastReadChatId, lastSendChatId, unreadChatCount);
+
+                    chatRoomMember.getChatRoom().getRoomId();
+
+                    if (!lastReadChatId.equals(lastSendChatId)) {
+                        unreadChatCount = chatRepository.countByRoomIdAndIdBetween(roomId, lastReadChatId, lastSendChatId);
+                        chatRoomLastReadChatDto.updateUnreadChatCount(unreadChatCount);
+                    }
+
+                    return chatRoomLastReadChatDto;
+                })
+                .toList();
+    }
+
+    public void updateLastReadChat(String roomId, String userId) {
+        ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND_ERROR, roomId));
+
+        ChatRoomMember findChatRoomMember = chatRoom.getChatRoomMemberList().stream()
+                .filter(chatRoomMember -> chatRoomMember.getMemberId().equals(Long.valueOf(userId)))
+                .findFirst()
+                .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND, userId));
+
+        findChatRoomMember.updateLastReadChatId(chatRoom.getLastChatId());
+    }
+
     private ChatRoomDto addNewChatRoomMember(ChatRoom chatRoom, List<MemberDto> members) {
         List<ChatRoomMember> chatRoomMemberList = members.stream()
                 .map(member -> {
-                    ChatRoomMember chatRoomMember = new ChatRoomMember(member.getId(), chatRoom);
+                    ChatRoomMember chatRoomMember = new ChatRoomMember(member.getId(), chatRoom.getLastChatId(), chatRoom);
                     chatRoom.getChatRoomMemberList().add(chatRoomMember);
                     return chatRoomMember;
                 })

@@ -4,10 +4,7 @@ import com.example.memberservice.global.exception.CustomException;
 import com.example.memberservice.global.exception.ErrorCode;
 import com.example.memberservice.global.lock.DistributedLock;
 import com.example.memberservice.global.properties.GoogleOauthProperties;
-import com.example.memberservice.member.dto.GoogleLoginRequest;
-import com.example.memberservice.member.dto.MemberDto;
-import com.example.memberservice.member.dto.ChatRoomMemberDto;
-import com.example.memberservice.member.dto.UpdateProfileDto;
+import com.example.memberservice.member.dto.*;
 import com.example.memberservice.member.entity.Member;
 import com.example.memberservice.member.repository.MemberRepository;
 import com.example.memberservice.profile.client.ProfileFeignClient;
@@ -20,6 +17,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.core.userdetails.User;
@@ -38,6 +36,7 @@ import java.util.stream.Collectors;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -65,6 +64,14 @@ public class MemberService implements UserDetailsService {
         return modelMapper.map(member, MemberDto.class);
     }
 
+    public ResponseMemberDto createMember(GoogleLoginRequest googleLoginRequest) {
+        MemberDto memberDto = registerMember(googleLoginRequest);
+        MemberDto updateMemberDto = addProfileImage(memberDto);
+        List<ProfileDto> profiles = profileFeignClient.getMemberProfiles(memberDto.getId()).getBody();
+
+        return ResponseMemberDto.from(updateMemberDto, profiles);
+    }
+
     @DistributedLock(key = "#googleLoginRequest.getAuthType().concat('-').concat(#googleLoginRequest.getIdToken())")
     public MemberDto registerMember(GoogleLoginRequest googleLoginRequest) {
         Payload payload = GoogleIdTokenVerifier(googleLoginRequest.getIdToken());
@@ -84,7 +91,8 @@ public class MemberService implements UserDetailsService {
         memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.CREATE_NEW_USER_FAIL, email));
 
-        return new MemberDto(saveMember);
+
+        return MemberDto.createMemberDto(saveMember);
     }
 
     public MemberDto addProfileImage(MemberDto memberDto) {
@@ -96,7 +104,7 @@ public class MemberService implements UserDetailsService {
             throw new CustomException(ErrorCode.USER_PROFILE_IMAGE_UPLOAD_ERROR, memberDto.getProfileImage());
         }
 
-        ProfileDto profileDto = new ProfileDto(0L, member.getId(), ProfileType.PROFILE_IMAGE, uploadFile, "", "");
+        ProfileDto profileDto = ProfileDto.from(0L, member.getId(), ProfileType.PROFILE_IMAGE, uploadFile, "", "");
         ProfileDto saveProfile = profileFeignClient.addProfileRequest(profileDto).getBody();
 
         if (saveProfile == null || !saveProfile.getValue().equals(uploadFile)) {
@@ -106,19 +114,19 @@ public class MemberService implements UserDetailsService {
         member.updateMemberInfo(saveProfile);
         member.addProfile(profileDto.getId());
 
-        return new MemberDto(member);
+        return MemberDto.createMemberDto(member);
     }
 
     public MemberDto getMemberById(Long id) {
         Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_ID_NOT_FOUND_ERROR, id));
-        return new MemberDto(member);
+        return MemberDto.createMemberDto(member);
     }
 
     public MemberDto getMemberByEmail(String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND, email));
-        return new MemberDto(member);
+        return MemberDto.createMemberDto(member);
     }
 
     public MemberDto updateMemberProfile(String userId, UpdateProfileDto updateProfileDto) {
@@ -128,7 +136,24 @@ public class MemberService implements UserDetailsService {
         member.updateProfile(updateProfileDto);
         Member updateMember = memberRepository.save(member);
 
-        return new MemberDto(updateMember);
+        return MemberDto.createMemberDto(member);
+    }
+
+    public MemberDto rollbackMemberProfile(Long id, ProfileDto profileDto) {
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_ID_NOT_FOUND_ERROR, id));
+
+        List<ProfileDto> profileList = profileFeignClient.getMemberProfiles(member.getId()).getBody();
+        if (profileList != null && profileList.isEmpty()) {
+            ProfileDto profile = profileList.getLast();
+
+            if (profileDto.getProfileType().equals(ProfileType.PROFILE_IMAGE) || profileDto.getProfileType().equals(ProfileType.PROFILE_WALLPAPER)) {
+                UpdateProfileDto updateProfileDto = UpdateProfileDto.createUpdateProfileDto(new MemberDto(member), profile);
+                return updateMemberProfile(member.getUserId(), updateProfileDto);
+            }
+        }
+
+        return MemberDto.createMemberDto(member);
     }
 
     public List<MemberDto> getFriendsList(String userId) {

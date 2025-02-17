@@ -6,6 +6,7 @@ import static com.google.android.gms.auth.api.signin.GoogleSignIn.*;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -38,10 +39,12 @@ import retrofit2.Response;
 public class LoginActivity extends AppCompatActivity {
 
     private static final String TAG = "Oauth2Google";
+    private static final int maxLoginRetry = 5;
 
     GoogleSignInClient mGoogleSignInClient;
     SignInButton LoginButton;
     ActivityResultLauncher<Intent> startActivityResult;
+    Handler handler;
     RetrofitMemberAPI retrofitMemberAPI;
     RetrofitAuthAPI retrofitAuthAPI;
 
@@ -68,8 +71,15 @@ public class LoginActivity extends AppCompatActivity {
 
             LoginButton.setVisibility(View.INVISIBLE);
 
-            LoginMember(new RequestLoginDto(account.getId(), account.getEmail()));
+            LoginMember(new RequestLoginDto(account.getId(), account.getEmail()), 0);
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        handler.removeCallbacksAndMessages(null);
     }
 
     private void bindingView() {
@@ -107,6 +117,8 @@ public class LoginActivity extends AppCompatActivity {
                 .build();
 
         mGoogleSignInClient = getClient(this, gso);
+
+        handler = new Handler();
     }
 
     private void setButtonClickEvent() {
@@ -131,6 +143,18 @@ public class LoginActivity extends AppCompatActivity {
         startActivityResult.launch(signInIntent);
     }
 
+    private void delayLogin(RequestLoginDto requestLoginDto, int retryCount) {
+        handler.postDelayed(() -> {
+            if (retryCount <= maxLoginRetry) {
+                Toast.makeText(getApplicationContext(), "로그인을 재시도 합니다.", Toast.LENGTH_SHORT).show();
+                LoginMember(requestLoginDto, retryCount + 1);
+            } else {
+                Toast.makeText(getApplicationContext(), "로그인을 재시도 횟수를 초과 하였습니다.", Toast.LENGTH_SHORT).show();
+                handler.removeCallbacksAndMessages(null);
+            }
+        }, 10000);
+    }
+
     // Retrofit function
     public void SignupMember(GoogleLoginRequest googleLoginRequest) {
         Call<SignUpDto> call = retrofitMemberAPI.RequestSignup(googleLoginRequest);
@@ -145,7 +169,7 @@ public class LoginActivity extends AppCompatActivity {
                         Log.d("회원가입 완료 : ", signUpDto.toString());
                         LoginButton.setVisibility(View.INVISIBLE);
 
-                        LoginMember(new RequestLoginDto(signUpDto.getUserId(), signUpDto.getEmail()));
+                        LoginMember(new RequestLoginDto(signUpDto.getUserId(), signUpDto.getEmail()), 0);
                     }
                 }
             }
@@ -157,7 +181,7 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    public void LoginMember(RequestLoginDto requestLoginDto){
+    public void LoginMember(RequestLoginDto requestLoginDto, int retryCount){
         Call<Void> call = retrofitAuthAPI.login(requestLoginDto);
 
         call.enqueue(new Callback<Void>() {
@@ -175,9 +199,13 @@ public class LoginActivity extends AppCompatActivity {
                     retrofitMemberAPI = RetrofitClient.createMemberApiService(); // recreate with token at interceptor
 
                     GetUserInfo(requestLoginDto.getEmail(), "google");
+
+                    handler.removeCallbacksAndMessages(null);
                 } else {
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
                     Toast.makeText(getApplicationContext(),"연결이 원활하지 않습니다.", Toast.LENGTH_SHORT).show();
+
+                    delayLogin(requestLoginDto, retryCount+1);
                 }
             }
 
@@ -185,6 +213,8 @@ public class LoginActivity extends AppCompatActivity {
             public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
                 Toast.makeText(getApplicationContext(),"로그인에 실패하였습니다.", Toast.LENGTH_SHORT).show();
+
+                delayLogin(requestLoginDto, retryCount+1);
             }
         });
     }

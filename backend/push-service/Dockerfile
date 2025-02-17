@@ -1,4 +1,4 @@
-FROM openjdk:17-alpine
+FROM amazoncorretto:21
 
 ARG JAR_FILE=build/libs/push-service-0.0.1-SNAPSHOT.jar
 

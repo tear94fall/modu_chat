@@ -25,11 +25,28 @@ spring:
         default_batch_fetch_size: 1000
     open-in-view: false
 
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
   sleuth:
     sampler:
       probability: 1.0
   zipkin:
     base-url: http://localhost:9411
+
+  kafka:
+    producer:
+      bootstrap-servers: localhost:29092
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      bootstrap-servers: localhost:29092
+      group-id: chat-save-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 logging:
   level:
@@ -44,3 +61,16 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: http://localhost:8761/eureka
+
+rabbitmq:
+  queue:
+    queue1:
+      name: modu-chat.queue
+      exchange: modu-chat.exchange
+    queue2:
+      name: modu-chat-ws.queue
+      exchange: modu-chat-ws.exchange
+    routing:
+      key:
+        queue1: modu-chat.key
+        queue2: modu-chat-ws.key

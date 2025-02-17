@@ -20,12 +20,19 @@ public class ChatRoomMember {
 
     private Long memberId;
 
+    private String lastReadChatId;
+
     @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "chat_room_id")
     private ChatRoom chatRoom;
 
-    public ChatRoomMember(Long memberId, ChatRoom chatRoom) {
+    public void updateLastReadChatId(String lastReadChatId) {
+        this.lastReadChatId = lastReadChatId;
+    }
+
+    public ChatRoomMember(Long memberId, String lastReadChatId, ChatRoom chatRoom) {
         this.memberId = memberId;
+        this.lastReadChatId = lastReadChatId;
         this.chatRoom = chatRoom;
     }
 }

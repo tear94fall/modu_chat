@@ -20,6 +20,9 @@
 ## 전체 통신 과정
 ![architecture](./images/login_process.jpg)
 
+## 채팅 전송 과정
+![architecture](./images/chat_process.jpg)
+
 ---
 
 ## 모두의 채팅 어플리케이션

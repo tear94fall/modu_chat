@@ -9,16 +9,16 @@ spring:
   application:
     name: member-service
 
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password:
+
   h2:
     console:
       enabled: true
       path: /h2-console
-
-  datasource:
-    url: jdbc:h2:tcp://localhost/~/modu-chat
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
 
   jpa:
     hibernate:
@@ -40,6 +40,11 @@ spring:
     redis:
       host: localhost
       port: 6379
+
+  kafka:
+    consumer:
+      bootstrap-servers: localhost:29092
+      group-id: member-service-group
 
 feign:
   client:

@@ -89,6 +89,58 @@ services:
       retries: 100
     restart: always
 
+  mongo-01:
+    container_name: mongo-01
+    image: mongo
+    volumes:
+      - mongo-01:/data/db
+      - ./infra/mongodb/rs-init.sh:/scripts/rs-init.sh
+      - ./infra/mongodb/mongodb.key:/mongodb.key
+    ports:
+      - 27017:27017
+    links:
+      - mongo-02
+      - mongo-03
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=rootpass
+    command: ["--keyFile", "./mongodb.key",  "--bind_ip_all", "--replSet", "mongo-rs" ]
+    networks:
+      - modu-chat-network
+
+  mongo-02:
+    container_name: mongo-02
+    image: mongo
+    volumes:
+      - mongo-02:/data/db
+      - ./infra/mongodb/mongodb.key:/mongodb.key
+    ports:
+      - 27018:27017
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=rootpass
+    command: ["--keyFile", "./mongodb.key", "--bind_ip_all", "--replSet", "mongo-rs" ]
+    networks:
+      - modu-chat-network
+
+  mongo-03:
+    container_name: mongo-03
+    image: mongo
+    volumes:
+      - mongo-03:/data/db
+      - ./infra/mongodb/mongodb.key:/mongodb.key
+    ports:
+      - 27019:27017
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=rootpass
+    command: ["--keyFile", "./mongodb.key",  "--bind_ip_all", "--replSet", "mongo-rs" ]
+    networks:
+      - modu-chat-network
+
   redis:
     image: redis:alpine
     command: redis-server --port 6379
@@ -109,6 +161,63 @@ services:
       - 5672:5672
       - 15672:15672
       - 25672:25672
+    networks:
+      - modu-chat-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - modu-chat-network
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    hostname: kafka-broker-1
+    container_name: kafka
+    ports:
+      - "29092:29092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_INTERNAL://localhost:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - modu-chat-network
+
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 9009:8080
+    depends_on:
+      - zookeeper
+      - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: kafka-ui
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    networks:
+      - modu-chat-network
+
+  debezium:
+    image: debezium/connect:latest
+    container_name: debezium
+    ports:
+      - 8083:8083
+    environment:
+      GROUP_ID: 1
+      CONFIG_STORAGE_TOPIC: debezium-config
+      OFFSET_STORAGE_TOPIC: debezium-offset
+      STATUS_STORAGE_TOPIC: debezium-status
+      BOOTSTRAP_SERVERS: kafka:9092
     networks:
       - modu-chat-network
 
@@ -198,6 +307,9 @@ services:
       - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
       - spring.zipkin.base-url=http://zipkin:9411
       - spring.redis.host=redis
+      - spring.rabbitmq.host=rabbitmq
+      - spring.kafka.producer.bootstrap-servers=kafka:9092
+      - spring.kafka.consumer.bootstrap-servers=kafka:9092
     depends_on:
       - mysql-chat
       - discovery-service
@@ -221,6 +333,7 @@ services:
       - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
       - spring.zipkin.base-url=http://zipkin:9411
       - spring.data.redis.host=redis
+      - spring.kafka.consumer.bootstrap-servers=kafka:9092
     depends_on:
       - mysql-member
       - discovery-service
@@ -244,6 +357,7 @@ services:
       - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
       - spring.zipkin.base-url=http://zipkin:9411
       - spring.redis.host=redis
+      - spring.kafka.producer.bootstrap-servers=kafka:9092
     depends_on:
       - mysql-profile
       - discovery-service
@@ -289,7 +403,10 @@ services:
       - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
       - spring.zipkin.base-url=http://zipkin:9411
       - spring.redis.host=redis
+      - spring.rabbitmq.host=rabbitmq
       - minio.endpoint=http://minio:9000
+      - spring.kafka.producer.bootstrap-servers=kafka:9092
+      - spring.kafka.consumer.bootstrap-servers=kafka:9092
     depends_on:
       - minio
       - discovery-service
@@ -316,6 +433,29 @@ services:
       - spring.zipkin.base-url=http://zipkin:9411
       - spring.redis.host=redis
       - spring.rabbitmq.host=rabbitmq
+      - spring.kafka.producer.bootstrap-servers=kafka:9092
+      - spring.kafka.consumer.bootstrap-servers=kafka:9092
+    depends_on:
+      - mysql-chat
+      - discovery-service
+      - zipkin
+      - redis
+    networks:
+      - modu-chat-network
+    restart: always
+
+  chat-store-service:
+    build:
+      context: ./chat-store-service
+      dockerfile: ./Dockerfile
+    container_name: chat-store-service
+    ports:
+      - 8100:8100
+    environment:
+      - spring.data.mongodb.uri=mongodb://admin:rootpass@mongo-01:27017/modu-chat?retryWrites=true&w=majority&authSource=admin
+      - spring.kafka.consumer.bootstrap-servers=kafka:9092
+      - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
+      - spring.zipkin.base-url=http://zipkin:9411
     depends_on:
       - mysql-chat
       - discovery-service
@@ -335,3 +475,6 @@ volumes:
   mysql-chat:
   mysql-push:
   mysql-profile:
+  mongo-01:
+  mongo-02:
+  mongo-03:

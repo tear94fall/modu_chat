@@ -17,6 +17,17 @@ spring:
   zipkin:
     base-url: http://localhost:9411
 
+  kafka:
+    producer:
+      bootstrap-servers: localhost:29092
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      bootstrap-servers: localhost:29092
+      group-id: chat-broadcast-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
 eureka:
   instance:
     instance-id: ws-service
@@ -29,8 +40,13 @@ eureka:
 
 rabbitmq:
   queue:
-    name: modu-chat.queue
-  exchange:
-    name: modu-chat.exchange
-  routing:
-    key: modu-chat.key
+    queue1:
+      name: modu-chat.queue
+      exchange: modu-chat.exchange
+    queue2:
+      name: modu-chat-ws.queue
+      exchange: modu-chat-ws.exchange
+    routing:
+      key:
+        queue1: modu-chat.key
+        queue2: modu-chat-ws.key

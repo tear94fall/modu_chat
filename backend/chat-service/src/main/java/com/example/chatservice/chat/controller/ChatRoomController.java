@@ -1,6 +1,7 @@
 package com.example.chatservice.chat.controller;
 
 import com.example.chatservice.chat.dto.ChatRoomDto;
+import com.example.chatservice.chat.dto.ChatRoomLastReadChatDto;
 import com.example.chatservice.chat.service.ChatRoomService;
 import com.example.chatservice.common.exception.CustomException;
 import com.example.chatservice.common.exception.ErrorCode;
@@ -66,5 +67,17 @@ public class ChatRoomController {
     public ResponseEntity<List<ChatRoomDto>> getOneOnOneChatRoom(@PathVariable("userId") String userId, @Valid @RequestBody String roomUserId) {
         List<ChatRoomDto> chatRoomDtoList = chatRoomService.searchOneOnOneChatRoom(userId, roomUserId);
         return ResponseEntity.ok().body(chatRoomDtoList);
+    }
+
+    @GetMapping("/chat/unread/{userId}")
+    public ResponseEntity<List<ChatRoomLastReadChatDto>> getUnreadChatRoomChat(@PathVariable("userId") String userId) {
+        List<ChatRoomLastReadChatDto> chatRoomLastReadChatDtoList = chatRoomService.searchUnreadChatRoom(userId);
+        return ResponseEntity.ok().body(chatRoomLastReadChatDtoList);
+    }
+
+    @PostMapping("/chat/read/{roomId}/{userId}")
+    public ResponseEntity<Void> updateLastReadChat(@PathVariable("roomId") String roomId, @PathVariable("userId") String userId) {
+        chatRoomService.updateLastReadChat(roomId, userId);
+        return ResponseEntity.noContent().build();
     }
 }

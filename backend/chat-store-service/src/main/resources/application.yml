@@ -1,0 +1,41 @@
+server:
+  port: 8100
+
+spring:
+  application:
+    name: chat-store-service
+
+  data:
+    mongodb:
+#      host: localhost
+#      port: 27017
+#      username: admim
+#      password: rootpass
+#      authentication-database: admin
+#      database: modu-chat
+      uri: mongodb://admin:rootpass@localhost:27017/modu-chat?retryWrites=true&w=majority&authSource=admin
+
+  kafka:
+    consumer:
+      bootstrap-servers: localhost:29092
+      group-id: chat-store
+      auto-offset-reset: latest
+      enable-auto-commit: false
+    template:
+      default-topic: modu.modu-chat.chat
+
+  sleuth:
+    sampler:
+      probability: 1.0
+  zipkin:
+    base-url: http://localhost:9411
+
+eureka:
+  instance:
+    instance-id: chat-store-service
+
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka

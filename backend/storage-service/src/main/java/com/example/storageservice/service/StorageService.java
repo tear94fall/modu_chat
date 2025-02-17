@@ -2,8 +2,10 @@ package com.example.storageservice.service;
 
 import com.example.storageservice.util.Sha256;
 import io.minio.*;
+import io.minio.errors.*;
+import io.minio.messages.Bucket;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
@@ -16,6 +18,7 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static java.util.Objects.*;
 
@@ -28,6 +31,43 @@ public class StorageService {
 
     @Value("${minio.bucketImageName}")
     String bucket;
+
+    @PostConstruct
+    public void init() {
+        List<String> bucketNames = getBucketNames();
+
+        if (!bucketNames.contains(bucket)) {
+            log.info("Creating bucket {}", bucket);
+            createBucket(bucket);
+        }
+    }
+
+    public List<String> getBucketNames() {
+        try {
+            List<Bucket> buckets = minioClient.listBuckets(ListBucketsArgs.builder().build());
+            return buckets.stream()
+                    .map(Bucket::name).
+                    toList();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new RuntimeException("Error fetching bucket list", e);
+        }
+    }
+
+    public void createBucket(String bucketName) {
+        try {
+            boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
+            if (!found) {
+                minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+                System.out.println("Bucket '" + bucketName + "' created successfully.");
+            } else {
+                System.out.println("Bucket '" + bucketName + "' already exists.");
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new RuntimeException("Error creating bucket: " + bucketName, e);
+        }
+    }
 
     public String upload(MultipartFile file) {
         try {
@@ -80,16 +120,34 @@ public class StorageService {
         }
     }
 
-    @SneakyThrows
-    public byte[] view(String name) {
-        InputStream inputStream = minioClient
-                .getObject(GetObjectArgs
-                        .builder()
-                        .bucket(bucket)
-                        .object(name)
-                        .build());
+    public boolean exist(String name) {
+        try {
+            minioClient.statObject(StatObjectArgs.builder()
+                    .bucket(bucket)
+                    .object(name).build());
+            return true;
+        } catch (ErrorResponseException e) {
+            log.error(e.getMessage());
+            return false;
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new RuntimeException(e.getMessage());
+        }
+    }
 
-        return inputStream.readAllBytes();
+    public byte[] view(String name) {
+        try {
+            InputStream inputStream = minioClient
+                    .getObject(GetObjectArgs
+                            .builder()
+                            .bucket(bucket)
+                            .object(name)
+                            .build());
+
+            return inputStream.readAllBytes();
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     public void delete(String name) {

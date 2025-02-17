@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.List;
+
 @Configuration
 public class RabbitmqConfig {
 
@@ -28,18 +30,32 @@ public class RabbitmqConfig {
     @Value("${spring.rabbitmq.port}")
     private int port;
 
-    @Value("${rabbitmq.queue.name}")
+    @Value("${rabbitmq.queue.queue1.name}")
     private String queueName;
 
-    @Value("${rabbitmq.exchange.name}")
+    @Value("${rabbitmq.queue.queue2.name}")
+    private String wsQueueName;
+
+    @Value("${rabbitmq.queue.queue1.exchange}")
     private String exchangeName;
 
-    @Value("${rabbitmq.routing.key}")
+    @Value("${rabbitmq.queue.queue2.exchange}")
+    private String wsExchangeName;
+
+    @Value("${rabbitmq.queue.routing.key.queue1}")
     private String routingKey;
+
+    @Value("${rabbitmq.queue.routing.key.queue2}")
+    private String wsRoutingKey;
 
     @Bean
     Queue queue() {
         return new Queue(queueName);
+    }
+
+    @Bean
+    Queue wsQueue() {
+        return new Queue(wsQueueName);
     }
 
     @Bean
@@ -48,8 +64,18 @@ public class RabbitmqConfig {
     }
 
     @Bean
+    DirectExchange wsDirectExchange() {
+        return new DirectExchange(wsExchangeName);
+    }
+
+    @Bean
     Binding binding(DirectExchange directExchange, Queue queue) {
         return BindingBuilder.bind(queue).to(directExchange).with(routingKey);
+    }
+
+    @Bean
+    Binding wsBinding(DirectExchange wsDirectExchange, Queue wsQueue) {
+        return BindingBuilder.bind(wsQueue).to(wsDirectExchange).with(wsRoutingKey);
     }
 
     @Bean

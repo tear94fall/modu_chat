@@ -50,4 +50,18 @@ public class MemberDto implements Serializable {
         setProfileImage((String) payload.get("picture"));
         setWallpaperImage("");
     }
+
+    public static MemberDto createMemberDto(Member member) {
+        return MemberDto.builder()
+                .id(member.getId())
+                .userId(member.getUserId())
+                .auth(member.getAuth())
+                .role(member.getRole())
+                .email(member.getEmail())
+                .username(member.getUsername())
+                .statusMessage(member.getStatusMessage())
+                .profileImage(member.getProfileImage())
+                .wallpaperImage(member.getWallpaperImage())
+                .build();
+    }
 }

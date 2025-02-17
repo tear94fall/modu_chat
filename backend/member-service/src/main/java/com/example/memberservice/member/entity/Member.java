@@ -6,6 +6,7 @@ import com.example.memberservice.member.dto.UpdateProfileDto;
 import com.example.memberservice.profile.dto.ProfileDto;
 import com.example.memberservice.profile.dto.ProfileType;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -91,6 +92,32 @@ public class Member extends BaseTimeEntity {
         this.friends.add(id);
     }
 
+    @Builder
+    public Member(String userId,
+                  String auth,
+                  Role role,
+                  String email,
+                  String username,
+                  String statusMessage,
+                  String profileImage,
+                  String wallpaperImage,
+                  List<Long> friends,
+                  List<Long> profiles,
+                  List<Long> chatRoomMembers
+        ) {
+        this.userId = userId;
+        this.auth = auth;
+        this.role = role;
+        this.email = email;
+        this.username = username;
+        this.statusMessage = statusMessage;
+        this.profileImage = profileImage;
+        this.wallpaperImage = wallpaperImage;
+        this.friends = friends;
+        this.profiles = profiles;
+        this.chatRoomMembers = chatRoomMembers;
+    }
+
     public Member(MemberDto memberDto) {
         this.userId = memberDto.getUserId();
         this.auth = memberDto.getAuth();
@@ -103,6 +130,22 @@ public class Member extends BaseTimeEntity {
         this.friends = new ArrayList<>();
         this.profiles = new ArrayList<>();
         this.chatRoomMembers = new ArrayList<>();
+    }
+
+    public static Member createMember(MemberDto memberDto) {
+        return Member.builder()
+                .userId(memberDto.getUserId())
+                .auth(memberDto.getAuth())
+                .role(memberDto.getRole())
+                .email(memberDto.getEmail())
+                .username(memberDto.getUsername())
+                .statusMessage(memberDto.getStatusMessage())
+                .profileImage(memberDto.getProfileImage())
+                .wallpaperImage(memberDto.getWallpaperImage())
+                .friends(new ArrayList<>())
+                .profiles(new ArrayList<>())
+                .chatRoomMembers(new ArrayList<>())
+                .build();
     }
 
     public Member(String userId) {

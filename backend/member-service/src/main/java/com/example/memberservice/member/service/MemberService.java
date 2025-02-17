@@ -91,7 +91,8 @@ public class MemberService implements UserDetailsService {
         memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.CREATE_NEW_USER_FAIL, email));
 
-        return new MemberDto(saveMember);
+
+        return MemberDto.createMemberDto(saveMember);
     }
 
     public MemberDto addProfileImage(MemberDto memberDto) {
@@ -113,19 +114,19 @@ public class MemberService implements UserDetailsService {
         member.updateMemberInfo(saveProfile);
         member.addProfile(profileDto.getId());
 
-        return new MemberDto(member);
+        return MemberDto.createMemberDto(member);
     }
 
     public MemberDto getMemberById(Long id) {
         Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_ID_NOT_FOUND_ERROR, id));
-        return new MemberDto(member);
+        return MemberDto.createMemberDto(member);
     }
 
     public MemberDto getMemberByEmail(String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND, email));
-        return new MemberDto(member);
+        return MemberDto.createMemberDto(member);
     }
 
     public MemberDto updateMemberProfile(String userId, UpdateProfileDto updateProfileDto) {
@@ -135,7 +136,7 @@ public class MemberService implements UserDetailsService {
         member.updateProfile(updateProfileDto);
         Member updateMember = memberRepository.save(member);
 
-        return new MemberDto(updateMember);
+        return MemberDto.createMemberDto(member);
     }
 
     public MemberDto rollbackMemberProfile(Long id, ProfileDto profileDto) {
@@ -152,7 +153,7 @@ public class MemberService implements UserDetailsService {
             }
         }
 
-        return new MemberDto(member);
+        return MemberDto.createMemberDto(member);
     }
 
     public List<MemberDto> getFriendsList(String userId) {

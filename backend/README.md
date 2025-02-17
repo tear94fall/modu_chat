@@ -15,6 +15,8 @@
 - [Spring Security](https://spring.io/projects/spring-security)
 - [Spring Data JPA](https://spring.io/projects/spring-data-jpa)
 - [Spring Querydsl](http://querydsl.com/)
+- [Spring Data MongoDB](https://spring.io/projects/spring-data-mongodb)
+- [Spring Kafka](https://spring.io/projects/spring-kafka)
 - [Spring WebSocket](https://spring.io/guides/gs/messaging-stomp-websocket/)
 - [Spring AMQP](https://spring.io/projects/spring-amqp)
 - [Springfox Swagger UI](http://springfox.github.io/springfox/docs/current/)
@@ -23,6 +25,7 @@
 ### Database
 
 - [MySQL](https://www.mysql.com/)
+- [Mongodb](https://www.mongodb.com/ko-kr)
 - [Redis](https://redis.io/)
 
 ### Infra Structure
@@ -31,7 +34,9 @@
 - [Docker](https://www.docker.com/)
 - [k8s](https://kubernetes.io/ko/)
 - [minio](https://min.io/)
+- [Kafka](https://kafka.apache.org/)
 - [Rabbit MQ](https://www.rabbitmq.com/)
+- [Debezium](https://debezium.io/)
 - [Zipkin](https://zipkin.io/)
 
 ## Project Architecture

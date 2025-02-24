@@ -17,6 +17,8 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.modumessenger.Global.DataStoreHelper;
+import com.example.modumessenger.Global.HashUtil;
 import com.example.modumessenger.R;
 import com.example.modumessenger.dto.GoogleLoginRequest;
 import com.example.modumessenger.dto.MemberDto;
@@ -32,12 +34,16 @@ import com.google.android.gms.tasks.Task;
 import com.example.modumessenger.Retrofit.*;
 import com.google.gson.Gson;
 
+import java.util.Arrays;
+import java.util.List;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
 
+    private static final List<String> supportApp = Arrays.asList("com.example.myapplication", "com.example.moducafe");
     private static final String TAG = "Oauth2Google";
     private static final int maxLoginRetry = 5;
 
@@ -105,6 +111,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void getData() {
+        loginFromAnotherApp();
     }
 
     private void setData() {
@@ -127,6 +134,31 @@ public class LoginActivity extends AppCompatActivity {
             Toast.makeText(getApplicationContext(),"회원 가입을 시작합니다.", Toast.LENGTH_SHORT).show();
             signIn();
         });
+    }
+
+    private void loginFromAnotherApp() {
+        Intent intent = getIntent();
+        String openApp = intent.getStringExtra("openApp");
+
+        if (supportApp.contains(openApp)) {
+            Intent resultIntent = new Intent();
+            String id = "";
+            String token = "";
+            String response = "fail";
+
+            GoogleSignInAccount account = getLastSignedInAccount(this);
+            if (account != null && account.getEmail() != null) {
+                id = HashUtil.getSHA256Hash(account.getId());
+                token = DataStoreHelper.getDataStoreStr("access-token");
+                response = "success";
+            }
+
+            resultIntent.putExtra("id", id);
+            resultIntent.putExtra("token", token);
+            resultIntent.putExtra("response_message", response);
+            setResult(Activity.RESULT_OK, resultIntent);
+            finish();
+        }
     }
 
     private void SignupToBackend(Task<GoogleSignInAccount> completedTask, String auth_type) {

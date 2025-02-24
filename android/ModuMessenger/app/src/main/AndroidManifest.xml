@@ -19,7 +19,7 @@
         android:usesCleartextTraffic="true">
 
         <!-- activities -->
-        <activity android:name=".Activity.LoginActivity" />
+        <activity android:name=".Activity.LoginActivity" android:exported="true"/>
         <activity android:name=".Activity.MainActivity" />
         <activity android:name=".Activity.ProfileActivity" />
         <activity android:name=".Activity.ProfileEditActivity" />

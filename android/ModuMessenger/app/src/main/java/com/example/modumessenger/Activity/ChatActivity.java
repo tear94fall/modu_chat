@@ -414,6 +414,11 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
             return;
         }
 
+        List<String> userIdList = chatRoomMembers.stream()
+                .map(Member::getUserId)
+                .filter(userId -> !userId.equals(member.getUserId()))
+                .collect(Collectors.toList());
+
         List<String> usernames = chatRoomMembers.stream()
                 .map(Member::getUsername)
                 .filter(name -> !name.equals(member.getUsername()))

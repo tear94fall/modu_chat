@@ -47,7 +47,7 @@ public class MemberController {
         return ResponseEntity.ok().body(memberService.createMember(googleLoginRequest));
     }
 
-    @PostMapping("/member/profile")
+    @PostMapping("/member/profile/profile")
     public ResponseEntity<Long> addMemberProfile(@RequestBody AddProfileDto addProfileDto) {
         return ResponseEntity.ok().body(memberService.addMemberProfile(addProfileDto));
     }

@@ -91,7 +91,6 @@ public class MemberService implements UserDetailsService {
         memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.CREATE_NEW_USER_FAIL, email));
 
-
         return MemberDto.createMemberDto(saveMember);
     }
 

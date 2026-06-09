@@ -209,6 +209,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Call<SignUpDto> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
+                mGoogleSignInClient.signOut();
             }
         });
     }

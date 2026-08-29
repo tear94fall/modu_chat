@@ -4,6 +4,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.example.modumessenger.BuildConfig;
 import com.example.modumessenger.Global.DataStoreHelper;
 import com.example.modumessenger.dto.TokenResponseDto;
 import com.google.gson.GsonBuilder;
@@ -24,7 +25,7 @@ public abstract class RetryAbleCallback<T> implements Callback<T> {
     private final Call<T> call;
     private int retryCount = 0;
 
-    private static final String BASE_URL = "http://192.168.0.3:8000/";
+    private static final String BASE_URL = BuildConfig.API_BASE_URL;
 
     OkHttpClient okHttpClient = new OkHttpClient().newBuilder()
             .connectTimeout(10, TimeUnit.SECONDS)

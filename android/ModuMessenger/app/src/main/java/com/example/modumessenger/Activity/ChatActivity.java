@@ -23,6 +23,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerView.OnScrollListener;
@@ -31,44 +32,27 @@ import com.bumptech.glide.Glide;
 import com.example.modumessenger.Adapter.ChatBubble;
 import com.example.modumessenger.Adapter.ChatHistoryAdapter;
 import com.example.modumessenger.Adapter.ChatRoomMemberAdapter;
-import com.example.modumessenger.Global.ActivityStack;
-import com.example.modumessenger.Global.DataStoreHelper;
+import com.example.modumessenger.Global.App;
+import com.example.modumessenger.Global.ChatBanner;
+import com.example.modumessenger.Global.socket.ConnectionState;
 import com.example.modumessenger.Grid.RecentChatImageGridAdapter;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitChatAPI;
 import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
+import com.example.modumessenger.ViewModel.ChatViewModel;
+import com.example.modumessenger.ViewModel.ChatViewModelFactory;
 import com.example.modumessenger.entity.ChatRoom;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatDto;
 import com.example.modumessenger.dto.ChatRoomDto;
-import com.example.modumessenger.dto.ChatType;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.android.material.navigation.NavigationView;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.WebSocket;
-import okhttp3.WebSocketListener;
-import okio.ByteString;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -77,11 +61,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     Member member;
     ChatRoom roomInfo;
 
-    OkHttpClient client;
-    WebSocket webSocket;
-    WebSocketListener listener;
-
-    ObjectMapper objectMapper;
+    ChatViewModel chatViewModel;
 
     List<Member> chatMemberList;
     List<ChatBubble> chatBubbleList;
@@ -112,25 +92,21 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         bindingView();
         getData();
         setData();
-        setEventBus(true);
+        setViewModel();
         setButtonClickEvent();
         setScrollEvent();
         settingSideNavBar();
-
-        ActivityStack.getInstance().regOnCreateState(this);
     }
 
     @Override
     public void onResume() {
         super.onResume();
         updateRoomInfo(roomId);
-        ActivityStack.getInstance().regOnResumeState(this);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        ActivityStack.getInstance().regOnPauseState(this);
     }
 
     @Override
@@ -146,14 +122,6 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        setEventBus(false);
-        ActivityStack.getInstance().regOnDestroyState(this);
-    }
-
-    @Override
-    public void finish() {
-        super.finish();
-        webSocket.close(1000, null);
     }
 
     @Override
@@ -184,7 +152,6 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     }
 
     private void setData() {
-        objectMapper = new ObjectMapper();
         chatBubbleList = new ArrayList<>();
         chatMemberList = new ArrayList<>();
 
@@ -202,42 +169,65 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         inputMsgTextView.setEnabled(true);
     }
 
-    private void setEventBus(boolean flag) {
-        if (flag) {
-            EventBus.getDefault().register(this);
-        } else {
-            EventBus.getDefault().unregister(this);
-        }
+    private void setViewModel() {
+        chatViewModel = new ViewModelProvider(
+                this,
+                new ChatViewModelFactory(App.getChatRepository(), roomId, member.getUserId())
+        ).get(ChatViewModel.class);
+
+        chatHistoryAdapter = new ChatHistoryAdapter(chatBubbleList, chatMemberList);
+        recyclerView.setAdapter(chatHistoryAdapter);
+
+        chatViewModel.getChats().observe(this, bubbles -> {
+            boolean atBottom = !recyclerView.canScrollVertically(1);
+
+            int prevCount = chatHistoryAdapter.getItemCount();
+            Long prevFirstId = prevCount == 0 ? null : chatBubbleList.get(0).getId();
+            int firstVisible = manager.findFirstVisibleItemPosition();
+            View firstVisibleView = manager.findViewByPosition(firstVisible);
+            int offset = firstVisibleView == null ? 0 : firstVisibleView.getTop();
+
+            chatHistoryAdapter.setChatList(bubbles);
+
+            int newCount = chatHistoryAdapter.getItemCount();
+            Long newFirstId = newCount == 0 ? null : chatBubbleList.get(0).getId();
+            int added = newCount - prevCount;
+            boolean prepended = prevFirstId != null && newFirstId != null
+                    && !prevFirstId.equals(newFirstId);
+
+            if (atBottom && newCount > 0) {
+                recyclerView.scrollToPosition(newCount - 1);
+            } else if (prepended && added > 0 && firstVisible >= 0) {
+                // 앞쪽에 과거 채팅이 끼어들면 인덱스가 밀린다. 보고 있던 항목과
+                // 픽셀 오프셋으로 되돌려 읽던 위치를 유지한다.
+                manager.scrollToPositionWithOffset(firstVisible + added, offset);
+            }
+        });
+
+        chatViewModel.getBanner().observe(this, event -> ChatBanner.show(this, event));
+
+        chatViewModel.getConnectionState().observe(this, state -> {
+            boolean connected = state == ConnectionState.CONNECTED;
+            sendMsg.setEnabled(connected);
+            if (!connected) {
+                Toast.makeText(this, "연결 중입니다", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        chatViewModel.loadInitial(pagingSize);
     }
 
     private void setButtonClickEvent() {
         sendMsg.setOnClickListener(v -> {
             String msg = inputMsgTextView.getText().toString();
-            if(msg.length() !=0) {
-                ChatDto chatDto = new ChatDto();
-                chatDto.setRoomId(roomId);
-                chatDto.setMessage(msg);
-                chatDto.setSender(member.getUserId());
-                chatDto.setChatTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-                chatDto.setChatType(ChatType.CHAT_TYPE_TEXT);
+            if (msg.length() == 0) return;
 
-                String message = null;
-                try {
-                    message = objectMapper.writeValueAsString(chatDto);
-                } catch (JsonProcessingException e) {
-                    e.printStackTrace();
-                }
-
-                System.out.println(message);
-
-                if(message!=null){
-                    webSocket.send(message);
-                    recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
-
-                    inputMsgTextView.setText(null);
-                } else {
-                    Toast.makeText(getApplicationContext(), "메세지 전송에 실패하였습니다.", Toast.LENGTH_SHORT).show();
-                }
+            if (chatViewModel.sendText(msg)) {
+                inputMsgTextView.setText(null);
+                recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
+            } else {
+                Toast.makeText(getApplicationContext(), "연결 중입니다. 잠시 후 다시 시도해주세요.",
+                        Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -253,9 +243,9 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                 super.onScrolled(recyclerView, dx, dy);
 
                 if(!recyclerView.canScrollVertically(-1)) {
-                    ChatBubble lastChat = chatBubbleList.get(0);
-                    if(chatBubbleList.size() >= pagingSize) {
-                        getPrevChatList(lastChat.getRoomId(), lastChat.getId().toString(), pagingSize);
+                    ChatBubble oldest = chatBubbleList.get(0);
+                    if (chatBubbleList.size() >= pagingSize) {
+                        chatViewModel.loadPrev(oldest.getId().toString(), pagingSize);
                     }
                 }
             }
@@ -437,105 +427,17 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         }
     }
 
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onEvent(MessageEvent messageEvent) {
-        Log.e("event bus call", "Chat Event " + messageEvent.getChatBubble().getChatMsg());
-        this.chatBubbleList.add(messageEvent.getChatBubble());
-        recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
-    }
-
     @Override
     public void sendImageChat(String filename) {
-        ChatDto chatDto = new ChatDto();
-        chatDto.setRoomId(roomId);
-        chatDto.setMessage(filename);
-        chatDto.setSender(member.getUserId());
-        chatDto.setChatTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        chatDto.setChatType(ChatType.CHAT_TYPE_IMAGE);
-
-        String message = null;
-        try {
-            message = objectMapper.writeValueAsString(chatDto);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
+        if (!chatViewModel.sendImage(filename)) {
+            Toast.makeText(getApplicationContext(), "연결 중입니다. 잠시 후 다시 시도해주세요.",
+                    Toast.LENGTH_SHORT).show();
         }
-
-        if(message!=null){
-            webSocket.send(message);
-            recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
-        } else {
-            Toast.makeText(getApplicationContext(), "메세지 전송에 실패하였습니다.", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    public String getRoomId() {
-        return roomId;
     }
 
     @Override
     public void sendOthersFinish() {
         chatSendOthersActivity.dismiss();
-    }
-
-    // event bus class
-    public static class MessageEvent {
-        private final ChatBubble chatBubble;
-
-        public MessageEvent(ChatBubble chatBubble) {
-            this.chatBubble = chatBubble;
-        }
-
-        public ChatBubble getChatBubble() {
-            return this.chatBubble;
-        }
-    }
-
-    public static class ChatWebSocketListener extends okhttp3.WebSocketListener {
-
-        private static final int NORMAL_CLOSURE_STATUS = 1000;
-
-        @Override
-        public void onOpen(@NonNull WebSocket webSocket, @NonNull okhttp3.Response response) {
-            Log.d("onOpen", "WebSocket connection success");
-        }
-
-        @Override
-        public void onMessage(@NonNull WebSocket webSocket, @NonNull String text) {
-            Log.d("onMessage", "WebSocket receive text message");
-            System.out.println(text);
-
-            JsonParser parser = new JsonParser();
-            JsonElement mJson =  parser.parse(text);
-            Gson gson = new Gson();
-            ChatDto chatDto = gson.fromJson(mJson, ChatDto.class);
-
-            ChatBubble chatBubble = new ChatBubble(chatDto);
-
-            EventBus.getDefault().post(new MessageEvent(chatBubble));
-        }
-
-        @Override
-        public void onMessage(@NonNull WebSocket webSocket, @NonNull ByteString bytes) {
-            Log.d("onMessage", "WebSocket receive binary message");
-        }
-
-        @Override
-        public void onClosed(@NonNull WebSocket webSocket, int code, @NonNull String reason) {
-            Log.d("onClosed", "WebSocket connection closed. code : " + code + " message : " + reason);
-        }
-
-        @Override
-        public void onClosing(WebSocket webSocket, int code, @NonNull String reason) {
-            Log.d("onClosing", "WebSocket connection closing. code : " + code + " message : " + reason);
-            webSocket.close(NORMAL_CLOSURE_STATUS, null);
-            webSocket.cancel();
-        }
-
-        @Override
-        public void onFailure(@NonNull WebSocket webSocket, Throwable t, okhttp3.Response response) {
-            Log.d("onClosing", "WebSocket connection fail " + t.getMessage());
-            t.printStackTrace();
-        }
     }
 
     // Retrofit function
@@ -556,29 +458,15 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
                 chatMemberList.clear();
                 chatRoomDto.getMembers().forEach(m -> chatMemberList.add(new Member(m)));
+                if (chatHistoryAdapter != null) {
+                    chatHistoryAdapter.setMemberList(chatMemberList);
+                }
 
                 setChatRoomName(chatMemberList, roomInfo.getRoomName());
                 setNavInfo(roomInfo);
+                setNavMember();
 
                 Log.d("채팅방 정보 가져오기 요청 : ", response.body().toString());
-
-                // init web socket
-                client = new OkHttpClient();
-
-                Request request = new Request
-                        .Builder()
-                        .url("ws://192.168.0.3:8000/ws-service/modu-chat/" + roomId)
-                        .addHeader("userId", member.getUserId())
-                        .addHeader("Authorization", DataStoreHelper.getDataStoreStr("access-token"))
-                        .build();
-                listener = new ChatWebSocketListener();
-                webSocket = client.newWebSocket(request, listener);
-
-                client.dispatcher().executorService().shutdown();
-
-                if(roomInfo!=null) {
-                    getChatList(roomInfo, pagingSize);
-                }
             }
 
             @Override
@@ -605,6 +493,9 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
                 chatMemberList.clear();
                 chatRoomDto.getMembers().forEach(m -> chatMemberList.add(new Member(m)));
+                if (chatHistoryAdapter != null) {
+                    chatHistoryAdapter.setMemberList(chatMemberList);
+                }
 
                 setChatRoomName(chatMemberList, roomInfo.getRoomName());
                 setNavInfo(roomInfo);
@@ -615,67 +506,6 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
             @Override
             public void onFailure(@NonNull Call<ChatRoomDto> call, @NonNull Throwable t) {
                 Log.e("채팅방 정보 가져오기 요청 실패", t.getMessage());
-            }
-        });
-    }
-
-    public void getChatList(ChatRoom chatRoom, int size) {
-        Call<List<ChatDto>> call = retrofitChatAPI.RequestChatListSize(chatRoom.getRoomId(), Integer.toString(size));
-
-        call.enqueue(new Callback<List<ChatDto>>() {
-            @Override
-            public void onResponse(@NonNull Call<List<ChatDto>> call, @NonNull Response<List<ChatDto>> response) {
-                if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
-                }
-
-                List<ChatDto> chatHistory = response.body();
-                assert chatHistory != null;
-                chatHistory.forEach(c-> chatBubbleList.add(new ChatBubble(c)));
-
-                chatHistoryAdapter = new ChatHistoryAdapter(chatBubbleList, chatMemberList);
-                recyclerView.setAdapter(chatHistoryAdapter);
-                recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
-
-                setNavMember();
-
-                Log.d("채팅 내역 가져오기 요청 : ", chatRoom.getRoomId());
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<List<ChatDto>> call, @NonNull Throwable t) {
-                Log.e("연결실패", t.getMessage());
-            }
-        });
-    }
-
-    public void getPrevChatList(String roomId, String chatId, int size) {
-        Call<List<ChatDto>> call = retrofitChatAPI.RequestPrevChatList(roomId, chatId, Integer.toString(size));
-
-        call.enqueue(new Callback<List<ChatDto>>() {
-            @Override
-            public void onResponse(@NonNull Call<List<ChatDto>> call, @NonNull Response<List<ChatDto>> response) {
-                if(!response.isSuccessful()){
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    return;
-                }
-
-                List<ChatDto> chatDtoList = response.body();
-                assert chatDtoList != null;
-                List<ChatBubble> prevChatList = chatDtoList.stream().map(ChatBubble::new).collect(Collectors.toList());
-                chatHistoryAdapter.addChatMsgFront(prevChatList);
-
-                LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
-                int lastCompletelyVisibleItemPosition = linearLayoutManager != null ? linearLayoutManager.findLastCompletelyVisibleItemPosition() : prevChatList.size();
-                recyclerView.scrollToPosition(prevChatList.size() + lastCompletelyVisibleItemPosition);
-
-                Log.d("채팅 내역 가져오기 요청 : ", roomId);
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<List<ChatDto>> call, @NonNull Throwable t) {
-                Log.e("연결실패", t.getMessage());
             }
         });
     }

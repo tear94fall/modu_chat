@@ -41,6 +41,9 @@ public class ChatRoom {
     public void setLastChatTime(String lastChatTime) { this.lastChatTime = lastChatTime; }
     public void setMembers(List<Member> members) { this.members = members; }
 
+    public ChatRoom() {
+    }
+
     public ChatRoom(ChatRoomDto chatRoomDto) {
         setRoomId(chatRoomDto.getRoomId());
         setRoomName(chatRoomDto.getRoomName());

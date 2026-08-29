@@ -30,7 +30,6 @@ public class KafkaConsumerService {
 
     @KafkaListener(
             topics = "topic-chat-broadcast",
-            groupId = "${spring.kafka.consumer.group-id}",
             containerFactory = "kafkaListenerContainerFactory"
     )
     public void receive(ConsumerRecord<String, ChatMessage> consumerRecord, Acknowledgment acknowledgment) {

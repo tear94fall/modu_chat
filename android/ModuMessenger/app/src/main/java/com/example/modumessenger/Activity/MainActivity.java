@@ -19,6 +19,8 @@ import android.widget.Toast;
 import com.example.modumessenger.Fragments.FragmentFriends;
 import com.example.modumessenger.Fragments.FragmentChat;
 import com.example.modumessenger.Fragments.FragmentSetting;
+import com.example.modumessenger.Global.App;
+import com.example.modumessenger.Global.ChatBanner;
 import com.example.modumessenger.Global.UiUtil;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitChatAPI;
@@ -53,6 +55,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        App.getChatRepository().getBanner().observe(this,
+                event -> ChatBanner.show(this, event));
 
         getData();
         setData();

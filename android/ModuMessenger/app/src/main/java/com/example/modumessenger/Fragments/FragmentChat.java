@@ -1,7 +1,5 @@
 package com.example.modumessenger.Fragments;
 
-import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,25 +15,24 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.LiveData;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.Activity.CreateRoomActivity;
 import com.example.modumessenger.Adapter.ChatRoomAdapter;
+import com.example.modumessenger.Global.App;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
-import com.example.modumessenger.RoomDatabase.Database.ChatRoomDatabase;
-import com.example.modumessenger.RoomDatabase.Entity.ChatRoomEntity;
 import com.example.modumessenger.entity.ChatRoom;
-import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
+import com.example.modumessenger.ViewModel.ChatRoomListViewModel;
+import com.example.modumessenger.ViewModel.ChatRoomListViewModelFactory;
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -44,20 +41,12 @@ import retrofit2.Response;
 public class FragmentChat extends Fragment {
 
     RecyclerView chatRecyclerView;
-    List<ChatRoom> chatRoomList;
     FloatingActionButton chatFloatingActionButton;
 
-    ChatRoomDatabase chatRoomDatabase;
     RetrofitChatRoomAPI retrofitChatRoomAPI;
 
-    Member member;
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        chatRoomDatabase = ChatRoomDatabase.getInstance(getActivity());
-    }
+    ChatRoomListViewModel chatRoomListViewModel;
+    ChatRoomAdapter chatRoomAdapter;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -75,6 +64,17 @@ public class FragmentChat extends Fragment {
         getData();
         setData();
         setButtonClickEvent();
+
+        chatRoomListViewModel = new ViewModelProvider(
+                this,
+                new ChatRoomListViewModelFactory(App.getChatRepository())
+        ).get(ChatRoomListViewModel.class);
+
+        chatRoomAdapter = new ChatRoomAdapter(new ArrayList<>(), this);
+        chatRecyclerView.setAdapter(chatRoomAdapter);
+
+        chatRoomListViewModel.getChatRooms().observe(getViewLifecycleOwner(),
+                rooms -> chatRoomAdapter.setChatRoomList(rooms));
     }
 
     @Override
@@ -83,7 +83,7 @@ public class FragmentChat extends Fragment {
         Log.e("DEBUG", "onResume of FragmentFriends");
 
         requireActivity().invalidateOptionsMenu();
-        getChatRoomList(member.getId());
+        chatRoomListViewModel.refresh();
     }
 
     @Override
@@ -130,13 +130,10 @@ public class FragmentChat extends Fragment {
     }
 
     private void getData() {
-        member = getDataStoreMember();
     }
 
     private void setData() {
         retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
-
-        chatRoomList = new ArrayList<>();
     }
 
     private void setButtonClickEvent() {
@@ -162,46 +159,6 @@ public class FragmentChat extends Fragment {
         });
 
         popupMenu.show();
-    }
-
-    // Retrofit function
-    public void getChatRoomList(Long memberId) {
-        Call<List<ChatRoomDto>> call = retrofitChatRoomAPI.RequestChatRooms(Long.toString(memberId));
-
-        call.enqueue(new Callback<List<ChatRoomDto>>() {
-            @Override
-            public void onResponse(@NonNull Call<List<ChatRoomDto>> call, @NonNull Response<List<ChatRoomDto>> response) {
-                if(response.isSuccessful()) {
-                    if(response.body() != null) {
-                        List<ChatRoomDto> chatRoomDtoList = response.body();
-
-                        if(chatRoomList.size() != chatRoomDtoList.size()) {
-                            chatRoomList.clear();
-
-                            chatRoomDtoList.forEach(c -> {
-                                chatRoomList.add(new ChatRoom(c));
-                            });
-
-                            chatRecyclerView.setAdapter(new ChatRoomAdapter(chatRoomList, FragmentChat.this));
-                        }
-
-                        Log.d("채팅방 목록 가져오기 요청 : ", response.body().toString());
-                    }
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<List<ChatRoomDto>> call, @NonNull Throwable t) {
-                Log.e("연결실패", t.getMessage());
-
-                LiveData<List<ChatRoomEntity>> all = chatRoomDatabase.chatRoomDao().getAll();
-
-                all.observe(requireActivity(), chatRoomEntities -> {
-                    List<ChatRoom> collect = chatRoomEntities.stream().map(ChatRoom::new).collect(Collectors.toList());
-                    chatRecyclerView.setAdapter(new ChatRoomAdapter(collect, FragmentChat.this));
-                });
-            }
-        });
     }
 
     public void searchChatRoomName(String roomName) {

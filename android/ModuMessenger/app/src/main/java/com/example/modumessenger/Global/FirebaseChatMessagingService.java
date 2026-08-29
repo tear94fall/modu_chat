@@ -1,9 +1,6 @@
 package com.example.modumessenger.Global;
 
-import static com.example.modumessenger.Global.DataStoreHelper.getDataStoreMember;
-
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -20,6 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 
 import com.example.modumessenger.Activity.ChatActivity;
+import com.example.modumessenger.Global.socket.ConnectionState;
 import com.example.modumessenger.R;
 import com.example.modumessenger.dto.ChatType;
 import com.example.modumessenger.dto.FcmMessageDto;
@@ -28,15 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
-import java.util.Objects;
-
 public class FirebaseChatMessagingService extends FirebaseMessagingService {
-
-    private final Member member;
-
-    public FirebaseChatMessagingService() {
-        member = getDataStoreMember();
-    }
 
     @Override
     public void onNewToken(String s) {
@@ -44,29 +34,41 @@ public class FirebaseChatMessagingService extends FirebaseMessagingService {
         Log.e("Firebase", "FirebaseChatMessagingService : " + s);
     }
 
+    /**
+     * 매 메시지마다 다시 읽는다. 생성자에서 읽으면 두 가지가 깨진다.
+     * 하나, 시스템은 로그인 전/로그아웃 후에도 이 서비스를 만드는데
+     * getDataStoreMember() 는 저장된 member 가 없으면 NPE 를 던져 서비스 생성이 실패하고
+     * FCM 알림이 통째로 사라진다. 둘, 프로세스 수명 동안 계정이 바뀌면
+     * 생성 시점에 캡처한 신원으로 판정하게 된다.
+     */
+    private String currentUserId() {
+        if (!Boolean.TRUE.equals(DataStoreHelper.checkDataStoreKey("member"))) return null;
+
+        Member member = DataStoreHelper.getDataStoreMember();
+        return member == null ? null : member.getUserId();
+    }
+
     @Override
     public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
 
-        if (remoteMessage.getData().size() > 0) {
-            ObjectMapper mapper = new ObjectMapper();
-            FcmMessageDto fcmMessageDto = mapper.convertValue(remoteMessage.getData(), FcmMessageDto.class);
+        if (remoteMessage.getData().size() == 0) return;
 
-            if(!Objects.requireNonNull(fcmMessageDto.getSender()).equals(member.getUserId())) {
-                ActivityStack activityStack =  ActivityStack.getInstance();
-                Activity foregroundActivity = activityStack.getForegroundActivity();
+        ObjectMapper mapper = new ObjectMapper();
+        FcmMessageDto fcmMessageDto = mapper.convertValue(remoteMessage.getData(), FcmMessageDto.class);
 
-                if(foregroundActivity instanceof ChatActivity) {
-                    ChatActivity chatActivity = (ChatActivity) foregroundActivity;
+        String myUserId = currentUserId();
+        if (myUserId != null && myUserId.equals(fcmMessageDto.getSender())) return;
 
-                    if(!chatActivity.getRoomId().equals(fcmMessageDto.getRoomId())) {
-                        setPushAlarm(remoteMessage);
-                    }
-                } else {
-                    setPushAlarm(remoteMessage);
-                }
-            }
-        }
+        // 앱이 보이고 소켓이 살아 있으면 인앱 배너가 알림을 담당한다.
+        // 재연결 중에는 배너가 뜨지 않으므로 FCM 이 알려야 한다.
+        boolean socketHandlesIt = AppLifecycleObserver.isForeground()
+                && App.getWebSocketManager() != null
+                && App.getWebSocketManager().getState() == ConnectionState.CONNECTED;
+
+        if (socketHandlesIt) return;
+
+        setPushAlarm(remoteMessage);
     }
 
     private void setPushAlarm(RemoteMessage remoteMessage) {
@@ -92,7 +94,8 @@ public class FirebaseChatMessagingService extends FirebaseMessagingService {
         Intent intent = new Intent(this, ChatActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intent.putExtra("roomId", remoteMessage.getData().get("roomId"));
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                this, 0, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             String channel = "modu-chat";

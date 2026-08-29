@@ -17,6 +17,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.modumessenger.Global.App;
 import com.example.modumessenger.Global.DataStoreHelper;
 import com.example.modumessenger.Global.HashUtil;
 import com.example.modumessenger.R;
@@ -264,6 +265,7 @@ public class LoginActivity extends AppCompatActivity {
                     if(result != null) {
                         String member = new Gson().toJson(result);
                         setDataStoreObject("member", member);
+                        App.onLoggedIn();
 
                         Log.d("내정보 가져오기 요청 : ", result.toString());
 

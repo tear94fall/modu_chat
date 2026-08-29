@@ -123,7 +123,12 @@ public class DataStoreUtils {
     @SuppressLint("UnsafeOptInUsageWarning")
     public String readValueBackStr(String strKey) {
         Preferences.Key<String> stringKey = PreferencesKeys.stringKey(strKey);
-        Flowable<String> flowable = dataStore.data().map(preferences -> preferences.get(stringKey));
+        // RxJava 의 map 은 null 반환을 금지한다. 저장된 키가 없으면 preferences.get 이
+        // null 을 돌려주고, 그 NPE 가 스케줄러 스레드에서 undeliverable 로 터져 앱이 죽는다.
+        Flowable<String> flowable = dataStore.data().map(preferences -> {
+            String value = preferences.get(stringKey);
+            return value == null ? "" : value;
+        });
         return flowable.blockingFirst();
     }
 
@@ -134,7 +139,12 @@ public class DataStoreUtils {
     @SuppressLint("UnsafeOptInUsageWarning")
     public Integer readValueBackInteger(String strKey) {
         Preferences.Key<Integer> key = PreferencesKeys.intKey(strKey);
-        Flowable<Integer> flowable = dataStore.data().map(preferences -> preferences.get(key));
+        // RxJava 의 map 은 null 반환을 금지한다. 저장된 키가 없으면 preferences.get 이
+        // null 을 돌려주고, 그 NPE 가 스케줄러 스레드에서 undeliverable 로 터져 앱이 죽는다.
+        Flowable<Integer> flowable = dataStore.data().map(preferences -> {
+            Integer value = preferences.get(key);
+            return value == null ? 0 : value;
+        });
         return flowable.blockingFirst();
     }
 
@@ -145,7 +155,12 @@ public class DataStoreUtils {
     @SuppressLint("UnsafeOptInUsageWarning")
     public Boolean readValueBackBoolean(String strKey) {
         Preferences.Key<Boolean> key = PreferencesKeys.booleanKey(strKey);
-        Flowable<Boolean> booleanFlowable = dataStore.data().map(preferences -> preferences.get(key));
+        // RxJava 의 map 은 null 반환을 금지한다. 저장된 키가 없으면 preferences.get 이
+        // null 을 돌려주고, 그 NPE 가 스케줄러 스레드에서 undeliverable 로 터져 앱이 죽는다.
+        Flowable<Boolean> booleanFlowable = dataStore.data().map(preferences -> {
+            Boolean value = preferences.get(key);
+            return value == null ? Boolean.FALSE : value;
+        });
         return booleanFlowable.blockingFirst();
     }
 
@@ -156,7 +171,12 @@ public class DataStoreUtils {
     @SuppressLint("UnsafeOptInUsageWarning")
     public Float readValueBackFloat(String strKey) {
         Preferences.Key<Float> keys = PreferencesKeys.floatKey(strKey);
-        Flowable<Float> floatFlowable = dataStore.data().map(preferences -> preferences.get(keys));
+        // RxJava 의 map 은 null 반환을 금지한다. 저장된 키가 없으면 preferences.get 이
+        // null 을 돌려주고, 그 NPE 가 스케줄러 스레드에서 undeliverable 로 터져 앱이 죽는다.
+        Flowable<Float> floatFlowable = dataStore.data().map(preferences -> {
+            Float value = preferences.get(keys);
+            return value == null ? 0f : value;
+        });
         return floatFlowable.blockingFirst();
     }
 
@@ -167,7 +187,12 @@ public class DataStoreUtils {
     @SuppressLint("UnsafeOptInUsageWarning")
     public Double readValueBackDouble(String strKey) {
         Preferences.Key<Double> key = PreferencesKeys.doubleKey(strKey);
-        Flowable<Double> flowable = dataStore.data().map(preferences -> preferences.get(key));
+        // RxJava 의 map 은 null 반환을 금지한다. 저장된 키가 없으면 preferences.get 이
+        // null 을 돌려주고, 그 NPE 가 스케줄러 스레드에서 undeliverable 로 터져 앱이 죽는다.
+        Flowable<Double> flowable = dataStore.data().map(preferences -> {
+            Double value = preferences.get(key);
+            return value == null ? 0d : value;
+        });
         return flowable.blockingFirst();
     }
 
@@ -178,7 +203,12 @@ public class DataStoreUtils {
     @SuppressLint("UnsafeOptInUsageWarning")
     public Long readValueBackLong(String strKey) {
         Preferences.Key<Long> key = PreferencesKeys.longKey(strKey);
-        Flowable<Long> flowable = dataStore.data().map(preferences -> preferences.get(key));
+        // RxJava 의 map 은 null 반환을 금지한다. 저장된 키가 없으면 preferences.get 이
+        // null 을 돌려주고, 그 NPE 가 스케줄러 스레드에서 undeliverable 로 터져 앱이 죽는다.
+        Flowable<Long> flowable = dataStore.data().map(preferences -> {
+            Long value = preferences.get(key);
+            return value == null ? 0L : value;
+        });
         return flowable.blockingFirst();
     }
 

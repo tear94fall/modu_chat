@@ -145,6 +145,21 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         notifyDataSetChanged();
     }
 
+    @SuppressLint("NotifyDataSetChanged")
+    public void setChatList(List<ChatBubble> chatList) {
+        this.chatList.clear();
+        this.chatList.addAll(chatList);
+        sortChatBubble();
+        notifyDataSetChanged();
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    public void setMemberList(List<Member> members) {
+        this.memberList.clear();
+        this.memberList.addAll(members);
+        notifyDataSetChanged();
+    }
+
     public int getRightChatBubbleType(int position) {
         /*
         채팅 타입 정리

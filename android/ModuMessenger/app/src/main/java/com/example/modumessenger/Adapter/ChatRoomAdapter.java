@@ -19,8 +19,6 @@ import com.example.modumessenger.Activity.ChatActivity;
 import com.example.modumessenger.Fragments.FragmentChat;
 import com.example.modumessenger.R;
 import com.example.modumessenger.entity.ChatRoom;
-import com.example.modumessenger.RoomDatabase.Database.ChatRoomDatabase;
-import com.example.modumessenger.RoomDatabase.Entity.ChatRoomEntity;
 import com.example.modumessenger.entity.Member;
 
 import java.time.LocalDateTime;
@@ -60,7 +58,6 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
     public void onBindViewHolder(@NonNull ChatRoomAdapter.ChatRoomViewHolder holder, int position) {
         ChatRoom chatRoom = this.chatRoomList.get(position);
 
-        holder.setDatabase(chatRoom);
         holder.setChatRoomTitle(chatRoom);
         holder.setChatRoomLastMsg(chatRoom);
         holder.setChatRoomLastTime(chatRoom);
@@ -83,13 +80,19 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
         this.chatRoomList.sort(Comparator.comparing(ChatRoom::getLastChatTime, Comparator.reverseOrder()));
     }
 
+    public void setChatRoomList(List<ChatRoom> rooms) {
+        this.chatRoomList.clear();
+        this.chatRoomList.addAll(rooms);
+        sortChatRoom();
+        notifyDataSetChanged();
+    }
+
     public static class ChatRoomViewHolder extends RecyclerView.ViewHolder {
         FragmentChat fragmentChat;
 
         Member member;
         String userId;
         String username;
-        ChatRoomDatabase chatRoomDB;
         TextView chatRoomName;
         TextView lastChatMessage;
         TextView lastChatTime;
@@ -115,7 +118,6 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
 
             userId = member.getUserId();
             username = member.getUsername();
-            chatRoomDB = ChatRoomDatabase.getInstance(this.itemView.getContext());
             chatRoomName = itemView.findViewById(R.id.chat_room_name);
             lastChatMessage = itemView.findViewById(R.id.last_chat_message);
             lastChatTime = itemView.findViewById(R.id.last_chat_time);
@@ -142,11 +144,6 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
             memberImageCardView2.setVisibility(View.INVISIBLE);
             memberImageCardView3.setVisibility(View.INVISIBLE);
             memberImageCardView4.setVisibility(View.INVISIBLE);
-        }
-
-        public void setDatabase(ChatRoom chatRoom) {
-            ChatRoomEntity chatRoomEntity = new ChatRoomEntity(chatRoom);
-            chatRoomDB.chatRoomDao().update(chatRoomEntity);
         }
 
         public void setChatRoomTitle(ChatRoom chatRoom) {

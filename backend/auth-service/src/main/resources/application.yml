@@ -5,9 +5,10 @@ spring:
   application:
     name: auth-service
 
-  redis:
-    host: localhost
-    port: 6379
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
   rabbitmq:
     host: localhost

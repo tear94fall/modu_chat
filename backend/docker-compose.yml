@@ -284,7 +284,7 @@ services:
     environment:
       - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
       - spring.zipkin.base-url=http://zipkin:9411
-      - spring.redis.host=redis
+      - spring.data.redis.host=redis
     depends_on:
       - discovery-service
       - zipkin
@@ -306,8 +306,7 @@ services:
       - spring.datasource.password=root1234
       - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
       - spring.zipkin.base-url=http://zipkin:9411
-      - spring.redis.host=redis
-      - spring.rabbitmq.host=rabbitmq
+      - spring.data.redis.host=redis
       - spring.kafka.producer.bootstrap-servers=kafka:9092
       - spring.kafka.consumer.bootstrap-servers=kafka:9092
     depends_on:
@@ -356,7 +355,7 @@ services:
       - spring.datasource.password=root1234
       - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
       - spring.zipkin.base-url=http://zipkin:9411
-      - spring.redis.host=redis
+      - spring.data.redis.host=redis
       - spring.kafka.producer.bootstrap-servers=kafka:9092
     depends_on:
       - mysql-profile
@@ -379,7 +378,7 @@ services:
       - spring.datasource.password=root1234
       - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
       - spring.zipkin.base-url=http://zipkin:9411
-      - spring.redis.host=redis
+      - spring.data.redis.host=redis
     depends_on:
       - mysql-push
       - discovery-service
@@ -402,7 +401,7 @@ services:
       - spring.datasource.password=root1234
       - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
       - spring.zipkin.base-url=http://zipkin:9411
-      - spring.redis.host=redis
+      - spring.data.redis.host=redis
       - spring.rabbitmq.host=rabbitmq
       - minio.endpoint=http://minio:9000
       - spring.kafka.producer.bootstrap-servers=kafka:9092
@@ -431,8 +430,7 @@ services:
       - spring.datasource.password=root1234
       - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
       - spring.zipkin.base-url=http://zipkin:9411
-      - spring.redis.host=redis
-      - spring.rabbitmq.host=rabbitmq
+      - spring.data.redis.host=redis
       - spring.kafka.producer.bootstrap-servers=kafka:9092
       - spring.kafka.consumer.bootstrap-servers=kafka:9092
     depends_on:

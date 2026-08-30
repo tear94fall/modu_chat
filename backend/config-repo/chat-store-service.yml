@@ -1,0 +1,6 @@
+# chat-store-service 전용 설정.
+# MongoDB 접속 URI 는 자격증명을 포함하므로 통째로 암호화한다.
+spring:
+  data:
+    mongodb:
+      uri: '{cipher}f7695e21153eff58c4b9434e4c855f4985a64ae82d84a3bb469abca1cdcea772a2e00f2219e6f60e3fdbf82d9fe692442ebd1679eada5d7f45f14b326550a916a1bd75d811f91232807d1f460102cbc2fb773ff4f1130b84af95e548c565b612dad2190556e18318c56f1c4028a3fb86'

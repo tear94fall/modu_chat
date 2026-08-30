@@ -54,13 +54,18 @@ function print_log()
 # find service in directories
 function find_service()
 {
-    local excludes="ModuMessenger README.md docker-compose.yml build.sh infra"
-    local list=`ls`
+    # 제외 목록 대신 gradlew 유무로 판별한다.
+    # 목록 방식은 새 디렉터리(config-repo 등)가 생길 때마다 갱신해야 하고,
+    # 빠뜨리면 build_all 이 그 지점에서 중단되어 알파벳순 뒤쪽 서비스가
+    # 조용히 빌드되지 않는다.
+    local excludes="ModuMessenger"
     local result=""
 
-    for service in $list; do
-        local build=true
+    for service in *; do
+        [ -d "$service" ] || continue
+        [ -x "$service/gradlew" ] || continue
 
+        local build=true
         for exclude in $excludes; do
             if [ "$service" == "$exclude" ]; then
                 build=false

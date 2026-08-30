@@ -1,0 +1,29 @@
+# 전 서비스가 공유하는 인프라 설정.
+# 시크릿은 config-service 가 {cipher} 를 복호화해 평문으로 내려주므로
+# 클라이언트에는 별도 설정이 필요 없다. 복호화 키는 backend/.env 의 ENCRYPT_KEY 다.
+security:
+  jwt:
+    token:
+      secret-key: '{cipher}ddd9b5f849f93bfb408d9e0c97b78003fb0d8744db46582a2c1a4cab61fb016d9779bdca9e58ced314bb219545bf902dcbc94b5ee7d3e3ae288b345e252ade1a9b4d4ccf4fb01d3e03fc9d073c32d9397775d7dedcb29f253f78a9264fd7bade'
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery-service:8761/eureka/
+
+spring:
+  kafka:
+    producer:
+      bootstrap-servers: kafka:9092
+    consumer:
+      bootstrap-servers: kafka:9092
+  data:
+    redis:
+      host: redis
+  rabbitmq:
+    host: rabbitmq
+    username: '{cipher}fca9392645c442339c1e59f85f7ba40b9ead2aead8892da8e67e87ef7a0be65d'
+    password: '{cipher}fca9392645c442339c1e59f85f7ba40b9ead2aead8892da8e67e87ef7a0be65d'
+
+  datasource:
+    password: '{cipher}fd96316c87e3190bbdaee42f9ec494ceaae3ea5f13d07d66b680933106f77eb8'

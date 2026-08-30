@@ -1,0 +1,4 @@
+# storage-service 전용 설정.
+minio:
+  accessKey: '{cipher}b8079457dd9bb2ea31f11d5feffaf6b3ccaff7ba6f3a2fc9120568e0b4dcfbd8'
+  secretKey: '{cipher}3c463740f19a15b31d11e1ffa55200680def33c9dac0924a818ab677302fc0ee'

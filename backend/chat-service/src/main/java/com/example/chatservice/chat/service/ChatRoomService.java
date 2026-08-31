@@ -1,5 +1,6 @@
 package com.example.chatservice.chat.service;
 
+import com.example.chatservice.chat.dto.ChatReadCursorDto;
 import com.example.chatservice.chat.dto.ChatRoomDto;
 import com.example.chatservice.chat.dto.ChatRoomLastReadChatDto;
 import com.example.chatservice.chat.entity.Chat;
@@ -248,14 +249,80 @@ public class ChatRoomService {
         }
     }
 
+    /**
+     * 방 멤버별 읽음 커서. chat.sender 는 member id 가 아니라 userId 문자열이라
+     * member-service 에서 한 번에 변환해 내려준다.
+     * member-service 가 죽으면 빈 목록을 준다. 숫자가 안 뜨는 것이 500 보다 낫다.
+     */
+    public List<ChatReadCursorDto> searchReadCursors(String roomId) {
+        ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND_ERROR, roomId));
+
+        List<ChatRoomMember> chatRoomMemberList = chatRoom.getChatRoomMemberList();
+        if (chatRoomMemberList.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> memberIds = chatRoomMemberList.stream()
+                .map(ChatRoomMember::getMemberId)
+                .toList();
+
+        Map<Long, String> userIdByMemberId;
+        try {
+            userIdByMemberId = memberFeignClient.getMembersById(memberIds).stream()
+                    .filter(member -> member.getUserId() != null)
+                    .collect(Collectors.toMap(MemberDto::getId, MemberDto::getUserId, (a, b) -> a));
+        } catch (Exception e) {
+            log.warn("failed to resolve userIds for room {}, returning no cursors", roomId, e);
+            return List.of();
+        }
+
+        return chatRoomMemberList.stream()
+                .map(chatRoomMember -> {
+                    String userId = userIdByMemberId.get(chatRoomMember.getMemberId());
+                    if (userId == null) {
+                        return null;
+                    }
+                    return ChatReadCursorDto.builder()
+                            .userId(userId)
+                            .lastReadChatId(parseIdOrZero(chatRoomMember.getLastReadChatId()))
+                            .build();
+                })
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    /**
+     * 이 엔드포인트는 호출자가 둘이라 식별자 형태가 둘이다.
+     * 안드로이드는 REST 로 memberId(숫자, PK) 를 보내고 — 방 목록 안읽음 배지를 지우는
+     * 기존 경로 — ws-service 의 READ 프레임은 OAuth userId 문자열을 보낸다.
+     * 그래서 먼저 memberId 로 시도하고, 방 멤버 중에 없으면(혹은 애초에 Long 파싱이
+     * 안 되면) OAuth userId 로 보고 member-service 에서 한 번 변환한다.
+     */
     public void updateLastReadChat(String roomId, String userId) {
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
                 .orElseThrow(() -> new CustomException(ErrorCode.CHATROOM_NOT_FOUND_ERROR, roomId));
 
+        Long memberId = null;
+        try {
+            memberId = Long.valueOf(userId);
+        } catch (NumberFormatException e) {
+            // OAuth userId 는 Long 범위를 넘는 21자리 숫자라 여기로 떨어진다.
+        }
+
+        final Long directMemberId = memberId;
         ChatRoomMember findChatRoomMember = chatRoom.getChatRoomMemberList().stream()
-                .filter(chatRoomMember -> chatRoomMember.getMemberId().equals(Long.valueOf(userId)))
+                .filter(chatRoomMember -> chatRoomMember.getMemberId().equals(directMemberId))
                 .findFirst()
-                .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND, userId));
+                .orElse(null);
+
+        if (findChatRoomMember == null) {
+            MemberDto member = memberFeignClient.getMember(userId);
+            findChatRoomMember = chatRoom.getChatRoomMemberList().stream()
+                    .filter(chatRoomMember -> chatRoomMember.getMemberId().equals(member.getId()))
+                    .findFirst()
+                    .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND, userId));
+        }
 
         findChatRoomMember.updateLastReadChatId(chatRoom.getLastChatId());
     }

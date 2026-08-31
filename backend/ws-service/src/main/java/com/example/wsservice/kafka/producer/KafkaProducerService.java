@@ -14,6 +14,7 @@ public class KafkaProducerService {
 
     private final KafkaTemplate<String, ChatMessage> kafkaTemplate;
     private static final String TOPIC = "topic-chat-save";
+    private static final String READ_TOPIC = "topic-chat-read";
 
     public void sendMessage(String key, ChatMessage message) {
         kafkaTemplate.send(TOPIC, key, message)
@@ -22,6 +23,17 @@ public class KafkaProducerService {
                         log.info("Message sent successfully: {}", result.getRecordMetadata().topic() + " / " + message);
                     } else {
                         log.info("Message sent failed: {}", ex.getMessage());
+                    }
+                });
+    }
+
+    public void sendReadMessage(String key, ChatMessage message) {
+        kafkaTemplate.send(READ_TOPIC, key, message)
+                .whenComplete((result, ex) -> {
+                    if (ex == null) {
+                        log.info("Read sent successfully: {}", result.getRecordMetadata().topic() + " / " + message);
+                    } else {
+                        log.info("Read sent failed: {}", ex.getMessage());
                     }
                 });
     }

@@ -22,4 +22,7 @@ public interface ChatFeignClient {
 
     @PostMapping("/chat/{roomId}/room")
     ChatRoomDto updateChatRoom(@PathVariable("roomId") String roomId, @RequestBody ChatRoomDto chatRoomDto);
+
+    @PostMapping("/chat/read/{roomId}/{userId}")
+    void updateLastReadChat(@PathVariable("roomId") String roomId, @PathVariable("userId") String userId);
 }

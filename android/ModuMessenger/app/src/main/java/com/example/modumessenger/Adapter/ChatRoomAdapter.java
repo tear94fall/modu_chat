@@ -178,8 +178,16 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
         }
 
         public void setChatBadge(ChatRoom chatRoom) {
-            this.chatBadge.setText("1");
-            this.chatBadge.setVisibility(View.INVISIBLE);
+            int count = chatRoom.getUnreadCount();
+
+            if (count <= 0) {
+                // INVISIBLE 은 자리를 차지해 레이아웃이 어긋난다.
+                this.chatBadge.setVisibility(View.GONE);
+                return;
+            }
+
+            this.chatBadge.setText(count > 999 ? "999+" : String.valueOf(count));
+            this.chatBadge.setVisibility(View.VISIBLE);
         }
 
         public void setChatRoomImage(ChatRoom chatRoom) {

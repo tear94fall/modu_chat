@@ -98,12 +98,36 @@ public class MainActivity extends AppCompatActivity {
 
         badgeDrawable.setVerticalOffset(UiUtil.DpToPx(MainActivity.this, 4));
         badgeDrawable.setHorizontalOffset(UiUtil.DpToPx(MainActivity.this, 1));
-        badgeDrawable.setNumber(3);
+        // 999 를 넘으면 "999+" 로 접힌다. 방 목록 배지와 같은 규칙이다.
+        badgeDrawable.setMaxCharacterCount(4);
 
-        badgeDrawable.setBackgroundColor(ContextCompat.getColor(MainActivity.this, R.color.red));
+        badgeDrawable.setBackgroundColor(ContextCompat.getColor(MainActivity.this, R.color.badge_red));
         badgeDrawable.setBadgeTextColor(ContextCompat.getColor(MainActivity.this, R.color.white));
 
         badgeDrawable.setVisible(false);
+
+        // 방별 배지와 같은 출처를 쓴다. 서버 병합·실시간 증가·읽음 소거가 모두 여기로 흘러온다.
+        App.getChatRepository().getTotalUnreadCount().observe(this, this::setChatTabBadge);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // 하단 탭 배지는 어느 탭에 있든 최신이어야 한다. 방 목록은 채팅 탭 프래그먼트가
+        // 실제로 만들어질 때 비로소 채워지므로, 친구/설정 탭에서 시작하면 합계가 0 으로 남는다.
+        // 소켓의 onReconnected 는 '재'연결에만 오므로 최초 실행을 덮지 못한다.
+        App.getChatRepository().refreshChatRooms();
+    }
+
+    private void setChatTabBadge(Integer total) {
+        if (total == null || total <= 0) {
+            badgeDrawable.setVisible(false);
+            return;
+        }
+
+        badgeDrawable.setNumber(total);
+        badgeDrawable.setVisible(true);
     }
 
     private void setButtonClickEvent() {

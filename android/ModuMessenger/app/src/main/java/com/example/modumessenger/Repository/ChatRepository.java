@@ -5,6 +5,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Transformations;
 
 import com.example.modumessenger.Adapter.ChatBubble;
 import com.example.modumessenger.Global.SingleLiveEvent;
@@ -16,12 +17,15 @@ import com.example.modumessenger.Retrofit.RetrofitChatAPI;
 import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
 import com.example.modumessenger.dto.ChatDto;
 import com.example.modumessenger.dto.ChatRoomDto;
+import com.example.modumessenger.dto.ChatRoomUnreadDto;
 import com.example.modumessenger.entity.ChatRoom;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -57,6 +61,20 @@ public class ChatRepository implements ChatSocketListener {
     /** LiveData.getValue() 는 postValue 직후 비동기라 신뢰할 수 없어 별도 캐시를 둔다. */
     private final List<ChatRoom> roomCache = new ArrayList<>();
 
+    /**
+     * 하단 탭 배지가 쓰는 안 읽음 총합.
+     * chatRooms 에서 파생시키면 서버 병합·실시간 증가·읽음 소거가 모두 자동으로 반영된다.
+     * Transformations.map 은 호출할 때마다 새 LiveData 를 만들어 필드로 한 번만 둔다.
+     */
+    private final LiveData<Integer> totalUnreadCount =
+            Transformations.map(chatRooms, rooms -> {
+                int total = 0;
+                for (ChatRoom room : rooms) {
+                    total += Math.max(0, room.getUnreadCount());
+                }
+                return total;
+            });
+
     private volatile String activeRoomId = null;
     private volatile String myUserId = "";
     private volatile String myMemberId = null;
@@ -79,6 +97,8 @@ public class ChatRepository implements ChatSocketListener {
 
     public LiveData<List<ChatRoom>> getChatRooms() { return chatRooms; }
 
+    public LiveData<Integer> getTotalUnreadCount() { return totalUnreadCount; }
+
     public LiveData<ConnectionState> getConnectionState() { return connectionState; }
 
     public SingleLiveEvent<BannerEvent> getBanner() { return banner; }
@@ -95,9 +115,15 @@ public class ChatRepository implements ChatSocketListener {
             activeRoomIndex.clear();
             activeRoomChats.postValue(new ArrayList<>());
         }
+        // 서버 반영은 closeRoom 에서 한다. 여기서는 체감을 위해 로컬만 0 으로.
+        clearUnread(roomId);
     }
 
     public void closeRoom(String roomId) {
+        String memberId = myMemberId;
+
+        // clearUnread 와 서버 호출은 이 블록 밖에 둔다. clearUnread 가 roomCache 락을 잡으므로
+        // 안쪽에 두면 handleChat(roomCache -> activeRoomIndex)과 반대 순서로 두 락이 겹친다.
         synchronized (activeRoomIndex) {
             if (roomId == null || !roomId.equals(activeRoomId)) return;
 
@@ -105,6 +131,27 @@ public class ChatRepository implements ChatSocketListener {
             activeRoomIndex.clear();
             activeRoomChats.postValue(new ArrayList<>());
         }
+
+        clearUnread(roomId);
+
+        if (memberId == null) return;
+        APIHelper.enqueueWithRetry(chatRoomApi.RequestUpdateLastRead(roomId, memberId),
+                new Callback<Void>() {
+                    @Override
+                    public void onResponse(@NonNull Call<Void> call,
+                                           @NonNull Response<Void> response) {
+                        if (!response.isSuccessful()) {
+                            Log.w(TAG, "updateLastRead failed, code=" + response.code());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                        // 실패해도 앱 동작을 막지 않는다. 다음 방 목록 갱신에서
+                        // 서버의 옛 값이 돌아와 배지가 되살아난다.
+                        Log.e(TAG, "updateLastRead failed", t);
+                    }
+                });
     }
 
     public boolean sendChat(ChatDto dto) {
@@ -136,6 +183,8 @@ public class ChatRepository implements ChatSocketListener {
                                            @NonNull Response<List<ChatRoomDto>> response) {
                         if (!response.isSuccessful() || response.body() == null) return;
                         applyChatRoomDtos(response.body());
+                        // 방 목록이 채워진 뒤에 병합해야 roomCache 에 반영된다.
+                        refreshUnreadCounts();
                     }
 
                     @Override
@@ -158,6 +207,77 @@ public class ChatRepository implements ChatSocketListener {
             roomCache.clear();
             roomCache.addAll(rooms);
             chatRooms.postValue(new ArrayList<>(roomCache));
+        }
+    }
+
+    /**
+     * 안 읽은 개수를 서버에서 받아 roomCache 에 병합한다.
+     * 방 목록과 별개의 호출이므로, 실패해도 방 목록 자체는 그대로 남는다.
+     */
+    public void refreshUnreadCounts() {
+        String memberId = myMemberId;
+        if (memberId == null) return;
+
+        APIHelper.enqueueWithRetry(chatRoomApi.RequestUnreadCounts(memberId),
+                new Callback<List<ChatRoomUnreadDto>>() {
+                    @Override
+                    public void onResponse(@NonNull Call<List<ChatRoomUnreadDto>> call,
+                                           @NonNull Response<List<ChatRoomUnreadDto>> response) {
+                        if (!response.isSuccessful() || response.body() == null) return;
+                        applyUnreadCounts(response.body());
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<List<ChatRoomUnreadDto>> call,
+                                          @NonNull Throwable t) {
+                        // 배지만 비고 방 목록은 정상이다. 다음 갱신에서 다시 시도된다.
+                        Log.e(TAG, "refreshUnreadCounts failed", t);
+                    }
+                });
+    }
+
+    void applyUnreadCounts(List<ChatRoomUnreadDto> dtos) {
+        synchronized (roomCache) {
+            Map<String, Integer> byRoom = new HashMap<>();
+            for (ChatRoomUnreadDto dto : dtos) {
+                if (dto.getRoomId() == null) continue;
+                Long count = dto.getUnreadChatCount();
+                byRoom.put(dto.getRoomId(), count == null ? 0 : count.intValue());
+            }
+
+            for (ChatRoom room : roomCache) {
+                // 응답에 없는 방은 0 으로 둔다. 서버가 진실이다.
+                Integer count = byRoom.get(room.getRoomId());
+                room.setUnreadCount(count == null ? 0 : count);
+            }
+            chatRooms.postValue(new ArrayList<>(roomCache));
+        }
+    }
+
+    /** 로컬에서만 +1 한다. 서버 재조회 없이 배지가 즉시 반응하게 하기 위해서다. */
+    void incrementUnread(String roomId) {
+        if (roomId == null) return;
+        synchronized (roomCache) {
+            for (ChatRoom room : roomCache) {
+                if (!roomId.equals(room.getRoomId())) continue;
+                room.setUnreadCount(room.getUnreadCount() + 1);
+                chatRooms.postValue(new ArrayList<>(roomCache));
+                return;
+            }
+        }
+    }
+
+    /** 로컬에서만 0 으로 만든다. 서버 반영은 closeRoom 에서 한다. */
+    void clearUnread(String roomId) {
+        if (roomId == null) return;
+        synchronized (roomCache) {
+            for (ChatRoom room : roomCache) {
+                if (!roomId.equals(room.getRoomId())) continue;
+                if (room.getUnreadCount() == 0) return;
+                room.setUnreadCount(0);
+                chatRooms.postValue(new ArrayList<>(roomCache));
+                return;
+            }
         }
     }
 
@@ -283,6 +403,7 @@ public class ChatRepository implements ChatSocketListener {
 
         boolean mine = myUserId.equals(dto.getSender());
         if (!mine && !isActiveRoom && !isGapRecovery) {
+            incrementUnread(dto.getRoomId());
             banner.postValue(new BannerEvent(
                     dto.getRoomId(), dto.getSender(), dto.getMessage(), dto.getChatType()));
         }

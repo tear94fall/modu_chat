@@ -2,6 +2,7 @@ package com.example.chatservice.chat.service;
 
 import com.example.chatservice.chat.dto.ChatRoomDto;
 import com.example.chatservice.chat.dto.ChatRoomLastReadChatDto;
+import com.example.chatservice.chat.entity.Chat;
 import com.example.chatservice.chat.entity.ChatRoom;
 import com.example.chatservice.chat.entity.ChatRoomMember;
 import com.example.chatservice.chat.repository.ChatRepository;
@@ -13,6 +14,7 @@ import com.example.chatservice.member.client.MemberFeignClient;
 import com.example.chatservice.member.dto.MemberDto;
 import com.example.chatservice.member.dto.ChatRoomMemberDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -165,27 +168,84 @@ public class ChatRoomService {
     }
 
     public List<ChatRoomLastReadChatDto> searchUnreadChatRoom(String userId) {
-        List<ChatRoomMember> chatRoomMemberList = chatRoomMemberRepository.findAllByMemberId(Long.valueOf(userId));
+        List<ChatRoomMember> chatRoomMemberList =
+                chatRoomMemberRepository.findAllByMemberId(Long.valueOf(userId));
+
+        // 마지막 메시지를 내가 보냈다면 그 방은 이미 본 것으로 본다.
+        // chat.sender 는 member id 가 아니라 userId 문자열이라 한 번 조회해 둔다.
+        String myUserId = findMyUserId(userId);
+        Map<Long, String> senderByChatId = findLastChatSenders(chatRoomMemberList);
 
         return chatRoomMemberList.stream()
                 .map(chatRoomMember -> {
                     String roomId = chatRoomMember.getChatRoom().getRoomId();
-                    Long lastReadChatId = Long.valueOf(chatRoomMember.getLastReadChatId());
-                    Long lastSendChatId = Long.valueOf(chatRoomMember.getChatRoom().getLastChatId());
+
+                    // 메시지가 하나도 없는 새 방은 두 값이 모두 null 이다.
+                    Long lastReadChatId = parseIdOrZero(chatRoomMember.getLastReadChatId());
+                    Long lastSendChatId = parseIdOrZero(chatRoomMember.getChatRoom().getLastChatId());
+
                     Long unreadChatCount = 0L;
-
-                    ChatRoomLastReadChatDto chatRoomLastReadChatDto = ChatRoomLastReadChatDto.createChatRoomLastReadChatDto(roomId, lastReadChatId, lastSendChatId, unreadChatCount);
-
-                    chatRoomMember.getChatRoom().getRoomId();
-
-                    if (!lastReadChatId.equals(lastSendChatId)) {
-                        unreadChatCount = chatRepository.countByRoomIdAndIdBetween(roomId, lastReadChatId, lastSendChatId);
-                        chatRoomLastReadChatDto.updateUnreadChatCount(unreadChatCount);
+                    if (lastSendChatId > lastReadChatId
+                            && !sentByMe(senderByChatId, lastSendChatId, myUserId)) {
+                        // BETWEEN 은 양끝을 포함한다. 마지막으로 '읽은' 메시지는 빼야 하므로 +1.
+                        unreadChatCount = chatRepository.countByRoomIdAndIdBetween(
+                                roomId, lastReadChatId + 1, lastSendChatId);
                     }
 
-                    return chatRoomLastReadChatDto;
+                    return ChatRoomLastReadChatDto.createChatRoomLastReadChatDto(
+                            roomId, lastSendChatId, lastReadChatId, unreadChatCount);
                 })
                 .toList();
+    }
+
+    /** 마지막 메시지의 발신자가 나인지. 판단할 수 없으면 false 라서 기존 계산이 그대로 남는다. */
+    private boolean sentByMe(Map<Long, String> senderByChatId, Long lastSendChatId, String myUserId) {
+        if (myUserId == null) {
+            return false;
+        }
+        return myUserId.equals(senderByChatId.get(lastSendChatId));
+    }
+
+    /** member-service 가 죽어도 배지 조회 자체는 살아야 하므로 실패를 삼키고 null 을 준다. */
+    private String findMyUserId(String memberId) {
+        try {
+            List<MemberDto> members = memberFeignClient.getMembersById(List.of(Long.valueOf(memberId)));
+            if (members == null || members.isEmpty()) {
+                return null;
+            }
+            return members.get(0).getUserId();
+        } catch (Exception e) {
+            log.warn("failed to resolve userId for member {}, falling back to id-only count", memberId, e);
+            return null;
+        }
+    }
+
+    /** 방마다 마지막 채팅을 따로 조회하면 N+1 이 된다. 한 번에 가져온다. */
+    private Map<Long, String> findLastChatSenders(List<ChatRoomMember> chatRoomMemberList) {
+        List<Long> lastChatIds = chatRoomMemberList.stream()
+                .map(chatRoomMember -> parseIdOrZero(chatRoomMember.getChatRoom().getLastChatId()))
+                .filter(chatId -> chatId > 0)
+                .distinct()
+                .toList();
+
+        if (lastChatIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return chatRepository.findAllByIdIn(lastChatIds).stream()
+                .filter(chat -> chat.getSender() != null)
+                .collect(Collectors.toMap(Chat::getId, Chat::getSender, (a, b) -> a));
+    }
+
+    private Long parseIdOrZero(String value) {
+        if (value == null || value.isBlank()) {
+            return 0L;
+        }
+        try {
+            return Long.valueOf(value);
+        } catch (NumberFormatException e) {
+            return 0L;
+        }
     }
 
     public void updateLastReadChat(String roomId, String userId) {

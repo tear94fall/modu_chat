@@ -24,6 +24,8 @@ public class ChatRoomEntity {
     private String lastChatMsg;
     @ColumnInfo(name = "last_chat_time")
     private String lastChatTime;
+    @ColumnInfo(name = "unread_count")
+    private int unreadCount;
 
 
     public Long getId() { return id; }
@@ -32,6 +34,7 @@ public class ChatRoomEntity {
     public String getRoomImage() { return this.roomImage; }
     public String getLastChatMsg() { return this.lastChatMsg; }
     public String getLastChatTime() { return this.lastChatTime; }
+    public int getUnreadCount() { return this.unreadCount; }
 
     public void setId(Long id) { this.id = id; }
     public void setRoomId(String roomId) { this.roomId = roomId; }
@@ -39,6 +42,7 @@ public class ChatRoomEntity {
     public void setRoomImage(String roomImage) { this.roomImage = roomImage; }
     public void setLastChatMsg(String lastChatMsg) { this.lastChatMsg = lastChatMsg; }
     public void setLastChatTime(String lastChatTime) { this.lastChatTime = lastChatTime; }
+    public void setUnreadCount(int unreadCount) { this.unreadCount = unreadCount; }
 
     public ChatRoomEntity(String roomId) {
         this.roomId = roomId;

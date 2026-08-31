@@ -1,6 +1,7 @@
 package com.example.modumessenger.Retrofit;
 
 import com.example.modumessenger.dto.ChatRoomDto;
+import com.example.modumessenger.dto.ChatRoomUnreadDto;
 import com.example.modumessenger.dto.MemberDto;
 
 import java.util.List;
@@ -34,4 +35,10 @@ public interface RetrofitChatRoomAPI {
 
     @POST("chat-service/chat/{roomId}/member")
     Call<ChatRoomDto> RequestAddMemberChatRoom(@Path("roomId") String roomId, @Body List<String> userIds);
+
+    @GET("chat-service/chat/unread/{userId}")
+    Call<List<ChatRoomUnreadDto>> RequestUnreadCounts(@Path("userId") String userId);
+
+    @POST("chat-service/chat/read/{roomId}/{userId}")
+    Call<Void> RequestUpdateLastRead(@Path("roomId") String roomId, @Path("userId") String userId);
 }

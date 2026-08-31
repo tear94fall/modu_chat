@@ -3,16 +3,22 @@ package com.example.modumessenger.Repository;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule;
+import androidx.lifecycle.Observer;
 
 import com.example.modumessenger.Adapter.ChatBubble;
 import com.example.modumessenger.Global.socket.WebSocketManager;
 import com.example.modumessenger.Retrofit.RetrofitChatAPI;
 import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
 import com.example.modumessenger.dto.ChatDto;
+import com.example.modumessenger.dto.ChatRoomUnreadDto;
 import com.example.modumessenger.entity.ChatRoom;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -21,6 +27,8 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import retrofit2.Call;
 
 public class ChatRepositoryTest {
 
@@ -52,12 +60,27 @@ public class ChatRepositoryTest {
         return dto;
     }
 
+    @SuppressWarnings("unchecked")
+    private static RetrofitChatRoomAPI chatRoomApiStub() {
+        RetrofitChatRoomAPI api = mock(RetrofitChatRoomAPI.class);
+        // Mockito 는 Call 반환 타입에 null 을 준다. closeRoom 이 실제로 호출하는
+        // 엔드포인트이므로 여기서 막지 않으면 APIHelper 안에서 NPE 가 난다.
+        when(api.RequestUpdateLastRead(anyString(), anyString())).thenReturn(mock(Call.class));
+        when(api.RequestUnreadCounts(anyString())).thenReturn(mock(Call.class));
+        return api;
+    }
+
+    /** 서버 응답 JSON 을 그대로 파싱한다. @SerializedName 매핑까지 함께 검증된다. */
+    private static List<ChatRoomUnreadDto> unreadDtos(String json) {
+        return new Gson().fromJson(json, new TypeToken<List<ChatRoomUnreadDto>>() {}.getType());
+    }
+
     @Before
     public void setUp() {
         repository = new ChatRepository(
                 mock(WebSocketManager.class),
                 mock(RetrofitChatAPI.class),
-                mock(RetrofitChatRoomAPI.class));
+                chatRoomApiStub());
 
         repository.setIdentity(ME, "1");
         repository.setChatRooms(new ArrayList<>(Arrays.asList(room(OTHER_ROOM), room(ACTIVE_ROOM))));
@@ -183,6 +206,126 @@ public class ChatRepositoryTest {
         repository.handleChat(chat(12L, ACTIVE_ROOM, OTHER, "이미 나간 방"), false);
 
         assertEquals("방을 나간 뒤 도착한 메시지는 말풍선이 되면 안 된다", 0, bubbles().size());
+    }
+
+    /** Transformations.map 은 관찰자가 붙어야 계산된다. */
+    private int totalUnread() {
+        int[] seen = {-1};
+        Observer<Integer> observer = value -> seen[0] = value == null ? -1 : value;
+        repository.getTotalUnreadCount().observeForever(observer);
+        repository.getTotalUnreadCount().removeObserver(observer);
+        return seen[0];
+    }
+
+    @Test
+    public void totalUnread_sumsAcrossRooms() {
+        repository.handleChat(chat(40L, OTHER_ROOM, OTHER, "하나"), false);
+        repository.handleChat(chat(41L, OTHER_ROOM, OTHER, "둘"), false);
+
+        assertEquals("탭 배지는 방 개수가 아니라 메시지 총합이다", 2, totalUnread());
+    }
+
+    @Test
+    public void totalUnread_isZeroWhenNothingUnread() {
+        assertEquals(0, totalUnread());
+    }
+
+    @Test
+    public void totalUnread_dropsWhenRoomIsRead() {
+        repository.handleChat(chat(42L, OTHER_ROOM, OTHER, "안 읽음"), false);
+        assertEquals(1, totalUnread());
+
+        repository.openRoom(OTHER_ROOM);
+
+        assertEquals("방을 읽으면 합계도 줄어든다", 0, totalUnread());
+    }
+
+    @Test
+    public void totalUnread_followsServerMerge() {
+        repository.applyUnreadCounts(unreadDtos(
+                "[{\"roomId\":\"" + OTHER_ROOM + "\",\"unreadChatCount\":7},"
+                        + "{\"roomId\":\"" + ACTIVE_ROOM + "\",\"unreadChatCount\":2}]"));
+
+        assertEquals(9, totalUnread());
+    }
+
+    private static int unreadOf(List<ChatRoom> rooms, String roomId) {
+        for (ChatRoom room : rooms) {
+            if (roomId.equals(room.getRoomId())) return room.getUnreadCount();
+        }
+        throw new AssertionError("방을 찾지 못했다: " + roomId);
+    }
+
+    @Test
+    public void otherRoomMessage_incrementsUnread() {
+        repository.handleChat(chat(30L, OTHER_ROOM, OTHER, "하나"), false);
+        repository.handleChat(chat(31L, OTHER_ROOM, OTHER, "둘"), false);
+
+        assertEquals("보고 있지 않은 방은 배지가 올라야 한다", 2, unreadOf(rooms(), OTHER_ROOM));
+    }
+
+    @Test
+    public void activeRoomMessage_doesNotIncrementUnread() {
+        repository.handleChat(chat(32L, ACTIVE_ROOM, OTHER, "보고 있는 방"), false);
+
+        assertEquals("보고 있는 방은 배지가 오르면 안 된다", 0, unreadOf(rooms(), ACTIVE_ROOM));
+    }
+
+    @Test
+    public void myMessage_doesNotIncrementUnread() {
+        repository.handleChat(chat(33L, OTHER_ROOM, ME, "다른 기기에서 내가 보냄"), false);
+
+        assertEquals("내가 보낸 메시지는 배지 대상이 아니다", 0, unreadOf(rooms(), OTHER_ROOM));
+    }
+
+    @Test
+    public void gapRecovery_doesNotIncrementUnread() {
+        repository.handleChat(chat(34L, OTHER_ROOM, OTHER, "복구분"), true);
+
+        assertEquals("갭 복구분은 서버 값으로 채워지므로 중복 증가하면 안 된다",
+                0, unreadOf(rooms(), OTHER_ROOM));
+    }
+
+    @Test
+    public void openRoom_clearsUnread() {
+        repository.handleChat(chat(35L, OTHER_ROOM, OTHER, "안 읽음"), false);
+        assertEquals(1, unreadOf(rooms(), OTHER_ROOM));
+
+        repository.openRoom(OTHER_ROOM);
+
+        assertEquals("방에 들어가면 배지가 즉시 사라진다", 0, unreadOf(rooms(), OTHER_ROOM));
+    }
+
+    @Test
+    public void closeRoom_clearsUnread() {
+        repository.handleChat(chat(36L, OTHER_ROOM, OTHER, "안 읽음"), false);
+        repository.openRoom(OTHER_ROOM);
+        repository.handleChat(chat(37L, ACTIVE_ROOM, OTHER, "이전 방"), false);
+
+        repository.closeRoom(OTHER_ROOM);
+
+        assertEquals(0, unreadOf(rooms(), OTHER_ROOM));
+    }
+
+    @Test
+    public void applyUnreadCounts_mergesByRoomId() {
+        repository.applyUnreadCounts(unreadDtos(
+                "[{\"roomId\":\"" + OTHER_ROOM + "\",\"lastSendChatId\":9,"
+                        + "\"lastReadChatId\":4,\"unreadChatCount\":5}]"));
+
+        assertEquals("서버 값이 그대로 반영된다", 5, unreadOf(rooms(), OTHER_ROOM));
+        assertEquals("응답에 없는 방은 0 이다", 0, unreadOf(rooms(), ACTIVE_ROOM));
+    }
+
+    @Test
+    public void applyUnreadCounts_overwritesLocalIncrement() {
+        repository.handleChat(chat(38L, OTHER_ROOM, OTHER, "로컬 +1"), false);
+        assertEquals(1, unreadOf(rooms(), OTHER_ROOM));
+
+        repository.applyUnreadCounts(unreadDtos(
+                "[{\"roomId\":\"" + OTHER_ROOM + "\",\"unreadChatCount\":0}]"));
+
+        assertEquals("서버가 진실이다", 0, unreadOf(rooms(), OTHER_ROOM));
     }
 
     @Test

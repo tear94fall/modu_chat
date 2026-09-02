@@ -40,6 +40,18 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     Member myInfo;
     ChatDatabase chatDatabase;
 
+    /** 실패한 내 메시지의 재전송/삭제 요청을 액티비티로 넘긴다. */
+    public interface FailedChatActionListener {
+        void onResend(ChatBubble chatBubble);
+        void onDelete(ChatBubble chatBubble);
+    }
+
+    private FailedChatActionListener failedChatActionListener;
+
+    public void setFailedChatActionListener(FailedChatActionListener listener) {
+        this.failedChatActionListener = listener;
+    }
+
     public ChatHistoryAdapter(List<ChatBubble> chatList, List<Member> memberList) {
         this.memberList = (memberList == null || memberList.size() == 0) ? new ArrayList<>() : memberList;
         this.chatList = chatList;
@@ -98,9 +110,11 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         } else if (holder instanceof ChatBubbleRightTextViewHolder) {
             ChatBubbleRightTextViewHolder rightText = ((ChatBubbleRightTextViewHolder) holder);
             rightText.setChatBubble(chat);
+            rightText.bindFailedActions(chat, failedChatActionListener);
         } else if (holder instanceof ChatBubbleRightImageViewHolder) {
             ChatBubbleRightImageViewHolder rightImage = ((ChatBubbleRightImageViewHolder) holder);
             rightImage.setChatBubble(chat);
+            rightImage.bindFailedActions(chat, failedChatActionListener);
         }
     }
 
@@ -123,6 +137,37 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         view.setText(String.valueOf(count));
         view.setVisibility(View.VISIBLE);
         anchorUnreadCount(view, timeView);
+    }
+
+    /**
+     * 실패 상태면 재전송/삭제 아이콘을 보이고 시간·안읽음을 숨긴다.
+     * 재활용 뷰가 이전 상태를 물고 오지 않도록 성공/실패 양쪽을 매번 지정한다.
+     */
+    private static void bindFailedActions(View failedActions, TextView timeView, TextView unreadView,
+                                          View resendButton, View deleteButton,
+                                          ChatBubble chatBubble, FailedChatActionListener listener) {
+        if (failedActions == null) return;
+
+        if (!chatBubble.isFailed()) {
+            failedActions.setVisibility(View.GONE);
+            return;
+        }
+
+        // 실패한 메시지엔 시간·안읽음 표시가 의미 없다.
+        if (timeView != null) timeView.setVisibility(View.GONE);
+        if (unreadView != null) unreadView.setVisibility(View.GONE);
+        failedActions.setVisibility(View.VISIBLE);
+
+        if (resendButton != null) {
+            resendButton.setOnClickListener(v -> {
+                if (listener != null) listener.onResend(chatBubble);
+            });
+        }
+        if (deleteButton != null) {
+            deleteButton.setOnClickListener(v -> {
+                if (listener != null) listener.onDelete(chatBubble);
+            });
+        }
     }
 
     /** 재활용된 뷰가 이전 위치를 물고 오지 않도록 두 방향 모두 매번 지정한다. */
@@ -563,6 +608,9 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         TextView chatMessage;
         TextView chatTime;
         TextView unreadCount;
+        View failedActions;
+        View resendButton;
+        View deleteButton;
         int chatType;
 
         public ChatBubbleRightTextViewHolder(@NonNull View itemView, int chatType) {
@@ -570,7 +618,15 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             chatMessage = itemView.findViewById(R.id.right_chat_text);
             chatTime = itemView.findViewById(R.id.right_chat_time);
             unreadCount = itemView.findViewById(R.id.right_unread_count);
+            failedActions = itemView.findViewById(R.id.right_failed_actions);
+            resendButton = itemView.findViewById(R.id.right_resend_button);
+            deleteButton = itemView.findViewById(R.id.right_delete_button);
             this.chatType = chatType;
+        }
+
+        public void bindFailedActions(ChatBubble chatBubble, FailedChatActionListener listener) {
+            ChatHistoryAdapter.bindFailedActions(failedActions, chatTime, unreadCount,
+                    resendButton, deleteButton, chatBubble, listener);
         }
 
         public void setChatBubble(ChatBubble chatBubble) {
@@ -588,6 +644,9 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         ImageView chatImage;
         TextView chatTime;
         TextView unreadCount;
+        View failedActions;
+        View resendButton;
+        View deleteButton;
         int chatType;
 
         public ChatBubbleRightImageViewHolder(@NonNull View itemView, int chatType) {
@@ -595,7 +654,15 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             chatImage = itemView.findViewById(R.id.right_chat_image);
             chatTime = itemView.findViewById(R.id.right_chat_time);
             unreadCount = itemView.findViewById(R.id.right_unread_count);
+            failedActions = itemView.findViewById(R.id.right_failed_actions);
+            resendButton = itemView.findViewById(R.id.right_resend_button);
+            deleteButton = itemView.findViewById(R.id.right_delete_button);
             this.chatType = chatType;
+        }
+
+        public void bindFailedActions(ChatBubble chatBubble, FailedChatActionListener listener) {
+            ChatHistoryAdapter.bindFailedActions(failedActions, chatTime, unreadCount,
+                    resendButton, deleteButton, chatBubble, listener);
         }
 
         public void setChatImageClickEvent(ChatBubble chat) {

@@ -73,7 +73,6 @@
                     android:layout_height="wrap_content"
                     android:hint="Message"
                     android:inputType="textPersonName"
-                    android:windowSoftInputMode="adjustResize"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@+id/send_message_button"
                     app:layout_constraintStart_toEndOf="@+id/send_others_button"

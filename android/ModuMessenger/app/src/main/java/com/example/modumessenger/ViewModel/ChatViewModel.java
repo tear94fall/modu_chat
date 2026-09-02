@@ -59,6 +59,16 @@ public class ChatViewModel extends ViewModel {
         return send(message, ChatType.CHAT_TYPE_TEXT);
     }
 
+    public boolean resendFailed(ChatBubble chatBubble) {
+        if (chatBubble == null || chatBubble.getId() == null) return false;
+        return repository.resendFailedChat(chatBubble.getId());
+    }
+
+    public void deleteFailed(ChatBubble chatBubble) {
+        if (chatBubble == null || chatBubble.getId() == null) return;
+        repository.deleteFailedChat(chatBubble.getId());
+    }
+
     public boolean sendImage(String filename) {
         return send(filename, ChatType.CHAT_TYPE_IMAGE);
     }

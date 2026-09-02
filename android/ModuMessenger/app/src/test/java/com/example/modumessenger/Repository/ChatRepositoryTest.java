@@ -3,6 +3,7 @@ package com.example.modumessenger.Repository;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
@@ -268,6 +269,13 @@ public class ChatRepositoryTest {
                         + "{\"roomId\":\"" + ACTIVE_ROOM + "\",\"unreadChatCount\":2}]"));
 
         assertEquals(9, totalUnread());
+    }
+
+    private ChatBubble bubbleById(long id) {
+        for (ChatBubble b : bubbles()) {
+            if (b.getId() != null && b.getId() == id) return b;
+        }
+        return null;
     }
 
     private static Map<String, Long> cursors(Object... pairs) {
@@ -678,5 +686,128 @@ public class ChatRepositoryTest {
             if (frame.contains("\"READ\"") && frame.contains(roomId)) count++;
         }
         return count;
+    }
+
+    // ---------- 낙관적 로컬 에코: 보낸 메시지는 브로드캐스트를 기다리지 않고 즉시 보인다 ----------
+
+    private static ChatDto outgoing(String roomId, String sender, String message) {
+        ChatDto dto = new ChatDto();
+        dto.setRoomId(roomId);
+        dto.setSender(sender);
+        dto.setMessage(message);
+        dto.setChatTime("2026-09-02 10:00:00");
+        dto.setChatType(0);
+        return dto; // id 없음 — 아직 서버가 부여하지 않았다
+    }
+
+    @Test
+    public void sendChat_showsMyMessageImmediately() {
+        repository.sendChat(outgoing(ACTIVE_ROOM, ME, "안녕"));
+
+        assertEquals("보낸 즉시 말풍선이 보여야 한다", 1, bubbles().size());
+        assertEquals("안녕", bubbles().get(0).getChatMsg());
+    }
+
+    @Test
+    public void broadcastOfMyMessage_replacesEcho_noDuplicate() {
+        repository.sendChat(outgoing(ACTIVE_ROOM, ME, "안녕"));
+
+        // 서버가 id 를 붙여 되돌려준다
+        repository.handleChat(chat(42L, ACTIVE_ROOM, ME, "안녕"), false);
+
+        assertEquals("에코와 브로드캐스트가 중복되면 안 된다", 1, bubbles().size());
+        assertEquals("실제 서버 id 로 대체돼야 한다", Long.valueOf(42L), bubbles().get(0).getId());
+    }
+
+    @Test
+    public void sendChat_whenSocketDown_showsFailedBubble() {
+        when(webSocketManager.send(anyString())).thenReturn(false);
+
+        repository.sendChat(outgoing(ACTIVE_ROOM, ME, "안녕"));
+
+        assertEquals("전송 실패해도 말풍선은 남겨 사용자가 알 수 있게 한다", 1, bubbles().size());
+        assertEquals("안녕", bubbles().get(0).getChatMsg());
+        assertTrue("실패 상태로 표시된다", bubbles().get(0).isFailed());
+    }
+
+    @Test
+    public void failedBubble_isNotReplacedByUnrelatedBroadcast() {
+        when(webSocketManager.send(anyString())).thenReturn(false);
+        repository.sendChat(outgoing(ACTIVE_ROOM, ME, "실패"));
+        long failedId = bubbles().get(0).getId();
+
+        // 다른(성공) 메시지의 브로드캐스트가 도착해도 실패 말풍선을 대체하면 안 된다
+        repository.handleChat(chat(70L, ACTIVE_ROOM, ME, "다른 메시지"), false);
+
+        assertEquals(2, bubbles().size());
+        assertTrue("실패 말풍선은 그대로 남는다",
+                bubbleById(failedId).isFailed());
+    }
+
+    @Test
+    public void resendFailedChat_onSuccess_marksSentAndReconciles() {
+        when(webSocketManager.send(anyString())).thenReturn(false);
+        repository.sendChat(outgoing(ACTIVE_ROOM, ME, "안녕"));
+        long failedId = bubbles().get(0).getId();
+        assertTrue(bubbleById(failedId).isFailed());
+
+        when(webSocketManager.send(anyString())).thenReturn(true);
+        repository.resendFailedChat(failedId);
+
+        assertEquals("재전송 성공 시 실패 표시가 사라진다", false, bubbleById(failedId).isFailed());
+
+        // 재전송한 메시지의 브로드캐스트가 실제 id 로 돌아오면 대체된다
+        repository.handleChat(chat(80L, ACTIVE_ROOM, ME, "안녕"), false);
+        assertEquals("중복 없이 실제 메시지로 대체", 1, bubbles().size());
+        assertEquals(Long.valueOf(80L), bubbles().get(0).getId());
+    }
+
+    @Test
+    public void resendFailedChat_onFailure_staysFailed() {
+        when(webSocketManager.send(anyString())).thenReturn(false);
+        repository.sendChat(outgoing(ACTIVE_ROOM, ME, "안녕"));
+        long failedId = bubbles().get(0).getId();
+
+        repository.resendFailedChat(failedId);   // 여전히 소켓 down
+
+        assertEquals(1, bubbles().size());
+        assertTrue("재전송도 실패하면 실패 상태 유지", bubbleById(failedId).isFailed());
+    }
+
+    @Test
+    public void deleteFailedChat_removesBubble() {
+        when(webSocketManager.send(anyString())).thenReturn(false);
+        repository.sendChat(outgoing(ACTIVE_ROOM, ME, "안녕"));
+        long failedId = bubbles().get(0).getId();
+
+        repository.deleteFailedChat(failedId);
+
+        assertEquals("삭제하면 목록에서 사라진다", 0, bubbles().size());
+    }
+
+    @Test
+    public void optimisticEcho_isDroppedOnRoomSwitch() {
+        repository.sendChat(outgoing(ACTIVE_ROOM, ME, "안녕"));
+        repository.openRoom(OTHER_ROOM);
+
+        assertEquals("방을 옮기면 이전 방의 에코는 사라진다", 0, bubbles().size());
+
+        // 뒤늦게 도착한 브로드캐스트가 새 방에 섞이면 안 된다
+        repository.handleChat(chat(42L, ACTIVE_ROOM, ME, "안녕"), false);
+        assertEquals(0, bubbles().size());
+    }
+
+    @Test
+    public void twoQuickSends_bothShowImmediately_thenReconcile() {
+        repository.sendChat(outgoing(ACTIVE_ROOM, ME, "하나"));
+        repository.sendChat(outgoing(ACTIVE_ROOM, ME, "둘"));
+        assertEquals(2, bubbles().size());
+
+        repository.handleChat(chat(50L, ACTIVE_ROOM, ME, "하나"), false);
+        repository.handleChat(chat(51L, ACTIVE_ROOM, ME, "둘"), false);
+
+        assertEquals("두 에코가 각각 실제 메시지로 대체된다", 2, bubbles().size());
+        assertEquals(Long.valueOf(50L), bubbles().get(0).getId());
+        assertEquals(Long.valueOf(51L), bubbles().get(1).getId());
     }
 }

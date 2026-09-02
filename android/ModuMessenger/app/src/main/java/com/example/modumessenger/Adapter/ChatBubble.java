@@ -10,6 +10,8 @@ public class ChatBubble {
     private String chatTime;
     private String sender;
     private int chatType;
+    /** 이 메시지를 아직 안 읽은 방 인원 수. 서버 응답에 없고 커서로 계산한다. */
+    private int unreadCount;
 
     public ChatBubble(String roomId, String chatMsg, String chatTime, String sender, int viewType) {
         setRoomId(roomId);
@@ -34,6 +36,7 @@ public class ChatBubble {
     public String getChatTime() { return this.chatTime; }
     public String getSender() { return this.sender; }
     public int getChatType() { return this.chatType; }
+    public int getUnreadCount() { return this.unreadCount; }
 
     public void setId(Long id) { this.id = id; }
     public void setRoomId(String roomId) { this.roomId = roomId; }
@@ -41,4 +44,5 @@ public class ChatBubble {
     public void setChatTime(String time) { this.chatTime = time; }
     public void setSender(String sender) { this.sender = sender; }
     public void setChatType(int type) { this.chatType = type; }
+    public void setUnreadCount(int unreadCount) { this.unreadCount = unreadCount; }
 }

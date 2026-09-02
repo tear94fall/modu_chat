@@ -12,4 +12,7 @@ public interface ChatSocketListener {
     void onReconnected();
 
     void onAuthFailure();
+
+    /** 방 멤버 한 명의 읽음 커서가 올라갔다. lastReadChatId 는 그 사람이 읽은 마지막 chatId. */
+    void onReadReceived(String roomId, String userId, long lastReadChatId);
 }

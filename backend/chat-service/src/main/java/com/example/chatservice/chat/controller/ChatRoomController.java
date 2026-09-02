@@ -1,5 +1,6 @@
 package com.example.chatservice.chat.controller;
 
+import com.example.chatservice.chat.dto.ChatReadCursorDto;
 import com.example.chatservice.chat.dto.ChatRoomDto;
 import com.example.chatservice.chat.dto.ChatRoomLastReadChatDto;
 import com.example.chatservice.chat.service.ChatRoomService;
@@ -79,5 +80,11 @@ public class ChatRoomController {
     public ResponseEntity<Void> updateLastReadChat(@PathVariable("roomId") String roomId, @PathVariable("userId") String userId) {
         chatRoomService.updateLastReadChat(roomId, userId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/chat/read/{roomId}")
+    public ResponseEntity<List<ChatReadCursorDto>> getReadCursors(@PathVariable("roomId") String roomId) {
+        List<ChatReadCursorDto> chatReadCursorDtoList = chatRoomService.searchReadCursors(roomId);
+        return ResponseEntity.ok().body(chatReadCursorDtoList);
     }
 }

@@ -48,6 +48,18 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@+id/left_chat_text" />
 
+        <TextView
+            android:id="@+id/left_unread_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:textColor="@color/unread_marker"
+            android:textSize="12sp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/left_chat_time"
+            app:layout_constraintStart_toEndOf="@+id/left_chat_text"
+            tools:text="1" />
+
         <ImageView
             android:id="@+id/left_chat_image"
             android:layout_width="0dp"

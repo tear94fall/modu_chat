@@ -15,6 +15,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.Activity.ChatImageActivity;
@@ -101,6 +102,42 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             ChatBubbleRightImageViewHolder rightImage = ((ChatBubbleRightImageViewHolder) holder);
             rightImage.setChatBubble(chat);
         }
+    }
+
+    /**
+     * 안 읽은 사람이 없으면 자리를 비운다. INVISIBLE 은 자리를 차지해 시간이 밀린다.
+     *
+     * 시간이 보이면 그 위에, 숨겨져 있으면 말풍선 바닥에 붙인다.
+     * 연속 메시지의 시간은 GONE 이 아니라 INVISIBLE 이라 자리를 그대로 차지한다.
+     * 그 위에 그대로 두면 숫자만 한 줄 위로 떠 보인다.
+     */
+    private static void setUnreadCount(TextView view, TextView timeView, ChatBubble chatBubble) {
+        if (view == null) return;
+
+        int count = chatBubble.getUnreadCount();
+        if (count <= 0) {
+            view.setVisibility(View.GONE);
+            return;
+        }
+
+        view.setText(String.valueOf(count));
+        view.setVisibility(View.VISIBLE);
+        anchorUnreadCount(view, timeView);
+    }
+
+    /** 재활용된 뷰가 이전 위치를 물고 오지 않도록 두 방향 모두 매번 지정한다. */
+    private static void anchorUnreadCount(TextView view, TextView timeView) {
+        ViewGroup.LayoutParams params = view.getLayoutParams();
+        if (!(params instanceof ConstraintLayout.LayoutParams)) return;
+
+        boolean timeShown = timeView != null && timeView.getVisibility() == View.VISIBLE;
+
+        ConstraintLayout.LayoutParams layoutParams = (ConstraintLayout.LayoutParams) params;
+        layoutParams.bottomToTop = timeShown
+                ? timeView.getId() : ConstraintLayout.LayoutParams.UNSET;
+        layoutParams.bottomToBottom = timeShown
+                ? ConstraintLayout.LayoutParams.UNSET : ConstraintLayout.LayoutParams.PARENT_ID;
+        view.setLayoutParams(layoutParams);
     }
 
     @Override
@@ -368,6 +405,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         TextView chatMessage;
         TextView chatTime;
         TextView chatSender;
+        TextView unreadCount;
         int chatType;
 
         public ChatBubbleLeftTextViewHolder(@NonNull View itemView, int chatType) {
@@ -376,6 +414,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             chatMessage = itemView.findViewById(R.id.left_chat_text);
             chatSender = itemView.findViewById(R.id.message_sender);
             chatTime = itemView.findViewById(R.id.left_chat_time);
+            unreadCount = itemView.findViewById(R.id.left_unread_count);
             this.chatType = chatType;
         }
 
@@ -393,32 +432,36 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             chatSender.setText(member.getUsername());
             chatMessage.setText(chatBubble.getChatMsg());
             chatTime.setText(getShortTime(chatBubble.getChatTime()));
-
             if(chatType == LEFT_TEXT_HEADER.getType()) {
                 chatTime.setVisibility(View.INVISIBLE);
             }
+
+            setUnreadCount(unreadCount, chatTime, chatBubble);
         }
     }
 
     public static class ChatBubbleLeftTextOnlyViewHolder extends RecyclerView.ViewHolder {
         TextView chatMessage;
         TextView chatTime;
+        TextView unreadCount;
         int chatType;
 
         public ChatBubbleLeftTextOnlyViewHolder(@NonNull View itemView, int chatType) {
             super(itemView);
             chatMessage = itemView.findViewById(R.id.left_chat_text);
             chatTime = itemView.findViewById(R.id.left_chat_time);
+            unreadCount = itemView.findViewById(R.id.left_unread_count);
             this.chatType = chatType;
         }
 
         public void setChatBubble(ChatBubble chatBubble) {
             chatMessage.setText(chatBubble.getChatMsg());
             chatTime.setText(getShortTime(chatBubble.getChatTime()));
-
             if(chatType == LEFT_TEXT_BODY.getType()) {
                 chatTime.setVisibility(View.INVISIBLE);
             }
+
+            setUnreadCount(unreadCount, chatTime, chatBubble);
         }
     }
 
@@ -427,6 +470,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         ImageView chatImage;
         TextView chatTime;
         TextView chatSender;
+        TextView unreadCount;
         int chatType;
 
         public ChatBubbleLeftImageViewHolder(@NonNull View itemView, int chatType) {
@@ -435,6 +479,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             chatImage = itemView.findViewById(R.id.left_chat_image);
             chatSender = itemView.findViewById(R.id.message_sender);
             chatTime = itemView.findViewById(R.id.left_chat_time);
+            unreadCount = itemView.findViewById(R.id.left_unread_count);
             this.chatType = chatType;
         }
 
@@ -466,22 +511,25 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             setChatImageClickEvent(chatBubble);
             chatSender.setText(member.getUsername());
             chatTime.setText(getShortTime(chatBubble.getChatTime()));
-
             if(chatType == LEFT_IMAGE_HEADER.getType()) {
                 chatTime.setVisibility(View.INVISIBLE);
             }
+
+            setUnreadCount(unreadCount, chatTime, chatBubble);
         }
     }
 
     public static class ChatBubbleLeftImageOnlyViewHolder extends RecyclerView.ViewHolder {
         ImageView chatImage;
         TextView chatTime;
+        TextView unreadCount;
         int chatType;
 
         public ChatBubbleLeftImageOnlyViewHolder(@NonNull View itemView, int chatType) {
             super(itemView);
             chatImage = itemView.findViewById(R.id.left_chat_image);
             chatTime = itemView.findViewById(R.id.left_chat_time);
+            unreadCount = itemView.findViewById(R.id.left_unread_count);
             this.chatType = chatType;
         }
 
@@ -502,10 +550,11 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             setChatImageClickEvent(chatBubble);
             chatTime.setText(getShortTime(chatBubble.getChatTime()));
-
             if(chatType == LEFT_IMAGE_BODY.getType()) {
                 chatTime.setVisibility(View.INVISIBLE);
             }
+
+            setUnreadCount(unreadCount, chatTime, chatBubble);
         }
     }
 
@@ -513,34 +562,39 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public static class ChatBubbleRightTextViewHolder extends RecyclerView.ViewHolder {
         TextView chatMessage;
         TextView chatTime;
+        TextView unreadCount;
         int chatType;
 
         public ChatBubbleRightTextViewHolder(@NonNull View itemView, int chatType) {
             super(itemView);
             chatMessage = itemView.findViewById(R.id.right_chat_text);
             chatTime = itemView.findViewById(R.id.right_chat_time);
+            unreadCount = itemView.findViewById(R.id.right_unread_count);
             this.chatType = chatType;
         }
 
         public void setChatBubble(ChatBubble chatBubble) {
             chatMessage.setText(chatBubble.getChatMsg());
             chatTime.setText(getShortTime(chatBubble.getChatTime()));
-
             if(chatType == RIGHT_TEXT_HEADER.getType()) {
                 chatTime.setVisibility(View.INVISIBLE);
             }
+
+            setUnreadCount(unreadCount, chatTime, chatBubble);
         }
     }
 
     public static class ChatBubbleRightImageViewHolder extends RecyclerView.ViewHolder {
         ImageView chatImage;
         TextView chatTime;
+        TextView unreadCount;
         int chatType;
 
         public ChatBubbleRightImageViewHolder(@NonNull View itemView, int chatType) {
             super(itemView);
             chatImage = itemView.findViewById(R.id.right_chat_image);
             chatTime = itemView.findViewById(R.id.right_chat_time);
+            unreadCount = itemView.findViewById(R.id.right_unread_count);
             this.chatType = chatType;
         }
 
@@ -560,10 +614,11 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             setProfileImage(chatImage, chatBubble.getChatMsg());
             setChatImageClickEvent(chatBubble);
             chatTime.setText(getShortTime(chatBubble.getChatTime()));
-
             if(chatType == RIGHT_IMAGE_HEADER.getType()) {
                 chatTime.setVisibility(View.INVISIBLE);
             }
+
+            setUnreadCount(unreadCount, chatTime, chatBubble);
         }
     }
 }

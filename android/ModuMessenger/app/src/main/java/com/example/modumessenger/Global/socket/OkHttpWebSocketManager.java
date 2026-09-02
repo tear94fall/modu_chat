@@ -7,6 +7,9 @@ import androidx.annotation.Nullable;
 
 import com.example.modumessenger.dto.ChatDto;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
 import java.util.concurrent.TimeUnit;
@@ -185,10 +188,41 @@ public class OkHttpWebSocketManager implements WebSocketManager {
             if (current == null) return;
 
             try {
+                // 프로젝트가 고정한 gson 2.8.5 에는 정적 JsonParser.parseString 이 없다(2.8.9+).
+                JsonObject json = new JsonParser().parse(text).getAsJsonObject();
+
+                // READ 프레임은 ChatDto 모양이 아니다. 채팅 파싱보다 먼저 갈라낸다.
+                if (json.has("type") && "READ".equals(json.get("type").getAsString())) {
+                    current.onReadReceived(
+                            json.get("roomId").getAsString(),
+                            json.get("userId").getAsString(),
+                            parseCursor(json.get("lastReadChatId")));
+                    return;
+                }
+
                 ChatDto dto = gson.fromJson(text, ChatDto.class);
                 if (dto != null) current.onChatReceived(dto);
-            } catch (JsonSyntaxException e) {
-                Log.e(TAG, "malformed chat payload: " + text, e);
+            } catch (JsonSyntaxException | IllegalStateException | NullPointerException
+                    | NumberFormatException e) {
+                // lastReadChatId 는 서버가 String 타입으로 보낸다. "abc" 처럼 숫자로 못 읽는
+                // 값이 오면 getAsLong() 이 NumberFormatException 을 던진다 — 소켓 리더 스레드가
+                // 죽지 않도록 여기서 잡는다.
+                Log.e(TAG, "malformed socket payload: " + text, e);
+            }
+        }
+
+        /**
+         * 읽음 커서를 읽는다. 서버는 이 값을 String 으로 내려주고,
+         * 메시지가 하나도 없는 방은 빈 문자열이 온다. 숫자로 못 읽는 값은 0 으로 본다 —
+         * 프레임을 통째로 버리면 그 방의 커서 이벤트를 놓친다.
+         */
+        private long parseCursor(JsonElement cursor) {
+            if (cursor == null || cursor.isJsonNull()) return 0L;
+
+            try {
+                return Long.parseLong(cursor.getAsString().trim());
+            } catch (NumberFormatException | UnsupportedOperationException | IllegalStateException e) {
+                return 0L;
             }
         }
 

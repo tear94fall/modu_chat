@@ -16,6 +16,7 @@ import com.example.modumessenger.Retrofit.APIHelper;
 import com.example.modumessenger.Retrofit.RetrofitChatAPI;
 import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
 import com.example.modumessenger.dto.ChatDto;
+import com.example.modumessenger.dto.ChatReadCursorDto;
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.example.modumessenger.dto.ChatRoomUnreadDto;
 import com.example.modumessenger.entity.ChatRoom;
@@ -24,8 +25,10 @@ import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -79,6 +82,15 @@ public class ChatRepository implements ChatSocketListener {
     private volatile String myUserId = "";
     private volatile String myMemberId = null;
 
+    /** 활성 방의 멤버별 읽음 커서. 키 집합이 곧 방 멤버 목록이다. */
+    private final Map<String, Long> readCursors = new HashMap<>();
+
+    /**
+     * 소켓이 끊겨 있어 전달하지 못한 READ 의 방 목록. 재연결 때 다시 보낸다.
+     * closeRoom 의 REST 폴백은 즉시 3회 재시도로 끝나 오프라인 구간을 못 넘긴다.
+     */
+    private final Set<String> pendingReadRooms = new LinkedHashSet<>();
+
     public ChatRepository(WebSocketManager webSocketManager,
                           RetrofitChatAPI chatApi,
                           RetrofitChatRoomAPI chatRoomApi) {
@@ -113,10 +125,13 @@ public class ChatRepository implements ChatSocketListener {
         synchronized (activeRoomIndex) {
             activeRoomId = roomId;
             activeRoomIndex.clear();
+            readCursors.clear();
             activeRoomChats.postValue(new ArrayList<>());
         }
         // 서버 반영은 closeRoom 에서 한다. 여기서는 체감을 위해 로컬만 0 으로.
         clearUnread(roomId);
+        refreshReadCursors(roomId);
+        sendReadReceipt(roomId);
     }
 
     public void closeRoom(String roomId) {
@@ -129,10 +144,12 @@ public class ChatRepository implements ChatSocketListener {
 
             activeRoomId = null;
             activeRoomIndex.clear();
+            readCursors.clear();
             activeRoomChats.postValue(new ArrayList<>());
         }
 
         clearUnread(roomId);
+        sendReadReceipt(roomId);
 
         if (memberId == null) return;
         APIHelper.enqueueWithRetry(chatRoomApi.RequestUpdateLastRead(roomId, memberId),
@@ -156,6 +173,45 @@ public class ChatRepository implements ChatSocketListener {
 
     public boolean sendChat(ChatDto dto) {
         return webSocketManager.send(gson.toJson(dto));
+    }
+
+    /**
+     * "여기까지 읽었다" 를 소켓으로 알린다.
+     * 서버가 커서를 lastChatId 로 점프시키고 방 인원에게 브로드캐스트한다.
+     * 끊겨 있어 못 보냈으면 방을 적어 두고 재연결 때 다시 보낸다.
+     */
+    private void sendReadReceipt(String roomId) {
+        if (roomId == null || myUserId.isEmpty()) return;
+
+        Map<String, String> frame = new HashMap<>();
+        frame.put("type", "READ");
+        frame.put("roomId", roomId);
+        frame.put("sender", myUserId);
+
+        boolean delivered = webSocketManager.send(gson.toJson(frame));
+        synchronized (pendingReadRooms) {
+            if (delivered) {
+                pendingReadRooms.remove(roomId);
+            } else {
+                pendingReadRooms.add(roomId);
+            }
+        }
+    }
+
+    /**
+     * 끊긴 동안 못 보낸 READ 를 다시 보낸다.
+     * 서버는 커서를 그 시점의 lastChatId 로 점프시키므로, 끊긴 동안 쌓인 메시지까지
+     * 읽은 것이 된다 — closeRoom 의 REST 폴백이 성공했을 때와 같은 결과다.
+     */
+    private void flushPendingReadReceipts() {
+        List<String> rooms;
+        synchronized (pendingReadRooms) {
+            if (pendingReadRooms.isEmpty()) return;
+            rooms = new ArrayList<>(pendingReadRooms);
+        }
+        for (String roomId : rooms) {
+            sendReadReceipt(roomId);
+        }
     }
 
     // ---------- REST ----------
@@ -297,6 +353,146 @@ public class ChatRepository implements ChatSocketListener {
         };
     }
 
+    /**
+     * chatId 를 아직 안 읽은 방 인원 수.
+     * 발신자 본인은 언제나 읽은 것으로 본다 — 보냈다는 것이 읽었다는 뜻이다.
+     * 커서가 없거나 null 인 멤버는 한 번도 안 읽은 것으로 센다.
+     */
+    static int unreadCountFor(long chatId, String senderUserId, Map<String, Long> cursors) {
+        int count = 0;
+        for (Map.Entry<String, Long> entry : cursors.entrySet()) {
+            if (senderUserId != null && senderUserId.equals(entry.getKey())) continue;
+
+            Long cursor = entry.getValue();
+            if (cursor == null || cursor < chatId) count++;
+        }
+        return count;
+    }
+
+    /**
+     * 메시지 자체에서 유도한 읽음 하한을 커서 맵에 얹는다.
+     * 누군가 id N 을 보냈다는 건 그 방을 보고 있었다는 뜻이므로 N 까지는 읽은 것이다.
+     * READ 프레임이 유실되거나 커서가 NULL 로 남은 방에서도 숫자가 맞게 된다.
+     *
+     * 나는 예외다. 이 계산은 활성 방에서만 도는데, 그 방은 내가 지금 보고 있는 방이고
+     * openRoom 이 이미 서버에 READ 를 보냈다. 그러니 내 커서는 내가 보낸 마지막 메시지가
+     * 아니라 화면의 마지막 메시지까지다 — 방에 처음 들어간 순간 GET 스냅샷이 옛 커서를
+     * 들고 와도 상대 메시지에 숫자가 남지 않는다.
+     *
+     * 커서를 올리기만 하고, 맵에 없는 발신자는 건너뛴다 — 키 집합이 곧 분모라
+     * 여기서 키를 늘리면 방 인원을 잘못 세게 된다.
+     */
+    static Map<String, Long> withImpliedCursors(Map<String, Long> cursors,
+                                                Map<Long, ChatBubble> bubblesById,
+                                                String myUserId) {
+        Map<String, Long> merged = new HashMap<>(cursors);
+
+        for (Map.Entry<Long, ChatBubble> entry : bubblesById.entrySet()) {
+            Long chatId = entry.getKey();
+            if (chatId == null) continue;
+
+            raise(merged, entry.getValue().getSender(), chatId);
+            raise(merged, myUserId, chatId);
+        }
+        return merged;
+    }
+
+    /** 맵에 이미 있는 사용자의 커서만, 더 큰 값으로만 올린다. */
+    private static void raise(Map<String, Long> cursors, String userId, long chatId) {
+        if (userId == null || !cursors.containsKey(userId)) return;
+
+        Long current = cursors.get(userId);
+        if (current == null || current < chatId) {
+            cursors.put(userId, chatId);
+        }
+    }
+
+    /** 방에 들어갈 때 서버에서 커서를 받아온다. 실패하면 숫자가 안 뜰 뿐 대화는 정상이다. */
+    public void refreshReadCursors(String roomId) {
+        if (roomId == null) return;
+
+        APIHelper.enqueueWithRetry(chatRoomApi.RequestReadCursors(roomId),
+                new Callback<List<ChatReadCursorDto>>() {
+                    @Override
+                    public void onResponse(@NonNull Call<List<ChatReadCursorDto>> call,
+                                           @NonNull Response<List<ChatReadCursorDto>> response) {
+                        if (!response.isSuccessful() || response.body() == null) return;
+
+                        Map<String, Long> cursors = new HashMap<>();
+                        for (ChatReadCursorDto dto : response.body()) {
+                            if (dto.getUserId() == null) continue;
+                            cursors.put(dto.getUserId(), dto.getLastReadChatId());
+                        }
+                        applyReadCursors(roomId, cursors);
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<List<ChatReadCursorDto>> call,
+                                          @NonNull Throwable t) {
+                        Log.e(TAG, "refreshReadCursors failed for " + roomId, t);
+                    }
+                });
+    }
+
+    /** 커서를 병합하고 활성 방 말풍선을 다시 계산한다. */
+    void applyReadCursors(String roomId, Map<String, Long> cursors) {
+        synchronized (activeRoomIndex) {
+            if (roomId == null || !roomId.equals(activeRoomId)) return;
+
+            // openRoom 이 이 GET 요청과 READ 프레임을 연달아 보낸다. 소켓 브로드캐스트(최신)가
+            // GET 응답(스냅샷)보다 먼저 도착하는 경우가 흔해서, 통째로 갈아끼우면 방금 반영된
+            // 최신 커서가 옛 스냅샷 값으로 되돌아간다. 키별로 기존 값과 응답 값 중 큰 쪽을 쓰되,
+            // 응답에 없는 멤버(방을 나간 사람)는 제거한다 — 멤버 목록은 응답이 진실이다.
+            Map<String, Long> merged = new HashMap<>();
+            for (Map.Entry<String, Long> entry : cursors.entrySet()) {
+                long incoming = entry.getValue() == null ? 0L : entry.getValue();
+                Long existing = readCursors.get(entry.getKey());
+                merged.put(entry.getKey(), existing == null ? incoming : Math.max(existing, incoming));
+            }
+
+            readCursors.clear();
+            readCursors.putAll(merged);
+            recomputeUnreadCounts();
+        }
+    }
+
+    /** 한 사람의 커서만 올린다. 소켓 READ 프레임이 도착했을 때 쓴다. */
+    void onReadCursorAdvanced(String roomId, String userId, long lastReadChatId) {
+        synchronized (activeRoomIndex) {
+            if (roomId == null || !roomId.equals(activeRoomId)) return;
+            if (userId == null) return;
+
+            Long current = readCursors.get(userId);
+            // 커서 맵에 없는 사용자는 새로 추가하지 않는다. 빈 맵은 "커서를 아직 못 받아왔다"는
+            // 뜻이지 "멤버가 한 명"이라는 뜻이 아니다 — 여기서 새 키를 만들면 분모가 줄어들어
+            // 다른 멤버 몫까지 읽은 것으로 잘못 계산된다. 중간에 초대된 멤버도 마찬가지로
+            // 다음 openRoom 의 GET 응답으로만 반영된다.
+            if (current == null) return;
+
+            // 커서는 단조 증가한다. 늦게 도착한 옛 이벤트가 되돌리지 못하게 한다.
+            if (current >= lastReadChatId) return;
+
+            readCursors.put(userId, lastReadChatId);
+            recomputeUnreadCounts();
+        }
+    }
+
+    /**
+     * 활성 방 말풍선 전체의 숫자를 다시 계산한다.
+     * 커서 하나만 바뀌어도 화면의 모든 말풍선이 영향을 받으므로 전체를 훑는다.
+     * 반드시 activeRoomIndex 락 안에서 호출한다.
+     */
+    private void recomputeUnreadCounts() {
+        if (readCursors.isEmpty()) return;
+
+        Map<String, Long> effective = withImpliedCursors(readCursors, activeRoomIndex, myUserId);
+        for (Map.Entry<Long, ChatBubble> entry : activeRoomIndex.entrySet()) {
+            ChatBubble bubble = entry.getValue();
+            bubble.setUnreadCount(unreadCountFor(entry.getKey(), bubble.getSender(), effective));
+        }
+        activeRoomChats.postValue(new ArrayList<>(activeRoomIndex.values()));
+    }
+
     void mergeChats(String roomId, List<ChatDto> chats, boolean prepend) {
         synchronized (activeRoomIndex) {
             if (roomId == null || !roomId.equals(activeRoomId)) return;
@@ -317,6 +513,7 @@ public class ChatRepository implements ChatSocketListener {
                     activeRoomIndex.put(dto.getId(), new ChatBubble(dto));
                 }
             }
+            recomputeUnreadCounts();
             activeRoomChats.postValue(new ArrayList<>(activeRoomIndex.values()));
         }
     }
@@ -329,6 +526,11 @@ public class ChatRepository implements ChatSocketListener {
     }
 
     @Override
+    public void onReadReceived(String roomId, String userId, long lastReadChatId) {
+        onReadCursorAdvanced(roomId, userId, lastReadChatId);
+    }
+
+    @Override
     public void onStateChanged(ConnectionState state) {
         connectionState.postValue(state);
     }
@@ -336,6 +538,7 @@ public class ChatRepository implements ChatSocketListener {
     @Override
     public void onReconnected() {
         // 끊겨 있던 동안의 공백을 메꾼다. 배너는 띄우지 않는다.
+        flushPendingReadReceipts();
         refreshChatRooms();
 
         String roomId = activeRoomId;
@@ -397,8 +600,15 @@ public class ChatRepository implements ChatSocketListener {
             isActiveRoom = dto.getRoomId().equals(activeRoomId);
             if (isActiveRoom) {
                 activeRoomIndex.put(dto.getId(), new ChatBubble(dto));
+                recomputeUnreadCounts();
                 activeRoomChats.postValue(new ArrayList<>(activeRoomIndex.values()));
             }
+        }
+
+        // 보고 있는 방에 온 메시지는 곧바로 읽은 것이다. 갭 복구분은 제외한다 —
+        // 재연결 직후 밀린 메시지마다 READ 를 쏘면 프레임만 늘고 결과는 같다.
+        if (isActiveRoom && !isGapRecovery) {
+            sendReadReceipt(dto.getRoomId());
         }
 
         boolean mine = myUserId.equals(dto.getSender());

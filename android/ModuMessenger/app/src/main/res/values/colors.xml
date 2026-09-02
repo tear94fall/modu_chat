@@ -12,4 +12,5 @@
     <color name="red">#FF3F32</color>
     <color name="sky_blue">#A1CDE1</color>
     <color name="badge_red">#D32F2F</color>
+    <color name="unread_marker">#F0A500</color>
 </resources>

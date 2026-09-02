@@ -76,6 +76,7 @@ public class OkHttpWebSocketManagerTest {
     private static class CapturingListener implements ChatSocketListener {
         final BlockingQueue<ChatDto> received = new LinkedBlockingQueue<>();
         final BlockingQueue<ConnectionState> states = new LinkedBlockingQueue<>();
+        final BlockingQueue<ReadEvent> readEvents = new LinkedBlockingQueue<>();
         final CountDownLatch connected = new CountDownLatch(1);
         final CountDownLatch reconnected = new CountDownLatch(1);
         volatile int reconnectedCount = 0;
@@ -93,11 +94,38 @@ public class OkHttpWebSocketManagerTest {
         }
 
         @Override public void onAuthFailure() { }
+
+        @Override public void onReadReceived(String roomId, String userId, long lastReadChatId) {
+            readEvents.add(new ReadEvent(roomId, userId, lastReadChatId));
+        }
+    }
+
+    /** onReadReceived 콜백 인자를 그대로 담아 큐에 넣기 위한 값 객체. */
+    private static class ReadEvent {
+        final String roomId;
+        final String userId;
+        final long lastReadChatId;
+
+        ReadEvent(String roomId, String userId, long lastReadChatId) {
+            this.roomId = roomId;
+            this.userId = userId;
+            this.lastReadChatId = lastReadChatId;
+        }
     }
 
     private static final String SAMPLE_CHAT =
             "{\"id\":42,\"chatType\":0,\"roomId\":\"room-1\",\"sender\":\"user-b\","
                     + "\"message\":\"hello\",\"chatTime\":\"2026-08-26 10:00:00\"}";
+
+    // 서버는 lastReadChatId 를 String 타입으로 보낸다 — 숫자 문자열도 파싱돼야 한다.
+    private static final String SAMPLE_READ =
+            "{\"type\":\"READ\",\"roomId\":\"room-1\",\"userId\":\"user-b\","
+                    + "\"lastReadChatId\":\"315\"}";
+
+    /** 메시지가 하나도 없는 방은 서버가 lastChatId 를 빈 문자열로 내려준다. */
+    private static final String SAMPLE_READ_EMPTY_CURSOR =
+            "{\"type\":\"READ\",\"roomId\":\"room-1\",\"userId\":\"user-b\","
+                    + "\"lastReadChatId\":\"\"}";
 
     private OkHttpWebSocketManager newManager(RecordingScheduler scheduler) {
         String wsUrl = server.url("/ws-service/modu-chat").toString().replaceFirst("^http", "ws");
@@ -179,6 +207,53 @@ public class OkHttpWebSocketManagerTest {
         assertEquals(Long.valueOf(42L), dto.getId());
         assertEquals("room-1", dto.getRoomId());
         assertEquals("hello", dto.getMessage());
+    }
+
+    @Test
+    public void parsesIncomingReadFrame_withStringLastReadChatId() throws Exception {
+        server.enqueue(new MockResponse().withWebSocketUpgrade(new AckingServerListener() {
+            @Override
+            public void onOpen(@NonNull WebSocket webSocket, @NonNull Response response) {
+                webSocket.send(SAMPLE_READ);
+            }
+        }));
+
+        RecordingScheduler scheduler = new RecordingScheduler();
+        OkHttpWebSocketManager manager = newManager(scheduler);
+        CapturingListener listener = new CapturingListener();
+        manager.setListener(listener);
+
+        manager.connect();
+
+        ReadEvent event = listener.readEvents.poll(5, TimeUnit.SECONDS);
+        assertNotNull(event);
+        assertEquals("room-1", event.roomId);
+        assertEquals("user-b", event.userId);
+        assertEquals(315L, event.lastReadChatId);
+    }
+
+    @Test
+    public void parsesReadFrame_withEmptyCursor_asZero() throws Exception {
+        // 빈 방에 들어가면 lastReadChatId 가 "" 로 온다. 예외로 프레임을 통째로
+        // 버리면 그 방의 커서 이벤트를 놓친다 — 0 으로 읽는다.
+        server.enqueue(new MockResponse().withWebSocketUpgrade(new AckingServerListener() {
+            @Override
+            public void onOpen(@NonNull WebSocket webSocket, @NonNull Response response) {
+                webSocket.send(SAMPLE_READ_EMPTY_CURSOR);
+            }
+        }));
+
+        RecordingScheduler scheduler = new RecordingScheduler();
+        OkHttpWebSocketManager manager = newManager(scheduler);
+        CapturingListener listener = new CapturingListener();
+        manager.setListener(listener);
+
+        manager.connect();
+
+        ReadEvent event = listener.readEvents.poll(5, TimeUnit.SECONDS);
+        assertNotNull("빈 커서 프레임도 버리지 않는다", event);
+        assertEquals("room-1", event.roomId);
+        assertEquals(0L, event.lastReadChatId);
     }
 
     @Test

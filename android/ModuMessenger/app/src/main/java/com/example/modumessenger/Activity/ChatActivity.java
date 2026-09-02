@@ -176,6 +176,17 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         ).get(ChatViewModel.class);
 
         chatHistoryAdapter = new ChatHistoryAdapter(chatBubbleList, chatMemberList);
+        chatHistoryAdapter.setFailedChatActionListener(new ChatHistoryAdapter.FailedChatActionListener() {
+            @Override
+            public void onResend(ChatBubble chatBubble) {
+                confirmFailedAction("메시지를 다시 보낼까요?", "재전송", () -> chatViewModel.resendFailed(chatBubble));
+            }
+
+            @Override
+            public void onDelete(ChatBubble chatBubble) {
+                confirmFailedAction("이 메시지를 삭제할까요?", "삭제", () -> chatViewModel.deleteFailed(chatBubble));
+            }
+        });
         recyclerView.setAdapter(chatHistoryAdapter);
 
         chatViewModel.getChats().observe(this, bubbles -> {
@@ -206,15 +217,20 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
         chatViewModel.getBanner().observe(this, event -> ChatBanner.show(this, event));
 
-        chatViewModel.getConnectionState().observe(this, state -> {
-            boolean connected = state == ConnectionState.CONNECTED;
-            sendMsg.setEnabled(connected);
-            if (!connected) {
-                Toast.makeText(this, "연결 중입니다", Toast.LENGTH_SHORT).show();
-            }
-        });
+        // 끊겨 있어도 전송 버튼은 활성 상태로 둔다. 보내면 send() 가 false 를 돌려주고
+        // 실패 말풍선(재전송/삭제)이 떠 사용자가 처리할 수 있다 — 버튼을 막는 것보다 낫다.
+        chatViewModel.getConnectionState().observe(this, state -> { });
 
         chatViewModel.loadInitial(pagingSize);
+    }
+
+    /** 재전송/삭제 전에 한 번 더 확인한다. */
+    private void confirmFailedAction(String message, String positiveText, Runnable onConfirm) {
+        new AlertDialog.Builder(this)
+                .setMessage(message)
+                .setPositiveButton(positiveText, (dialog, which) -> onConfirm.run())
+                .setNegativeButton("취소", null)
+                .show();
     }
 
     private void setButtonClickEvent() {
@@ -222,13 +238,11 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
             String msg = inputMsgTextView.getText().toString();
             if (msg.length() == 0) return;
 
-            if (chatViewModel.sendText(msg)) {
-                inputMsgTextView.setText(null);
-                recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
-            } else {
-                Toast.makeText(getApplicationContext(), "연결 중입니다. 잠시 후 다시 시도해주세요.",
-                        Toast.LENGTH_SHORT).show();
-            }
+            // 성공이든 실패든 메시지는 말풍선으로 들어간다(실패 시 재전송/삭제 가능한
+            // 실패 말풍선). 입력창은 항상 비워 같은 글자가 칸과 말풍선에 겹치지 않게 한다.
+            chatViewModel.sendText(msg);
+            inputMsgTextView.setText(null);
+            recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
         });
 
         sendOthers.setOnClickListener(v -> {

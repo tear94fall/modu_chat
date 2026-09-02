@@ -22,7 +22,9 @@ import com.example.modumessenger.dto.ChatRoomUnreadDto;
 import com.example.modumessenger.entity.ChatRoom;
 import com.google.gson.Gson;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -86,6 +88,20 @@ public class ChatRepository implements ChatSocketListener {
     private final Map<String, Long> readCursors = new HashMap<>();
 
     /**
+     * 낙관적 로컬 에코. 보낸 메시지는 서버 브로드캐스트 왕복
+     * (socket -> topic-chat-save -> chat-service -> topic-chat-broadcast -> socket)
+     * 을 기다리지 않고 즉시 화면에 올린다. 브로드캐스트가 실제 id 를 달고 돌아오면
+     * 그때 에코를 실제 말풍선으로 대체한다. 새 방에서 첫 메시지가 지연돼 안 보이던
+     * 문제를 없앤다.
+     *
+     * 에코 말풍선은 서버 id 가 없으므로 음수 임시 id 로 키를 잡는다.
+     * pendingEchoes 는 내 브로드캐스트가 돌아오는 순서(전송 순서와 같다)대로
+     * 대체하기 위한 FIFO 큐다.
+     */
+    private long nextTempId = -1L;
+    private final Deque<Long> pendingEchoes = new ArrayDeque<>();
+
+    /**
      * 소켓이 끊겨 있어 전달하지 못한 READ 의 방 목록. 재연결 때 다시 보낸다.
      * closeRoom 의 REST 폴백은 즉시 3회 재시도로 끝나 오프라인 구간을 못 넘긴다.
      */
@@ -126,6 +142,7 @@ public class ChatRepository implements ChatSocketListener {
             activeRoomId = roomId;
             activeRoomIndex.clear();
             readCursors.clear();
+            pendingEchoes.clear();
             activeRoomChats.postValue(new ArrayList<>());
         }
         // 서버 반영은 closeRoom 에서 한다. 여기서는 체감을 위해 로컬만 0 으로.
@@ -145,6 +162,7 @@ public class ChatRepository implements ChatSocketListener {
             activeRoomId = null;
             activeRoomIndex.clear();
             readCursors.clear();
+            pendingEchoes.clear();
             activeRoomChats.postValue(new ArrayList<>());
         }
 
@@ -172,7 +190,76 @@ public class ChatRepository implements ChatSocketListener {
     }
 
     public boolean sendChat(ChatDto dto) {
-        return webSocketManager.send(gson.toJson(dto));
+        boolean sent = webSocketManager.send(gson.toJson(dto));
+        addOptimisticEcho(dto, sent);
+        return sent;
+    }
+
+    /**
+     * 보낸 메시지를 서버 왕복 전에 화면에 먼저 올린다. 임시 음수 id 로 키를 잡는다.
+     * 전송에 성공했으면 pendingEchoes 에 넣어 브로드캐스트가 돌아올 때 대체되게 하고,
+     * 실패했으면 FAILED 상태로 남겨 재전송/삭제를 노출한다 — 실패 에코는 돌아올
+     * 브로드캐스트가 없으므로 pendingEchoes 에 넣지 않는다(엉뚱한 대체 방지).
+     */
+    private void addOptimisticEcho(ChatDto dto, boolean sent) {
+        if (dto == null || dto.getRoomId() == null) return;
+
+        synchronized (activeRoomIndex) {
+            if (!dto.getRoomId().equals(activeRoomId)) return;
+
+            long tempId = nextTempId--;
+            ChatBubble bubble = new ChatBubble(dto);
+            bubble.setId(tempId);
+            bubble.setFailed(!sent);
+            activeRoomIndex.put(tempId, bubble);
+            if (sent) pendingEchoes.addLast(tempId);
+
+            recomputeUnreadCounts();
+            activeRoomChats.postValue(new ArrayList<>(activeRoomIndex.values()));
+        }
+    }
+
+    /**
+     * 실패한 말풍선을 다시 보낸다. 성공하면 실패 표시를 지우고 pendingEchoes 에 넣어
+     * 브로드캐스트가 돌아올 때 실제 메시지로 대체되게 한다. 또 실패하면 그대로 둔다.
+     */
+    public boolean resendFailedChat(long tempId) {
+        ChatBubble bubble;
+        synchronized (activeRoomIndex) {
+            bubble = activeRoomIndex.get(tempId);
+            if (bubble == null || !bubble.isFailed()) return false;
+        }
+
+        ChatDto dto = new ChatDto();
+        dto.setRoomId(bubble.getRoomId());
+        dto.setMessage(bubble.getChatMsg());
+        dto.setSender(bubble.getSender());
+        dto.setChatTime(bubble.getChatTime());
+        dto.setChatType(bubble.getChatType());
+
+        boolean sent = webSocketManager.send(gson.toJson(dto));
+        if (!sent) return false;
+
+        synchronized (activeRoomIndex) {
+            ChatBubble current = activeRoomIndex.get(tempId);
+            if (current == null) return true; // 그새 삭제됨
+            current.setFailed(false);
+            pendingEchoes.addLast(tempId);
+            recomputeUnreadCounts();
+            activeRoomChats.postValue(new ArrayList<>(activeRoomIndex.values()));
+        }
+        return true;
+    }
+
+    /** 실패한 말풍선을 목록에서 지운다. */
+    public void deleteFailedChat(long tempId) {
+        synchronized (activeRoomIndex) {
+            ChatBubble bubble = activeRoomIndex.remove(tempId);
+            if (bubble == null) return;
+            pendingEchoes.remove(tempId);
+            recomputeUnreadCounts();
+            activeRoomChats.postValue(new ArrayList<>(activeRoomIndex.values()));
+        }
     }
 
     /**
@@ -595,10 +682,18 @@ public class ChatRepository implements ChatSocketListener {
         // activeRoomId 판정과 말풍선 추가는 같은 락 안에서 원자적으로 이뤄져야 한다.
         // handleChat 은 OkHttp 콜백 스레드에서, openRoom/closeRoom 은 메인 스레드에서
         // 실행되므로, 락 밖에서 판정하면 방을 전환하는 순간 이전 방의 메시지가 새 방에 섞인다.
+        boolean mine = myUserId.equals(dto.getSender());
+
         boolean isActiveRoom;
         synchronized (activeRoomIndex) {
             isActiveRoom = dto.getRoomId().equals(activeRoomId);
             if (isActiveRoom) {
+                // 내가 보낸 메시지의 브로드캐스트라면 먼저 올려둔 에코를 걷어낸다.
+                // 전송 순서대로 돌아오므로 가장 오래된 에코를 대체한다. 갭 복구분은
+                // 실시간 전송이 아니므로 에코를 소비하지 않는다.
+                if (mine && !isGapRecovery && !pendingEchoes.isEmpty()) {
+                    activeRoomIndex.remove(pendingEchoes.pollFirst());
+                }
                 activeRoomIndex.put(dto.getId(), new ChatBubble(dto));
                 recomputeUnreadCounts();
                 activeRoomChats.postValue(new ArrayList<>(activeRoomIndex.values()));
@@ -611,7 +706,6 @@ public class ChatRepository implements ChatSocketListener {
             sendReadReceipt(dto.getRoomId());
         }
 
-        boolean mine = myUserId.equals(dto.getSender());
         if (!mine && !isActiveRoom && !isGapRecovery) {
             incrementUnread(dto.getRoomId());
             banner.postValue(new BannerEvent(

@@ -32,3 +32,8 @@ eureka:
   client:
     register-with-eureka: false
     fetch-registry: false
+
+# InternalApiFilter / InternalApiFeignConfig 가 요구한다. 운영은 config-repo 가 내려준다.
+modu:
+  internal-api:
+    token: test-internal-token

@@ -56,7 +56,7 @@ public class ProfileImageSliderAdapter extends RecyclerView.Adapter<ProfileImage
 
         public void bindSliderImage(String imageFile) {
             String accessToken = DataStoreHelper.getDataStoreStr("access-token");
-            String url = RetrofitClient.getBaseUrl() + "storage-service/view/"+ imageFile;
+            String url = RetrofitClient.getBaseUrl() + "storage-service/api-public/view/"+ imageFile;
 
             GlideUrl glideUrl = new GlideUrl(url,
                     new LazyHeaders.Builder()

@@ -13,10 +13,10 @@ import java.util.List;
 public interface ProfileFeignClient {
 
     @Retry(name = "memberProfileRetry", fallbackMethod = "retryGetMemberProfileFallback")
-    @GetMapping("/profile/{memberId}")
+    @GetMapping("/api-internal/profile/{memberId}")
     ResponseEntity<List<ProfileDto>> getMemberProfiles(@PathVariable("memberId") Long memberId);
 
-    @PostMapping("/profile")
+    @PostMapping("/api-internal/profile")
     ResponseEntity<ProfileDto> addProfileRequest(@RequestBody ProfileDto profileDto);
 
     default ResponseEntity<List<ProfileDto>> retryGetMemberProfileFallback(Exception e) {

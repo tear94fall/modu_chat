@@ -328,6 +328,7 @@ services:
     environment:
       - CONFIG_SERVER_URI=http://config-service:8888
       - JAVA_TOOL_OPTIONS=${AUTH_AGENT_OPTS:-}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
       config-service:
         condition: service_healthy
@@ -355,6 +356,7 @@ services:
       - spring.datasource.url=jdbc:mysql://mysql-chat:3306/modu-chat
       - spring.datasource.username=root
       - JAVA_TOOL_OPTIONS=${CHAT_AGENT_OPTS:-}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
       kafka:
         condition: service_started
@@ -386,6 +388,7 @@ services:
       - spring.datasource.url=jdbc:mysql://mysql-member:3306/modu-chat
       - spring.datasource.username=root
       - JAVA_TOOL_OPTIONS=${MEMBER_AGENT_OPTS:-}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
       kafka:
         condition: service_started
@@ -417,6 +420,7 @@ services:
       - spring.datasource.url=jdbc:mysql://mysql-profile:3306/modu-chat
       - spring.datasource.username=root
       - JAVA_TOOL_OPTIONS=${PROFILE_AGENT_OPTS:-}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
       kafka:
         condition: service_started
@@ -446,6 +450,7 @@ services:
       - spring.datasource.url=jdbc:mysql://mysql-push:3306/modu-chat
       - spring.datasource.username=root
       - JAVA_TOOL_OPTIONS=${PUSH_AGENT_OPTS:-}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
       config-service:
         condition: service_healthy
@@ -476,6 +481,7 @@ services:
       - spring.datasource.username=root
       - minio.endpoint=http://minio:9000
       - JAVA_TOOL_OPTIONS=${STORAGE_AGENT_OPTS:-}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
       kafka:
         condition: service_started
@@ -508,6 +514,7 @@ services:
       - spring.datasource.url=jdbc:mysql://mysql:3306/modu-chat
       - spring.datasource.username=root
       - JAVA_TOOL_OPTIONS=${WS_SERVICE_AGENT_OPTS:-}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
       kafka:
         condition: service_started
@@ -537,6 +544,7 @@ services:
     environment:
       - CONFIG_SERVER_URI=http://config-service:8888
       - JAVA_TOOL_OPTIONS=${CHAT_STORE_AGENT_OPTS:-}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
       kafka:
         condition: service_started

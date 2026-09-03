@@ -24,7 +24,7 @@ public class CustomAuthenticationFilter extends AbstractAuthenticationProcessing
 
     public CustomAuthenticationFilter(AuthenticationManager authenticationManager,
                                       AuthenticationSuccessHandler authenticationSuccessHandler, AuthenticationFailureHandler authenticationFailureHandler) {
-        super("/login", authenticationManager);
+        super("/api-public/login", authenticationManager);
         this.authenticationSuccessHandler = authenticationSuccessHandler;
         this.authenticationFailureHandler = authenticationFailureHandler;
     }

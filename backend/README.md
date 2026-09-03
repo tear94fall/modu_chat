@@ -72,6 +72,23 @@ gateway 뒤에 위치한 서비스에 대한 정보를 알고 있다고 하더�
 이러한 인증이 불필요한 요청등은 인증을 수행하지 않고 요청을 수행하도록 필터 설정이 가능했습니다.  
 그래서 일부 요청의 경우 인증 수행을 하지 않고 정상적으로 서비스를 이용할 수 있도록 하였습니다.  
 
+### API 계층 (api-public / api-internal / api-debug)
+각 서비스의 HTTP API 는 호출자에 따라 세 계층으로 나뉩니다.
+
+| 계층 | 프리픽스 | 호출자 | 게이트웨이 | 보호 |
+|---|---|---|---|---|
+| public | `/api-public/**` | 안드로이드 앱 | 라우트 있음 (`/<svc>-service/api-public/**`) | 게이트웨이 JWT 필터 |
+| internal | `/api-internal/**` | 다른 서비스 (Feign) | 라우트 없음 | 각 서비스의 `InternalApiFilter` 가 `X-Internal-Token` 검사 (`modu.internal-api.token`) |
+| debug | `/api-debug/**` | 개발자 | 라우트 없음 | `@Profile("!prod")` + `X-Internal-Token` |
+
+컨트롤러는 `<root>/api/pub`, `<root>/api/internal`, `<root>/api/debug` 패키지에 계층별로 두고 서비스 레이어를 공유합니다.
+앱과 다른 서비스가 둘 다 쓰는 엔드포인트는 두 컨트롤러에 각각 둡니다.
+내부 토큰은 `backend/.env` 의 `INTERNAL_API_TOKEN` 으로 각 컨테이너에 전달됩니다.
+
+schedule-service 는 config-server 를 쓰지 않아 자체 `application.yml` 에서 정의합니다.
+`.env` 에 `INTERNAL_API_TOKEN` 이 없으면 서비스가 기동을 거부합니다 (빈 토큰 방지).
+config-server 가 죽어 있으면 토큰을 못 받아 기동에 실패합니다 (`optional:` 이지만 이 프로퍼티는 필수).
+
 ### Spring Cloud Eureka
 모놀리식 구조에서는 하나의 서비스에서 사용자 인증 부터 리소스 접근에 대한 모든 요청을 처리 하였습니다.  
 예를 들어, 회원 가입-로그인-서비스 이용이 하나의 서버에서 이뤄지다 보니 구조가 단순하였습니다.  

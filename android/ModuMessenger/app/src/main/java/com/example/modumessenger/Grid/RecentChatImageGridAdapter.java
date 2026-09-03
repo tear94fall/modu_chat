@@ -67,7 +67,7 @@ public class RecentChatImageGridAdapter extends BaseAdapter {
         });
 
         String accessToken = DataStoreHelper.getDataStoreStr("access-token");
-        String url = RetrofitClient.getBaseUrl() + "storage-service/view/"+ recentChatImageGridItem.getImageUrl();
+        String url = RetrofitClient.getBaseUrl() + "storage-service/api-public/view/"+ recentChatImageGridItem.getImageUrl();
 
         GlideUrl glideUrl = new GlideUrl(url,
                 new LazyHeaders.Builder()

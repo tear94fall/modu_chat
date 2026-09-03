@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 @FeignClient("chat-service")
 public interface ChatFeignClient {
 
-    @GetMapping("/chat/{chatId}")
+    @GetMapping("/api-internal/chat/{chatId}")
     ChatDto getChat(@PathVariable("chatId") String chatId);
 
-    @GetMapping("/chat/{roomId}/room")
+    @GetMapping("/api-internal/chat/{roomId}/room")
     ChatRoomDto getChatRoom(@PathVariable("roomId") String roomId);
 }

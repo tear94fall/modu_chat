@@ -9,6 +9,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 @FeignClient("member-service")
 public interface MemberFeignClient {
 
-    @PostMapping("/member/profile/profile")
+    @PostMapping("/api-internal/member/profile/profile")
     ResponseEntity<Long> addMemberProfile(@RequestBody AddProfileDto addProfileDto);
 }

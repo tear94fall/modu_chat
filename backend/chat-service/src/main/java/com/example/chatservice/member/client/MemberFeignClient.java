@@ -11,19 +11,19 @@ import java.util.List;
 @FeignClient("member-service")
 public interface MemberFeignClient {
 
-    @GetMapping("/member/id/{userId}")
+    @GetMapping("/api-internal/member/id/{userId}")
     MemberDto getMember(@Valid @PathVariable("userId") String userId);
 
-    @GetMapping("/member/members")
+    @GetMapping("/api-internal/member/members")
     List<MemberDto> getMembersByUserId(@Valid @RequestParam("userIds") List<String> userIds);
 
-    @GetMapping("/member/members/{ids}")
+    @GetMapping("/api-internal/member/members/{ids}")
     List<MemberDto> getMembersById(@Valid @PathVariable("ids") List<Long> ids);
 
-    @PutMapping("/member/invite")
+    @PutMapping("/api-internal/member/invite")
     List<MemberDto> inviteChatRoom(@Valid @RequestBody ChatRoomMemberDto inviteMemberDto);
 
-    @PutMapping("/member/exit")
+    @PutMapping("/api-internal/member/exit")
     List<MemberDto> exitChatRoom(@Valid @RequestBody ChatRoomMemberDto exitMemberDto);
 }
 

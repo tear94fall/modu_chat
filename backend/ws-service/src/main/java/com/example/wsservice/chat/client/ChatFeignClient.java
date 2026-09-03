@@ -11,18 +11,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 @FeignClient("chat-service")
 public interface ChatFeignClient {
 
-    @PostMapping("/chat")
+    @PostMapping("/api-internal/chat")
     Long saveChat(@RequestBody ChatDto chatDto);
 
-    @GetMapping("/chat/{chatId}")
+    @GetMapping("/api-internal/chat/{chatId}")
     ChatDto getChat(@PathVariable("chatId") String chatId);
 
-    @GetMapping("/chat/{roomId}/room")
+    @GetMapping("/api-internal/chat/{roomId}/room")
     ChatRoomDto getChatRoom(@PathVariable("roomId") String roomId);
 
-    @PostMapping("/chat/{roomId}/room")
+    @PostMapping("/api-internal/chat/{roomId}/room")
     ChatRoomDto updateChatRoom(@PathVariable("roomId") String roomId, @RequestBody ChatRoomDto chatRoomDto);
 
-    @PostMapping("/chat/read/{roomId}/{userId}")
+    @PostMapping("/api-internal/chat/read/{roomId}/{userId}")
     void updateLastReadChat(@PathVariable("roomId") String roomId, @PathVariable("userId") String userId);
 }

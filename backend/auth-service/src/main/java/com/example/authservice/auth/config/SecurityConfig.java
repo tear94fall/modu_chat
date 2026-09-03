@@ -70,7 +70,7 @@ public class SecurityConfig {
             CustomAuthenticationFailureHandler customAuthenticationFailureHandler
     ) {
         CustomAuthenticationFilter customAuthenticationFilter = new CustomAuthenticationFilter(authenticationManager, customAuthenticationSuccessHandler, customAuthenticationFailureHandler);
-        customAuthenticationFilter.setFilterProcessesUrl("/login");
+        customAuthenticationFilter.setFilterProcessesUrl("/api-public/login");
         customAuthenticationFilter.afterPropertiesSet();
         return customAuthenticationFilter;
     }

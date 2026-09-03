@@ -8,6 +8,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 @FeignClient("storage-service")
 public interface StorageFeignClient {
 
-    @DeleteMapping("/delete")
+    @DeleteMapping("/api-internal/delete")
     ResponseEntity<String> delete(@RequestParam("file") String file);
 }

@@ -11,12 +11,12 @@ import org.springframework.web.multipart.MultipartFile;
 @FeignClient("storage-service")
 public interface StorageFeignClient {
 
-    @PostMapping("/upload")
+    @PostMapping("/api-internal/upload")
     ResponseEntity<String> upload(@RequestParam("file") MultipartFile file);
 
-    @PostMapping("/upload/url")
+    @PostMapping("/api-internal/upload/url")
     ResponseEntity<String> upload(@RequestBody String file);
 
-    @DeleteMapping("/delete")
+    @DeleteMapping("/api-internal/delete")
     ResponseEntity<String> delete(@RequestParam("file") String file);
 }

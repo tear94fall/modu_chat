@@ -6,6 +6,13 @@ security:
     token:
       secret-key: '{cipher}ddd9b5f849f93bfb408d9e0c97b78003fb0d8744db46582a2c1a4cab61fb016d9779bdca9e58ced314bb219545bf902dcbc94b5ee7d3e3ae288b345e252ade1a9b4d4ccf4fb01d3e03fc9d073c32d9397775d7dedcb29f253f78a9264fd7bade'
 
+# 서비스 간(Feign) 호출 식별 토큰. /api-internal/** 은 이 값이 X-Internal-Token 헤더로
+# 와야만 통과한다. 플레이스홀더는 각 서비스 컨테이너의 환경변수로 풀린다 — prod 에서는
+# backend/.env 의 INTERNAL_API_TOKEN 에 강한 값을 넣어야 한다.
+modu:
+  internal-api:
+    token: ${INTERNAL_API_TOKEN:modu-internal-dev-token}
+
 eureka:
   client:
     service-url:

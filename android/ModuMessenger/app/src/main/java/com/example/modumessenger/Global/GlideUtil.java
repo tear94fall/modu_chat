@@ -17,7 +17,7 @@ public class GlideUtil {
         }
 
         String accessToken = DataStoreHelper.getDataStoreStr("access-token");
-        String url = RetrofitClient.getBaseUrl() + "storage-service/view/"+ fileName;
+        String url = RetrofitClient.getBaseUrl() + "storage-service/api-public/view/"+ fileName;
 
         GlideUrl glideUrl = new GlideUrl(url,
                 new LazyHeaders.Builder()

@@ -16,33 +16,33 @@ import retrofit2.http.Path;
 
 public interface RetrofitChatRoomAPI {
 
-    @GET("chat-service/chat/{memberId}/rooms")
+    @GET("chat-service/api-public/chat/{memberId}/rooms")
     Call<List<ChatRoomDto>> RequestChatRooms(@Path("memberId") String memberId);
 
-    @GET("chat-service/chat/{roomId}/room")
+    @GET("chat-service/api-public/chat/{roomId}/room")
     Call<ChatRoomDto> RequestChatRoom(@Path("roomId") String roomId);
 
-    @GET("chat-service/chat/search/{roomName}")
+    @GET("chat-service/api-public/chat/search/{roomName}")
     Call<List<ChatRoomDto>> RequestSearchChatRooms(@Path("roomName") String roomName);
 
-    @POST("chat-service/chat/chat/room")
+    @POST("chat-service/api-public/chat/chat/room")
     Call<ChatRoomDto> RequestCreateChatRoom(@Body List<Long> ids);
 
-    @DELETE("chat-service/chat/{roomId}/{userId}")
+    @DELETE("chat-service/api-public/chat/{roomId}/member/{userId}")
     Call<ChatRoomDto> RequestExitChatRoom(@Path("roomId") String roomId, @Path("userId") String userId);
 
-    @POST("chat-service/chat/{roomId}/room")
+    @POST("chat-service/api-public/chat/{roomId}/room")
     Call<ChatRoomDto> RequestUpdateChatRoom(@Path("roomId") String roomId, @Body ChatRoomDto chatRoomDto);
 
-    @POST("chat-service/chat/{roomId}/member")
+    @POST("chat-service/api-public/chat/{roomId}/member")
     Call<ChatRoomDto> RequestAddMemberChatRoom(@Path("roomId") String roomId, @Body List<String> userIds);
 
-    @GET("chat-service/chat/unread/{userId}")
+    @GET("chat-service/api-public/chat/unread/{userId}")
     Call<List<ChatRoomUnreadDto>> RequestUnreadCounts(@Path("userId") String userId);
 
-    @POST("chat-service/chat/read/{roomId}/{userId}")
+    @POST("chat-service/api-public/chat/read/{roomId}/{userId}")
     Call<Void> RequestUpdateLastRead(@Path("roomId") String roomId, @Path("userId") String userId);
 
-    @GET("chat-service/chat/read/{roomId}")
+    @GET("chat-service/api-public/chat/read/{roomId}")
     Call<List<ChatReadCursorDto>> RequestReadCursors(@Path("roomId") String roomId);
 }

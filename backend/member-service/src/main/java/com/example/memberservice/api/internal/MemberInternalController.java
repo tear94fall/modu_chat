@@ -54,4 +54,9 @@ public class MemberInternalController {
     public ResponseEntity<Role> getUserRole(@PathVariable("userId") String userId) {
         return ResponseEntity.ok().body(memberService.getUserById(userId).getRole());
     }
+
+    @GetMapping("/by-email/{email}")
+    public ResponseEntity<MemberDto> getMemberByEmail(@PathVariable("email") String email) {
+        return ResponseEntity.ok().body(memberService.getMemberByEmail(email));
+    }
 }

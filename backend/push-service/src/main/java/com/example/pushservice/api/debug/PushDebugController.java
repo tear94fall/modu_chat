@@ -6,18 +6,11 @@ import com.example.pushservice.fcm.entity.FcmToken;
 import com.example.pushservice.fcm.service.FcmService;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
-import com.google.firebase.messaging.MulticastMessage;
 import com.google.firebase.messaging.Notification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
  * 운영자용 브로드캐스트/테스트 발송. 게이트웨이 라우트가 없고 prod 에서는 빈이 생성되지 않는다.
@@ -41,19 +34,7 @@ public class PushDebugController {
 
     @PostMapping("/users")
     public void notificationUsers(@RequestBody RequestPushMessage data) throws FirebaseMessagingException {
-        List<FcmToken> fcmTokens = fcmService.searchAllFcmToken();
-        AtomicInteger counter = new AtomicInteger();
-        Collection<List<FcmToken>> sendUserGroups = fcmTokens.stream().collect(Collectors.groupingBy(it -> counter.getAndIncrement() / multicastMessageSize)).values();
-        for (List<FcmToken> it : sendUserGroups) {
-            Notification notification = Notification.builder().setTitle(data.getTitle()).setBody(data.getBody()).setImage(data.getImage()).build();
-            MulticastMessage.Builder builder = MulticastMessage.builder();
-            Optional.ofNullable(data.getData()).ifPresent(builder::putAllData);
-            MulticastMessage message = builder
-                    .setNotification(notification)
-                    .addAllTokens(it.stream().map(FcmToken::getFcmToken).collect(Collectors.toList()))
-                    .build();
-            fcmService.sendMessage(message);
-        }
+        fcmService.broadcast(data, multicastMessageSize);
     }
 
     @PostMapping("/user/{userId}")

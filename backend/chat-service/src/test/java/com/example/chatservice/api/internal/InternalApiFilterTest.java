@@ -15,62 +15,52 @@ class InternalApiFilterTest {
 
     @Test
     void internalPathWithoutToken_isRejectedWith403() throws Exception {
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api-internal/chat/1");
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api-internal/x/1");
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-
         filter.doFilter(request, response, chain);
-
         assertEquals(403, response.getStatus());
-        assertNull(chain.getRequest(), "체인으로 넘어가면 안 된다");
+        assertNull(chain.getRequest());
     }
 
     @Test
     void internalPathWithWrongToken_isRejectedWith403() throws Exception {
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api-internal/chat/1");
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api-internal/x/1");
         request.addHeader(InternalApiFilter.HEADER, "wrong");
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-
         filter.doFilter(request, response, chain);
-
         assertEquals(403, response.getStatus());
         assertNull(chain.getRequest());
     }
 
     @Test
     void internalPathWithCorrectToken_passesThrough() throws Exception {
-        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api-internal/chat");
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api-internal/x");
         request.addHeader(InternalApiFilter.HEADER, "secret-token");
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-
         filter.doFilter(request, response, chain);
-
         assertEquals(200, response.getStatus());
-        assertNotNull(chain.getRequest(), "체인으로 넘어가야 한다");
+        assertNotNull(chain.getRequest());
     }
 
     @Test
     void publicPath_isNotChecked() throws Exception {
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api-public/chat/1/rooms");
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api-public/x/1");
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-
         filter.doFilter(request, response, chain);
-
         assertEquals(200, response.getStatus());
         assertNotNull(chain.getRequest());
     }
 
     @Test
     void debugPath_withoutToken_isRejectedWith403() throws Exception {
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api-debug/chat");
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api-debug/x");
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-
         filter.doFilter(request, response, chain);
-
         assertEquals(403, response.getStatus());
         assertNull(chain.getRequest());
     }
@@ -129,5 +119,25 @@ class InternalApiFilterTest {
     @Test
     void blankToken_isRejectedAtConstruction() {
         org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () -> new InternalApiFilter(" "));
+    }
+
+    @Test
+    void adminPath_withoutToken_isRejectedWith403() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api-admin/x/1");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+        filter.doFilter(request, response, chain);
+        assertEquals(403, response.getStatus());
+        assertNull(chain.getRequest());
+    }
+
+    @Test
+    void adminPath_withCorrectToken_passesThrough() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api-admin/x/1");
+        request.addHeader(InternalApiFilter.HEADER, "secret-token");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+        filter.doFilter(request, response, chain);
+        assertNotNull(chain.getRequest());
     }
 }

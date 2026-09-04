@@ -56,4 +56,17 @@ class GatewayRoutesTest {
         assertTrue(firstMatch(HttpMethod.GET, "/chat-service/chat/1/rooms").isEmpty());
         assertTrue(firstMatch(HttpMethod.POST, "/auth-service/login").isEmpty());
     }
+
+    @Test
+    void adminTier_routesToAdminRoute() {
+        assertEquals("member-service-admin", firstMatch(HttpMethod.GET, "/member-service/api-admin/member").orElseThrow().getId());
+        assertEquals("chat-service-admin", firstMatch(HttpMethod.GET, "/chat-service/api-admin/chat/rooms").orElseThrow().getId());
+        assertEquals("push-service-admin", firstMatch(HttpMethod.POST, "/push-service/api-admin/push/broadcast").orElseThrow().getId());
+        assertEquals("storage-service-admin", firstMatch(HttpMethod.GET, "/storage-service/api-admin/view/x.jpg").orElseThrow().getId());
+    }
+
+    @Test
+    void adminLogin_isNoAuthRoute() {
+        assertEquals("auth-service-admin-login", firstMatch(HttpMethod.POST, "/auth-service/api-public/admin/login").orElseThrow().getId());
+    }
 }

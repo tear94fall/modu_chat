@@ -1,5 +1,6 @@
 package com.example.chatservice.chat.service;
 
+import com.example.chatservice.api.admin.dto.AdminChatRoomSummaryDto;
 import com.example.chatservice.chat.dto.ChatReadCursorDto;
 import com.example.chatservice.chat.dto.ChatRoomDto;
 import com.example.chatservice.chat.dto.ChatRoomLastReadChatDto;
@@ -17,6 +18,8 @@ import com.example.chatservice.member.dto.ChatRoomMemberDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -340,5 +343,11 @@ public class ChatRoomService {
         ChatRoom newRoom = chatRoomRepository.save(chatRoom);
 
         return modelMapper.map(newRoom, ChatRoomDto.class);
+    }
+
+    /** 백오피스 방 목록. 멤버 수를 세기 위해 같은 트랜잭션 안에서 컬렉션을 초기화한다. */
+    @Transactional(readOnly = true)
+    public Page<AdminChatRoomSummaryDto> searchChatRoomsForAdmin(Pageable pageable) {
+        return chatRoomRepository.findAll(pageable).map(AdminChatRoomSummaryDto::new);
     }
 }

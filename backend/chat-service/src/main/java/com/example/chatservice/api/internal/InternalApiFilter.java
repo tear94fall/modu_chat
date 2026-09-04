@@ -15,7 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
 /**
- * /api-internal/** 과 /api-debug/** 는 앱이 부르지 않는다. 게이트웨이에 라우트가 없어
+ * /api-internal/**, /api-debug/**, /api-admin/** 은 앱이 직접 부르지 않는다. 게이트웨이에 라우트가 없어
  * 외부에서는 못 오지만, 서비스 포트로 직접 오는 요청은 막을 수 없으므로 여기서
  * X-Internal-Token 을 검사한다. 토큰은 modu.internal-api.token 이다.
  *
@@ -29,6 +29,7 @@ public class InternalApiFilter extends OncePerRequestFilter {
     public static final String HEADER = "X-Internal-Token";
     public static final String INTERNAL_PREFIX = "/api-internal/";
     public static final String DEBUG_PREFIX = "/api-debug/";
+    public static final String ADMIN_PREFIX = "/api-admin/";
 
     /** 하위 호환: 기존 테스트가 참조한다. */
     public static final String PREFIX = INTERNAL_PREFIX;
@@ -52,7 +53,9 @@ public class InternalApiFilter extends OncePerRequestFilter {
 
     static boolean isGuarded(String normalizedPath) {
         return normalizedPath.startsWith(INTERNAL_PREFIX) || normalizedPath.startsWith(DEBUG_PREFIX)
-                || normalizedPath.equals("/api-internal") || normalizedPath.equals("/api-debug");
+                || normalizedPath.startsWith(ADMIN_PREFIX)
+                || normalizedPath.equals("/api-internal") || normalizedPath.equals("/api-debug")
+                || normalizedPath.equals("/api-admin");
     }
 
     @Override

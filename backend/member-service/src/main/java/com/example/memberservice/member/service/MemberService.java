@@ -1,5 +1,7 @@
 package com.example.memberservice.member.service;
 
+import com.example.memberservice.api.admin.dto.AdminMemberDetailDto;
+import com.example.memberservice.api.admin.dto.AdminMemberSummaryDto;
 import com.example.memberservice.global.exception.CustomException;
 import com.example.memberservice.global.exception.ErrorCode;
 import com.example.memberservice.global.lock.DistributedLock;
@@ -20,6 +22,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -277,5 +281,53 @@ public class MemberService implements UserDetailsService {
         member.addProfile(addProfileDto.getProfileId());
 
         return member.getProfiles().get(member.getProfiles().size()-1);
+    }
+
+    /** 백오피스 검색. keyword 가 비면 전체. */
+    public Page<AdminMemberSummaryDto> searchMembers(String keyword, Pageable pageable) {
+        Page<Member> page = (keyword == null || keyword.isBlank())
+                ? memberRepository.findAll(pageable)
+                : memberRepository.findByEmailContainingIgnoreCaseOrUsernameContainingIgnoreCase(keyword, keyword, pageable);
+        return page.map(AdminMemberSummaryDto::from);
+    }
+
+    /** 백오피스 상세: 회원 + 친구 수. */
+    public AdminMemberDetailDto getMemberDetail(Long id) {
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_ID_NOT_FOUND_ERROR, String.valueOf(id)));
+        return toAdminMemberDetailDto(member);
+    }
+
+    /** 백오피스에서 로그인한 본인 정보. userId 는 게이트웨이가 넣어 준 값이다. */
+    public AdminMemberDetailDto getMemberDetailByUserId(String userId) {
+        Member member = memberRepository.findByUserId(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userId));
+        return toAdminMemberDetailDto(member);
+    }
+
+    /**
+     * 백오피스에서 본인 정보를 고친다. null 인 필드는 기존 값을 유지한다 —
+     * 엔티티의 updateProfile 은 네 필드를 통째로 덮어쓰기 때문이다.
+     */
+    public AdminMemberDetailDto updateMyProfile(String userId, UpdateProfileDto request) {
+        Member member = memberRepository.findByUserId(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userId));
+
+        UpdateProfileDto full = UpdateProfileDto.builder()
+                .username(request.getUsername() == null ? member.getUsername() : request.getUsername())
+                .statusMessage(request.getStatusMessage() == null ? member.getStatusMessage() : request.getStatusMessage())
+                .profileImage(request.getProfileImage() == null ? member.getProfileImage() : request.getProfileImage())
+                .wallpaperImage(request.getWallpaperImage() == null ? member.getWallpaperImage() : request.getWallpaperImage())
+                .build();
+
+        member.updateProfile(full);
+        memberRepository.save(member);
+
+        return toAdminMemberDetailDto(member);
+    }
+
+    private AdminMemberDetailDto toAdminMemberDetailDto(Member member) {
+        int friendCount = member.getFriends() == null ? 0 : member.getFriends().size();
+        return new AdminMemberDetailDto(modelMapper.map(member, MemberDto.class), friendCount, member.getCreatedDate());
     }
 }

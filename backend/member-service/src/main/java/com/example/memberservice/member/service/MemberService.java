@@ -4,7 +4,8 @@ import com.example.memberservice.api.admin.dto.AdminMemberDetailDto;
 import com.example.memberservice.api.admin.dto.AdminMemberSummaryDto;
 import com.example.memberservice.global.exception.CustomException;
 import com.example.memberservice.global.exception.ErrorCode;
-import com.example.memberservice.global.lock.DistributedLock;
+import com.example.memberservice.global.lock.ApiLock;
+import com.example.memberservice.global.lock.LockParam;
 import com.example.memberservice.global.properties.GoogleOauthProperties;
 import com.example.memberservice.member.dto.*;
 import com.example.memberservice.member.entity.Member;
@@ -68,7 +69,13 @@ public class MemberService implements UserDetailsService {
         return modelMapper.map(member, MemberDto.class);
     }
 
-    public ResponseMemberDto createMember(GoogleLoginRequest googleLoginRequest) {
+    /**
+     * ApiLockAop 이 @Order(HIGHEST_PRECEDENCE) 라 트랜잭션 어드바이스보다 먼저 실행되고,
+     * 안쪽 트랜잭션은 AopForTransaction 의 REQUIRES_NEW 가 연다.
+     * 전파 옵션을 덧붙이면 그 트랜잭션이 중단되므로 붙이지 않는다.
+     */
+    @ApiLock
+    public ResponseMemberDto createMember(@LockParam GoogleLoginRequest googleLoginRequest) {
         MemberDto memberDto = registerMember(googleLoginRequest);
         MemberDto updateMemberDto = addProfileImage(memberDto);
         List<ProfileDto> profiles = profileFeignClient.getMemberProfiles(memberDto.getId()).getBody();
@@ -76,7 +83,6 @@ public class MemberService implements UserDetailsService {
         return ResponseMemberDto.from(updateMemberDto, profiles);
     }
 
-    @DistributedLock(key = "#googleLoginRequest.getAuthType().concat('-').concat(#googleLoginRequest.getIdToken())")
     public MemberDto registerMember(GoogleLoginRequest googleLoginRequest) {
         Payload payload = GoogleIdTokenVerifier(googleLoginRequest.getIdToken());
         if (payload == null) {

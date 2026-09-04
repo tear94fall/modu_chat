@@ -13,6 +13,11 @@ modu:
   internal-api:
     token: ${INTERNAL_API_TOKEN:modu-internal-dev-token}
 
+  # 백오피스. password-hash 는 bcrypt. 비어 있으면 관리자 로그인이 항상 실패한다.
+  admin:
+    password-hash: ${ADMIN_PASSWORD_HASH:}
+    allowed-origin: ${ADMIN_ALLOWED_ORIGIN:http://localhost:5173}
+
 eureka:
   client:
     service-url:

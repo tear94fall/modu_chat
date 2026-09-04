@@ -1,6 +1,8 @@
 package com.example.chatservice.chat.repository;
 
 import com.example.chatservice.chat.entity.Chat;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,6 +15,8 @@ public interface ChatRepository extends JpaRepository<Chat, Long>, ChatCustomRep
     List<Chat> findAllByIdIn(List<Long> ids);
 
     List<Chat> findAllByRoomId(String roomId);
+
+    Page<Chat> findByRoomId(String roomId, Pageable pageable);
 
     Optional<Chat> findById(Long id);
 

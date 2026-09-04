@@ -120,4 +120,24 @@ class InternalApiFilterTest {
     void blankToken_isRejectedAtConstruction() {
         org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () -> new InternalApiFilter(" "));
     }
+
+    @Test
+    void adminPath_withoutToken_isRejectedWith403() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api-admin/x/1");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+        filter.doFilter(request, response, chain);
+        assertEquals(403, response.getStatus());
+        assertNull(chain.getRequest());
+    }
+
+    @Test
+    void adminPath_withCorrectToken_passesThrough() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api-admin/x/1");
+        request.addHeader(InternalApiFilter.HEADER, "secret-token");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+        filter.doFilter(request, response, chain);
+        assertNotNull(chain.getRequest());
+    }
 }

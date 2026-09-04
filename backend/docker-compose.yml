@@ -305,6 +305,8 @@ services:
     environment:
       - CONFIG_SERVER_URI=http://config-service:8888
       - JAVA_TOOL_OPTIONS=${GATEWAY_AGENT_OPTS:-}
+      - ADMIN_ALLOWED_ORIGIN=${ADMIN_ALLOWED_ORIGIN:-http://localhost:5173}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
       config-service:
         condition: service_healthy
@@ -329,6 +331,7 @@ services:
       - CONFIG_SERVER_URI=http://config-service:8888
       - JAVA_TOOL_OPTIONS=${AUTH_AGENT_OPTS:-}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
+      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH:-}
     depends_on:
       config-service:
         condition: service_healthy

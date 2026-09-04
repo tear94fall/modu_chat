@@ -80,10 +80,13 @@ gateway 뒤에 위치한 서비스에 대한 정보를 알고 있다고 하더�
 | public | `/api-public/**` | 안드로이드 앱 | 라우트 있음 (`/<svc>-service/api-public/**`) | 게이트웨이 JWT 필터 |
 | internal | `/api-internal/**` | 다른 서비스 (Feign) | 라우트 없음 | 각 서비스의 `InternalApiFilter` 가 `X-Internal-Token` 검사 (`modu.internal-api.token`) |
 | debug | `/api-debug/**` | 개발자 | 라우트 없음 | `@Profile("!prod")` + `X-Internal-Token` |
+| admin | `/api-admin/**` | 백오피스(브라우저) | 라우트 있음, `AuthorizationHeaderFilter=ROLE_ADMIN` + `AddRequestHeader=X-Internal-Token` | 서비스 `InternalApiFilter` |
 
 컨트롤러는 `<root>/api/pub`, `<root>/api/internal`, `<root>/api/debug` 패키지에 계층별로 두고 서비스 레이어를 공유합니다.
 앱과 다른 서비스가 둘 다 쓰는 엔드포인트는 두 컨트롤러에 각각 둡니다.
 내부 토큰은 `backend/.env` 의 `INTERNAL_API_TOKEN` 으로 각 컨테이너에 전달됩니다.
+`ADMIN_PASSWORD_HASH` (auth-service): 관리자 로그인 비밀번호의 bcrypt 해시.
+`ADMIN_ALLOWED_ORIGIN` (gateway): 백오피스 프런트엔드가 서비스되는 origin (CORS 허용 origin).
 
 schedule-service 는 config-server 를 쓰지 않아 자체 `application.yml` 에서 정의합니다.
 `.env` 에 `INTERNAL_API_TOKEN` 이 없으면 서비스가 기동을 거부합니다 (빈 토큰 방지).

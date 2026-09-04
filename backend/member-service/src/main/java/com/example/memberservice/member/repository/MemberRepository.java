@@ -1,6 +1,8 @@
 package com.example.memberservice.member.repository;
 
 import com.example.memberservice.member.entity.Member;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -20,4 +22,6 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberCus
     List<Member> findAllByUserIdIn(List<String> userIds);
 
     List<Member> findAllByEmail(String email);
+
+    Page<Member> findByEmailContainingIgnoreCaseOrUsernameContainingIgnoreCase(String email, String username, Pageable pageable);
 }

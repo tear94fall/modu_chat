@@ -2,6 +2,9 @@ import { clearToken, getToken } from '../auth/token'
 
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000').replace(/\/$/, '')
 
+/** 백오피스 목록의 한 페이지 크기. 화면마다 제각각이면 페이지 번호가 어긋나 보여 한 곳에서 정한다. */
+export const PAGE_SIZE = 15
+
 export class ApiError extends Error {
   status: number
   constructor(status: number, message: string) {

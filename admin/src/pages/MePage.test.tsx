@@ -22,6 +22,7 @@ describe('MePage', () => {
         role: 'ROLE_ADMIN',
       },
       friendCount: 0,
+      friends: [],
     })
     vi.spyOn(storage, 'fetchImageObjectUrl').mockResolvedValue('blob:fake')
 
@@ -48,6 +49,7 @@ describe('MePage', () => {
         wallpaperImage: 'existing-wallpaper.jpg',
       },
       friendCount: 0,
+      friends: [],
     })
     vi.spyOn(storage, 'fetchImageObjectUrl').mockResolvedValue('blob:fake')
     const updateMe = vi.spyOn(members, 'updateMe').mockResolvedValue({
@@ -62,6 +64,7 @@ describe('MePage', () => {
         wallpaperImage: 'existing-wallpaper.jpg',
       },
       friendCount: 0,
+      friends: [],
     })
 
     const user = userEvent.setup()
@@ -102,6 +105,7 @@ describe('MePage', () => {
         role: 'ROLE_ADMIN',
       },
       friendCount: 0,
+      friends: [],
     })
     vi.spyOn(storage, 'fetchImageObjectUrl').mockResolvedValue('blob:fake')
     const uploadImage = vi.spyOn(storage, 'uploadImage')
@@ -136,6 +140,7 @@ describe('MePage', () => {
         wallpaperImage: '',
       },
       friendCount: 0,
+      friends: [],
     })
     vi.spyOn(storage, 'fetchImageObjectUrl').mockResolvedValue('blob:fake')
     const uploadImage = vi.spyOn(storage, 'uploadImage').mockResolvedValue('new-profile.jpg')
@@ -151,6 +156,7 @@ describe('MePage', () => {
         wallpaperImage: '',
       },
       friendCount: 0,
+      friends: [],
     })
 
     const user = userEvent.setup()

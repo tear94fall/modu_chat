@@ -320,7 +320,16 @@ public class MemberService implements UserDetailsService {
     }
 
     private AdminMemberDetailDto toAdminMemberDetailDto(Member member) {
-        int friendCount = member.getFriends() == null ? 0 : member.getFriends().size();
-        return new AdminMemberDetailDto(modelMapper.map(member, MemberDto.class), friendCount, member.getCreatedDate());
+        List<Long> friendIds = member.getFriends() == null ? List.of() : List.copyOf(member.getFriends());
+
+        // 친구가 없으면 조회 자체를 건너뛴다. findAllByIdIn 에 빈 목록을 넘기면 불필요한 IN () 질의가 나간다.
+        List<AdminMemberSummaryDto> friends = friendIds.isEmpty()
+                ? List.of()
+                : memberRepository.findAllByIdIn(friendIds).stream()
+                        .map(AdminMemberSummaryDto::from)
+                        .collect(Collectors.toList());
+
+        return new AdminMemberDetailDto(
+                modelMapper.map(member, MemberDto.class), friendIds.size(), member.getCreatedDate(), friends);
     }
 }

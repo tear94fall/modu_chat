@@ -17,7 +17,11 @@ export default function Layout() {
   return (
     <div className="layout">
       <nav className="sidebar">
-        <div className="brand">모두메신저 백오피스</div>
+        <div className="brand">
+          {/* 옆 글자가 이름을 말하므로 로고는 장식이다 — alt 를 비워 화면 낭독기가 두 번 읽지 않게 한다. */}
+          <img src="/favicon.svg" alt="" className="brand-logo" />
+          <span>모두메신저 백오피스</span>
+        </div>
         <div className="sidebar-nav">
           <NavLink to="/members" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
             회원

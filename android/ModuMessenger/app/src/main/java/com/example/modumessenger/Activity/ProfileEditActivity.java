@@ -54,8 +54,8 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
     Member member;
     ImageView profileImageView, wallpaperImageView;
     EditText myProfileName, myStatusMessage;
-    Button profileCloseButton, myProfileSaveButton;
-    ImageButton profileEditButton, wallpaperEditButton;
+    Button myProfileSaveButton;
+    ImageButton profileEditButton, wallpaperEditButton, profileCloseButton;
 
     ActivityResultLauncher<Intent> profileLauncher, wallpaperLauncher;
 
@@ -140,8 +140,6 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
         profileEditButton = findViewById(R.id.my_profile_image_edit_button);
         wallpaperEditButton = findViewById(R.id.my_wallpaper_edit_button);
 
-        profileImageView.bringToFront();
-        profileEditButton.bringToFront();
     }
 
     private void setLauncher() {
@@ -249,7 +247,7 @@ public class ProfileEditActivity extends AppCompatActivity implements ProfileEdi
         if(value != null && !value.equals("")) {
             view.setText(value);
         } else {
-            view.setText("No Value");
+            view.setText("");
         }
     }
 

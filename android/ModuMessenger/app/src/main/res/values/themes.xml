@@ -32,6 +32,12 @@
         <item name="android:windowBackground">@drawable/background_splash</item>
     </style>
 
+    <!-- 프로필 사진을 원형으로 깎는다. ShapeableImageView 의 shapeAppearanceOverlay 로 쓴다. -->
+    <style name="ShapeAppearance.Modu.Circle" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
     <style name="AppTheme.Button" parent="Base.Widget.AppCompat.Button">
         <item name="colorButtonNormal">@color/brand_violet</item>
     </style>

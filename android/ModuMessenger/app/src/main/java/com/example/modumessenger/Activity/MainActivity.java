@@ -120,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
             // 한 번 거부된 상태다. 다시 요청하기 전에 이유를 짧게 설명한다.
-            new AlertDialog.Builder(this)
+            new AlertDialog.Builder(this, R.style.Theme_Modu_Dialog)
                     .setTitle(R.string.notification_permission_rationale_title)
                     .setMessage(R.string.notification_permission_rationale_message)
                     .setPositiveButton(R.string.notification_permission_rationale_confirm,

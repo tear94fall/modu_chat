@@ -37,10 +37,17 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
+            <!-- 마지막 말풍선이 입력 바에 딱 붙어 답답했다. 아래에 여백을 두되
+                 clipToPadding 을 꺼서 스크롤은 끝까지 닿게 한다. 말풍선이 화면
+                 좌우에서 4dp 떨어져 있으므로 위아래도 같은 4dp 로 둔다. 8dp 로
+                 두었더니 아래만 우측의 두 배로 벌어져 보였다. -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/chat_history_recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
+                android:clipToPadding="false"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/toolbar"
@@ -116,7 +123,7 @@
                     android:id="@+id/send_others_button"
                     android:layout_width="44dp"
                     android:layout_height="44dp"
-                    android:layout_marginStart="4dp"
+                    android:layout_marginStart="8dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="사진·파일 보내기"
                     android:padding="10dp"

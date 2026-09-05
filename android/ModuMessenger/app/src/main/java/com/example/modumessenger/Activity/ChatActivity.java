@@ -1,11 +1,11 @@
 package com.example.modumessenger.Activity;
 
+import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
 import static com.example.modumessenger.Global.DataStoreHelper.*;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -37,6 +37,7 @@ import com.example.modumessenger.Global.App;
 import com.example.modumessenger.Global.ChatBanner;
 import com.example.modumessenger.Global.socket.ConnectionState;
 import com.example.modumessenger.Grid.RecentChatImageGridAdapter;
+import com.example.modumessenger.Global.ChatRoomNameUtil;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitChatAPI;
 import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
@@ -271,7 +272,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
     /** 재전송/삭제 전에 한 번 더 확인한다. */
     private void confirmFailedAction(String message, String positiveText, Runnable onConfirm) {
-        new AlertDialog.Builder(this)
+        new AlertDialog.Builder(this, R.style.Theme_Modu_Dialog)
                 .setMessage(message)
                 .setPositiveButton(positiveText, (dialog, which) -> onConfirm.run())
                 .setNegativeButton("취소", null)
@@ -353,21 +354,24 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
         Button ExitButton = navigationView.findViewById(R.id.nav_exit_button);
         ExitButton.setOnClickListener(v -> {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Light_Dialog);
-
-            AlertDialog alertDialog = builder.setMessage("채팅방을 나가시겠습니까?")
-                    .setTitle("나가기")
-                    .setPositiveButton("아니오", (dialog, which) -> Toast.makeText(getApplicationContext(), "취소", Toast.LENGTH_LONG).show())
-                    .setNeutralButton("예", (dialog, which) -> {
+            // 시스템 기본 팝업이라 각지고 색도 앱과 달랐다. 앱 팝업 테마를 입힌다.
+            // 예전에는 "아니오" 가 긍정 버튼, "예" 가 중립 버튼이라 자리와 뜻이 어긋났다.
+            AlertDialog alertDialog = new AlertDialog.Builder(this, R.style.Theme_Modu_Dialog)
+                    .setTitle("채팅방 나가기")
+                    .setMessage("이 채팅방에서 나갑니다.")
+                    .setNegativeButton("취소", (dialog, which) -> dialog.dismiss())
+                    .setPositiveButton("나가기", (dialog, which) -> {
                         exitChatRoom(roomId, member.getUserId());
                         Toast.makeText(getApplicationContext(), "채팅방에서 나갑니다.", Toast.LENGTH_SHORT).show();
                         finish();
                     })
-                    .setCancelable(false)
                     .create();
 
-            alertDialog.getWindow().setGravity(Gravity.CENTER);
             alertDialog.show();
+
+            // 되돌릴 수 없는 동작이라 색으로 구분한다.
+            alertDialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                    .setTextColor(getResources().getColor(R.color.red, getTheme()));
         });
 
         Button InviteButton = navigationView.findViewById(R.id.nav_invite_button);
@@ -432,12 +436,9 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         ((TextView) headerView.findViewById(R.id.menu_header_name)).setText(roomInfo.getRoomName());
         ((TextView) headerView.findViewById(R.id.chat_room_member_count)).setText(count);
 
-        Glide.with(this)
-                .load(chatRoom.getRoomImage().equals("") ? R.drawable.basic_profile_image : chatRoom.getRoomImage())
-                .error(Glide.with(this)
-                        .load(R.drawable.basic_profile_image)
-                        .into((ImageView) headerView.findViewById(R.id.chat_room_profile_image)))
-                .into((ImageView) headerView.findViewById(R.id.chat_room_profile_image));
+        // 파일명을 그대로 주소처럼 넘겨 방 사진이 나오지 않았다. 앱의 다른 곳과 같은
+        // 경로(storage-service 주소 + 인증 헤더)로 불러온다.
+        setProfileImage(headerView.findViewById(R.id.chat_room_profile_image), chatRoom.getRoomImage());
 
 
         // set recent chat image
@@ -463,34 +464,8 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     }
 
     public void setChatRoomName(List<Member> chatRoomMembers, String chatRoomName) {
-        String roomName = "새로운 채팅방";
-
-        if(!chatRoomName.equals("") && !chatRoomName.equals(roomName)) {
-            setTitle(chatRoomName);
-            return;
-        }
-
-        List<String> userIdList = chatRoomMembers.stream()
-                .map(Member::getUserId)
-                .filter(userId -> !userId.equals(member.getUserId()))
-                .collect(Collectors.toList());
-
-        List<String> usernames = chatRoomMembers.stream()
-                .map(Member::getUsername)
-                .filter(name -> !name.equals(member.getUsername()))
-                .collect(Collectors.toList());
-
-        roomName = String.join(", ", usernames);
-
-        switch(usernames.size()) {
-            case 0: // self
-                setTitle(String.format("나와의 채팅 (%s)", member.getUsername()));
-                break;
-            case 1: // 1on1
-            default: // multi
-                setTitle(roomName);
-                break;
-        }
+        setTitle(ChatRoomNameUtil.resolve(
+                chatRoomName, chatRoomMembers, member.getUserId(), member.getUsername(), 0));
     }
 
     @Override

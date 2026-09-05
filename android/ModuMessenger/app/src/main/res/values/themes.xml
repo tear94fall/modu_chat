@@ -38,6 +38,25 @@
         <item name="cornerSize">50%</item>
     </style>
 
+    <!-- 팝업. ChatActivity 는 AppCompat 테마라 머티리얼 다이얼로그를 못 쓰므로
+         AppCompat 팝업에 브랜드색과 둥근 배경을 입혀 앱의 다른 화면과 톤을 맞춘다. -->
+    <style name="Theme.Modu.Dialog" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="colorAccent">@color/brand_violet</item>
+        <item name="android:windowBackground">@drawable/bg_dialog</item>
+        <item name="android:textColorPrimary">@color/on_chat_bubble</item>
+        <item name="android:textColorSecondary">@color/on_chat_bubble</item>
+        <!-- 팝업 테마는 액티비티 테마 위에 덧씌워지므로, 지정하지 않은 속성은 액티비티
+             테마로 흘러내린다. 버튼 색을 비워 두었더니 MaterialComponents 테마를 쓰는
+             화면에서는 흰 글자가 되어 흰 배경에 묻혔다. 버튼 색을 직접 못 박는다. -->
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.Modu.DialogButton</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.Modu.DialogButton</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Widget.Modu.DialogButton</item>
+    </style>
+
+    <style name="Widget.Modu.DialogButton" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="android:textColor">@color/brand_violet</item>
+    </style>
+
     <style name="AppTheme.Button" parent="Base.Widget.AppCompat.Button">
         <item name="colorButtonNormal">@color/brand_violet</item>
     </style>

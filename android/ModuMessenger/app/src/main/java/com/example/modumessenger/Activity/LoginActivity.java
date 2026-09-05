@@ -168,6 +168,8 @@ public class LoginActivity extends AppCompatActivity {
             SignupMember(new GoogleLoginRequest(account.getIdToken(), auth_type));
         } catch (ApiException e) {
             Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
+            Toast.makeText(getApplicationContext(),
+                    String.format("구글 로그인에 실패했습니다 (코드 %d)", e.getStatusCode()), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -203,7 +205,28 @@ public class LoginActivity extends AppCompatActivity {
                         LoginButton.setVisibility(View.INVISIBLE);
 
                         LoginMember(new RequestLoginDto(signUpDto.getUserId(), signUpDto.getEmail()), 0);
+                    } else {
+                        Log.e(TAG, "회원가입 응답 본문이 비어 있습니다. code=" + response.code());
+                        Toast.makeText(getApplicationContext(),
+                                String.format("회원 가입에 실패했습니다 (코드 %d)", response.code()), Toast.LENGTH_SHORT).show();
+
+                        LoginButton.setVisibility(View.VISIBLE);
+                        mGoogleSignInClient.signOut();
                     }
+                } else {
+                    String errorBody = null;
+                    try {
+                        errorBody = response.errorBody() != null ? response.errorBody().string() : null;
+                    } catch (Exception e) {
+                        Log.e(TAG, "errorBody 읽기 실패: " + e.getMessage());
+                    }
+
+                    Log.e(TAG, "회원가입 실패 code=" + response.code() + " body=" + errorBody);
+                    Toast.makeText(getApplicationContext(),
+                            String.format("회원 가입에 실패했습니다 (코드 %d)", response.code()), Toast.LENGTH_SHORT).show();
+
+                    LoginButton.setVisibility(View.VISIBLE);
+                    mGoogleSignInClient.signOut();
                 }
             }
 
@@ -265,7 +288,7 @@ public class LoginActivity extends AppCompatActivity {
                     if(result != null) {
                         String member = new Gson().toJson(result);
                         setDataStoreObject("member", member);
-                        App.onLoggedIn();
+                        App.onLoggedIn(result.getUserId(), String.valueOf(result.getId()));
 
                         Log.d("내정보 가져오기 요청 : ", result.toString());
 

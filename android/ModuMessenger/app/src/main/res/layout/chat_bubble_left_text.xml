@@ -23,7 +23,7 @@
             android:maxWidth="250sp"
             android:minWidth="25sp"
             android:padding="8dp"
-            android:textColor="@color/white"
+            android:textColor="@color/on_chat_bubble"
             app:layout_constraintBottom_toBottomOf="@+id/cardBackgroundView"
             app:layout_constraintStart_toEndOf="@+id/cardBackgroundView"
             tools:text="왼쪽 채팅 메시지 입니다." />

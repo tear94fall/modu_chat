@@ -47,6 +47,48 @@
                 app:layout_constraintBottom_toTopOf="@id/bottomConstraintLayout"
                 tools:listitem="@layout/chat_bubble_left_image" />
 
+            <!-- 채팅방 중간에서 읽는 중 다른 사람의 새 메시지가 오면 뜨는 맨 아래로 이동 버튼.
+                 기본은 숨김이며 ChatActivity 가 스크롤/전송 상태에 따라 보이고 감춘다. -->
+            <FrameLayout
+                android:id="@+id/scroll_to_bottom_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="12dp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toTopOf="@id/bottomConstraintLayout"
+                app:layout_constraintEnd_toEndOf="parent"
+                tools:visibility="visible">
+
+                <ImageView
+                    android:id="@+id/scroll_to_bottom_button"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/bg_scroll_bottom"
+                    android:contentDescription="맨 아래로 이동"
+                    android:padding="10dp"
+                    app:srcCompat="@drawable/ic_baseline_keyboard_arrow_down_24"
+                    app:tint="@color/white" />
+
+                <TextView
+                    android:id="@+id/scroll_to_bottom_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top|end"
+                    android:background="@drawable/chat_badge"
+                    android:gravity="center"
+                    android:minWidth="18dp"
+                    android:minHeight="18dp"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:visibility="gone"
+                    tools:text="3"
+                    tools:visibility="visible" />
+
+            </FrameLayout>
+
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/bottomConstraintLayout"
                 android:layout_width="match_parent"

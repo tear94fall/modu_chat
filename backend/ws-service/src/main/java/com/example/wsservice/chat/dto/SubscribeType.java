@@ -6,5 +6,6 @@ import lombok.Getter;
 public enum SubscribeType {
     BROAD_CAST,
     USER,
-    READ;
+    READ,
+    ROOM_CREATED;
 }

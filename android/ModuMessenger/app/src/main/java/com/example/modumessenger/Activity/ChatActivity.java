@@ -77,6 +77,11 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     TextView inputMsgTextView;
     Button sendMsg, sendOthers;
 
+    View scrollToBottomContainer;
+    TextView scrollToBottomBadge;
+    /** 점프 버튼이 떠 있는 동안 쌓인, 아직 못 본 상대방 메시지 개수. 버튼을 감출 때 0으로 되돌린다. */
+    int unseenJumpCount = 0;
+
     String roomId;
 
     ActionBarDrawerToggle actionBarDrawerToggle;
@@ -167,6 +172,31 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         sendOthers = findViewById(R.id.send_others_button);
         inputMsgTextView = findViewById(R.id.chat_message_edit_text);
         inputMsgTextView.setEnabled(true);
+
+        scrollToBottomContainer = findViewById(R.id.scroll_to_bottom_container);
+        scrollToBottomBadge = findViewById(R.id.scroll_to_bottom_badge);
+        scrollToBottomContainer.setOnClickListener(v -> {
+            recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
+            hideJumpToBottomButton();
+        });
+    }
+
+    /** 새 메시지 배지와 함께 맨 아래로 이동 버튼을 띄운다. */
+    private void showJumpToBottomButton(int unseenCount) {
+        scrollToBottomContainer.setVisibility(View.VISIBLE);
+        if (unseenCount > 0) {
+            scrollToBottomBadge.setVisibility(View.VISIBLE);
+            scrollToBottomBadge.setText(String.valueOf(unseenCount));
+        } else {
+            scrollToBottomBadge.setVisibility(View.GONE);
+        }
+    }
+
+    /** 버튼을 탭했거나 스크롤로 바닥에 닿았을 때 감추고 카운트를 초기화한다. */
+    private void hideJumpToBottomButton() {
+        unseenJumpCount = 0;
+        scrollToBottomContainer.setVisibility(View.GONE);
+        scrollToBottomBadge.setVisibility(View.GONE);
     }
 
     private void setViewModel() {
@@ -191,6 +221,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
         chatViewModel.getChats().observe(this, bubbles -> {
             boolean atBottom = !recyclerView.canScrollVertically(1);
+            boolean forceScrollToBottom = chatViewModel.consumePendingScrollToBottom();
 
             int prevCount = chatHistoryAdapter.getItemCount();
             Long prevFirstId = prevCount == 0 ? null : chatBubbleList.get(0).getId();
@@ -206,12 +237,25 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
             boolean prepended = prevFirstId != null && newFirstId != null
                     && !prevFirstId.equals(newFirstId);
 
-            if (atBottom && newCount > 0) {
+            if (forceScrollToBottom || (atBottom && newCount > 0)) {
+                // setChatList 가 이미 notifyDataSetChanged 를 걸어둔 뒤라, 여기서 부르는
+                // scrollToPosition 은 다음 레이아웃 패스에서 반영된다. (클릭 핸들러에서
+                // 곧바로 불렀다면 아직 갱신 전이라 아무 일도 안 일어났을 것이다.)
                 recyclerView.scrollToPosition(newCount - 1);
+                hideJumpToBottomButton();
             } else if (prepended && added > 0 && firstVisible >= 0) {
                 // 앞쪽에 과거 채팅이 끼어들면 인덱스가 밀린다. 보고 있던 항목과
                 // 픽셀 오프셋으로 되돌려 읽던 위치를 유지한다.
                 manager.scrollToPositionWithOffset(firstVisible + added, offset);
+            } else if (!prepended && added > 0 && newCount > 0) {
+                // 과거를 읽는 중에 새 메시지가 뒤에 붙었다. 내가 보낸 메시지는 위에서
+                // forceScrollToBottom 으로 이미 처리됐으니 여기 남는 건 상대방 메시지뿐이다.
+                // 화면을 억지로 끌고 가지 않고 버튼으로만 알린다.
+                ChatBubble lastBubble = chatBubbleList.get(newCount - 1);
+                if (ChatViewModel.shouldShowJumpToBottom(atBottom, lastBubble.getSender(), member.getUserId())) {
+                    unseenJumpCount += added;
+                    showJumpToBottomButton(unseenJumpCount);
+                }
             }
         });
 
@@ -240,9 +284,11 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
 
             // 성공이든 실패든 메시지는 말풍선으로 들어간다(실패 시 재전송/삭제 가능한
             // 실패 말풍선). 입력창은 항상 비워 같은 글자가 칸과 말풍선에 겹치지 않게 한다.
+            // 바닥으로의 스크롤은 여기서 곧바로 하지 않는다 — 어댑터가 아직 갱신되기
+            // 전이라 스크롤할 대상이 없다. 대신 getChats() 관찰 콜백이 갱신을 반영한
+            // 직후에 스크롤한다 (chatViewModel.consumePendingScrollToBottom() 참고).
             chatViewModel.sendText(msg);
             inputMsgTextView.setText(null);
-            recyclerView.scrollToPosition(chatHistoryAdapter.getItemCount() - 1);
         });
 
         sendOthers.setOnClickListener(v -> {
@@ -261,6 +307,11 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
                     if (chatBubbleList.size() >= pagingSize) {
                         chatViewModel.loadPrev(oldest.getId().toString(), pagingSize);
                     }
+                }
+
+                // 탭이 아니라 직접 스크롤로 바닥에 닿아도 점프 버튼은 감춘다.
+                if (!recyclerView.canScrollVertically(1)) {
+                    hideJumpToBottomButton();
                 }
             }
         });

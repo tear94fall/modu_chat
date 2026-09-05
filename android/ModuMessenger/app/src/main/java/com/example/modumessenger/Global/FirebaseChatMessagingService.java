@@ -112,7 +112,7 @@ public class FirebaseChatMessagingService extends FirebaseMessagingService {
 
             NotificationCompat.Builder notificationBuilder =
                     new NotificationCompat.Builder(this, channel)
-                            .setSmallIcon(R.drawable.modu_icon)
+                            .setSmallIcon(R.drawable.ic_notification)
                             .setContentTitle(title)
                             .setContentText(message)
                             .setChannelId(channel)
@@ -126,7 +126,7 @@ public class FirebaseChatMessagingService extends FirebaseMessagingService {
         } else {
             NotificationCompat.Builder notificationBuilder =
                     new NotificationCompat.Builder(this, "")
-                            .setSmallIcon(R.drawable.modu_icon)
+                            .setSmallIcon(R.drawable.ic_notification)
                             .setContentTitle(title)
                             .setContentText(message)
                             .setAutoCancel(true)

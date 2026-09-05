@@ -24,6 +24,14 @@ public class ChatViewModel extends ViewModel {
     private final String roomId;
     private final String myUserId;
 
+    /**
+     * 내가 방금 보낸 메시지가 있어 화면을 바닥으로 강제로 내려야 한다는 표시.
+     * 액티비티는 getChats() 관찰 콜백에서 한 번 소비하고 지운다 — 클릭 핸들러에서
+     * 곧바로 스크롤을 부르면 어댑터가 아직 갱신 전이라 아무 효과가 없기 때문에,
+     * 실제 갱신이 도착하는 시점(관찰 콜백)까지 의도를 들고 있는 용도다.
+     */
+    private boolean pendingScrollToBottom = false;
+
     public ChatViewModel(ChatRepository repository, String roomId, String myUserId) {
         this.repository = repository;
         this.roomId = roomId;
@@ -81,7 +89,31 @@ public class ChatViewModel extends ViewModel {
         dto.setChatTime(LocalDateTime.now().format(CHAT_TIME_FORMAT));
         dto.setChatType(chatType);
 
-        return repository.sendChat(dto);
+        boolean sent = repository.sendChat(dto);
+        // 성공이든 실패든 말풍선(정상 또는 재전송 가능한 실패 말풍선)이 하나 추가되니
+        // 두 경우 다 바닥으로 내려 보여준다.
+        pendingScrollToBottom = true;
+        return sent;
+    }
+
+    /**
+     * 대기 중인 강제 스크롤 표시를 한 번 읽고 지운다. 관찰 콜백에서 딱 한 번만 소비해야
+     * 그 다음에 도착하는(내 전송과 무관한) 갱신에서 잘못 다시 스크롤하지 않는다.
+     */
+    public boolean consumePendingScrollToBottom() {
+        boolean value = pendingScrollToBottom;
+        pendingScrollToBottom = false;
+        return value;
+    }
+
+    /**
+     * 맨 아래로 이동 버튼을 띄울지 결정한다: 바닥이 아닐 때 다른 사람이 보낸 메시지가
+     * 도착한 경우에만 띄운다. 스크롤 리스너 안에 흩어놓지 않고 한 곳에 모아 테스트한다.
+     */
+    public static boolean shouldShowJumpToBottom(boolean wasAtBottom, String lastMessageSenderId, String myUserId) {
+        if (wasAtBottom) return false;
+        if (lastMessageSenderId == null) return false;
+        return !lastMessageSenderId.equals(myUserId);
     }
 
     @Override

@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.Adapter.CreateRoomAdapter;
+import com.example.modumessenger.Global.App;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
 import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
@@ -144,6 +145,11 @@ public class CreateRoomActivity extends AppCompatActivity {
 
                 assert response.body() != null;
                 ChatRoomDto chatRoomDto = response.body();
+
+                // 뒤로 돌아왔을 때 목록이 바로 보이도록 여기서 미리 갱신해 둔다.
+                if (App.getChatRepository() != null) {
+                    App.getChatRepository().refreshChatRooms();
+                }
 
                 Intent intent = new Intent(getApplicationContext(), ChatActivity.class);
                 intent.putExtra("roomId", chatRoomDto.getRoomId());

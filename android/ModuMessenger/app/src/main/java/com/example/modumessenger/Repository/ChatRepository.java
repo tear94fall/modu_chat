@@ -317,7 +317,10 @@ public class ChatRepository implements ChatSocketListener {
 
     public void refreshChatRooms() {
         String memberId = myMemberId;
-        if (memberId == null) return;
+        if (memberId == null) {
+            Log.w(TAG, "신원이 없어 방 목록 갱신을 건너뛴다");
+            return;
+        }
 
         APIHelper.enqueueWithRetry(chatRoomApi.RequestChatRooms(memberId),
                 new Callback<List<ChatRoomDto>>() {
@@ -359,7 +362,10 @@ public class ChatRepository implements ChatSocketListener {
      */
     public void refreshUnreadCounts() {
         String memberId = myMemberId;
-        if (memberId == null) return;
+        if (memberId == null) {
+            Log.w(TAG, "신원이 없어 안 읽은 개수 갱신을 건너뛴다");
+            return;
+        }
 
         APIHelper.enqueueWithRetry(chatRoomApi.RequestUnreadCounts(memberId),
                 new Callback<List<ChatRoomUnreadDto>>() {
@@ -615,6 +621,15 @@ public class ChatRepository implements ChatSocketListener {
     @Override
     public void onReadReceived(String roomId, String userId, long lastReadChatId) {
         onReadCursorAdvanced(roomId, userId, lastReadChatId);
+    }
+
+    /**
+     * 내가 멤버로 초대된 방이 새로 생겼다는 알림. 프레임에는 roomId 뿐이라
+     * 방 이름/멤버 등 나머지 필드는 목록을 통째로 다시 받아 채운다.
+     */
+    @Override
+    public void onRoomCreated(String roomId) {
+        refreshChatRooms();
     }
 
     @Override

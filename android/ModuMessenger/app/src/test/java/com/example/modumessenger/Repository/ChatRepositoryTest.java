@@ -9,6 +9,7 @@ import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -809,5 +810,47 @@ public class ChatRepositoryTest {
         assertEquals("두 에코가 각각 실제 메시지로 대체된다", 2, bubbles().size());
         assertEquals(Long.valueOf(50L), bubbles().get(0).getId());
         assertEquals(Long.valueOf(51L), bubbles().get(1).getId());
+    }
+
+    @Test
+    public void refreshChatRooms_withoutIdentity_doesNotCallApi() {
+        RetrofitChatRoomAPI chatRoomApi = chatRoomApiStub();
+        ChatRepository freshRepository = new ChatRepository(
+                mock(WebSocketManager.class),
+                chatApiStub(),
+                chatRoomApi);
+
+        freshRepository.refreshChatRooms();
+
+        verify(chatRoomApi, never()).RequestChatRooms(anyString());
+    }
+
+    @Test
+    public void refreshChatRooms_withIdentity_callsApiWithMemberId() {
+        RetrofitChatRoomAPI chatRoomApi = chatRoomApiStub();
+        ChatRepository freshRepository = new ChatRepository(
+                mock(WebSocketManager.class),
+                chatApiStub(),
+                chatRoomApi);
+
+        freshRepository.setIdentity("u1", "11");
+        freshRepository.refreshChatRooms();
+
+        verify(chatRoomApi).RequestChatRooms("11");
+    }
+
+    @Test
+    public void onRoomCreated_refreshesChatRoomList() {
+        RetrofitChatRoomAPI chatRoomApi = chatRoomApiStub();
+        ChatRepository freshRepository = new ChatRepository(
+                mock(WebSocketManager.class),
+                chatApiStub(),
+                chatRoomApi);
+
+        freshRepository.setIdentity("u1", "11");
+        // 소켓 프레임에는 roomId 만 실려 온다 - 나머지 필드는 REST 재조회로 채운다.
+        freshRepository.onRoomCreated("room-new");
+
+        verify(chatRoomApi).RequestChatRooms("11");
     }
 }

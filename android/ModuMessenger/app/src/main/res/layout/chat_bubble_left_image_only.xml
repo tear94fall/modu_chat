@@ -24,20 +24,9 @@
             android:maxWidth="250sp"
             android:minWidth="25sp"
             android:padding="8dp"
-            android:textColor="@color/white"
-            app:layout_constraintStart_toEndOf="@+id/cardBackgroundView"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardBackgroundView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:layout_marginTop="4dp"
-            app:cardCornerRadius="30dp"
-            app:cardElevation="0dp"
+            android:textColor="@color/on_chat_bubble"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/>
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/left_chat_time"
@@ -75,7 +64,7 @@
             app:layout_constraintEnd_toEndOf="@+id/left_chat_text"
             app:layout_constraintStart_toStartOf="@+id/left_chat_text"
             app:layout_constraintTop_toTopOf="@+id/left_chat_text"
-            app:srcCompat="@drawable/modu_icon" />
+            app:srcCompat="@drawable/modu_logo" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

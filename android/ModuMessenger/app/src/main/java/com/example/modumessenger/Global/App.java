@@ -103,6 +103,17 @@ public class App extends Application {
         webSocketManager.connect();
     }
 
+    /**
+     * 로그인 성공 직후, 방금 받은 회원 정보로 곧바로 신원을 세운다.
+     * DataStore 쓰기는 비동기라 저장 직후 다시 읽으면 아직 없을 수 있고,
+     * 그러면 신원이 비어 ChatRepository 의 갱신이 조용히 아무것도 하지 않는다.
+     */
+    public static void onLoggedIn(String userId, String memberId) {
+        if (chatRepository == null) return;
+        chatRepository.setIdentity(userId, memberId);
+        webSocketManager.connect();
+    }
+
     /** 로그아웃 시 호출한다. */
     public static void onLoggedOut() {
         // 방 목록을 비우기 전에 토픽을 해제해야 한다(roomId 가 필요하다).

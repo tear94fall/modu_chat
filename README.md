@@ -1,7 +1,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <img src="./images/modu_icon.png" alt="Logo" width="100" height="100">
+  <img src="./images/modu_logo.png" alt="Logo" width="100" height="100">
   <h3 align="center">Modu-Messenger</h3>
 
   <p align="center">

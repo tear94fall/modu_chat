@@ -46,12 +46,13 @@ class MemberAdminControllerTest {
 
     @Test
     void search_returnsPage() throws Exception {
-        AdminMemberSummaryDto dto = new AdminMemberSummaryDto(1L, "u1", "Alice", "a@b.c", Role.ROLE_MEMBER, LocalDateTime.now());
+        AdminMemberSummaryDto dto = new AdminMemberSummaryDto(1L, "u1", "Alice", "profile.jpg", "a@b.c", Role.ROLE_MEMBER, LocalDateTime.now());
         when(memberService.searchMembers(eq("a"), any())).thenReturn(new PageImpl<>(List.of(dto)));
 
         mockMvc.perform(get("/api-admin/member").param("keyword", "a").header("X-Internal-Token", "test-internal-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].username").value("Alice"))
+                .andExpect(jsonPath("$.content[0].profileImage").value("profile.jpg"))
                 .andExpect(jsonPath("$.content[0].email").value("a@b.c"))
                 .andExpect(jsonPath("$.content[0].createdDate").value(matchesPattern("^\\d{4}-.*")))
                 .andExpect(jsonPath("$.totalElements").value(1));

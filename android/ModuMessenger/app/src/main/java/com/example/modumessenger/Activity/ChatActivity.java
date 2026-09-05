@@ -11,6 +11,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.GridView;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -75,7 +76,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     ChatSendOthersActivity chatSendOthersActivity;
 
     TextView inputMsgTextView;
-    Button sendMsg, sendOthers;
+    ImageButton sendMsg, sendOthers;
 
     View scrollToBottomContainer;
     TextView scrollToBottomBadge;

@@ -51,49 +51,54 @@ export default function MemberDetailPage() {
         ← 회원 목록
       </Link>
 
-      <MemberCard member={member} friendCount={friendCount} createdDate={createdDate} />
+      {/* 회원 정보와 친구 목록을 나란히 둔다. 좁은 화면에서는 CSS 가 한 줄로 접는다. */}
+      <div className="member-columns">
+        <MemberCard member={member} friendCount={friendCount} createdDate={createdDate} />
 
-      <h2>친구 {friendCount}명</h2>
-      {friends.length === 0 ? (
-        <p>친구가 없습니다</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th aria-label="프로필" />
-              <th>이름</th>
-              <th>이메일</th>
-              <th>사용자 ID</th>
-              <th>권한</th>
-            </tr>
-          </thead>
-          <tbody>
-            {friends.map((f) => (
-              <tr
-                key={f.id}
-                className="clickable-row"
-                role="button"
-                tabIndex={0}
-                onClick={() => goToMember(f.id)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    goToMember(f.id)
-                  }
-                }}
-              >
-                <td className="avatar-cell">
-                  <RemoteImage filename={f.profileImage} alt={f.username} className="avatar avatar--sm" />
-                </td>
-                <td>{f.username}</td>
-                <td>{f.email}</td>
-                <td>{f.userId}</td>
-                <td>{formatRole(f.role)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+        <div>
+          <h2>친구 {friendCount}명</h2>
+          {friends.length === 0 ? (
+            <p>친구가 없습니다</p>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th aria-label="프로필" />
+                  <th>이름</th>
+                  <th>이메일</th>
+                  <th>사용자 ID</th>
+                  <th>권한</th>
+                </tr>
+              </thead>
+              <tbody>
+                {friends.map((f) => (
+                  <tr
+                    key={f.id}
+                    className="clickable-row"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => goToMember(f.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        goToMember(f.id)
+                      }
+                    }}
+                  >
+                    <td className="avatar-cell">
+                      <RemoteImage filename={f.profileImage} alt={f.username} className="avatar avatar--sm" />
+                    </td>
+                    <td>{f.username}</td>
+                    <td>{f.email}</td>
+                    <td>{f.userId}</td>
+                    <td>{formatRole(f.role)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

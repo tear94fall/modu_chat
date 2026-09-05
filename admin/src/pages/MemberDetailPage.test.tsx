@@ -100,4 +100,25 @@ describe('MemberDetailPage', () => {
     expect(screen.getByText('친구가 없습니다')).toBeInTheDocument()
   })
 
+
+  it('places the friend list beside the member card, not under it', async () => {
+    vi.spyOn(members, 'getMember').mockResolvedValue({
+      member: { id: 1, userId: 'u1', email: 'a@b.c', username: '민수', role: 'ROLE_MEMBER' },
+      friendCount: 1,
+      friends: [
+        { id: 50, userId: 'demo-jiwoo', email: 'jiwoo@modu.chat', username: '김지우', role: 'ROLE_MEMBER' },
+      ],
+    })
+
+    const { container } = renderPage()
+    expect(await screen.findByText('친구 1명')).toBeInTheDocument()
+
+    // 카드와 친구 목록이 같은 2단 컨테이너의 형제로 들어가야 옆에 나란히 놓인다.
+    const columns = container.querySelector('.member-columns')
+    expect(columns).toBeInTheDocument()
+    expect(columns?.querySelector('.profile-card')).toBeInTheDocument()
+    expect(columns?.querySelector('table')).toBeInTheDocument()
+    expect(columns?.children.length).toBe(2)
+  })
+
 })

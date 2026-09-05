@@ -16,6 +16,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(name = "member", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_member_email", columnNames = "email"),
+        @UniqueConstraint(name = "uk_member_user_id", columnNames = "user_id")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member extends BaseTimeEntity {

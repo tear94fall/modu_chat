@@ -191,12 +191,17 @@ public class OkHttpWebSocketManager implements WebSocketManager {
                 // 프로젝트가 고정한 gson 2.8.5 에는 정적 JsonParser.parseString 이 없다(2.8.9+).
                 JsonObject json = new JsonParser().parse(text).getAsJsonObject();
 
-                // READ 프레임은 ChatDto 모양이 아니다. 채팅 파싱보다 먼저 갈라낸다.
+                // READ / ROOM_CREATED 프레임은 ChatDto 모양이 아니다. 채팅 파싱보다 먼저 갈라낸다.
                 if (json.has("type") && "READ".equals(json.get("type").getAsString())) {
                     current.onReadReceived(
                             json.get("roomId").getAsString(),
                             json.get("userId").getAsString(),
                             parseCursor(json.get("lastReadChatId")));
+                    return;
+                }
+
+                if (json.has("type") && "ROOM_CREATED".equals(json.get("type").getAsString())) {
+                    current.onRoomCreated(json.get("roomId").getAsString());
                     return;
                 }
 

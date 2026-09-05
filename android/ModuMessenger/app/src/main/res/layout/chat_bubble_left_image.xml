@@ -24,7 +24,7 @@
             android:maxWidth="250sp"
             android:minWidth="25sp"
             android:padding="8dp"
-            android:textColor="@color/white"
+            android:textColor="@color/on_chat_bubble"
             app:layout_constraintStart_toEndOf="@+id/cardBackgroundView"
             app:layout_constraintTop_toBottomOf="@+id/message_sender" />
 
@@ -95,7 +95,7 @@
             app:layout_constraintEnd_toEndOf="@+id/left_chat_text"
             app:layout_constraintStart_toStartOf="@+id/left_chat_text"
             app:layout_constraintTop_toTopOf="@+id/left_chat_text"
-            app:srcCompat="@drawable/modu_icon" />
+            app:srcCompat="@drawable/modu_logo" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

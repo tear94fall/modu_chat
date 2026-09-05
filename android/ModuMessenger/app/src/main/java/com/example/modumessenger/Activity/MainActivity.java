@@ -2,7 +2,10 @@ package com.example.modumessenger.Activity;
 
 import static com.example.modumessenger.Global.DataStoreHelper.*;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -10,7 +13,10 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
@@ -21,6 +27,7 @@ import com.example.modumessenger.Fragments.FragmentChat;
 import com.example.modumessenger.Fragments.FragmentSetting;
 import com.example.modumessenger.Global.App;
 import com.example.modumessenger.Global.ChatBanner;
+import com.example.modumessenger.Global.NotificationPermissionUtil;
 import com.example.modumessenger.Global.UiUtil;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitChatAPI;
@@ -51,6 +58,10 @@ public class MainActivity extends AppCompatActivity {
     RetrofitPushAPI retrofitPushAPI;
     RetrofitChatRoomAPI retrofitChatRoomAPI;
 
+    // 클릭 핸들러 등 지연된 시점에 등록하면 예외가 발생하므로, 액티비티가 STARTED 상태가
+    // 되기 전인 onCreate 에서 곧바로 등록해 둔다.
+    ActivityResultLauncher<String> notificationPermissionLauncher;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,8 +73,10 @@ public class MainActivity extends AppCompatActivity {
         getData();
         setData();
         bindingView();
+        setNotificationPermissionLauncher();
         initFirebase();
         setButtonClickEvent();
+        requestNotificationPermissionIfNeeded();
     }
 
     private void getData() {
@@ -85,6 +98,39 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println("fcm get token error");
             }
         });
+    }
+
+    private void setNotificationPermissionLauncher() {
+        notificationPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(),
+                isGranted -> Log.d("알림 권한 요청 결과 : ", String.valueOf(isGranted))
+                // 거부되어도 앱은 그대로 동작해야 한다. 알림만 못 받을 뿐이므로
+                // 별도 안내나 재요청 없이 조용히 넘어간다.
+        );
+    }
+
+    // 로그인 후 최초로 도착하는 화면(MainActivity)에서 한 번 요청한다.
+    private void requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return;
+
+        boolean alreadyGranted = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
+
+        if (!NotificationPermissionUtil.shouldRequest(Build.VERSION.SDK_INT, alreadyGranted)) return;
+
+        if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+            // 한 번 거부된 상태다. 다시 요청하기 전에 이유를 짧게 설명한다.
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.notification_permission_rationale_title)
+                    .setMessage(R.string.notification_permission_rationale_message)
+                    .setPositiveButton(R.string.notification_permission_rationale_confirm,
+                            (dialog, which) -> notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS))
+                    .setNegativeButton(R.string.notification_permission_rationale_cancel, null)
+                    .show();
+            return;
+        }
+
+        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
     }
 
     private void bindingView() {

@@ -83,6 +83,8 @@ public class FragmentChat extends Fragment {
         Log.e("DEBUG", "onResume of FragmentFriends");
 
         requireActivity().invalidateOptionsMenu();
+        // 프로세스 재시작, 알림을 통한 콜드 스타트 등으로 신원이 비어 있었다면 복구한다.
+        App.seedIdentity();
         chatRoomListViewModel.refresh();
     }
 

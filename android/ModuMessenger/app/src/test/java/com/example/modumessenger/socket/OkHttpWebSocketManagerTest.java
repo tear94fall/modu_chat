@@ -77,6 +77,7 @@ public class OkHttpWebSocketManagerTest {
         final BlockingQueue<ChatDto> received = new LinkedBlockingQueue<>();
         final BlockingQueue<ConnectionState> states = new LinkedBlockingQueue<>();
         final BlockingQueue<ReadEvent> readEvents = new LinkedBlockingQueue<>();
+        final BlockingQueue<String> roomCreatedEvents = new LinkedBlockingQueue<>();
         final CountDownLatch connected = new CountDownLatch(1);
         final CountDownLatch reconnected = new CountDownLatch(1);
         volatile int reconnectedCount = 0;
@@ -97,6 +98,10 @@ public class OkHttpWebSocketManagerTest {
 
         @Override public void onReadReceived(String roomId, String userId, long lastReadChatId) {
             readEvents.add(new ReadEvent(roomId, userId, lastReadChatId));
+        }
+
+        @Override public void onRoomCreated(String roomId) {
+            roomCreatedEvents.add(roomId);
         }
     }
 
@@ -126,6 +131,9 @@ public class OkHttpWebSocketManagerTest {
     private static final String SAMPLE_READ_EMPTY_CURSOR =
             "{\"type\":\"READ\",\"roomId\":\"room-1\",\"userId\":\"user-b\","
                     + "\"lastReadChatId\":\"\"}";
+
+    private static final String SAMPLE_ROOM_CREATED =
+            "{\"type\":\"ROOM_CREATED\",\"roomId\":\"room-9\"}";
 
     private OkHttpWebSocketManager newManager(RecordingScheduler scheduler) {
         String wsUrl = server.url("/ws-service/modu-chat").toString().replaceFirst("^http", "ws");
@@ -254,6 +262,27 @@ public class OkHttpWebSocketManagerTest {
         assertNotNull("빈 커서 프레임도 버리지 않는다", event);
         assertEquals("room-1", event.roomId);
         assertEquals(0L, event.lastReadChatId);
+    }
+
+    @Test
+    public void parsesIncomingRoomCreatedFrame() throws Exception {
+        server.enqueue(new MockResponse().withWebSocketUpgrade(new AckingServerListener() {
+            @Override
+            public void onOpen(@NonNull WebSocket webSocket, @NonNull Response response) {
+                webSocket.send(SAMPLE_ROOM_CREATED);
+            }
+        }));
+
+        RecordingScheduler scheduler = new RecordingScheduler();
+        OkHttpWebSocketManager manager = newManager(scheduler);
+        CapturingListener listener = new CapturingListener();
+        manager.setListener(listener);
+
+        manager.connect();
+
+        String roomId = listener.roomCreatedEvents.poll(5, TimeUnit.SECONDS);
+        assertNotNull(roomId);
+        assertEquals("room-9", roomId);
     }
 
     @Test

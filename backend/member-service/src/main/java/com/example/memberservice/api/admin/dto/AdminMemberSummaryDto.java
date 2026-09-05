@@ -14,6 +14,7 @@ public class AdminMemberSummaryDto {
     private Long id;
     private String userId;
     private String username;
+    private String profileImage;
     private String email;
     private Role role;
     private LocalDateTime createdDate;
@@ -23,6 +24,7 @@ public class AdminMemberSummaryDto {
                 member.getId(),
                 member.getUserId(),
                 member.getUsername(),
+                member.getProfileImage(),
                 member.getEmail(),
                 member.getRole(),
                 member.getCreatedDate()

@@ -3,6 +3,7 @@ package com.example.memberservice.member.service;
 import com.example.memberservice.global.lock.ApiLock;
 import com.example.memberservice.global.lock.LockParam;
 import com.example.memberservice.member.dto.GoogleLoginRequest;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,7 +42,10 @@ class MemberServiceLockWiringTest {
 
     @Test
     void registerMember_noLongerCarriesApiLock() throws NoSuchMethodException {
-        Method registerMember = MemberService.class.getMethod("registerMember", GoogleLoginRequest.class);
+        // registerMember 는 이미 검증된 Payload 를 받아 신규 회원만 생성한다 (자기 호출 때문에
+        // 락이 걸리지 않던 문제의 회귀 방지 + 멱등 처리를 위해 createMember 에서 분리됨).
+        // 패키지 전용 메서드라 getDeclaredMethod 로 조회한다.
+        Method registerMember = MemberService.class.getDeclaredMethod("registerMember", Payload.class);
 
         assertThat(registerMember.getAnnotation(ApiLock.class)).isNull();
 

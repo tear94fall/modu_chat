@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ModuMessenger</string>
+    <string name="app_name">모두의 채팅</string>
     <string name="friends">친구</string>
     <string name="chat">채팅</string>
     <string name="setting">설정</string>
@@ -12,4 +12,9 @@
     <string name="temp_images_dir">temp_images</string>
     <string name="temp_image">temp_image.jpg</string>
     <string name="authorities">com.example.modumessenger</string>
+
+    <string name="notification_permission_rationale_title">알림 권한이 필요합니다</string>
+    <string name="notification_permission_rationale_message">새 메시지 알림을 받으려면 알림 권한이 필요합니다. 권한을 허용해 주세요.</string>
+    <string name="notification_permission_rationale_confirm">확인</string>
+    <string name="notification_permission_rationale_cancel">취소</string>
 </resources>

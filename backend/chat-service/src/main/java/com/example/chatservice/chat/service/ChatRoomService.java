@@ -12,6 +12,7 @@ import com.example.chatservice.chat.repository.ChatRoomMemberRepository;
 import com.example.chatservice.chat.repository.ChatRoomRepository;
 import com.example.chatservice.common.exception.CustomException;
 import com.example.chatservice.common.exception.ErrorCode;
+import com.example.chatservice.kafka.producer.KafkaProducerService;
 import com.example.chatservice.member.client.MemberFeignClient;
 import com.example.chatservice.member.dto.MemberDto;
 import com.example.chatservice.member.dto.ChatRoomMemberDto;
@@ -22,6 +23,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -39,6 +42,7 @@ public class ChatRoomService {
     private final ChatRepository chatRepository;
     private final MemberFeignClient memberFeignClient;
     private final ModelMapper modelMapper;
+    private final KafkaProducerService kafkaProducerService;
 
     public List<ChatRoomDto> searchChatRoomByUserId(String memberId) {
         List<ChatRoomMember> chatRoomMemberList = chatRoomMemberRepository.findAllByMemberId(Long.valueOf(memberId));
@@ -124,7 +128,30 @@ public class ChatRoomService {
         String chatRoomCreateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         ChatRoom chatRoom = new ChatRoom(UUID.randomUUID().toString(), "새로운 채팅방", "", "", "", chatRoomCreateTime);
 
-        return addNewChatRoomMember(chatRoom, members);
+        ChatRoomDto chatRoomDto = addNewChatRoomMember(chatRoom, members);
+
+        // ws-service 컨슈머가 이 이벤트를 받고 바로 방을 조회하므로, 커밋 전에 보내면
+        // 아직 안 보이는 방을 찾게 된다. 커밋 이후로 미룬다.
+        publishRoomCreatedAfterCommit(chatRoomDto.getRoomId());
+
+        return chatRoomDto;
+    }
+
+    /**
+     * 트랜잭션이 커밋된 뒤에만 발행한다. 트랜잭션 동기화가 없는 컨텍스트(단위 테스트 등)에서
+     * 호출되면 등록할 트랜잭션이 없으므로 즉시 보낸다.
+     */
+    private void publishRoomCreatedAfterCommit(String roomId) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    kafkaProducerService.sendRoomCreatedMessage(roomId);
+                }
+            });
+        } else {
+            kafkaProducerService.sendRoomCreatedMessage(roomId);
+        }
     }
 
     public ChatRoomDto exitChatRoomMember(String roomId, String userId) {

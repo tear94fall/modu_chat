@@ -6,7 +6,6 @@ import com.example.memberservice.global.exception.CustomException;
 import com.example.memberservice.global.exception.ErrorCode;
 import com.example.memberservice.global.lock.ApiLock;
 import com.example.memberservice.global.lock.LockParam;
-import com.example.memberservice.global.properties.GoogleOauthProperties;
 import com.example.memberservice.member.dto.*;
 import com.example.memberservice.member.entity.Member;
 import com.example.memberservice.member.repository.MemberRepository;
@@ -15,10 +14,6 @@ import com.example.memberservice.profile.dto.AddProfileDto;
 import com.example.memberservice.profile.dto.ProfileDto;
 import com.example.memberservice.profile.dto.ProfileType;
 import com.example.memberservice.storage.client.StorageFeignClient;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -32,11 +27,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
@@ -49,9 +42,9 @@ public class MemberService implements UserDetailsService {
 
     private final MemberRepository memberRepository;
     private final ModelMapper modelMapper;
-    private final GoogleOauthProperties googleOauthProperties;
     private final StorageFeignClient storageFeignClient;
     private final ProfileFeignClient profileFeignClient;
+    private final GoogleIdTokenValidator googleIdTokenValidator;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -73,34 +66,41 @@ public class MemberService implements UserDetailsService {
      * ApiLockAop 이 @Order(HIGHEST_PRECEDENCE) 라 트랜잭션 어드바이스보다 먼저 실행되고,
      * 안쪽 트랜잭션은 AopForTransaction 의 REQUIRES_NEW 가 연다.
      * 전파 옵션을 덧붙이면 그 트랜잭션이 중단되므로 붙이지 않는다.
+     *
+     * 이미 가입한 계정이면 그대로 돌려준다. 재설치·기기 변경이 곧바로 로그인으로 이어져야 한다
+     * (예전에는 이미 존재하는 이메일이면 예외를 던져서 500 으로 응답이 끊겼다).
      */
     @ApiLock
     public ResponseMemberDto createMember(@LockParam GoogleLoginRequest googleLoginRequest) {
-        MemberDto memberDto = registerMember(googleLoginRequest);
-        MemberDto updateMemberDto = addProfileImage(memberDto);
-        List<ProfileDto> profiles = profileFeignClient.getMemberProfiles(memberDto.getId()).getBody();
-
-        return ResponseMemberDto.from(updateMemberDto, profiles);
-    }
-
-    public MemberDto registerMember(GoogleLoginRequest googleLoginRequest) {
-        Payload payload = GoogleIdTokenVerifier(googleLoginRequest.getIdToken());
+        Payload payload = googleIdTokenValidator.verify(googleLoginRequest.getIdToken());
         if (payload == null) {
             throw new CustomException(ErrorCode.UNAUTHORIZED_GOOGLE_ID_TOKEN_ERROR, googleLoginRequest.getIdToken());
         }
 
-        String email = payload.getEmail();
-        if (memberRepository.existsByEmail(email)) {
-            throw new CustomException(ErrorCode.ALREADY_EXIST_USERID, email);
+        Optional<Member> registered = memberRepository.findByEmail(payload.getEmail());
+        if (registered.isPresent()) {
+            return toResponse(MemberDto.createMemberDto(registered.get()));
         }
 
+        MemberDto created = registerMember(payload);      // 신규 생성만
+        return toResponse(addProfileImage(created));      // 프로필 이미지는 신규일 때만
+    }
+
+    private ResponseMemberDto toResponse(MemberDto memberDto) {
+        List<ProfileDto> profiles = profileFeignClient.getMemberProfiles(memberDto.getId()).getBody();
+        return ResponseMemberDto.from(memberDto, profiles);
+    }
+
+    MemberDto registerMember(Payload payload) {
         MemberDto memberDto = new MemberDto(payload);
         Member member = new Member(memberDto);
 
+        // 동시에 들어온 두 요청이 모두 findByEmail 을 통과한 뒤 저장을 시도하면 DB 의 유일 제약
+        // (uk_member_email/uk_member_user_id) 이 하나만 통과시키고 나머지는 DataIntegrityViolationException
+        // 을 던진다. 같은 트랜잭션 안에서는 REPEATABLE READ 스냅샷 때문에 상대가 커밋한 행이 보이지
+        // 않고 트랜잭션도 이미 롤백 표시가 되어 여기서 복구할 수 없다 — 그대로 흘려보내고
+        // MemberSignupService 가 트랜잭션 밖에서 재시도한다.
         Member saveMember = memberRepository.save(member);
-        memberRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.CREATE_NEW_USER_FAIL, email));
-
         return MemberDto.createMemberDto(saveMember);
     }
 
@@ -206,19 +206,6 @@ public class MemberService implements UserDetailsService {
                 .stream()
                 .map(MemberDto::new)
                 .collect(Collectors.toList());
-    }
-
-    public Payload GoogleIdTokenVerifier(String token) {
-        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance())
-                .setAudience(Collections.singletonList(googleOauthProperties.getClientId()))
-                .build();
-
-        try {
-            GoogleIdToken googleIdToken = verifier.verify(token);
-            return googleIdToken.getPayload();
-        } catch (GeneralSecurityException | IOException e) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED_GOOGLE_ID_TOKEN_ERROR, token);
-        }
     }
 
     public List<MemberDto> findMembers(List<String> userIds) {

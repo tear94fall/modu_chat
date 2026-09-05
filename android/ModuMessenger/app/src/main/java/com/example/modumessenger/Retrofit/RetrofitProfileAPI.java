@@ -14,18 +14,18 @@ import retrofit2.http.Path;
 
 public interface RetrofitProfileAPI {
 
-    @GET("profile-service/profile/{memberId}")
+    @GET("profile-service/api-public/profile/{memberId}")
     Call<List<ProfileDto>> RequestMemberProfiles(@Path("memberId") Long memberId);
 
-    @GET("profile-service/profile/{memberId}/{id}")
+    @GET("profile-service/api-public/profile/{memberId}/{id}")
     Call<ProfileDto> RequestMemberProfile(@Path("memberId") String memberId, @Path("id") String id);
 
-    @POST("profile-service/profile")
+    @POST("profile-service/api-public/profile")
     Call<ProfileDto> RequestCreateProfile(@Body CreateProfileDto createProfileDto);
 
-    @DELETE("profile-service/{memberId}/{id}")
+    @DELETE("profile-service/api-public/profile/{memberId}/{id}")
     Call<Long> RequestDeleteProfile(@Path("memberId") String memberId, @Path("id") String id);
 
-    @GET("profile-service/total/count/{memberId}")
+    @GET("profile-service/api-public/profile/total/count/{memberId}")
     Call<Long> RequestTotalProfileCount(@Path("memberId") String memberId);
 }

@@ -9,6 +9,7 @@ import com.example.chatservice.common.exception.CustomException;
 import com.example.chatservice.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -129,5 +130,11 @@ public class ChatService {
     public String searchChatCount(String roomId) {
         Long id = chatRepository.countByRoomId(roomId);
         return id.toString();
+    }
+
+    /** 백오피스 방 메시지 목록. 최신 순 페이징. */
+    @Transactional(readOnly = true)
+    public Page<ChatDto> searchChatsForAdmin(String roomId, Pageable pageable) {
+        return chatRepository.findByRoomId(roomId, pageable).map(c -> modelMapper.map(c, ChatDto.class));
     }
 }

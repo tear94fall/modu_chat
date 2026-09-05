@@ -9,13 +9,14 @@
         android:id="@+id/imageView"
         android:layout_width="350dp"
         android:layout_height="350dp"
+        android:padding="88dp"
         android:layout_marginTop="40dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.491"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.368"
-        app:srcCompat="@drawable/modu_icon" />
+        app:srcCompat="@drawable/modu_logo" />
 
     <TextView
         android:id="@+id/serverVersionTextView"

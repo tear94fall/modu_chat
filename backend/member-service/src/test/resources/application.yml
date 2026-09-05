@@ -8,6 +8,12 @@ spring:
   profiles:
     active: test
 
+  # 테스트는 config-server 를 쓰지 않는다. enabled: false 면
+  # Spring Cloud Commons 의 spring.config.import 필수 검사도 통과한다.
+  cloud:
+    config:
+      enabled: false
+
   datasource:
     driver-class-name: org.h2.Driver
     url: jdbc:h2:mem:db;MODE=MYSQL
@@ -29,11 +35,6 @@ spring:
         default_batch_fetch_size: 1000
     open-in-view: false
 
-  sleuth:
-    sampler:
-      probability: 1.0
-  zipkin:
-    base-url: http://localhost:9411
 
   data:
     redis:
@@ -102,3 +103,8 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: http://localhost:8761/eureka
+
+# InternalApiFilter / InternalApiFeignConfig 가 요구한다. 운영은 config-repo 가 내려준다.
+modu:
+  internal-api:
+    token: test-internal-token

@@ -5,6 +5,12 @@ spring:
   application:
     name: storage-service
 
+  # 테스트는 config-server 를 쓰지 않는다. enabled: false 면
+  # Spring Cloud Commons 의 spring.config.import 필수 검사도 통과한다.
+  cloud:
+    config:
+      enabled: false
+
   servlet:
     multipart:
       max-file-size: 10MB
@@ -17,11 +23,6 @@ spring:
     username: guest
     password: guest
 
-  sleuth:
-    sampler:
-      probability: 1.0
-  zipkin:
-    base-url: http://localhost:9411
 
   kafka:
     producer:
@@ -34,6 +35,8 @@ spring:
 
 minio:
   endpoint: http://localhost:9000
+  # 이 테스트는 @PostConstruct 에서 실제 MinIO 에 접속하므로
+  # 로컬 docker 스택의 값과 일치해야 한다. 운영 자격증명이 아니라 개발용 고정값이다.
   accessKey: minio
   secretKey: miniopass
   bucketImageName: file-storage
@@ -53,3 +56,8 @@ logging:
     org:
       apache:
         kafka: DEBUG
+
+# InternalApiFilter / InternalApiFeignConfig 가 요구한다. 운영은 config-repo 가 내려준다.
+modu:
+  internal-api:
+    token: test-internal-token

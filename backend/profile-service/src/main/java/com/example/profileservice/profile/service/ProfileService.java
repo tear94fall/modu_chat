@@ -71,10 +71,9 @@ public class ProfileService {
 
         try {
             profileRepository.save(profile);
-            memberFeignClient.addMemberProfile(new AddProfileDto(profile));
         } catch (Exception e) {
             log.error(e.getMessage());
-        } finally {
+
             ProfileDto profileDto = new ProfileDto(profile);
             kafkaProducerService.sendMessage(profile.getMemberId().toString(), profileDto);
         }

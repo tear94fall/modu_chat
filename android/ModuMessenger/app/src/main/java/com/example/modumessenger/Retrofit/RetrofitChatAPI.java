@@ -14,24 +14,24 @@ import retrofit2.http.Query;
 
 public interface RetrofitChatAPI {
 
-    @GET("chat-service/chat/{chatId}")
+    @GET("chat-service/api-public/chat/{chatId}")
     Call<ChatDto> RequestGetChat(@Path("chatId") String chatId);
 
-    @GET("chat-service/chat")
+    @GET("chat-service/api-public/chat")
     Call<List<ChatDto>> RequestChatList(@Query("ids") List<String> ids);
 
-    @GET("chat-service/chat/{roomId}/chats")
+    @GET("chat-service/api-public/chat/{roomId}/chats")
     Call<List<ChatDto>> RequestChatHistory(@Path("roomId") String roomId);
 
-    @GET("chat-service/chat/{roomId}/page/{size}")
+    @GET("chat-service/api-public/chat/{roomId}/page/{size}")
     Call<List<ChatDto>> RequestChatListSize(@Path("roomId") String roomId, @Path("size") String size);
 
-    @GET("chat-service/chat/{roomId}/{chatId}/{size}")
+    @GET("chat-service/api-public/chat/{roomId}/{chatId}/{size}")
     Call<List<ChatDto>> RequestPrevChatList(@Path("roomId") String roomId, @Path("chatId") String chatId, @Path("size") String size);
 
-    @GET("chat-service/chat/{roomId}/images/{size}")
+    @GET("chat-service/api-public/chat/{roomId}/images/{size}")
     Call<List<ChatDto>> RequestImageChatListSize(@Path("roomId") String roomId, @Path("size") String size);
 
-    @DELETE("chat-service/chat/{roomId}/{chatId}")
+    @DELETE("chat-service/api-public/chat/{roomId}/{chatId}")
     Call<ChatDto> RequestDeleteChat(@Path("roomId") String roomId, @Path("chatId") String chatId);
 }

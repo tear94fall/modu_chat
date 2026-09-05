@@ -18,27 +18,27 @@ import retrofit2.http.Path;
 
 public interface RetrofitMemberAPI {
 
-    @POST("member-service/member/signup")
+    @POST("member-service/api-public/member/signup")
     Call<SignUpDto> RequestSignup(@Body GoogleLoginRequest googleLoginRequest);
 
-    @GET("member-service/member/{email}")
+    @GET("member-service/api-public/member/{email}")
     Call<MemberDto> RequestUserInfo(@Path("email") String email);
 
-    @GET("member-service/member/member/{id}")
+    @GET("member-service/api-public/member/member/{id}")
     Call<MemberDto> RequestMemberById(@Path("id") Long id);
 
-    @POST("member-service/member/{userId}")
+    @POST("member-service/api-public/member/{userId}")
     Call<MemberDto> RequestUpdateProfile(@Path("userId") String userId, @Body UpdateProfileDto updateProfileDto);
 
-    @GET("member-service/member/{userId}/friends")
+    @GET("member-service/api-public/member/{userId}/friends")
     Call<List<MemberDto>> RequestFriends(@Path("userId") String userId);
 
-    @POST("member-service/member/{userId}/friends")
+    @POST("member-service/api-public/member/{userId}/friends")
     Call<MemberDto> RequestAddFriends(@Path("userId") String userId, @Body AddFriendDto addFriendDto);
 
-    @GET("member-service/member/friends/{email}")
+    @GET("member-service/api-public/member/friends/{email}")
     Call<List<MemberDto>> RequestFriend(@Path("email") String email);
 
-    @DELETE("member-service/member/profile/{userId}")
+    @DELETE("member-service/api-public/member/profile/{userId}")
     Call<MemberDto> RequestDeleteProfileImage(@Path("userId") String userId, @Body String image);
 }

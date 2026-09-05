@@ -24,6 +24,8 @@ public class ChatRoom {
     private String lastChatTime;
     @SerializedName("chatMember")
     private List<Member> members = new ArrayList<>();
+    // 서버 응답(ChatRoomDto)에는 없는 값이다. /chat/unread 응답을 roomId 로 병합해 채운다.
+    private int unreadCount;
 
     public String getRoomId() { return this.roomId; }
     public String getRoomName() { return this.roomName; }
@@ -32,6 +34,7 @@ public class ChatRoom {
     public String getLastChatId() { return this.lastChatId; }
     public String getLastChatTime() { return this.lastChatTime; }
     public List<Member> getMembers() { return this.members; }
+    public int getUnreadCount() { return this.unreadCount; }
 
     public void setRoomId(String roomId) { this.roomId = roomId; }
     public void setRoomName(String roomName) { this.roomName = roomName; }
@@ -40,6 +43,10 @@ public class ChatRoom {
     public void setLastChatId(String lastChatId) { this.lastChatId = lastChatId; }
     public void setLastChatTime(String lastChatTime) { this.lastChatTime = lastChatTime; }
     public void setMembers(List<Member> members) { this.members = members; }
+    public void setUnreadCount(int unreadCount) { this.unreadCount = unreadCount; }
+
+    public ChatRoom() {
+    }
 
     public ChatRoom(ChatRoomDto chatRoomDto) {
         setRoomId(chatRoomDto.getRoomId());

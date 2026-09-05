@@ -2,6 +2,12 @@ server:
   port: 8080
 
 spring:
+  application:
+    name: member-service
+
   profiles:
     active: dev
     include: oauth
+
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URI:http://localhost:8888}

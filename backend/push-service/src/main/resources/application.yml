@@ -2,6 +2,24 @@ server:
   port: 9990
 
 spring:
+  application:
+    name: push-service
+
   profiles:
     active: dev
     include: oauth
+
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URI:http://localhost:8888}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true

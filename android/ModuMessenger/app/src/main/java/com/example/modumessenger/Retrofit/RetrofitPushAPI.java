@@ -7,6 +7,6 @@ import retrofit2.http.Path;
 
 public interface RetrofitPushAPI {
 
-    @PUT("push-service/push/{userId}/token")
+    @PUT("push-service/api-public/push/{userId}/token")
     Call<String> RequestFcmToken(@Path("userId") String userId, @Body String fcmToken);
 }

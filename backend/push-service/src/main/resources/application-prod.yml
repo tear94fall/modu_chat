@@ -13,7 +13,6 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3308/modu-chat?serverTimezone=Asia/Seoul
     username: root
-    password: root1234
 
   jpa:
     hibernate:
@@ -24,12 +23,6 @@ spring:
         format_sql: true
         default_batch_fetch_size: 1000
     open-in-view: false
-
-  sleuth:
-    sampler:
-      probability: 1.0
-  zipkin:
-    base-url: http://localhost:9411
 
 project:
   properties:
@@ -43,5 +36,3 @@ eureka:
   client:
     register-with-eureka: true
     fetch-registry: true
-    service-url:
-      defaultZone: http://localhost:8761/eureka

@@ -1,131 +1,178 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 프로필 편집. 보기 화면과 같은 뼈대(배너 + 걸친 원형 사진 + 정보 영역)를 쓰되
+     이름·상태메시지는 라벨 붙은 입력 칸으로, 저장은 하단 고정 버튼으로 둔다. -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/profile_surface">
 
-    <ImageView
-        android:id="@+id/profile_wallpaper_image"
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/profile_edit_scroll"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginBottom="50dp"
-        android:scaleType="centerCrop"
-        app:layout_constraintBottom_toBottomOf="@+id/my_profile_activity_image"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:srcCompat="@tools:sample/avatars" />
-
-    <ImageView
-        android:id="@+id/my_profile_activity_image"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:layout_marginBottom="12dp"
-        app:layout_constraintBottom_toTopOf="@+id/my_profile_name"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:srcCompat="@tools:sample/avatars" />
-
-    <Button
-        android:id="@+id/profile_close_button"
-        android:layout_width="40dp"
-        android:layout_height="50dp"
-        android:layout_marginTop="0dp"
-        android:layout_marginEnd="4dp"
-        android:text="X"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/my_profile_save_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="56dp"
-        android:text="저장"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <EditText
-        android:id="@+id/my_profile_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
-        android:autoSizeMaxTextSize="100sp"
-        android:autoSizeMinTextSize="12sp"
-        android:autoSizeStepGranularity="2sp"
-        android:autoSizeTextType="uniform"
-        android:inputType="textPersonName"
-        android:maxWidth="200sp"
-        android:text="사용자 이름"
-        app:layout_constraintBottom_toTopOf="@+id/my_status_message"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.502"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <EditText
-        android:id="@+id/my_status_message"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
-        android:autoSizeMaxTextSize="100sp"
-        android:autoSizeMinTextSize="12sp"
-        android:autoSizeStepGranularity="2sp"
-        android:autoSizeTextType="uniform"
-        android:inputType="textPersonName"
-        android:maxWidth="350sp"
-        android:text="상테 메세지"
+        android:fillViewport="true"
         app:layout_constraintBottom_toTopOf="@+id/my_profile_save_button"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="24dp">
+
+            <ImageView
+                android:id="@+id/profile_wallpaper_image"
+                android:layout_width="0dp"
+                android:layout_height="220dp"
+                android:background="@color/brand_violet"
+                android:contentDescription="배경 사진"
+                android:scaleType="centerCrop"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:srcCompat="@tools:sample/backgrounds/scenic" />
+
+            <View
+                android:id="@+id/profile_wallpaper_scrim"
+                android:layout_width="0dp"
+                android:layout_height="96dp"
+                android:background="@drawable/profile_top_scrim"
+                app:layout_constraintEnd_toEndOf="@+id/profile_wallpaper_image"
+                app:layout_constraintStart_toStartOf="@+id/profile_wallpaper_image"
+                app:layout_constraintTop_toTopOf="@+id/profile_wallpaper_image" />
+
+            <ImageButton
+                android:id="@+id/my_wallpaper_edit_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="12dp"
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/circle_icon_button_scrim"
+                android:contentDescription="배경 사진 바꾸기"
+                android:padding="8dp"
+                android:src="@drawable/ic_baseline_photo_camera_24"
+                app:layout_constraintBottom_toBottomOf="@+id/profile_wallpaper_image"
+                app:layout_constraintEnd_toEndOf="@+id/profile_wallpaper_image"
+                app:tint="@color/white" />
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/my_profile_activity_image"
+                android:layout_width="112dp"
+                android:layout_height="112dp"
+                android:contentDescription="프로필 사진"
+                android:padding="4dp"
+                android:scaleType="centerCrop"
+                app:layout_constraintBottom_toBottomOf="@+id/profile_wallpaper_image"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/profile_wallpaper_image"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.Modu.Circle"
+                app:strokeColor="@color/white"
+                app:strokeWidth="4dp"
+                tools:srcCompat="@tools:sample/avatars" />
+
+            <!-- 사진의 오른쪽 아래 모서리에 건다. 예전에는 -20dp 음수 마진으로 끌어당겨
+                 화면 크기에 따라 자리가 흔들렸다. -->
+            <ImageButton
+                android:id="@+id/my_profile_image_edit_button"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="@drawable/circle_icon_button"
+                android:contentDescription="프로필 사진 바꾸기"
+                android:padding="7dp"
+                android:src="@drawable/ic_baseline_photo_camera_24"
+                app:layout_constraintBottom_toBottomOf="@+id/my_profile_activity_image"
+                app:layout_constraintEnd_toEndOf="@+id/my_profile_activity_image"
+                app:tint="@color/brand_violet" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/my_profile_name_layout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="24dp"
+                android:layout_marginEnd="16dp"
+                android:hint="이름"
+                app:boxStrokeColor="@color/brand_violet"
+                app:hintTextColor="@color/brand_violet"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/my_profile_activity_image">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/my_profile_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPersonName"
+                    android:maxLines="1"
+                    android:textColor="@color/on_chat_bubble" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/my_status_message_layout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="16dp"
+                android:hint="상태메시지"
+                app:boxStrokeColor="@color/brand_violet"
+                app:hintTextColor="@color/brand_violet"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/my_profile_name_layout">
+
+                <!-- 예전에는 상태메시지도 textPersonName 이라 줄바꿈이 막혀 있었다. -->
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/my_status_message"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="top|start"
+                    android:inputType="text|textMultiLine"
+                    android:maxLines="3"
+                    android:minLines="2"
+                    android:textColor="@color/on_chat_bubble" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/my_profile_save_button"
+        android:layout_width="0dp"
+        android:layout_height="52dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:backgroundTint="@color/brand_violet"
+        android:text="저장"
+        android:textColor="@color/on_brand_violet"
+        android:textSize="16sp"
+        app:cornerRadius="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <View
-        android:id="@+id/view"
-        android:layout_width="match_parent"
-        android:layout_height="0.5dp"
-        android:layout_centerInParent="true"
-        android:background="#C0C0C0"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/profile_wallpaper_image" />
-
     <ImageButton
-        android:id="@+id/my_profile_image_edit_button"
-        android:layout_width="35dp"
-        android:layout_height="35dp"
-        android:layout_marginStart="-20dp"
-        android:layout_marginTop="-20dp"
-        android:adjustViewBounds="true"
-        android:background="@drawable/circle_icon_button"
-        android:bottomLeftRadius="20dp"
-        android:bottomRightRadius="20dp"
-        android:padding="15dp"
-        android:topLeftRadius="20dp"
-        android:topRightRadius="20dp"
-        app:layout_constraintStart_toEndOf="@+id/my_profile_activity_image"
-        app:layout_constraintTop_toBottomOf="@+id/my_profile_activity_image"
-        app:srcCompat="@drawable/ic_baseline_photo_camera_24" />
-
-    <ImageButton
-        android:id="@+id/my_wallpaper_edit_button"
-        android:layout_width="35dp"
-        android:layout_height="35dp"
-        android:layout_marginEnd="7dp"
-        android:layout_marginBottom="7dp"
-        android:adjustViewBounds="true"
-        android:background="@drawable/circle_icon_button"
-        android:bottomLeftRadius="20dp"
-        android:bottomRightRadius="20dp"
-        android:padding="15dp"
-        android:topLeftRadius="20dp"
-        android:topRightRadius="20dp"
-        app:layout_constraintBottom_toBottomOf="@+id/profile_wallpaper_image"
+        android:id="@+id/profile_close_button"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="12dp"
+        android:background="@drawable/circle_icon_button_scrim"
+        android:contentDescription="닫기"
+        android:padding="8dp"
+        android:src="@drawable/ic_baseline_clear_24"
         app:layout_constraintEnd_toEndOf="parent"
-        app:srcCompat="@drawable/ic_baseline_photo_camera_24" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@color/white" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -17,6 +17,9 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.modumessenger.Global.App;
+import com.example.modumessenger.Global.DataStoreHelper;
+import com.example.modumessenger.Global.HashUtil;
 import com.example.modumessenger.R;
 import com.example.modumessenger.dto.GoogleLoginRequest;
 import com.example.modumessenger.dto.MemberDto;
@@ -32,12 +35,16 @@ import com.google.android.gms.tasks.Task;
 import com.example.modumessenger.Retrofit.*;
 import com.google.gson.Gson;
 
+import java.util.Arrays;
+import java.util.List;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
 
+    private static final List<String> supportApp = Arrays.asList("com.example.myapplication", "com.example.moducafe");
     private static final String TAG = "Oauth2Google";
     private static final int maxLoginRetry = 5;
 
@@ -105,6 +112,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void getData() {
+        loginFromAnotherApp();
     }
 
     private void setData() {
@@ -129,12 +137,39 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    private void loginFromAnotherApp() {
+        Intent intent = getIntent();
+        String openApp = intent.getStringExtra("openApp");
+
+        if (supportApp.contains(openApp)) {
+            Intent resultIntent = new Intent();
+            String id = "";
+            String token = "";
+            String response = "fail";
+
+            GoogleSignInAccount account = getLastSignedInAccount(this);
+            if (account != null && account.getEmail() != null) {
+                id = HashUtil.getSHA256Hash(account.getId());
+                token = DataStoreHelper.getDataStoreStr("access-token");
+                response = "success";
+            }
+
+            resultIntent.putExtra("id", id);
+            resultIntent.putExtra("token", token);
+            resultIntent.putExtra("response_message", response);
+            setResult(Activity.RESULT_OK, resultIntent);
+            finish();
+        }
+    }
+
     private void SignupToBackend(Task<GoogleSignInAccount> completedTask, String auth_type) {
         try {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
             SignupMember(new GoogleLoginRequest(account.getIdToken(), auth_type));
         } catch (ApiException e) {
             Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
+            Toast.makeText(getApplicationContext(),
+                    String.format("구글 로그인에 실패했습니다 (코드 %d)", e.getStatusCode()), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -170,13 +205,35 @@ public class LoginActivity extends AppCompatActivity {
                         LoginButton.setVisibility(View.INVISIBLE);
 
                         LoginMember(new RequestLoginDto(signUpDto.getUserId(), signUpDto.getEmail()), 0);
+                    } else {
+                        Log.e(TAG, "회원가입 응답 본문이 비어 있습니다. code=" + response.code());
+                        Toast.makeText(getApplicationContext(),
+                                String.format("회원 가입에 실패했습니다 (코드 %d)", response.code()), Toast.LENGTH_SHORT).show();
+
+                        LoginButton.setVisibility(View.VISIBLE);
+                        mGoogleSignInClient.signOut();
                     }
+                } else {
+                    String errorBody = null;
+                    try {
+                        errorBody = response.errorBody() != null ? response.errorBody().string() : null;
+                    } catch (Exception e) {
+                        Log.e(TAG, "errorBody 읽기 실패: " + e.getMessage());
+                    }
+
+                    Log.e(TAG, "회원가입 실패 code=" + response.code() + " body=" + errorBody);
+                    Toast.makeText(getApplicationContext(),
+                            String.format("회원 가입에 실패했습니다 (코드 %d)", response.code()), Toast.LENGTH_SHORT).show();
+
+                    LoginButton.setVisibility(View.VISIBLE);
+                    mGoogleSignInClient.signOut();
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<SignUpDto> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
+                mGoogleSignInClient.signOut();
             }
         });
     }
@@ -231,6 +288,7 @@ public class LoginActivity extends AppCompatActivity {
                     if(result != null) {
                         String member = new Gson().toJson(result);
                         setDataStoreObject("member", member);
+                        App.onLoggedIn(result.getUserId(), String.valueOf(result.getId()));
 
                         Log.d("내정보 가져오기 요청 : ", result.toString());
 

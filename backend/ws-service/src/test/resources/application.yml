@@ -1,0 +1,39 @@
+# 테스트 전용 설정.
+# 운영 설정은 config-server 에서 오지만, 테스트는 config-server 없이 돌아야 하므로
+# 여기에 로컬 값을 둔다. src/test/resources 는 테스트 시 main 을 가린다.
+server:
+  port: 8090
+
+spring:
+  application:
+    name: ws-service
+
+  # 테스트는 config-server 를 쓰지 않는다.
+  # enabled: false 면 Spring Cloud Commons 의 spring.config.import 필수 검사도 통과한다.
+  # 이 설정이 없으면 개발자 머신에 config-server 가 떠 있는지 여부에 따라
+  # 테스트 결과가 달라진다 (떠 있으면 컨테이너용 kafka:9092 를 받아와 실패).
+  cloud:
+    config:
+      enabled: false
+
+  kafka:
+    producer:
+      bootstrap-servers: localhost:29092
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      bootstrap-servers: localhost:29092
+      group-id: test-group
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+
+# InternalApiFilter / InternalApiFeignConfig 가 요구한다. 운영은 config-repo 가 내려준다.
+modu:
+  internal-api:
+    token: test-internal-token

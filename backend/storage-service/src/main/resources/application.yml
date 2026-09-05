@@ -5,6 +5,9 @@ spring:
   application:
     name: storage-service
 
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URI:http://localhost:8888}
+
   servlet:
     multipart:
       max-file-size: 10MB
@@ -12,28 +15,14 @@ spring:
       location: /data
 
   rabbitmq:
-    host: localhost
     port: 5672
-    username: guest
-    password: guest
-
-  sleuth:
-    sampler:
-      probability: 1.0
-  zipkin:
-    base-url: http://localhost:9411
 
   kafka:
-    producer:
-      bootstrap-servers: localhost:29092
     consumer:
-      bootstrap-servers: localhost:29092
       group-id: storage-service-group
 
 minio:
   endpoint: http://localhost:9000
-  accessKey: minio
-  secretKey: miniopass
   bucketImageName: file-storage
 
 eureka:
@@ -43,5 +32,15 @@ eureka:
   client:
     register-with-eureka: true
     fetch-registry: true
-    service-url:
-      defaultZone: http://localhost:8761/eureka
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true

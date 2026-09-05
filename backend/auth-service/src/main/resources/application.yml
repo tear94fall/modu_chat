@@ -5,21 +5,15 @@ spring:
   application:
     name: auth-service
 
-  redis:
-    host: localhost
-    port: 6379
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URI:http://localhost:8888}
+
+  data:
+    redis:
+      port: 6379
 
   rabbitmq:
-    host: localhost
     port: 5672
-    username: guest
-    password: guest
-
-  sleuth:
-    sampler:
-      probability: 1.0
-  zipkin:
-    base-url: http://localhost:9411
 
 logging:
   level:
@@ -30,7 +24,6 @@ security:
     token:
       access-expired: 3600000
       refresh-expired: 604800000
-      secret-key: 98FB6A50D8BE83F0521F6EDA48903D718DE1C41BF09D4D3671A5E3A6E4E0910A
 
 eureka:
   instance:
@@ -39,5 +32,15 @@ eureka:
   client:
     register-with-eureka: true
     fetch-registry: true
-    service-url:
-      defaultZone: http://localhost:8761/eureka
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true

@@ -2,26 +2,26 @@
     <!-- Base application theme. -->
     <style name="Theme.ModuMessenger" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">#A1CDE1</item>
-        <item name="colorPrimaryVariant">#5DA4BE</item>
-        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimary">@color/brand_violet</item>
+        <item name="colorPrimaryVariant">@color/brand_violet_dark</item>
+        <item name="colorOnPrimary">@color/on_brand_violet</item>
         <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/teal_200</item>
-        <item name="colorSecondaryVariant">@color/teal_700</item>
-        <item name="colorOnSecondary">@color/black</item>
+        <item name="colorSecondary">@color/brand_blue</item>
+        <item name="colorSecondaryVariant">@color/brand_blue_dark</item>
+        <item name="colorOnSecondary">@color/on_brand_blue</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
     </style>
 
     <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
-        <item name="colorPrimary">#A1CDE1</item>
-        <item name="colorPrimaryVariant">#5DA4BE</item>
-        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimary">@color/brand_violet</item>
+        <item name="colorPrimaryVariant">@color/brand_violet_dark</item>
+        <item name="colorOnPrimary">@color/on_brand_violet</item>
         <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/teal_200</item>
-        <item name="colorSecondaryVariant">@color/teal_700</item>
-        <item name="colorOnSecondary">@color/black</item>
+        <item name="colorSecondary">@color/brand_blue</item>
+        <item name="colorSecondaryVariant">@color/brand_blue_dark</item>
+        <item name="colorOnSecondary">@color/on_brand_blue</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
 <!--        <item name="windowActionBar">false</item>-->
@@ -32,7 +32,32 @@
         <item name="android:windowBackground">@drawable/background_splash</item>
     </style>
 
+    <!-- 프로필 사진을 원형으로 깎는다. ShapeableImageView 의 shapeAppearanceOverlay 로 쓴다. -->
+    <style name="ShapeAppearance.Modu.Circle" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <!-- 팝업. ChatActivity 는 AppCompat 테마라 머티리얼 다이얼로그를 못 쓰므로
+         AppCompat 팝업에 브랜드색과 둥근 배경을 입혀 앱의 다른 화면과 톤을 맞춘다. -->
+    <style name="Theme.Modu.Dialog" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="colorAccent">@color/brand_violet</item>
+        <item name="android:windowBackground">@drawable/bg_dialog</item>
+        <item name="android:textColorPrimary">@color/on_chat_bubble</item>
+        <item name="android:textColorSecondary">@color/on_chat_bubble</item>
+        <!-- 팝업 테마는 액티비티 테마 위에 덧씌워지므로, 지정하지 않은 속성은 액티비티
+             테마로 흘러내린다. 버튼 색을 비워 두었더니 MaterialComponents 테마를 쓰는
+             화면에서는 흰 글자가 되어 흰 배경에 묻혔다. 버튼 색을 직접 못 박는다. -->
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.Modu.DialogButton</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.Modu.DialogButton</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Widget.Modu.DialogButton</item>
+    </style>
+
+    <style name="Widget.Modu.DialogButton" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="android:textColor">@color/brand_violet</item>
+    </style>
+
     <style name="AppTheme.Button" parent="Base.Widget.AppCompat.Button">
-        <item name="colorButtonNormal">@color/sky_blue</item>
+        <item name="colorButtonNormal">@color/brand_violet</item>
     </style>
 </resources>

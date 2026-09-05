@@ -8,78 +8,145 @@ eureka:
   client:
     fetch-registry: true
     register-with-eureka: true
-    service-url:
-      defaultZone: http://localhost:8761/eureka
 
 security:
   jwt:
     token:
       access-expired: 3600000
       refresh-expired: 604800000
-      secret-key: 98FB6A50D8BE83F0521F6EDA48903D718DE1C41BF09D4D3671A5E3A6E4E0910A
 
 spring:
   application:
     name: gateway-service
 
-  sleuth:
-    sampler:
-      probability: 1.0
-  zipkin:
-    base-url: http://localhost:9411
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URI:http://localhost:8888}
 
   cloud:
     gateway:
+      # 외부 요청이 들고 온 내부 토큰 헤더는 항상 떼어낸다. 내부 토큰은 서비스 간 Feign 만 붙인다.
+      default-filters:
+        - RemoveRequestHeader=X-Internal-Token
+      # 백오피스(브라우저)용 CORS. 허용 origin 은 modu.admin.allowed-origin.
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: ${modu.admin.allowed-origin:http://localhost:5173}
+            allowedMethods: [GET, POST, PUT, DELETE, OPTIONS]
+            allowedHeaders: "*"
+            allowCredentials: false
+            maxAge: 3600
       routes:
-        - id: auth-service
+        # ---- 인증 없이 통과하는 public 엔드포인트 (와일드카드보다 먼저 매칭돼야 한다) ----
+        - id: auth-service-login
           uri: lb://AUTH-SERVICE
           predicates:
-            - Path=/auth-service/login
+            - Path=/auth-service/api-public/login
             - Method=POST
           filters:
             - RewritePath=/auth-service/(?<segment>.*), /$\{segment}
-        - id: auth-service
+        - id: auth-service-reissue
           uri: lb://AUTH-SERVICE
           predicates:
-            - Path=/auth-service/auth/reissue
+            - Path=/auth-service/api-public/auth/reissue
             - Method=POST
           filters:
             - RewritePath=/auth-service/(?<segment>.*), /$\{segment}
-        - id: auth-service
+        - id: member-service-signup
+          uri: lb://MEMBER-SERVICE
+          predicates:
+            - Path=/member-service/api-public/member/signup
+            - Method=POST
+          filters:
+            - RewritePath=/member-service/(?<segment>.*), /$\{segment}
+        - id: auth-service-admin-login
           uri: lb://AUTH-SERVICE
           predicates:
-            - Path=/auth-service/auth/logout
+            - Path=/auth-service/api-public/admin/login
+            - Method=POST
+          filters:
+            - RewritePath=/auth-service/(?<segment>.*), /$\{segment}
+
+        # ---- JWT 가 필요한 public 계층. /api-internal, /api-debug 는 라우트가 없어 404 다 ----
+        - id: auth-service-public
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/auth-service/api-public/**
           filters:
             - AuthorizationHeaderFilter
             - RewritePath=/auth-service/(?<segment>.*), /$\{segment}
-        - id: member-service
+        - id: member-service-public
           uri: lb://MEMBER-SERVICE
           predicates:
-            - Path=/member-service/member/signup
-            - Method=POST
-          filters:
-            - RewritePath=/member-service/(?<segment>.*), /$\{segment}
-        - id: member-service
-          uri: lb://MEMBER-SERVICE
-          predicates:
-            - Path=/member-service/member/common/**
-            - Method=POST
-          filters:
-            - RewritePath=/member-service/(?<segment>.*), /$\{segment}
-        - id: member-service
-          uri: lb://MEMBER-SERVICE
-          predicates:
-            - Path=/member-service/**
+            - Path=/member-service/api-public/**
           filters:
             - AuthorizationHeaderFilter
             - RewritePath=/member-service/(?<segment>.*), /$\{segment}
-        - id: chat-service
+        - id: chat-service-public
           uri: lb://CHAT-SERVICE
           predicates:
-            - Path=/chat-service/**
+            - Path=/chat-service/api-public/**
           filters:
             - AuthorizationHeaderFilter
             - RewritePath=/chat-service/(?<segment>.*), /$\{segment}
+        - id: profile-service-public
+          uri: lb://PROFILE-SERVICE
+          predicates:
+            - Path=/profile-service/api-public/**
+          filters:
+            - AuthorizationHeaderFilter
+            - RewritePath=/profile-service/(?<segment>.*), /$\{segment}
+        - id: storage-service-public
+          uri: lb://STORAGE-SERVICE
+          predicates:
+            - Path=/storage-service/api-public/**
+          filters:
+            - AuthorizationHeaderFilter
+            - RewritePath=/storage-service/(?<segment>.*), /$\{segment}
+        - id: push-service-public
+          uri: lb://PUSH-SERVICE
+          predicates:
+            - Path=/push-service/api-public/**
+          filters:
+            - AuthorizationHeaderFilter
+            - RewritePath=/push-service/(?<segment>.*), /$\{segment}
+
+        # ---- admin 계층. ROLE_ADMIN JWT 를 검사하고, 통과한 요청에만 내부 토큰을 붙여 넘긴다 ----
+        - id: member-service-admin
+          uri: lb://MEMBER-SERVICE
+          predicates:
+            - Path=/member-service/api-admin/**
+          filters:
+            - AuthorizationHeaderFilter=ROLE_ADMIN
+            - AddRequestHeader=X-Internal-Token, ${modu.internal-api.token}
+            - RewritePath=/member-service/(?<segment>.*), /$\{segment}
+        - id: chat-service-admin
+          uri: lb://CHAT-SERVICE
+          predicates:
+            - Path=/chat-service/api-admin/**
+          filters:
+            - AuthorizationHeaderFilter=ROLE_ADMIN
+            - AddRequestHeader=X-Internal-Token, ${modu.internal-api.token}
+            - RewritePath=/chat-service/(?<segment>.*), /$\{segment}
+        - id: push-service-admin
+          uri: lb://PUSH-SERVICE
+          predicates:
+            - Path=/push-service/api-admin/**
+          filters:
+            - AuthorizationHeaderFilter=ROLE_ADMIN
+            - AddRequestHeader=X-Internal-Token, ${modu.internal-api.token}
+            - RewritePath=/push-service/(?<segment>.*), /$\{segment}
+
+        - id: storage-service-admin
+          uri: lb://STORAGE-SERVICE
+          predicates:
+            - Path=/storage-service/api-admin/**
+          filters:
+            - AuthorizationHeaderFilter=ROLE_ADMIN
+            - AddRequestHeader=X-Internal-Token, ${modu.internal-api.token}
+            - RewritePath=/storage-service/(?<segment>.*), /$\{segment}
+
+        # ---- WebSocket. HTTP API 계층과 무관하므로 경로 그대로 ----
         - id: ws-service
           uri: lb:ws://WS-SERVICE
           predicates:
@@ -87,17 +154,15 @@ spring:
           filters:
             - AuthorizationHeaderFilter
             - RewritePath=/ws-service/(?<segment>.*), /$\{segment}
-        - id: storage-service
-          uri: lb://STORAGE-SERVICE
-          predicates:
-            - Path=/storage-service/**
-          filters:
-            - AuthorizationHeaderFilter
-            - RewritePath=/storage-service/(?<segment>.*), /$\{segment}
-        - id: profile-service
-          uri: lb://PROFILE-SERVICE
-          predicates:
-            - Path=/profile-service/**
-          filters:
-            - AuthorizationHeaderFilter
-            - RewritePath=/profile-service/(?<segment>.*), /$\{segment}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true

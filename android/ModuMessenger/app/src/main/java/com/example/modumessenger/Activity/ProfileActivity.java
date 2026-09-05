@@ -47,8 +47,8 @@ public class ProfileActivity extends AppCompatActivity {
 
     ImageView profileImageView, wallpaperImageView;
     TextView usernameTextView, statusMessageTextView;
-    Button profileEditButton, profileCloseButton, createChatRoomButton;
-    ImageButton profileHistoryButton;
+    Button profileEditButton, createChatRoomButton;
+    ImageButton profileHistoryButton, profileCloseButton;
     GestureDetector gestureDetector;
 
     RetrofitMemberAPI retrofitMemberAPI;
@@ -110,7 +110,7 @@ public class ProfileActivity extends AppCompatActivity {
 
         profileHistoryButton = findViewById(R.id.profile_image_history_button);
 
-        profileEditButton.setVisibility(View.INVISIBLE);
+        profileEditButton.setVisibility(View.GONE);
     }
 
     private void getData() {
@@ -191,14 +191,10 @@ public class ProfileActivity extends AppCompatActivity {
 
     private void setUserProfile(Member member) {
         usernameTextView.setText(member.getUsername());
-
-        String statusMessage = member.getStatusMessage().length() > 15 ? member.getStatusMessage().substring(0, 12) + "..." : member.getStatusMessage();
-        statusMessageTextView.setText(statusMessage);
+        statusMessageTextView.setText(member.getStatusMessage());
 
         setProfileImage(profileImageView, member.getProfileImage());
         setProfileImage(wallpaperImageView, member.getWallpaperImage());
-
-        profileImageView.bringToFront();
     }
 
     // Retrofit function

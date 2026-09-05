@@ -8,20 +8,41 @@ spring:
   profiles:
     active: native
 
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
-
   cloud:
     config:
       server:
-        git:
-          uri: https://github.com/tear94fall/modu_messenger_config
+        native:
+          search-locations: file:/config-repo
+
+  # spring-cloud-starter-bus-amqp 가 RabbitMQ 헬스 인디케이터를 자동 구성한다.
+  # 호스트를 지정하지 않으면 localhost:5672 를 재시도하다가 기동이 수 분 지연되고
+  # /actuator/health 가 DOWN 으로 남는다. Bus 자체(/busrefresh)는 후속 과제지만
+  # 의존성이 있는 한 접속 대상은 있어야 한다.
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: 5672
+
+encrypt:
+  # 빈 기본값을 두지 않는다. 키가 없으면 서버가 {cipher} 를 복호화하지 못한 채
+  # 'invalid' 접두사가 붙은 쓰레기 값을 내려주고, 클라이언트는 기동 시점이 아니라
+  # 요청 시점에 인증 실패로 나타난다. 없으면 기동 자체가 실패하는 편이 낫다.
+  key: ${ENCRYPT_KEY}
 
 management:
+  health:
+    # spring-cloud-starter-bus-amqp 가 RabbitMQ 헬스 인디케이터를 자동 구성한다.
+    # config-service 의 health 는 스택 전체의 기동 게이트(depends_on: service_healthy)라,
+    # 여기에 rabbitmq 기동 시점이 얽히면 느린 호스트에서 전체 기동이 실패한다.
+    # Bus 기능은 아직 쓰지 않으므로 인디케이터를 끈다.
+    rabbit:
+      enabled: false
   endpoints:
     web:
       exposure:
-        include: health, beans, refresh, busrefresh
+        include: health, info, prometheus, refresh, busrefresh
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true

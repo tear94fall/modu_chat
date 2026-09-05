@@ -9,7 +9,7 @@ import androidx.room.RoomDatabase;
 import com.example.modumessenger.RoomDatabase.Dao.ChatRoomDao;
 import com.example.modumessenger.RoomDatabase.Entity.ChatRoomEntity;
 
-@Database(entities = {ChatRoomEntity.class}, version =  1)
+@Database(entities = {ChatRoomEntity.class}, version =  2)
 public abstract class ChatRoomDatabase extends RoomDatabase {
 
     private static ChatRoomDatabase instance;

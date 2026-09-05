@@ -8,6 +8,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 @FeignClient("push-service")
 public interface FcmFeignClient {
 
-    @PostMapping("/push/chat")
+    @PostMapping("/api-internal/push/chat")
     Void sendMessage(@RequestBody FcmMessageDto fcmMessageDto);
 }

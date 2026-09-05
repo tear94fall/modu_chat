@@ -17,10 +17,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.Activity.ChatActivity;
 import com.example.modumessenger.Fragments.FragmentChat;
+import com.example.modumessenger.Global.ChatRoomNameUtil;
 import com.example.modumessenger.R;
 import com.example.modumessenger.entity.ChatRoom;
-import com.example.modumessenger.RoomDatabase.Database.ChatRoomDatabase;
-import com.example.modumessenger.RoomDatabase.Entity.ChatRoomEntity;
 import com.example.modumessenger.entity.Member;
 
 import java.time.LocalDateTime;
@@ -60,7 +59,6 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
     public void onBindViewHolder(@NonNull ChatRoomAdapter.ChatRoomViewHolder holder, int position) {
         ChatRoom chatRoom = this.chatRoomList.get(position);
 
-        holder.setDatabase(chatRoom);
         holder.setChatRoomTitle(chatRoom);
         holder.setChatRoomLastMsg(chatRoom);
         holder.setChatRoomLastTime(chatRoom);
@@ -83,13 +81,19 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
         this.chatRoomList.sort(Comparator.comparing(ChatRoom::getLastChatTime, Comparator.reverseOrder()));
     }
 
+    public void setChatRoomList(List<ChatRoom> rooms) {
+        this.chatRoomList.clear();
+        this.chatRoomList.addAll(rooms);
+        sortChatRoom();
+        notifyDataSetChanged();
+    }
+
     public static class ChatRoomViewHolder extends RecyclerView.ViewHolder {
         FragmentChat fragmentChat;
 
         Member member;
         String userId;
         String username;
-        ChatRoomDatabase chatRoomDB;
         TextView chatRoomName;
         TextView lastChatMessage;
         TextView lastChatTime;
@@ -115,7 +119,6 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
 
             userId = member.getUserId();
             username = member.getUsername();
-            chatRoomDB = ChatRoomDatabase.getInstance(this.itemView.getContext());
             chatRoomName = itemView.findViewById(R.id.chat_room_name);
             lastChatMessage = itemView.findViewById(R.id.last_chat_message);
             lastChatTime = itemView.findViewById(R.id.last_chat_time);
@@ -144,32 +147,9 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
             memberImageCardView4.setVisibility(View.INVISIBLE);
         }
 
-        public void setDatabase(ChatRoom chatRoom) {
-            ChatRoomEntity chatRoomEntity = new ChatRoomEntity(chatRoom);
-            chatRoomDB.chatRoomDao().update(chatRoomEntity);
-        }
-
         public void setChatRoomTitle(ChatRoom chatRoom) {
-            if (chatRoom.getMembers().size() == 1) {
-                this.chatRoomName.setText(chatRoom.getMembers().get(0).getUserId().equals(userId) ? String.format("나와의 채팅 (%s)", username) : chatRoom.getRoomName());
-            } else if (chatRoom.getMembers().size() == 2) {
-                chatRoom.getMembers().forEach(member -> {
-                    if (!member.getUserId().equals(userId)) {
-                        this.chatRoomName.setText(member.getUsername());
-                    }
-                });
-            } else if (chatRoom.getMembers().size() > 2) {
-                List<String> userIds = chatRoom.getMembers().stream()
-                        .map(Member::getUsername)
-                        .filter(name -> !name.equals(username))
-                        .collect(Collectors.toList());
-                String title = String.join(", ", userIds);
-                title = title.substring(0, Math.min(title.length(), 25)).trim();
-                title = title.substring(0, Math.min(title.length(), title.endsWith(",") ? title.length() - 1 : title.length()));
-                this.chatRoomName.setText(title);
-            } else {
-                this.chatRoomName.setText(chatRoom.getRoomName());
-            }
+            this.chatRoomName.setText(ChatRoomNameUtil.resolve(
+                    chatRoom.getRoomName(), chatRoom.getMembers(), userId, username, 25));
         }
 
         public void setChatRoomLastMsg(ChatRoom chatRoom) {
@@ -181,39 +161,58 @@ public class ChatRoomAdapter extends RecyclerView.Adapter<ChatRoomAdapter.ChatRo
         }
 
         public void setChatBadge(ChatRoom chatRoom) {
-            this.chatBadge.setText("1");
-            this.chatBadge.setVisibility(View.INVISIBLE);
+            int count = chatRoom.getUnreadCount();
+
+            if (count <= 0) {
+                // INVISIBLE 은 자리를 차지해 레이아웃이 어긋난다.
+                this.chatBadge.setVisibility(View.GONE);
+                return;
+            }
+
+            this.chatBadge.setText(count > 999 ? "999+" : String.valueOf(count));
+            this.chatBadge.setVisibility(View.VISIBLE);
         }
 
         public void setChatRoomImage(ChatRoom chatRoom) {
-            if (chatRoom.getMembers().size() == 1) {
-                setProfileImage(chatRoomImage, chatRoom.getMembers().get(0).getProfileImage());
-            } else if(chatRoom.getMembers().size() == 2) {
-                chatRoom.getMembers().forEach(member -> {
-                    if(!member.getUserId().equals(userId)) {
-                        setProfileImage(chatRoomImage, member.getProfileImage());
-                    }
-                });
-            } else if (chatRoom.getMembers().size() > 2) {
-                if (chatRoom.getRoomImage() != null && !chatRoom.getRoomImage().equals("")) {
-                    setProfileImage(chatRoomImage, chatRoom.getRoomImage());
-                } else {
-                    List<Member> memberList = chatRoom.getMembers().stream()
-                            .filter(m -> !m.getUserId().equals(userId))
-                            .collect(Collectors.toList());
+            List<ImageView> imageViewList = Arrays.asList(memberImage1, memberImage2, memberImage3, memberImage4);
+            List<CardView> cardViewList = Arrays.asList(memberImageCardView1, memberImageCardView2, memberImageCardView3, memberImageCardView4);
 
-                    chatRoomImage.setVisibility(View.INVISIBLE);
-                    List<ImageView> imageViewList = new ArrayList<>(Arrays.asList(memberImage1, memberImage2, memberImage3, memberImage4));
-                    List<CardView> cardViewList = new ArrayList<>(Arrays.asList(memberImageCardView1, memberImageCardView2, memberImageCardView3, memberImageCardView4));
+            // 재사용되는 뷰라 매번 처음 상태로 되돌린다. 예전에는 뷰를 만들 때 한 번만
+            // 숨겨서, 여러 명 방을 보여 준 자리를 재사용하면 작은 사진들이 남았다.
+            chatRoomImage.setVisibility(View.VISIBLE);
+            for (int index = 0; index < imageViewList.size(); index++) {
+                imageViewList.get(index).setVisibility(View.INVISIBLE);
+                cardViewList.get(index).setVisibility(View.INVISIBLE);
+            }
 
-                    for(int index=0; index<Math.min(4, memberList.size()); index++) {
-                        imageViewList.get(index).setVisibility(View.VISIBLE);
-                        cardViewList.get(index).setVisibility(View.VISIBLE);
-                        setProfileImage(imageViewList.get(index), memberList.get(index).getProfileImage());
-                    }
-                }
-            } else {
+            // 직접 넣은 방 사진이 있으면 참여자 수와 상관없이 그것을 쓴다.
+            // 예전에는 참여자가 셋 이상인 방에서만 방 사진을 봐서, 1:1 방은
+            // 사진을 바꿔도 목록에 반영되지 않았다.
+            if (ChatRoomNameUtil.hasCustomImage(chatRoom.getRoomImage())) {
                 setProfileImage(chatRoomImage, chatRoom.getRoomImage());
+                return;
+            }
+
+            List<Member> others = chatRoom.getMembers().stream()
+                    .filter(m -> m.getUserId() != null && !m.getUserId().equals(userId))
+                    .collect(Collectors.toList());
+
+            if (others.isEmpty()) {
+                setProfileImage(chatRoomImage, chatRoom.getMembers().isEmpty()
+                        ? "" : chatRoom.getMembers().get(0).getProfileImage());
+                return;
+            }
+
+            if (others.size() == 1) {
+                setProfileImage(chatRoomImage, others.get(0).getProfileImage());
+                return;
+            }
+
+            chatRoomImage.setVisibility(View.INVISIBLE);
+            for (int index = 0; index < Math.min(4, others.size()); index++) {
+                imageViewList.get(index).setVisibility(View.VISIBLE);
+                cardViewList.get(index).setVisibility(View.VISIBLE);
+                setProfileImage(imageViewList.get(index), others.get(index).getProfileImage());
             }
         }
 

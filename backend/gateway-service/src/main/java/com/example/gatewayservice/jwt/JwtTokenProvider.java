@@ -95,13 +95,10 @@ public class JwtTokenProvider {
         return (List<String>) getClaims(token).get("roles");
     }
 
-    public void validateToken(String token) {
+    public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(getSecretKey())
-                    .build()
-                    .parseClaimsJws(token);
-
+            Jwts.parserBuilder().setSigningKey(getSecretKey()).build().parseClaimsJws(token);
+            return true;
         } catch (SecurityException ex) {
             log.error("Invalid JWT signature");
         } catch (MalformedJwtException ex) {
@@ -115,5 +112,6 @@ public class JwtTokenProvider {
         } catch (NullPointerException ex) {
             log.error("JWT RefreshToken is empty");
         }
+        return false;
     }
 }

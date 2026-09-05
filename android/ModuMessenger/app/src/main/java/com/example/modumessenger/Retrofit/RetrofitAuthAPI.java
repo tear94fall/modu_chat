@@ -11,12 +11,12 @@ import retrofit2.http.POST;
 
 public interface RetrofitAuthAPI {
 
-    @POST("auth-service/auth/reissue")
+    @POST("auth-service/api-public/auth/reissue")
     Call<TokenResponseDto> reissue(@Header("Authorization") String accessToken, @Header("refresh-token") String refreshToken);
 
-    @POST("auth-service/login")
+    @POST("auth-service/api-public/login")
     Call<Void> login(@Body RequestLoginDto requestLoginDto);
 
-    @POST("auth-service/auth/logout")
+    @POST("auth-service/api-public/auth/logout")
     Call<Void> logout();
 }

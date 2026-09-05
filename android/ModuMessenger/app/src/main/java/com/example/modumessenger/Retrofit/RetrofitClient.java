@@ -1,5 +1,6 @@
 package com.example.modumessenger.Retrofit;
 
+import com.example.modumessenger.BuildConfig;
 import com.google.gson.GsonBuilder;
 
 import java.util.concurrent.TimeUnit;
@@ -9,7 +10,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RetrofitClient {
-    private static final String BASE_URL = "http://192.168.0.3:8000/";
+    private static final String BASE_URL = BuildConfig.API_BASE_URL;
 
     private static OkHttpClient.Builder okHttp = new OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)

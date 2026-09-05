@@ -18,4 +18,8 @@ public class ChatRoomService {
     public ChatRoomDto updateChatRoom(String roomId, ChatRoomDto chatRoomDto) {
         return chatFeignClient.updateChatRoom(roomId, chatRoomDto);
     }
+
+    public void updateLastReadChat(String roomId, String userId) {
+        chatFeignClient.updateLastReadChat(roomId, userId);
+    }
 }

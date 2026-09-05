@@ -37,58 +37,140 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
+            <!-- 마지막 말풍선이 입력 바에 딱 붙어 답답했다. 아래에 여백을 두되
+                 clipToPadding 을 꺼서 스크롤은 끝까지 닿게 한다. 말풍선이 화면
+                 좌우에서 4dp 떨어져 있으므로 위아래도 같은 4dp 로 둔다. 8dp 로
+                 두었더니 아래만 우측의 두 배로 벌어져 보였다. -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/chat_history_recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
+                android:clipToPadding="false"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/toolbar"
                 app:layout_constraintBottom_toTopOf="@id/bottomConstraintLayout"
                 tools:listitem="@layout/chat_bubble_left_image" />
 
+            <!-- 채팅방 중간에서 읽는 중 다른 사람의 새 메시지가 오면 뜨는 맨 아래로 이동 버튼.
+                 기본은 숨김이며 ChatActivity 가 스크롤/전송 상태에 따라 보이고 감춘다. -->
+            <FrameLayout
+                android:id="@+id/scroll_to_bottom_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="12dp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toTopOf="@id/bottomConstraintLayout"
+                app:layout_constraintEnd_toEndOf="parent"
+                tools:visibility="visible">
+
+                <ImageView
+                    android:id="@+id/scroll_to_bottom_button"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/bg_scroll_bottom"
+                    android:contentDescription="맨 아래로 이동"
+                    android:padding="10dp"
+                    app:srcCompat="@drawable/ic_baseline_keyboard_arrow_down_24"
+                    app:tint="@color/white" />
+
+                <TextView
+                    android:id="@+id/scroll_to_bottom_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top|end"
+                    android:background="@drawable/chat_badge"
+                    android:gravity="center"
+                    android:minWidth="18dp"
+                    android:minHeight="18dp"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:visibility="gone"
+                    tools:text="3"
+                    tools:visibility="visible" />
+
+            </FrameLayout>
+
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/bottomConstraintLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@color/white"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/chat_history_recycler_view">
 
-                <android.widget.Button
-                    android:id="@+id/send_others_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:theme="@style/AppTheme.Button"
-                    android:textColor="@color/white"
-                    android:text="+"
-                    app:layout_constraintBottom_toBottomOf="parent"
+                <!-- 대화 목록과 입력 바를 가르는 선. 컨테이너에 좌우 여백을 주지 않아
+                     선이 화면 끝까지 이어진다. -->
+                <View
+                    android:id="@+id/chat_input_divider"
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:background="@color/divider"
+                    app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
+
+                <!-- ChatActivity 는 AppCompat 테마여서 머티리얼 버튼을 inflate 하지 못한다.
+                     테마를 바꾸면 이 화면의 다른 버튼까지 함께 변하므로 ImageButton 으로 담는다. -->
+                <ImageButton
+                    android:id="@+id/send_others_button"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="사진·파일 보내기"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_baseline_add_24"
+                    app:layout_constraintBottom_toBottomOf="@+id/chat_message_edit_text"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:tint="@color/brand_violet" />
 
                 <EditText
                     android:id="@+id/chat_message_edit_text"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:hint="Message"
-                    android:inputType="textPersonName"
-                    android:windowSoftInputMode="adjustResize"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:background="@drawable/chat_input_background"
+                    android:gravity="center_vertical"
+                    android:hint="메시지 입력"
+                    android:importantForAutofill="no"
+                    android:inputType="textCapSentences|textMultiLine"
+                    android:minHeight="44dp"
+                    android:maxLines="4"
+                    android:paddingStart="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="10dp"
+                    android:textColor="@color/on_chat_bubble"
+                    android:textColorHint="@color/grey"
+                    android:textSize="16sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@+id/send_message_button"
                     app:layout_constraintStart_toEndOf="@+id/send_others_button"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    app:layout_constraintTop_toBottomOf="@+id/chat_input_divider" />
 
-                <android.widget.Button
+                <ImageButton
                     android:id="@+id/send_message_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:theme="@style/AppTheme.Button"
-                    android:textColor="@color/white"
-                    android:text="전송"
-                    app:layout_constraintBottom_toBottomOf="parent"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_send_button"
+                    android:contentDescription="보내기"
+                    android:padding="12dp"
+                    android:src="@drawable/ic_baseline_send_24"
+                    app:layout_constraintBottom_toBottomOf="@+id/chat_message_edit_text"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    app:tint="@color/on_brand_violet" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>

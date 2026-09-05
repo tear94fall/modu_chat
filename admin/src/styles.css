@@ -1,0 +1,620 @@
+:root {
+  --color-accent: #2563eb;
+  --color-accent-hover: #1d4ed8;
+  --color-border: #d1d5db;
+  --color-muted: #6b7280;
+  --color-danger: #dc2626;
+  --color-success: #16a34a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  color: #1a1a1a;
+  background: #f5f5f7;
+}
+
+h1 {
+  font-size: 1.4rem;
+  margin-bottom: 16px;
+}
+
+h2 {
+  margin-bottom: 12px;
+}
+
+/* 레이아웃 */
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  background: #1f2430;
+  color: #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px;
+  gap: 4px;
+}
+
+.sidebar .brand {
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 16px;
+}
+
+.nav-link {
+  color: #cbd5e1;
+  text-decoration: none;
+  padding: 8px 10px;
+  border-radius: 6px;
+}
+
+.nav-link:hover {
+  background: #2a3142;
+}
+
+.nav-link.active {
+  background: #3b4256;
+  color: #fff;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 12px;
+  border-top: 1px solid #3b4256;
+}
+
+.sidebar-footer .btn {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.sidebar-footer .btn--ghost {
+  color: #cbd5e1;
+  border: 1px solid #3b4256;
+}
+
+.sidebar-footer .btn--ghost:hover {
+  background: #2a3142;
+  color: #fff;
+}
+
+.content {
+  flex: 1;
+  padding: 24px 32px;
+}
+
+/* 표 */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  background: #fff;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.9rem;
+}
+
+tbody tr[onclick],
+tbody tr {
+  cursor: pointer;
+}
+
+tbody tr:hover {
+  background: #f0f2f5;
+}
+
+/* 버튼 */
+button {
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: var(--color-accent);
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.btn--primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+.btn--secondary {
+  background: #fff;
+  border-color: var(--color-border);
+  color: #1a1a1a;
+}
+
+.btn--secondary:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-muted);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background: #f0f2f5;
+}
+
+.btn--danger {
+  background: transparent;
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
+.btn--sm {
+  padding: 5px 10px;
+  font-size: 12px;
+}
+
+.btn:disabled,
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tab {
+  border-radius: 6px;
+}
+
+.tab.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+/* 폼 */
+.form-card {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 640px;
+}
+
+.form-section {
+  display: grid;
+  gap: 16px;
+}
+
+.form-field {
+  display: grid;
+  gap: 6px;
+}
+
+.form-field > label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.form-hint {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+/* .form-actions 를 form-card 밖(예: 읽기 전용 카드 아래)에서 쓸 때
+   form-card 와 동일한 폭·오른쪽 여백을 만들어 버튼 위치를 맞춘다. */
+.actions-frame {
+  max-width: 640px;
+  padding-right: 20px;
+}
+
+.search-form,
+.tabs {
+  display: flex;
+  flex-direction: row;
+  max-width: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.tabs {
+  margin-bottom: 16px;
+}
+
+label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+input,
+textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background: #fff;
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.search-form input {
+  width: auto;
+  flex: 1;
+}
+
+/* 파일 업로드 */
+.file-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.file-preview {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
+.file-preview--banner {
+  width: 200px;
+  height: 72px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #eef0f3;
+}
+
+.file-preview--banner img,
+.file-preview--banner .profile-banner {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.file-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* 로그인 */
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.login-form {
+  width: 320px;
+}
+
+/* 상세 필드 목록 */
+.detail-list {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  row-gap: 8px;
+  background: #fff;
+  padding: 16px 20px;
+  border-radius: 8px;
+  max-width: 480px;
+}
+
+.detail-list dt {
+  font-weight: 600;
+  color: #374151;
+}
+
+.detail-list dd {
+  margin: 0;
+}
+
+/* 회원 상세: 프로필 카드 */
+.back-link {
+  display: inline-block;
+  margin-bottom: 16px;
+  color: var(--color-accent);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.profile-card {
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  max-width: 640px;
+  margin-bottom: 16px;
+}
+
+.profile-banner {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+  background: #e5e7eb;
+}
+
+.profile-banner--empty {
+  background: linear-gradient(135deg, #dbeafe, #e0e7ff);
+}
+
+.profile-header {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  padding: 0 20px 16px;
+  margin-top: -48px;
+}
+
+.avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  object-fit: cover;
+  background: #d1d5db;
+  flex-shrink: 0;
+}
+
+.avatar--sm {
+  width: 28px;
+  height: 28px;
+  border-width: 1px;
+}
+
+.avatar--md {
+  width: 48px;
+  height: 48px;
+  border-width: 2px;
+}
+
+.avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 600;
+  color: #4b5563;
+  background: #d1d5db;
+}
+
+.avatar-placeholder.avatar--sm {
+  font-size: 0.85rem;
+}
+
+.avatar-placeholder.avatar--md {
+  font-size: 1.25rem;
+}
+
+.image-placeholder {
+  background: #eef0f3;
+}
+
+.profile-header-text {
+  padding-bottom: 8px;
+  min-width: 0;
+}
+
+.profile-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-username {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.profile-email {
+  margin: 4px 0 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.role-badge--admin {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.role-badge--member {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  row-gap: 10px;
+  column-gap: 12px;
+  padding: 16px 20px 24px;
+  margin: 0;
+  border-top: 1px solid #e5e7eb;
+}
+
+.detail-grid dt {
+  font-weight: 600;
+  color: #374151;
+}
+
+.detail-grid dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.detail-grid-filename {
+  overflow-wrap: anywhere;
+  word-break: break-all;
+  color: #4b5563;
+  font-size: 0.85rem;
+}
+
+/* 채팅방 상세: 정보 카드 */
+.info-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  padding: 20px 20px 8px;
+  margin-bottom: 16px;
+}
+
+.info-card h1 {
+  margin: 0 0 8px;
+}
+
+.room-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar-cell {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.info-card .detail-grid {
+  border-top: none;
+  padding: 0 0 16px;
+}
+
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 480px;
+}
+
+/* 채팅방 상세: 2단 레이아웃 */
+.room-columns {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 2fr;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .room-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chat-table {
+  table-layout: fixed;
+}
+
+.chat-table .message-cell {
+  white-space: normal;
+  word-break: break-word;
+}
+
+.chat-table .nowrap-cell {
+  white-space: nowrap;
+}
+
+/* 클릭 가능한 표 행 */
+.clickable-row:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+/* 페이저 */
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+/* 상태 문구 */
+.error-text {
+  color: var(--color-danger);
+  margin: 12px 0;
+}
+
+.result-text {
+  color: var(--color-success);
+  margin: 12px 0;
+}

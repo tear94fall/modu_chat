@@ -11,11 +11,12 @@ services:
     environment:
       MYSQL_DATABASE: modu-chat
       MYSQL_USER: user 
-      MYSQL_PASSWORD: userpwd
+      MYSQL_PASSWORD: ${MYSQL_USER_PASSWORD}
       MYSQL_ROOT_HOST: '%'
-      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     networks:
       - modu-chat-network
+      - observability
     healthcheck:
       test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -u root --password=$$MYSQL_ROOT_PASSWORD']
       interval: 10s
@@ -33,11 +34,12 @@ services:
     environment:
       MYSQL_DATABASE: modu-chat
       MYSQL_USER: user 
-      MYSQL_PASSWORD: userpwd
+      MYSQL_PASSWORD: ${MYSQL_USER_PASSWORD}
       MYSQL_ROOT_HOST: '%'
-      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     networks:
       - modu-chat-network
+      - observability
     healthcheck:
       test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -u root --password=$$MYSQL_ROOT_PASSWORD']
       interval: 10s
@@ -55,11 +57,12 @@ services:
     environment:
       MYSQL_DATABASE: modu-chat
       MYSQL_USER: user 
-      MYSQL_PASSWORD: userpwd
+      MYSQL_PASSWORD: ${MYSQL_USER_PASSWORD}
       MYSQL_ROOT_HOST: '%'
-      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     networks:
       - modu-chat-network
+      - observability
     healthcheck:
       test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -u root --password=$$MYSQL_ROOT_PASSWORD']
       interval: 10s
@@ -77,11 +80,12 @@ services:
     environment:
       MYSQL_DATABASE: modu-chat
       MYSQL_USER: user 
-      MYSQL_PASSWORD: userpwd
+      MYSQL_PASSWORD: ${MYSQL_USER_PASSWORD}
       MYSQL_ROOT_HOST: '%'
-      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     networks:
       - modu-chat-network
+      - observability
     healthcheck:
       test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -u root --password=$$MYSQL_ROOT_PASSWORD']
       interval: 10s
@@ -104,10 +108,11 @@ services:
     restart: always
     environment:
       - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=rootpass
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
     command: ["--keyFile", "./mongodb.key",  "--bind_ip_all", "--replSet", "mongo-rs" ]
     networks:
       - modu-chat-network
+      - observability
 
   mongo-02:
     container_name: mongo-02
@@ -120,10 +125,11 @@ services:
     restart: always
     environment:
       - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=rootpass
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
     command: ["--keyFile", "./mongodb.key", "--bind_ip_all", "--replSet", "mongo-rs" ]
     networks:
       - modu-chat-network
+      - observability
 
   mongo-03:
     container_name: mongo-03
@@ -136,10 +142,11 @@ services:
     restart: always
     environment:
       - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=rootpass
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
     command: ["--keyFile", "./mongodb.key",  "--bind_ip_all", "--replSet", "mongo-rs" ]
     networks:
       - modu-chat-network
+      - observability
 
   redis:
     image: redis:alpine
@@ -153,6 +160,7 @@ services:
       - 6379:6379
     networks:
       - modu-chat-network
+      - observability
   
   rabbitmq:
     image: rabbitmq:management
@@ -163,6 +171,7 @@ services:
       - 25672:25672
     networks:
       - modu-chat-network
+      - observability
 
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
@@ -191,6 +200,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     networks:
       - modu-chat-network
+      - observability
 
   kafka-ui:
     container_name: kafka-ui
@@ -227,7 +237,7 @@ services:
     container_name: minio
     environment:
       MINIO_ROOT_USER: minio
-      MINIO_ROOT_PASSWORD: miniopass
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     restart: always
     shm_size: '1gb'
     ports:
@@ -238,24 +248,52 @@ services:
     volumes:
       - /var/modu-chat/minio/data:/data
 
-  zipkin:
-    container_name: zipkin
-    image: openzipkin/zipkin
-    restart: always
+  config-service:
+    build:
+      context: ./config-service
+      dockerfile: ./Dockerfile
+    container_name: config-service
     ports:
-      - "9411:9411"
+      - 8888:8888
+    environment:
+      - ENCRYPT_KEY=${ENCRYPT_KEY:-}
+      - RABBITMQ_HOST=rabbitmq
+      - JAVA_TOOL_OPTIONS=${CONFIG_AGENT_OPTS:-}
+    volumes:
+      - ./config-repo:/config-repo:ro
+      - pinpoint-agent:/pinpoint-agent:ro
     networks:
       - modu-chat-network
+      - observability
+      - pinpoint
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8888/actuator/health | grep -q UP || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+      start_period: 20s
+    restart: always
 
   discovery-service:
     container_name: discovery-service
-    build: 
+    build:
       context: ./eureka-server
       dockerfile: Dockerfile
-    ports: 
+    ports:
       - 8761:8761
+    environment:
+      - CONFIG_SERVER_URI=http://config-service:8888
+      - JAVA_TOOL_OPTIONS=${DISCOVERY_AGENT_OPTS:-}
+    volumes:
+      - pinpoint-agent:/pinpoint-agent:ro
+    depends_on:
+      config-service:
+        condition: service_healthy
     networks:
       - modu-chat-network
+      - observability
+      - pinpoint
+    restart: always
 
   gateway-service:
     build:
@@ -265,13 +303,21 @@ services:
     ports:
       - 8000:8000
     environment:
-      - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
-      - spring.zipkin.base-url=http://zipkin:9411
+      - CONFIG_SERVER_URI=http://config-service:8888
+      - JAVA_TOOL_OPTIONS=${GATEWAY_AGENT_OPTS:-}
+      - ADMIN_ALLOWED_ORIGIN=${ADMIN_ALLOWED_ORIGIN:-http://localhost:5173}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
-      - discovery-service
-      - zipkin
+      config-service:
+        condition: service_healthy
+      discovery-service:
+        condition: service_started
+    volumes:
+      - pinpoint-agent:/pinpoint-agent:ro
     networks:
       - modu-chat-network
+      - observability
+      - pinpoint
     restart: always
 
   auth-service:
@@ -282,15 +328,23 @@ services:
     ports:
       - 9900:9900
     environment:
-      - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
-      - spring.zipkin.base-url=http://zipkin:9411
-      - spring.redis.host=redis
+      - CONFIG_SERVER_URI=http://config-service:8888
+      - JAVA_TOOL_OPTIONS=${AUTH_AGENT_OPTS:-}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
+      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH:-}
     depends_on:
-      - discovery-service
-      - zipkin
-      - redis
+      config-service:
+        condition: service_healthy
+      discovery-service:
+        condition: service_started
+      redis:
+        condition: service_started
+    volumes:
+      - pinpoint-agent:/pinpoint-agent:ro
     networks:
       - modu-chat-network
+      - observability
+      - pinpoint
     restart: always
 
   chat-service:
@@ -301,22 +355,28 @@ services:
     ports:
       - 9090:9090
     environment:
+      - CONFIG_SERVER_URI=http://config-service:8888
       - spring.datasource.url=jdbc:mysql://mysql-chat:3306/modu-chat
       - spring.datasource.username=root
-      - spring.datasource.password=root1234
-      - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
-      - spring.zipkin.base-url=http://zipkin:9411
-      - spring.redis.host=redis
-      - spring.rabbitmq.host=rabbitmq
-      - spring.kafka.producer.bootstrap-servers=kafka:9092
-      - spring.kafka.consumer.bootstrap-servers=kafka:9092
+      - JAVA_TOOL_OPTIONS=${CHAT_AGENT_OPTS:-}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
-      - mysql-chat
-      - discovery-service
-      - zipkin
-      - redis
+      kafka:
+        condition: service_started
+      config-service:
+        condition: service_healthy
+      mysql-chat:
+        condition: service_healthy
+      discovery-service:
+        condition: service_started
+      redis:
+        condition: service_started
+    volumes:
+      - pinpoint-agent:/pinpoint-agent:ro
     networks:
       - modu-chat-network
+      - observability
+      - pinpoint
     restart: always
 
   member-service:
@@ -327,20 +387,28 @@ services:
     ports:
       - 8080:8080
     environment:
+      - CONFIG_SERVER_URI=http://config-service:8888
       - spring.datasource.url=jdbc:mysql://mysql-member:3306/modu-chat
       - spring.datasource.username=root
-      - spring.datasource.password=root1234
-      - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
-      - spring.zipkin.base-url=http://zipkin:9411
-      - spring.data.redis.host=redis
-      - spring.kafka.consumer.bootstrap-servers=kafka:9092
+      - JAVA_TOOL_OPTIONS=${MEMBER_AGENT_OPTS:-}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
-      - mysql-member
-      - discovery-service
-      - zipkin
-      - redis
+      kafka:
+        condition: service_started
+      config-service:
+        condition: service_healthy
+      mysql-member:
+        condition: service_healthy
+      discovery-service:
+        condition: service_started
+      redis:
+        condition: service_started
+    volumes:
+      - pinpoint-agent:/pinpoint-agent:ro
     networks:
       - modu-chat-network
+      - observability
+      - pinpoint
     restart: always
 
   profile-service:
@@ -351,19 +419,26 @@ services:
     ports:
       - 8880:8880
     environment:
+      - CONFIG_SERVER_URI=http://config-service:8888
       - spring.datasource.url=jdbc:mysql://mysql-profile:3306/modu-chat
       - spring.datasource.username=root
-      - spring.datasource.password=root1234
-      - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
-      - spring.zipkin.base-url=http://zipkin:9411
-      - spring.redis.host=redis
-      - spring.kafka.producer.bootstrap-servers=kafka:9092
+      - JAVA_TOOL_OPTIONS=${PROFILE_AGENT_OPTS:-}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
-      - mysql-profile
-      - discovery-service
-      - zipkin
+      kafka:
+        condition: service_started
+      config-service:
+        condition: service_healthy
+      mysql-profile:
+        condition: service_healthy
+      discovery-service:
+        condition: service_started
+    volumes:
+      - pinpoint-agent:/pinpoint-agent:ro
     networks:
       - modu-chat-network
+      - observability
+      - pinpoint
     restart: always
 
   push-service:
@@ -374,19 +449,26 @@ services:
     ports:
       - 9990:9990
     environment:
+      - CONFIG_SERVER_URI=http://config-service:8888
       - spring.datasource.url=jdbc:mysql://mysql-push:3306/modu-chat
       - spring.datasource.username=root
-      - spring.datasource.password=root1234
-      - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
-      - spring.zipkin.base-url=http://zipkin:9411
-      - spring.redis.host=redis
+      - JAVA_TOOL_OPTIONS=${PUSH_AGENT_OPTS:-}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
-      - mysql-push
-      - discovery-service
-      - zipkin
-      - redis
+      config-service:
+        condition: service_healthy
+      mysql-push:
+        condition: service_healthy
+      discovery-service:
+        condition: service_started
+      redis:
+        condition: service_started
+    volumes:
+      - pinpoint-agent:/pinpoint-agent:ro
     networks:
       - modu-chat-network
+      - observability
+      - pinpoint
     restart: always
 
   storage-service:
@@ -397,26 +479,31 @@ services:
     ports:
       - 9999:9999
     environment:
+      - CONFIG_SERVER_URI=http://config-service:8888
       - spring.datasource.url=jdbc:mysql://mysql:3306/modu-chat
       - spring.datasource.username=root
-      - spring.datasource.password=root1234
-      - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
-      - spring.zipkin.base-url=http://zipkin:9411
-      - spring.redis.host=redis
-      - spring.rabbitmq.host=rabbitmq
       - minio.endpoint=http://minio:9000
-      - spring.kafka.producer.bootstrap-servers=kafka:9092
-      - spring.kafka.consumer.bootstrap-servers=kafka:9092
+      - JAVA_TOOL_OPTIONS=${STORAGE_AGENT_OPTS:-}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
-      - minio
-      - discovery-service
-      - zipkin
-      - redis
+      kafka:
+        condition: service_started
+      config-service:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      discovery-service:
+        condition: service_started
+      redis:
+        condition: service_started
     networks:
       - modu-chat-network
+      - observability
+      - pinpoint
     restart: always
     volumes:
       - /var/modu-chat/storage/data:/data
+      - pinpoint-agent:/pinpoint-agent:ro
 
   ws-service:
     build:
@@ -426,22 +513,28 @@ services:
     ports:
       - 8090:8090
     environment:
+      - CONFIG_SERVER_URI=http://config-service:8888
       - spring.datasource.url=jdbc:mysql://mysql:3306/modu-chat
       - spring.datasource.username=root
-      - spring.datasource.password=root1234
-      - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
-      - spring.zipkin.base-url=http://zipkin:9411
-      - spring.redis.host=redis
-      - spring.rabbitmq.host=rabbitmq
-      - spring.kafka.producer.bootstrap-servers=kafka:9092
-      - spring.kafka.consumer.bootstrap-servers=kafka:9092
+      - JAVA_TOOL_OPTIONS=${WS_SERVICE_AGENT_OPTS:-}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
-      - mysql-chat
-      - discovery-service
-      - zipkin
-      - redis
+      kafka:
+        condition: service_started
+      config-service:
+        condition: service_healthy
+      mysql-chat:
+        condition: service_healthy
+      discovery-service:
+        condition: service_started
+      redis:
+        condition: service_started
+    volumes:
+      - pinpoint-agent:/pinpoint-agent:ro
     networks:
       - modu-chat-network
+      - observability
+      - pinpoint
     restart: always
 
   chat-store-service:
@@ -452,22 +545,36 @@ services:
     ports:
       - 8100:8100
     environment:
-      - spring.data.mongodb.uri=mongodb://admin:rootpass@mongo-01:27017/modu-chat?retryWrites=true&w=majority&authSource=admin
-      - spring.kafka.consumer.bootstrap-servers=kafka:9092
-      - eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka/
-      - spring.zipkin.base-url=http://zipkin:9411
+      - CONFIG_SERVER_URI=http://config-service:8888
+      - JAVA_TOOL_OPTIONS=${CHAT_STORE_AGENT_OPTS:-}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
-      - mysql-chat
-      - discovery-service
-      - zipkin
-      - redis
+      kafka:
+        condition: service_started
+      config-service:
+        condition: service_healthy
+      mysql-chat:
+        condition: service_healthy
+      discovery-service:
+        condition: service_started
+      redis:
+        condition: service_started
+    volumes:
+      - pinpoint-agent:/pinpoint-agent:ro
     networks:
       - modu-chat-network
+      - observability
+      - pinpoint
     restart: always
 
 networks:
   modu-chat-network:
     driver: bridge
+  observability:
+    external: true
+  pinpoint:
+    external: true
+    name: pinpoint-docker_pinpoint
 
 volumes:
   mysql-data:
@@ -478,3 +585,6 @@ volumes:
   mongo-01:
   mongo-02:
   mongo-03:
+  pinpoint-agent:
+    external: true
+    name: pinpoint-docker_data-volume

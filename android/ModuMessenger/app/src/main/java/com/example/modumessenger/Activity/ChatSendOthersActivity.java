@@ -217,18 +217,21 @@ public class ChatSendOthersActivity extends BottomSheetDialogFragment {
         call.enqueue(new Callback<String>() {
             @Override
             public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
-                if(!response.isSuccessful()){
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
+                        String filePath = response.body();
+                        scopedStorageUtil.deleteTempFiles();
+
+                        mListener.sendImageChat(filePath);
+                        mListener.sendOthersFinish();
+
+                        Log.d("채팅 이미지 업로드 요청 : ", response.body());
+                    } else {
+                        Log.d("채팅 이미지 업로드 실패", file.toString());
+                    }
+                } else {
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
                 }
-
-                assert response.body() != null;
-                String filePath = response.body();
-                scopedStorageUtil.deleteTempFiles();
-
-                mListener.sendImageChat(filePath);
-                mListener.sendOthersFinish();
-
-                Log.d("채팅 이미지 업로드 요청 : ", response.body());
             }
 
             @Override

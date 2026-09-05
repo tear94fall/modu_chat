@@ -78,7 +78,7 @@ class MemberAdminControllerTest {
     @Test
     void me_withUserIdHeader_returnsSelf() throws Exception {
         MemberDto member = MemberDto.builder().username("Alice").build();
-        AdminMemberDetailDto dto = new AdminMemberDetailDto(member, 3, LocalDateTime.now());
+        AdminMemberDetailDto dto = new AdminMemberDetailDto(member, 3, LocalDateTime.now(), List.of());
         when(memberService.getMemberDetailByUserId("admin")).thenReturn(dto);
 
         mockMvc.perform(get("/api-admin/member/me")
@@ -102,7 +102,7 @@ class MemberAdminControllerTest {
     @Test
     void updateMe_withUserIdHeader_returnsUpdatedSelf() throws Exception {
         MemberDto member = MemberDto.builder().username("Bob").build();
-        AdminMemberDetailDto dto = new AdminMemberDetailDto(member, 2, LocalDateTime.now());
+        AdminMemberDetailDto dto = new AdminMemberDetailDto(member, 2, LocalDateTime.now(), List.of());
         when(memberService.updateMyProfile(eq("admin"), any(UpdateProfileDto.class))).thenReturn(dto);
 
         mockMvc.perform(put("/api-admin/member/me")
@@ -113,4 +113,20 @@ class MemberAdminControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.member.username").value("Bob"));
     }
+
+    @Test
+    void detail_includesFriendList() throws Exception {
+        MemberDto member = MemberDto.builder().username("Alice").build();
+        AdminMemberSummaryDto friend = new AdminMemberSummaryDto(
+                50L, "demo-jiwoo", "김지우", "a.png", "jiwoo@modu.chat", Role.ROLE_MEMBER, LocalDateTime.now());
+        when(memberService.getMemberDetail(1L))
+                .thenReturn(new AdminMemberDetailDto(member, 1, LocalDateTime.now(), List.of(friend)));
+
+        mockMvc.perform(get("/api-admin/member/1").header("X-Internal-Token", "test-internal-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.friendCount").value(1))
+                .andExpect(jsonPath("$.friends[0].username").value("김지우"))
+                .andExpect(jsonPath("$.friends[0].userId").value("demo-jiwoo"));
+    }
+
 }

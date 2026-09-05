@@ -32,6 +32,7 @@ describe('MemberDetailPage', () => {
         createdDate: '2026-09-04T12:34:56',
       },
       friendCount: 3,
+      friends: [],
     })
     const fetchImageObjectUrl = vi.spyOn(storage, 'fetchImageObjectUrl').mockResolvedValue('blob:fake')
 
@@ -56,6 +57,7 @@ describe('MemberDetailPage', () => {
         role: 'ROLE_ADMIN',
       },
       friendCount: 0,
+      friends: [],
     })
     const fetchImageObjectUrl = vi.spyOn(storage, 'fetchImageObjectUrl').mockResolvedValue('blob:fake')
 
@@ -66,4 +68,36 @@ describe('MemberDetailPage', () => {
     expect(screen.getByText('민')).toBeInTheDocument()
     expect(fetchImageObjectUrl).not.toHaveBeenCalled()
   })
+
+  it('renders the friend list and lets you open a friend', async () => {
+    vi.spyOn(members, 'getMember').mockResolvedValue({
+      member: { id: 1, userId: 'u1', email: 'a@b.c', username: '민수', role: 'ROLE_MEMBER' },
+      friendCount: 2,
+      friends: [
+        { id: 50, userId: 'demo-jiwoo', email: 'jiwoo@modu.chat', username: '김지우', role: 'ROLE_MEMBER' },
+        { id: 51, userId: 'demo-minjun', email: 'minjun@modu.chat', username: '박민준', role: 'ROLE_MEMBER' },
+      ],
+    })
+
+    renderPage()
+
+    expect(await screen.findByText('친구 2명')).toBeInTheDocument()
+    expect(screen.getByText('김지우')).toBeInTheDocument()
+    expect(screen.getByText('박민준')).toBeInTheDocument()
+    expect(screen.getByText('demo-jiwoo')).toBeInTheDocument()
+  })
+
+  it('says so when the member has no friends', async () => {
+    vi.spyOn(members, 'getMember').mockResolvedValue({
+      member: { id: 1, userId: 'u1', email: 'a@b.c', username: '민수', role: 'ROLE_MEMBER' },
+      friendCount: 0,
+      friends: [],
+    })
+
+    renderPage()
+
+    expect(await screen.findByText('친구 0명')).toBeInTheDocument()
+    expect(screen.getByText('친구가 없습니다')).toBeInTheDocument()
+  })
+
 })

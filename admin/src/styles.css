@@ -390,6 +390,11 @@ textarea:focus {
   text-decoration: underline;
 }
 
+.member-columns .profile-card {
+  max-width: none;
+  margin-bottom: 0;
+}
+
 .profile-card {
   background: #fff;
   border-radius: 10px;
@@ -568,7 +573,9 @@ textarea:focus {
 }
 
 /* 채팅방 상세: 2단 레이아웃 */
-.room-columns {
+/* 상세 화면의 2단 배치. 좁아지면 아래 미디어쿼리에서 한 줄로 접힌다. */
+.room-columns,
+.member-columns {
   display: grid;
   grid-template-columns: minmax(260px, 1fr) 2fr;
   gap: 16px;
@@ -576,7 +583,8 @@ textarea:focus {
 }
 
 @media (max-width: 900px) {
-  .room-columns {
+  .room-columns,
+  .member-columns {
     grid-template-columns: 1fr;
   }
 }

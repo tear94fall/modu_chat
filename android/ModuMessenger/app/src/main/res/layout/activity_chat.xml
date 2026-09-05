@@ -93,43 +93,77 @@
                 android:id="@+id/bottomConstraintLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@color/white"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/chat_history_recycler_view">
 
-                <android.widget.Button
-                    android:id="@+id/send_others_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:theme="@style/AppTheme.Button"
-                    android:textColor="@color/white"
-                    android:text="+"
-                    app:layout_constraintBottom_toBottomOf="parent"
+                <!-- 대화 목록과 입력 바를 가르는 선. 컨테이너에 좌우 여백을 주지 않아
+                     선이 화면 끝까지 이어진다. -->
+                <View
+                    android:id="@+id/chat_input_divider"
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:background="@color/divider"
+                    app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
+
+                <!-- ChatActivity 는 AppCompat 테마여서 머티리얼 버튼을 inflate 하지 못한다.
+                     테마를 바꾸면 이 화면의 다른 버튼까지 함께 변하므로 ImageButton 으로 담는다. -->
+                <ImageButton
+                    android:id="@+id/send_others_button"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="4dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="사진·파일 보내기"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_baseline_add_24"
+                    app:layout_constraintBottom_toBottomOf="@+id/chat_message_edit_text"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:tint="@color/brand_violet" />
 
                 <EditText
                     android:id="@+id/chat_message_edit_text"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:hint="Message"
-                    android:inputType="textPersonName"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:background="@drawable/chat_input_background"
+                    android:gravity="center_vertical"
+                    android:hint="메시지 입력"
+                    android:importantForAutofill="no"
+                    android:inputType="textCapSentences|textMultiLine"
+                    android:minHeight="44dp"
+                    android:maxLines="4"
+                    android:paddingStart="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="10dp"
+                    android:textColor="@color/on_chat_bubble"
+                    android:textColorHint="@color/grey"
+                    android:textSize="16sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@+id/send_message_button"
                     app:layout_constraintStart_toEndOf="@+id/send_others_button"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    app:layout_constraintTop_toBottomOf="@+id/chat_input_divider" />
 
-                <android.widget.Button
+                <ImageButton
                     android:id="@+id/send_message_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:theme="@style/AppTheme.Button"
-                    android:textColor="@color/white"
-                    android:text="전송"
-                    app:layout_constraintBottom_toBottomOf="parent"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_send_button"
+                    android:contentDescription="보내기"
+                    android:padding="12dp"
+                    android:src="@drawable/ic_baseline_send_24"
+                    app:layout_constraintBottom_toBottomOf="@+id/chat_message_edit_text"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    app:tint="@color/on_brand_violet" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>

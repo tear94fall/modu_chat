@@ -17,6 +17,10 @@
     <!-- 프로필 화면 바탕. 순백이면 프로필 사진의 흰 테두리가 아래 절반에서 사라져
          링이 위쪽에만 있는 것처럼 보인다. 아주 옅게 깔아 링이 양쪽에서 다 읽히게 한다. -->
     <color name="profile_surface">#F5F4FA</color>
+    <!-- 채팅 입력창. 흰 바 위에서 입력칸이 눌린 자리로 보이도록 아주 옅게 깐다. -->
+    <color name="chat_input_fill">#F2F0FB</color>
+    <color name="chat_input_stroke">#E4E0F5</color>
+    <color name="divider">#E6E4EC</color>
 
     <color name="black">#FF000000</color>
     <color name="grey">#808080</color>

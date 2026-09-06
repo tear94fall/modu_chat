@@ -635,3 +635,16 @@ textarea:focus {
   color: var(--color-success);
   margin: 12px 0;
 }
+
+/* 공지 작성 폼의 체크박스 한 줄. 라벨과 상자를 같은 줄에 둔다. */
+.form-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.form-check input {
+  width: auto;
+  margin: 0;
+}

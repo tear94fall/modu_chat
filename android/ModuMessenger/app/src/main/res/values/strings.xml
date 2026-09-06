@@ -17,4 +17,7 @@
     <string name="notification_permission_rationale_message">새 메시지 알림을 받으려면 알림 권한이 필요합니다. 권한을 허용해 주세요.</string>
     <string name="notification_permission_rationale_confirm">확인</string>
     <string name="notification_permission_rationale_cancel">취소</string>
+
+    <!-- 시작 화면에서 로고 아래에 보이는 문구. iOS 로그인 화면과 같은 말을 쓴다. -->
+    <string name="login_tagline">친구와 가볍게 이야기하세요</string>
 </resources>

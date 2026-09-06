@@ -11,8 +11,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.modumessenger.Adapter.NotificationAdapter;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
-import com.example.modumessenger.Retrofit.RetrofitCommonDataAPI;
-import com.example.modumessenger.entity.CommonData;
+import com.example.modumessenger.Retrofit.RetrofitNoticeAPI;
+import com.example.modumessenger.entity.Notice;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,10 +23,10 @@ import retrofit2.Response;
 
 public class NotificationActivity extends AppCompatActivity {
 
-    List<CommonData> notifyList;
+    List<Notice> notifyList;
     RecyclerView notificationRecyclerView;
     NotificationAdapter notificationAdapter;
-    RetrofitCommonDataAPI retrofitCommonDataAPI;
+    RetrofitNoticeAPI retrofitNoticeAPI;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,8 +34,10 @@ public class NotificationActivity extends AppCompatActivity {
         setContentView(R.layout.activity_notification);
 
         bindingView();
-        getData();
+        // setData 가 Retrofit 인스턴스를 만들므로 조회보다 먼저 와야 한다.
+        // 예전에는 getData 가 먼저라 API 가 null 인 채로 불렸다.
         setData();
+        getData();
         setButtonClickEvent();
     }
 
@@ -53,7 +55,7 @@ public class NotificationActivity extends AppCompatActivity {
     }
 
     private void setData() {
-        retrofitCommonDataAPI = RetrofitClient.createCommonApiService();
+        retrofitNoticeAPI = RetrofitClient.createNoticeApiService();
 
         notifyList = new ArrayList<>();
     }
@@ -63,11 +65,11 @@ public class NotificationActivity extends AppCompatActivity {
 
     // Retrofit function
     public void getNotification() {
-        Call<List<CommonData>> call = retrofitCommonDataAPI.RequestCommonDataList("notification");
+        Call<List<Notice>> call = retrofitNoticeAPI.RequestNotices();
 
-        call.enqueue(new Callback<List<CommonData>>() {
+        call.enqueue(new Callback<List<Notice>>() {
             @Override
-            public void onResponse(@NonNull Call<List<CommonData>> call, @NonNull Response<List<CommonData>> response) {
+            public void onResponse(@NonNull Call<List<Notice>> call, @NonNull Response<List<Notice>> response) {
                 if(!response.isSuccessful()){
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
                     return;
@@ -87,7 +89,7 @@ public class NotificationActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(@NonNull Call<List<CommonData>> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<List<Notice>> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
             }
         });

@@ -50,5 +50,6 @@ public class RetrofitClient {
     public static RetrofitAuthAPI createAuthApiService(){ return createService(RetrofitAuthAPI.class); }
     public static RetrofitProfileAPI createProfileApiService() { return createService(RetrofitProfileAPI.class); }
     public static RetrofitPushAPI createPushApiService() { return createService(RetrofitPushAPI.class); }
+    public static RetrofitNoticeAPI createNoticeApiService() { return createService(RetrofitNoticeAPI.class); }
 }
 

@@ -3,6 +3,7 @@ package com.example.modumessenger.Retrofit;
 import com.example.modumessenger.dto.AddFriendDto;
 import com.example.modumessenger.dto.GoogleLoginRequest;
 import com.example.modumessenger.dto.MemberDto;
+import com.example.modumessenger.dto.PageResponseDto;
 import com.example.modumessenger.dto.RequestLoginDto;
 import com.example.modumessenger.dto.SignUpDto;
 import com.example.modumessenger.dto.UpdateProfileDto;
@@ -15,6 +16,7 @@ import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
+import retrofit2.http.Query;
 
 public interface RetrofitMemberAPI {
 
@@ -30,8 +32,9 @@ public interface RetrofitMemberAPI {
     @POST("member-service/api-public/member/{userId}")
     Call<MemberDto> RequestUpdateProfile(@Path("userId") String userId, @Body UpdateProfileDto updateProfileDto);
 
+    /** 친구 목록. sort 는 {@link com.example.modumessenger.Global.FriendSort} 값, 서버가 정렬해 page/size 로 잘라 준다. */
     @GET("member-service/api-public/member/{userId}/friends")
-    Call<List<MemberDto>> RequestFriends(@Path("userId") String userId);
+    Call<PageResponseDto<MemberDto>> RequestFriends(@Path("userId") String userId, @Query("sort") String sort, @Query("page") int page, @Query("size") int size);
 
     @POST("member-service/api-public/member/{userId}/friends")
     Call<MemberDto> RequestAddFriends(@Path("userId") String userId, @Body AddFriendDto addFriendDto);

@@ -2,6 +2,7 @@ package com.example.modumessenger.Adapter;
 
 import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -41,6 +42,19 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.MyViewHo
 
         holder.setUserInfo(member);
         holder.setUserClickEvent(member);
+    }
+
+    /** 다음 페이지를 뒤에 이어 붙인다. */
+    public void addAll(List<MemberDto> members) {
+        int start = this.friendsList.size();
+        this.friendsList.addAll(members);
+        notifyItemRangeInserted(start, members.size());
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    public void clear() {
+        this.friendsList.clear();
+        notifyDataSetChanged();
     }
 
     @Override

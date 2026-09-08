@@ -22,6 +22,9 @@ import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.example.modumessenger.dto.MemberDto;
+import com.example.modumessenger.dto.PageResponseDto;
+import com.example.modumessenger.Global.FriendSort;
+import com.example.modumessenger.Global.FriendsPager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +34,10 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class CreateRoomActivity extends AppCompatActivity {
+
+    private static final int FRIENDS_PAGE_SIZE = 50;
+    private static final int LOAD_MORE_THRESHOLD = 5;
+
     RecyclerView addChatRecyclerView;
     CreateRoomAdapter createRoomAdapter;
 
@@ -38,6 +45,7 @@ public class CreateRoomActivity extends AppCompatActivity {
 
     List<Long> addChatList;
     List<MemberDto> friendsList;
+    FriendsPager friendsPager;
 
     Member member;
 
@@ -63,6 +71,21 @@ public class CreateRoomActivity extends AppCompatActivity {
         addChatRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         addChatRecyclerView.scrollToPosition(0);
 
+        friendsList = new ArrayList<>();
+        createRoomAdapter = new CreateRoomAdapter(friendsList);
+        addChatRecyclerView.setAdapter(createRoomAdapter);
+        friendsPager = new FriendsPager(FRIENDS_PAGE_SIZE);
+        addChatRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
+                if (dy <= 0) return;
+                int lastVisible = ((LinearLayoutManager) rv.getLayoutManager()).findLastVisibleItemPosition();
+                if (lastVisible >= createRoomAdapter.getItemCount() - LOAD_MORE_THRESHOLD) {
+                    loadNextFriendsPage();
+                }
+            }
+        });
+
         inviteButton = findViewById(R.id.create_chatroom_button);
     }
 
@@ -74,7 +97,7 @@ public class CreateRoomActivity extends AppCompatActivity {
         retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
 
         member = getDataStoreMember();
-        getFriendsList(member);
+        loadNextFriendsPage();
 
         addChatList = new ArrayList<>();
     }
@@ -105,27 +128,31 @@ public class CreateRoomActivity extends AppCompatActivity {
     }
 
     // Retrofit function
-    public void getFriendsList(Member member) {
-        Call<List<MemberDto>> call = retrofitMemberAPI.RequestFriends(member.getUserId());
+    private void loadNextFriendsPage() {
+        if (!friendsPager.canLoad()) return;
 
-        call.enqueue(new Callback<List<MemberDto>>() {
+        int page = friendsPager.beginLoad();
+        Call<PageResponseDto<MemberDto>> call = retrofitMemberAPI.RequestFriends(member.getUserId(), FriendSort.DEFAULT, page, friendsPager.getPageSize());
+
+        call.enqueue(new Callback<PageResponseDto<MemberDto>>() {
             @Override
-            public void onResponse(@NonNull Call<List<MemberDto>> call, @NonNull Response<List<MemberDto>> response) {
-                if(!response.isSuccessful()){
+            public void onResponse(@NonNull Call<PageResponseDto<MemberDto>> call, @NonNull Response<PageResponseDto<MemberDto>> response) {
+                if(!response.isSuccessful() || response.body() == null){
+                    friendsPager.onFailed();
                     Log.e("연결이 비정상적 : ", "error code : " + response.code());
                     return;
                 }
 
-                assert response.body() != null;
-                friendsList = response.body();
-                createRoomAdapter = new CreateRoomAdapter(friendsList);
-                addChatRecyclerView.setAdapter(createRoomAdapter);
+                PageResponseDto<MemberDto> body = response.body();
+                friendsPager.onLoaded(body);
+                createRoomAdapter.addAll(body.getContent());
 
-                Log.d("친구 리스트 가져오기 요청 : ", response.body().toString());
+                Log.d("친구 리스트 가져오기 요청 : ", "page " + body.getPage() + " / " + body.getTotalPages());
             }
 
             @Override
-            public void onFailure(@NonNull Call<List<MemberDto>> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<PageResponseDto<MemberDto>> call, @NonNull Throwable t) {
+                friendsPager.onFailed();
                 Log.e("연결실패", t.getMessage());
             }
         });

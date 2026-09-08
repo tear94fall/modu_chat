@@ -84,8 +84,7 @@ public class CreateRoomActivity extends AppCompatActivity {
             if (addChatList.size()!=0) {
                 Toast.makeText(getApplicationContext(), "채팅방을 생성합니다.", Toast.LENGTH_SHORT).show();
                 addChatList.add(member.getId());
-                // exist chat room
-                // if not, create chat room
+                // 같은 멤버 구성의 방이 있으면 서버가 그 방을 돌려주므로 기존 방으로 이동하게 된다.
                 createChatRoom(addChatList);
             } else {
                 Toast.makeText(getApplicationContext(), "추가할 친구가 없습니다.", Toast.LENGTH_SHORT).show();

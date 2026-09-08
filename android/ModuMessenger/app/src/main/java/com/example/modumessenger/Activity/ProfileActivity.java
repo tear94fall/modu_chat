@@ -19,6 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.modumessenger.Global.App;
 import com.example.modumessenger.Global.OnSwipeListener;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
@@ -162,8 +163,7 @@ public class ProfileActivity extends AppCompatActivity {
         profileCloseButton.setOnClickListener(view -> finish());
 
         createChatRoomButton.setOnClickListener(view -> {
-            // exist chat room
-            // if not, create chat room
+            // 같은 멤버 구성의 방이 있으면 서버가 그 방을 돌려주므로 기존 방으로 이동하게 된다.
             List<Long> ids = new ArrayList<>(Collections.singletonList(myId));
 
             if (!isMyInfo) {
@@ -240,6 +240,11 @@ public class ProfileActivity extends AppCompatActivity {
 
                 assert response.body() != null;
                 ChatRoomDto chatRoomDto = response.body();
+
+                // 뒤로 돌아왔을 때 목록이 바로 보이도록 여기서 미리 갱신해 둔다.
+                if (App.getChatRepository() != null) {
+                    App.getChatRepository().refreshChatRooms();
+                }
 
                 Intent intent = new Intent(getApplicationContext(), ChatActivity.class);
                 intent.putExtra("roomId", chatRoomDto.getRoomId());

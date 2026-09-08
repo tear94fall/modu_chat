@@ -46,6 +46,10 @@ public class ChatRoomService {
 
     public List<ChatRoomDto> searchChatRoomByUserId(String memberId) {
         List<ChatRoomMember> chatRoomMemberList = chatRoomMemberRepository.findAllByMemberId(Long.valueOf(memberId));
+        if (chatRoomMemberList.isEmpty()) {
+            // 빈 id 목록으로 member-service 를 부르면 경로 변수가 비어 404 → 500 이 된다. 방이 없으면 바로 빈 목록.
+            return List.of();
+        }
 
         List<ChatRoom> chatRooms = chatRoomMemberList
                 .stream()
@@ -118,10 +122,20 @@ public class ChatRoomService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 같은 멤버 구성의 방이 이미 있으면 새로 만들지 않고 그 방을 돌려준다.
+     * 클라이언트는 응답의 roomId 로 이동하므로 자연스럽게 기존 방으로 들어간다.
+     */
     public ChatRoomDto createChatRoom(List<Long> ids) {
-        List<MemberDto> members = memberFeignClient.getMembersById(ids);
+        List<Long> memberIds = ids.stream().distinct().toList();
+        List<MemberDto> members = memberFeignClient.getMembersById(memberIds);
         if(members.isEmpty()) {
             throw new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, ids.toString());
+        }
+
+        Optional<ChatRoom> existingRoom = findChatRoomByExactMembers(members);
+        if (existingRoom.isPresent()) {
+            return new ChatRoomDto(existingRoom.get(), members);
         }
 
         //legacy
@@ -355,6 +369,16 @@ public class ChatRoomService {
         }
 
         findChatRoomMember.updateLastReadChatId(chatRoom.getLastChatId());
+    }
+
+    /** 멤버 id 집합이 정확히 일치하는 방을 DB 집계로 찾는다. 1:1 방과 그룹방 모두 해당한다. */
+    private Optional<ChatRoom> findChatRoomByExactMembers(List<MemberDto> members) {
+        Set<Long> wantedMemberIds = members.stream()
+                .map(MemberDto::getId)
+                .collect(Collectors.toSet());
+
+        return chatRoomMemberRepository.findRoomIdByExactMemberIds(wantedMemberIds)
+                .flatMap(chatRoomRepository::findById);
     }
 
     private ChatRoomDto addNewChatRoomMember(ChatRoom chatRoom, List<MemberDto> members) {

@@ -31,9 +31,13 @@ import com.example.modumessenger.Adapter.FriendsAdapter;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
+import com.example.modumessenger.Global.FriendSort;
+import com.example.modumessenger.Global.FriendsPager;
 import com.example.modumessenger.dto.MemberDto;
+import com.example.modumessenger.dto.PageResponseDto;
 import com.example.modumessenger.entity.Member;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
@@ -41,6 +45,10 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class FragmentFriends extends Fragment {
+
+    private static final int FRIENDS_PAGE_SIZE = 50;
+    /** 끝에서 이만큼 남았을 때 다음 페이지를 미리 읽는다. */
+    private static final int LOAD_MORE_THRESHOLD = 5;
 
     RecyclerView recyclerView;
     RecyclerView.LayoutManager layoutManager;
@@ -50,6 +58,8 @@ public class FragmentFriends extends Fragment {
     ImageView myProfileImage;
 
     List<MemberDto> friendsList;
+    FriendsAdapter friendsAdapter;
+    FriendsPager friendsPager;
     Member member;
 
     RetrofitMemberAPI retrofitMemberAPI;
@@ -85,7 +95,10 @@ public class FragmentFriends extends Fragment {
 
         requireActivity().invalidateOptionsMenu();
 
-        getFriendsList(member.getUserId());
+        // 탭에 돌아올 때마다 처음부터 다시 읽는다. 진행 중이던 요청의 늦은 응답은 pager 가 세대로 걸러 낸다.
+        friendsPager.reset();
+        friendsAdapter.clear();
+        loadNextFriendsPage();
         getMyProfileInfo(member.getEmail());
     }
 
@@ -153,6 +166,21 @@ public class FragmentFriends extends Fragment {
 
     private void setData() {
         retrofitMemberAPI = RetrofitClient.createMemberApiService();
+
+        friendsList = new ArrayList<>();
+        friendsAdapter = new FriendsAdapter(friendsList);
+        recyclerView.setAdapter(friendsAdapter);
+        friendsPager = new FriendsPager(FRIENDS_PAGE_SIZE);
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
+                if (dy <= 0) return;
+                int lastVisible = ((LinearLayoutManager) layoutManager).findLastVisibleItemPosition();
+                if (lastVisible >= friendsAdapter.getItemCount() - LOAD_MORE_THRESHOLD) {
+                    loadNextFriendsPage();
+                }
+            }
+        });
     }
 
     private void setButtonClickEvent() {
@@ -165,29 +193,37 @@ public class FragmentFriends extends Fragment {
     }
 
     // Retrofit function
-    public void getFriendsList(String userId) {
-        Call<List<MemberDto>> call = retrofitMemberAPI.RequestFriends(userId);
+    private void loadNextFriendsPage() {
+        if (!friendsPager.canLoad()) return;
 
-        call.enqueue(new Callback<List<MemberDto>>() {
+        int page = friendsPager.beginLoad();
+        int generation = friendsPager.getGeneration();
+        Call<PageResponseDto<MemberDto>> call = retrofitMemberAPI.RequestFriends(member.getUserId(), FriendSort.DEFAULT, page, friendsPager.getPageSize());
+
+        call.enqueue(new Callback<PageResponseDto<MemberDto>>() {
             @Override
-            public void onResponse(@NonNull Call<List<MemberDto>> call, @NonNull Response<List<MemberDto>> response) {
-                if(response.isSuccessful()) {
-                    if(response.body() != null) {
-                        friendsList = response.body();
-                        recyclerView.setAdapter(new FriendsAdapter(friendsList));
-
-                        // friend count
-                        String count = Integer.toString(friendsList.size());
-                        String friendCountMessage = "친구 " + count + " 명";
-                        friendsCount.setText(friendCountMessage);
-
-                        Log.d("친구 리스트 가져오기 요청 : ", response.body().toString());
-                    }
+            public void onResponse(@NonNull Call<PageResponseDto<MemberDto>> call, @NonNull Response<PageResponseDto<MemberDto>> response) {
+                if (!response.isSuccessful() || response.body() == null) {
+                    friendsPager.onFailed();
+                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
+                    return;
                 }
+
+                PageResponseDto<MemberDto> body = response.body();
+                if (!friendsPager.onLoaded(generation, body)) {
+                    return; // 초기화 이전에 보낸 요청의 응답. 지금 목록과 맞지 않으므로 버린다.
+                }
+
+                friendsAdapter.addAll(body.getContent());
+                String friendCountMessage = "친구 " + body.getTotalElements() + " 명";
+                friendsCount.setText(friendCountMessage);
+
+                Log.d("친구 리스트 가져오기 요청 : ", "page " + body.getPage() + " / " + body.getTotalPages());
             }
 
             @Override
-            public void onFailure(@NonNull Call<List<MemberDto>> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<PageResponseDto<MemberDto>> call, @NonNull Throwable t) {
+                friendsPager.onFailed();
                 Log.e("연결실패", t.getMessage());
             }
         });

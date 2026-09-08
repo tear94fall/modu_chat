@@ -13,6 +13,13 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
+import com.example.memberservice.member.dto.PageResponse;
+import com.example.memberservice.member.repository.FriendSort;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 /** 안드로이드가 게이트웨이를 거쳐 부르는 회원 API. signup 은 게이트웨이에서 인증 없이 통과한다. */
 @RestController
@@ -51,12 +58,20 @@ public class MemberPublicController {
         return ResponseEntity.ok().body(ResponseMemberDto.from(memberDto, profiles));
     }
 
+    private static final int FRIENDS_DEFAULT_SIZE = 50;
+    private static final int FRIENDS_MAX_SIZE = 100;
+
+    /** 친구 목록. sort(기본 name,asc) 는 {@link FriendSort} 허용 목록만 받고, page/size 로 잘라 준다. size 는 최대 100. */
     @GetMapping("/{userId}/friends")
-    public ResponseEntity<List<ResponseFriendDto>> friendsList(@Valid @PathVariable("userId") String userId) {
-        List<ResponseFriendDto> result = memberService.getFriendsList(userId).stream()
-                .map(f -> modelMapper.map(f, ResponseFriendDto.class))
-                .collect(Collectors.toList());
-        return ResponseEntity.ok().body(result);
+    public ResponseEntity<PageResponse<ResponseFriendDto>> friendsList(@Valid @PathVariable("userId") String userId,
+                                                                       @RequestParam(value = "sort", defaultValue = "name,asc") String sort,
+                                                                       @RequestParam(value = "page", defaultValue = "0") int page,
+                                                                       @RequestParam(value = "size", defaultValue = "" + FRIENDS_DEFAULT_SIZE) int size) {
+        FriendSort friendSort = FriendSort.parse(sort)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "지원하지 않는 정렬입니다: " + sort));
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), FRIENDS_MAX_SIZE));
+        Page<MemberDto> friends = memberService.getFriendsPage(userId, friendSort, pageable);
+        return ResponseEntity.ok().body(PageResponse.from(friends, f -> modelMapper.map(f, ResponseFriendDto.class)));
     }
 
     @PostMapping("/{userId}/friends")

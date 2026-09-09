@@ -6,13 +6,18 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.memberservice.member.dto.MemberDto;
 import com.example.memberservice.member.repository.FriendSort;
-import com.example.memberservice.member.service.MemberService;
+import com.example.memberservice.global.exception.CustomException;
+import com.example.memberservice.global.exception.ErrorCode;
+import com.example.memberservice.member.dto.ResponseFriendDto;
+import com.example.memberservice.member.service.MemberFriendService;
 import java.util.List;
+import java.util.Map;
+import org.springframework.http.MediaType;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,18 +34,19 @@ import org.springframework.test.web.servlet.MockMvc;
 class MemberPublicControllerFriendsTest {
 
     @Autowired MockMvc mockMvc;
-    @MockitoBean MemberService memberService;
+    @MockitoBean MemberFriendService memberFriendService;
 
     @Test
     void 친구_목록은_page_size_로_잘라_페이지_응답으로_돌려준다() throws Exception {
-        MemberDto friend = MemberDto.builder().id(7L).userId("f1").username("강감찬").email("kang@example.com").build();
-        when(memberService.getFriendsPage(eq("me"), any(), any()))
+        ResponseFriendDto friend = ResponseFriendDto.builder().id(7L).userId("f1").username("강감찬").email("kang@example.com").friendName("감찬이").build();
+        when(memberFriendService.getFriendsPage(eq("me"), any(), any()))
                 .thenReturn(new PageImpl<>(List.of(friend), PageRequest.of(1, 20), 21));
 
         mockMvc.perform(get("/api-public/member/me/friends").param("page", "1").param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].username").value("강감찬"))
                 .andExpect(jsonPath("$.content[0].email").value("kang@example.com"))
+                .andExpect(jsonPath("$.content[0].friendName").value("감찬이"))
                 .andExpect(jsonPath("$.page").value(1))
                 .andExpect(jsonPath("$.size").value(20))
                 .andExpect(jsonPath("$.totalElements").value(21))
@@ -50,14 +56,14 @@ class MemberPublicControllerFriendsTest {
 
     @Test
     void page_size_가_없으면_기본값이고_size_는_100을_넘지_않는다() throws Exception {
-        when(memberService.getFriendsPage(eq("me"), any(), any()))
+        when(memberFriendService.getFriendsPage(eq("me"), any(), any()))
                 .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 50), 0));
         ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
 
         mockMvc.perform(get("/api-public/member/me/friends")).andExpect(status().isOk());
         mockMvc.perform(get("/api-public/member/me/friends").param("page", "-3").param("size", "500")).andExpect(status().isOk());
 
-        verify(memberService, org.mockito.Mockito.times(2)).getFriendsPage(eq("me"), eq(FriendSort.NAME_ASC), pageable.capture());
+        verify(memberFriendService, org.mockito.Mockito.times(2)).getFriendsPage(eq("me"), eq(FriendSort.NAME_ASC), pageable.capture());
         assertThat(pageable.getAllValues().get(0).getPageNumber()).isEqualTo(0);
         assertThat(pageable.getAllValues().get(0).getPageSize()).isEqualTo(50);
         assertThat(pageable.getAllValues().get(1).getPageNumber()).isEqualTo(0);
@@ -66,14 +72,42 @@ class MemberPublicControllerFriendsTest {
 
     @Test
     void sort_파라미터는_허용_목록으로_해석하고_모르는_값은_400이다() throws Exception {
-        when(memberService.getFriendsPage(eq("me"), any(), any()))
+        when(memberFriendService.getFriendsPage(eq("me"), any(), any()))
                 .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 50), 0));
 
         mockMvc.perform(get("/api-public/member/me/friends").param("sort", "name,desc")).andExpect(status().isOk());
         mockMvc.perform(get("/api-public/member/me/friends").param("sort", "email,asc")).andExpect(status().isOk());
         mockMvc.perform(get("/api-public/member/me/friends").param("sort", "createdDate,desc")).andExpect(status().isBadRequest());
 
-        verify(memberService).getFriendsPage(eq("me"), eq(FriendSort.NAME_DESC), any());
-        verify(memberService).getFriendsPage(eq("me"), eq(FriendSort.EMAIL_ASC), any());
+        verify(memberFriendService).getFriendsPage(eq("me"), eq(FriendSort.NAME_DESC), any());
+        verify(memberFriendService).getFriendsPage(eq("me"), eq(FriendSort.EMAIL_ASC), any());
+    }
+
+    @Test
+    void 이름_맵을_돌려준다() throws Exception {
+        when(memberFriendService.getFriendNames("me")).thenReturn(Map.of("f1", "감찬이", "f2", ""));
+
+        mockMvc.perform(get("/api-public/member/me/friends/names"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.f1").value("감찬이"))
+                .andExpect(jsonPath("$.f2").value(""));
+    }
+
+    @Test
+    void 별칭_변경은_공백이면_400_친구가_아니면_404_정상이면_바뀐_값을_돌려준다() throws Exception {
+        when(memberFriendService.renameFriend("me", 7L, "감찬이"))
+                .thenReturn(ResponseFriendDto.builder().id(7L).friendName("감찬이").build());
+        when(memberFriendService.renameFriend(eq("me"), eq(9L), any()))
+                .thenThrow(new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, "9"));
+
+        mockMvc.perform(put("/api-public/member/me/friends/7/name").contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"  감찬이 \"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.friendName").value("감찬이"));
+        mockMvc.perform(put("/api-public/member/me/friends/7/name").contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"   \"}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(put("/api-public/member/me/friends/7/name").contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"" + "가".repeat(256) + "\"}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(put("/api-public/member/me/friends/9/name").contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"x\"}"))
+                .andExpect(status().isNotFound());
     }
 }

@@ -74,8 +74,8 @@ describe('MemberDetailPage', () => {
       member: { id: 1, userId: 'u1', email: 'a@b.c', username: '민수', role: 'ROLE_MEMBER' },
       friendCount: 2,
       friends: [
-        { id: 50, userId: 'demo-jiwoo', email: 'jiwoo@modu.chat', username: '김지우', role: 'ROLE_MEMBER' },
-        { id: 51, userId: 'demo-minjun', email: 'minjun@modu.chat', username: '박민준', role: 'ROLE_MEMBER' },
+        { id: 50, userId: 'demo-jiwoo', email: 'jiwoo@modu.chat', username: '김지우', role: 'ROLE_MEMBER', friendName: '지우야' },
+        { id: 51, userId: 'demo-minjun', email: 'minjun@modu.chat', username: '박민준', role: 'ROLE_MEMBER', friendName: '' },
       ],
     })
 
@@ -85,6 +85,9 @@ describe('MemberDetailPage', () => {
     expect(screen.getByText('김지우')).toBeInTheDocument()
     expect(screen.getByText('박민준')).toBeInTheDocument()
     expect(screen.getByText('demo-jiwoo')).toBeInTheDocument()
+    // 그 회원이 정한 친구 이름. 비어 있으면 '-'
+    expect(screen.getByText('지우야')).toBeInTheDocument()
+    expect(screen.getAllByText('-').length).toBeGreaterThan(0)
   })
 
   it('says so when the member has no friends', async () => {

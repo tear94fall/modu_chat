@@ -22,6 +22,7 @@ import com.example.modumessenger.Activity.ChatImageActivity;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Global.ChatSenderUtil;
+import com.example.modumessenger.Global.DisplayName;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.RoomDatabase.Database.ChatDatabase;
 import com.example.modumessenger.RoomDatabase.Entity.ChatEntity;
@@ -477,7 +478,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             setProfileImage(senderImage, member.getProfileImage());
 
             setUserClickEvent(member);
-            chatSender.setText(member.getUsername());
+            chatSender.setText(DisplayName.of(member.getUserId(), member.getUsername()));
             chatMessage.setText(chatBubble.getChatMsg());
             chatTime.setText(getShortTime(chatBubble.getChatTime()));
             if(chatType == LEFT_TEXT_HEADER.getType()) {
@@ -561,7 +562,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             setUserClickEvent(member);
             setChatImageClickEvent(chatBubble);
-            chatSender.setText(member.getUsername());
+            chatSender.setText(DisplayName.of(member.getUserId(), member.getUsername()));
             chatTime.setText(getShortTime(chatBubble.getChatTime()));
             if(chatType == LEFT_IMAGE_HEADER.getType()) {
                 chatTime.setVisibility(View.INVISIBLE);

@@ -15,6 +15,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.Activity.ProfileActivity;
+import com.example.modumessenger.Global.DisplayName;
 import com.example.modumessenger.R;
 import com.example.modumessenger.dto.MemberDto;
 
@@ -78,7 +79,7 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.MyViewHo
         }
 
         public void setUserInfo(MemberDto member) {
-            this.username.setText(member.getUsername());
+            this.username.setText(DisplayName.of(member.getUserId(), member.getUsername()));
             this.statusMessage.setText(member.getStatusMessage());
             setProfileImage(profileImage, member.getProfileImage());
         }

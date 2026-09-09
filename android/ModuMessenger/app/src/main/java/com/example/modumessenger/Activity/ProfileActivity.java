@@ -14,6 +14,15 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import com.example.modumessenger.dto.RenameFriendDto;
+import com.example.modumessenger.Global.FriendNames;
+import com.example.modumessenger.Global.DisplayName;
+import androidx.appcompat.app.AlertDialog;
+import android.widget.Toast;
+import android.widget.FrameLayout;
+import android.widget.EditText;
+import android.text.TextWatcher;
+import android.text.Editable;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -43,12 +52,15 @@ public class ProfileActivity extends AppCompatActivity {
 
     Long myId;
     Long memberId;
+    /** 이 화면이 보여주는 사람. 내 프로필이면 나. */
     Member member;
+    /** 로그인한 나 */
+    Member myMember;
     boolean isMyInfo = true;
 
     ImageView profileImageView, wallpaperImageView;
     TextView usernameTextView, statusMessageTextView;
-    Button profileEditButton, createChatRoomButton;
+    Button profileEditButton, createChatRoomButton, renameFriendButton;
     ImageButton profileHistoryButton, profileCloseButton;
     GestureDetector gestureDetector;
 
@@ -108,6 +120,7 @@ public class ProfileActivity extends AppCompatActivity {
         profileEditButton = findViewById(R.id.profile_edit_button);
         profileCloseButton = findViewById(R.id.profile_close_button);
         createChatRoomButton = findViewById(R.id.start_chat_button);
+        renameFriendButton = findViewById(R.id.rename_friend_button);
 
         profileHistoryButton = findViewById(R.id.profile_image_history_button);
 
@@ -115,9 +128,10 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void getData() {
-        member = getDataStoreMember();
+        myMember = getDataStoreMember();
+        member = myMember;
         memberId = Long.parseLong(getIntent().getStringExtra("memberId"));
-        myId = member.getId();
+        myId = myMember.getId();
     }
 
     private void setData() {
@@ -131,6 +145,7 @@ public class ProfileActivity extends AppCompatActivity {
         } else {
             getUserInfo(memberId);
             createChatRoomButton.setText("친구와 채팅 하기");
+            renameFriendButton.setVisibility(View.VISIBLE);
             isMyInfo = false;
         }
     }
@@ -162,6 +177,8 @@ public class ProfileActivity extends AppCompatActivity {
 
         profileCloseButton.setOnClickListener(view -> finish());
 
+        renameFriendButton.setOnClickListener(v -> showRenameDialog());
+
         createChatRoomButton.setOnClickListener(view -> {
             // 같은 멤버 구성의 방이 있으면 서버가 그 방을 돌려주므로 기존 방으로 이동하게 된다.
             List<Long> ids = new ArrayList<>(Collections.singletonList(myId));
@@ -190,11 +207,63 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void setUserProfile(Member member) {
-        usernameTextView.setText(member.getUsername());
+        usernameTextView.setText(DisplayName.of(member.getUserId(), member.getUsername()));
         statusMessageTextView.setText(member.getStatusMessage());
 
         setProfileImage(profileImageView, member.getProfileImage());
         setProfileImage(wallpaperImageView, member.getWallpaperImage());
+    }
+
+    /** 내가 정한 친구 이름 변경. 저장하면 서버와 로컬 별칭 맵을 함께 갱신한다. */
+    private void showRenameDialog() {
+        if (member == null || isMyInfo) return;
+        EditText input = new EditText(this);
+        input.setSingleLine(true);
+        input.setText(DisplayName.of(member.getUserId(), member.getUsername()));
+        input.setSelection(input.getText().length());
+        FrameLayout wrapper = new FrameLayout(this);
+        int pad = (int) (20 * getResources().getDisplayMetrics().density);
+        wrapper.setPadding(pad, 0, pad, 0);
+        wrapper.addView(input);
+
+        AlertDialog dialog = new AlertDialog.Builder(this, R.style.Theme_Modu_Dialog)
+                .setTitle("친구 이름 변경")
+                .setView(wrapper)
+                .setNegativeButton("취소", null)
+                .setPositiveButton("저장", (d, w) -> renameFriend(input.getText().toString().trim()))
+                .create();
+        dialog.setOnShowListener(d -> {
+            Button save = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            save.setEnabled(input.getText().toString().trim().length() > 0);
+            input.addTextChangedListener(new TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
+                @Override public void onTextChanged(CharSequence s, int a, int b, int c) { save.setEnabled(s.toString().trim().length() > 0); }
+                @Override public void afterTextChanged(Editable s) {}
+            });
+        });
+        dialog.show();
+    }
+
+    private void renameFriend(String name) {
+        if (name.isEmpty()) return;
+        retrofitMemberAPI.RequestRenameFriend(myMember.getUserId(), member.getId(), new RenameFriendDto(name))
+                .enqueue(new Callback<MemberDto>() {
+                    @Override
+                    public void onResponse(@NonNull Call<MemberDto> call, @NonNull Response<MemberDto> response) {
+                        if (!response.isSuccessful() || response.body() == null) {
+                            Toast.makeText(getApplicationContext(), "이름을 바꾸지 못했습니다. (" + response.code() + ")", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        FriendNames.instance().put(member.getUserId(), response.body().getFriendName());
+                        usernameTextView.setText(DisplayName.of(member.getUserId(), member.getUsername()));
+                        Toast.makeText(getApplicationContext(), "이름을 바꿨습니다.", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<MemberDto> call, @NonNull Throwable t) {
+                        Toast.makeText(getApplicationContext(), "연결에 실패했습니다.", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     // Retrofit function

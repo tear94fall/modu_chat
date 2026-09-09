@@ -86,4 +86,17 @@ public class ChatRoomNameUtilTest {
         assertEquals("나와의 채팅 (임준섭)",
                 ChatRoomNameUtil.resolve("", null, ME, MY_NAME, 0));
     }
+
+    @Test
+    public void 참여자_이름은_내가_정한_별칭으로_바뀐다() {
+        FriendNames names = new FriendNames(new FriendNamesTest.MemoryStorage());
+        names.put("a", "친구일");
+        List<Member> members = Arrays.asList(member(ME, MY_NAME), member("a", "김지우"), member("b", "박민준"));
+
+        String resolved = ChatRoomNameUtil.resolve(names, ChatRoomNameUtil.DEFAULT_ROOM_NAME, members, ME, MY_NAME, 0);
+
+        assertTrue(resolved.contains("친구일"));
+        assertFalse(resolved.contains("김지우"));
+        assertTrue(resolved.contains("박민준"));
+    }
 }

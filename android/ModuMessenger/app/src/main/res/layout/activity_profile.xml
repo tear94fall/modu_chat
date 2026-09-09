@@ -133,6 +133,23 @@
                 app:layout_goneMarginStart="16dp"
                 app:layout_constraintTop_toTopOf="@+id/profile_edit_button" />
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/rename_friend_button"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="16dp"
+                android:text="이름 변경"
+                android:textColor="@color/brand_violet"
+                android:visibility="gone"
+                app:cornerRadius="12dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/start_chat_button"
+                app:strokeColor="@color/brand_violet" />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.core.widget.NestedScrollView>

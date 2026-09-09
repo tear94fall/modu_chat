@@ -8,7 +8,6 @@ import com.example.memberservice.global.lock.ApiLock;
 import com.example.memberservice.global.lock.LockParam;
 import com.example.memberservice.member.dto.*;
 import com.example.memberservice.member.entity.Member;
-import com.example.memberservice.member.repository.FriendSort;
 import com.example.memberservice.member.repository.MemberRepository;
 import com.example.memberservice.profile.client.ProfileFeignClient;
 import com.example.memberservice.profile.dto.AddProfileDto;
@@ -46,6 +45,7 @@ public class MemberService implements UserDetailsService {
     private final StorageFeignClient storageFeignClient;
     private final ProfileFeignClient profileFeignClient;
     private final GoogleIdTokenValidator googleIdTokenValidator;
+    private final MemberFriendService memberFriendService;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -164,38 +164,6 @@ public class MemberService implements UserDetailsService {
         }
 
         return MemberDto.createMemberDto(member);
-    }
-
-    /** 친구 목록을 요청한 정렬로 한 페이지씩 돌려준다. 정렬 규칙은 {@link FriendSort}. */
-    public Page<MemberDto> getFriendsPage(String userId, FriendSort sort, Pageable pageable) {
-        Member member = memberRepository.findByUserId(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userId));
-
-        List<Long> friendIds = member.getFriends() == null ? List.of() : member.getFriends();
-        if (friendIds.isEmpty()) {
-            return Page.empty(pageable);
-        }
-
-        return memberRepository.findFriends(friendIds, sort, pageable)
-                .map(friend -> modelMapper.map(friend, MemberDto.class));
-    }
-
-    public MemberDto addFriends(String userId, String email) {
-        if(!memberRepository.existsByEmail(email)) {
-            throw new DuplicateKeyException(String.format(
-                    "존재하지 않는 유저입니다 'email: %s'", email
-            ));
-        }
-
-        Member member = memberRepository.findByUserId(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userId));
-
-        Member friend = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND, email));
-
-        member.addFriends(friend.getId());
-
-        return modelMapper.map(friend, MemberDto.class);
     }
 
     public List<MemberDto> findFriend(String email) {
@@ -323,16 +291,8 @@ public class MemberService implements UserDetailsService {
     }
 
     private AdminMemberDetailDto toAdminMemberDetailDto(Member member) {
-        List<Long> friendIds = member.getFriends() == null ? List.of() : List.copyOf(member.getFriends());
-
-        // 친구가 없으면 조회 자체를 건너뛴다. findAllByIdIn 에 빈 목록을 넘기면 불필요한 IN () 질의가 나간다.
-        List<AdminMemberSummaryDto> friends = friendIds.isEmpty()
-                ? List.of()
-                : memberRepository.findFriends(friendIds, FriendSort.NAME_ASC, Pageable.unpaged()).stream()
-                        .map(AdminMemberSummaryDto::from)
-                        .collect(Collectors.toList());
-
+        List<AdminMemberSummaryDto> friends = memberFriendService.listForAdmin(member.getId());
         return new AdminMemberDetailDto(
-                modelMapper.map(member, MemberDto.class), friendIds.size(), member.getCreatedDate(), friends);
+                modelMapper.map(member, MemberDto.class), friends.size(), member.getCreatedDate(), friends);
     }
 }

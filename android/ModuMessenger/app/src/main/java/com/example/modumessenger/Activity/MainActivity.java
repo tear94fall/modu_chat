@@ -25,6 +25,7 @@ import android.widget.Toast;
 import com.example.modumessenger.Fragments.FragmentFriends;
 import com.example.modumessenger.Fragments.FragmentChat;
 import com.example.modumessenger.Fragments.FragmentSetting;
+import com.example.modumessenger.Global.FriendNames;
 import com.example.modumessenger.Global.App;
 import com.example.modumessenger.Global.ChatBanner;
 import com.example.modumessenger.Global.NotificationPermissionUtil;
@@ -33,6 +34,7 @@ import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitChatAPI;
 import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
 import com.example.modumessenger.Retrofit.RetrofitClient;
+import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.Retrofit.RetrofitPushAPI;
 import com.example.modumessenger.dto.ChatRoomDto;
 import com.example.modumessenger.entity.Member;
@@ -41,6 +43,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
 import com.google.firebase.messaging.FirebaseMessaging;
 
+import java.util.Map;
 import java.util.List;
 
 import retrofit2.Call;
@@ -56,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
     private ViewPager2 viewPager2;
 
     RetrofitPushAPI retrofitPushAPI;
+    RetrofitMemberAPI retrofitMemberAPI;
     RetrofitChatRoomAPI retrofitChatRoomAPI;
 
     // 클릭 핸들러 등 지연된 시점에 등록하면 예외가 발생하므로, 액티비티가 STARTED 상태가
@@ -85,6 +89,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void setData() {
         retrofitPushAPI = RetrofitClient.createPushApiService();
+        retrofitMemberAPI = RetrofitClient.createMemberApiService();
         retrofitChatRoomAPI = RetrofitClient.createChatRoomApiService();
     }
 
@@ -94,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
                 setDataStoreObject("fcm-token", task.getResult());
                 SendFcmToken(member.getUserId(), getDataStoreStr("fcm-token"));
                 getChatRoomList(member.getId());
+                loadFriendNames();
             } else {
                 System.out.println("fcm get token error");
             }
@@ -280,6 +286,23 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
+            }
+        });
+    }
+
+    /** 별칭 맵. 채팅 화면과 푸시 알림이 이름을 치환할 때 쓰므로 시작하자마자 받아 둔다. */
+    private void loadFriendNames() {
+        retrofitMemberAPI.RequestFriendNames(member.getUserId()).enqueue(new Callback<Map<String, String>>() {
+            @Override
+            public void onResponse(@NonNull Call<Map<String, String>> call, @NonNull Response<Map<String, String>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    FriendNames.instance().replaceAll(response.body());
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
+                Log.e("연결실패", "friend names: " + t.getMessage());
             }
         });
     }

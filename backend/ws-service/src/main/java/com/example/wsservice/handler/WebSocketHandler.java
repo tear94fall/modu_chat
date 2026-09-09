@@ -65,7 +65,9 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
         kafkaProducerService.sendMessage(chatMessage.getRoomId(), chatMessage);
 
-        FcmMessageDto fcmMessageDto = new FcmMessageDto(updateChatRoomDto, recvChatDto);
+        // 푸시는 참여자 목록이 있는 조회 DTO 로 만든다. updateChatRoom 응답은 ModelMapper 매핑이라 members 가 비어
+        // senderName/memberCount 를 채울 수 없다. chatRoomDto 는 위 updateLastChat 로 마지막 메시지도 이미 반영돼 있다.
+        FcmMessageDto fcmMessageDto = new FcmMessageDto(chatRoomDto, recvChatDto);
         fcmService.sendFcmMessage(fcmMessageDto);
     }
 

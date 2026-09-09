@@ -32,6 +32,7 @@ import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
 import com.example.modumessenger.Global.FriendSort;
+import com.example.modumessenger.Global.FriendNames;
 import com.example.modumessenger.Global.FriendsPager;
 import com.example.modumessenger.dto.MemberDto;
 import com.example.modumessenger.dto.PageResponseDto;
@@ -214,6 +215,7 @@ public class FragmentFriends extends Fragment {
                     return; // 초기화 이전에 보낸 요청의 응답. 지금 목록과 맞지 않으므로 버린다.
                 }
 
+                body.getContent().forEach(m -> FriendNames.instance().put(m.getUserId(), m.getFriendName()));
                 friendsAdapter.addAll(body.getContent());
                 String friendCountMessage = "친구 " + body.getTotalElements() + " 명";
                 friendsCount.setText(friendCountMessage);

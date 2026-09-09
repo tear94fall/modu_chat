@@ -1,6 +1,7 @@
 package com.example.modumessenger.Fragments;
 
 import android.content.Intent;
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -22,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.modumessenger.Activity.CreateRoomActivity;
 import com.example.modumessenger.Adapter.ChatRoomAdapter;
 import com.example.modumessenger.Global.App;
+import com.example.modumessenger.Global.FriendNames;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitChatRoomAPI;
 import com.example.modumessenger.entity.ChatRoom;
@@ -47,6 +49,7 @@ public class FragmentChat extends Fragment {
 
     ChatRoomListViewModel chatRoomListViewModel;
     ChatRoomAdapter chatRoomAdapter;
+    int renderedNamesVersion;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -77,6 +80,7 @@ public class FragmentChat extends Fragment {
                 rooms -> chatRoomAdapter.setChatRoomList(rooms));
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     @Override
     public void onResume() {
         super.onResume();
@@ -86,6 +90,12 @@ public class FragmentChat extends Fragment {
         // 프로세스 재시작, 알림을 통한 콜드 스타트 등으로 신원이 비어 있었다면 복구한다.
         App.seedIdentity();
         chatRoomListViewModel.refresh();
+        // 친구 이름을 바꾸고 돌아왔으면 서버 응답과 상관없이 방 이름부터 다시 그린다.
+        int version = FriendNames.instance().version();
+        if (version != renderedNamesVersion) {
+            renderedNamesVersion = version;
+            chatRoomAdapter.notifyDataSetChanged();
+        }
     }
 
     @Override

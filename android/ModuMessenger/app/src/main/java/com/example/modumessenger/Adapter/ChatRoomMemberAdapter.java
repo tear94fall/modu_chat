@@ -14,6 +14,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.Activity.ProfileActivity;
+import com.example.modumessenger.Global.DisplayName;
 import com.example.modumessenger.R;
 import com.example.modumessenger.entity.Member;
 
@@ -64,7 +65,7 @@ public class ChatRoomMemberAdapter extends RecyclerView.Adapter<ChatRoomMemberAd
         }
 
         public void setUserInfo(Member member) {
-            this.username.setText(member.getUsername());
+            this.username.setText(DisplayName.of(member.getUserId(), member.getUsername()));
 
             setStatusMessage(member.getStatusMessage());
             setProfileImage(profileImage, member.getProfileImage());
@@ -81,7 +82,7 @@ public class ChatRoomMemberAdapter extends RecyclerView.Adapter<ChatRoomMemberAd
                 intent.putExtra("memberId", String.valueOf(member.getId()));
                 intent.putExtra("email", member.getEmail());
                 intent.putExtra("userId", member.getUserId());
-                intent.putExtra("username", member.getUsername());
+                intent.putExtra("username", DisplayName.of(member.getUserId(), member.getUsername()));
                 intent.putExtra("statusMessage", member.getStatusMessage());
                 intent.putExtra("profileImage", member.getProfileImage());
                 intent.putExtra("wallpaperImage", member.getWallpaperImage());

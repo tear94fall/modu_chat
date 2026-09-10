@@ -46,7 +46,7 @@ class MemberAdminControllerTest {
 
     @Test
     void search_returnsPage() throws Exception {
-        AdminMemberSummaryDto dto = new AdminMemberSummaryDto(1L, "u1", "Alice", "profile.jpg", "a@b.c", Role.ROLE_MEMBER, LocalDateTime.now());
+        AdminMemberSummaryDto dto = new AdminMemberSummaryDto(1L, "u1", "Alice", "profile.jpg", "a@b.c", Role.ROLE_MEMBER, LocalDateTime.now(), null);
         when(memberService.searchMembers(eq("a"), any())).thenReturn(new PageImpl<>(List.of(dto)));
 
         mockMvc.perform(get("/api-admin/member").param("keyword", "a").header("X-Internal-Token", "test-internal-token"))
@@ -118,7 +118,7 @@ class MemberAdminControllerTest {
     void detail_includesFriendList() throws Exception {
         MemberDto member = MemberDto.builder().username("Alice").build();
         AdminMemberSummaryDto friend = new AdminMemberSummaryDto(
-                50L, "demo-jiwoo", "김지우", "a.png", "jiwoo@modu.chat", Role.ROLE_MEMBER, LocalDateTime.now());
+                50L, "demo-jiwoo", "김지우", "a.png", "jiwoo@modu.chat", Role.ROLE_MEMBER, LocalDateTime.now(), "지우야");
         when(memberService.getMemberDetail(1L))
                 .thenReturn(new AdminMemberDetailDto(member, 1, LocalDateTime.now(), List.of(friend)));
 
@@ -126,7 +126,8 @@ class MemberAdminControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.friendCount").value(1))
                 .andExpect(jsonPath("$.friends[0].username").value("김지우"))
-                .andExpect(jsonPath("$.friends[0].userId").value("demo-jiwoo"));
+                .andExpect(jsonPath("$.friends[0].userId").value("demo-jiwoo"))
+                .andExpect(jsonPath("$.friends[0].friendName").value("지우야"));
     }
 
 }

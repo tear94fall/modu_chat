@@ -3,6 +3,7 @@ package com.example.modumessenger.Activity;
 import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
 import static com.example.modumessenger.Global.DataStoreHelper.*;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -33,6 +34,7 @@ import com.bumptech.glide.Glide;
 import com.example.modumessenger.Adapter.ChatBubble;
 import com.example.modumessenger.Adapter.ChatHistoryAdapter;
 import com.example.modumessenger.Adapter.ChatRoomMemberAdapter;
+import com.example.modumessenger.Global.FriendNames;
 import com.example.modumessenger.Global.App;
 import com.example.modumessenger.Global.ChatBanner;
 import com.example.modumessenger.Global.socket.ConnectionState;
@@ -73,6 +75,9 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
     RecyclerView recyclerView;
     LinearLayoutManager manager;
     ChatHistoryAdapter chatHistoryAdapter;
+    ChatRoomMemberAdapter chatRoomMemberAdapter;
+    /** 마지막으로 이름을 그렸을 때의 FriendNames 버전 */
+    int renderedNamesVersion;
 
     ChatSendOthersActivity chatSendOthersActivity;
 
@@ -96,6 +101,7 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
+        renderedNamesVersion = FriendNames.instance().version();
         bindingView();
         getData();
         setData();
@@ -105,10 +111,21 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         settingSideNavBar();
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     @Override
     public void onResume() {
         super.onResume();
         updateRoomInfo(roomId);
+
+        // 참여자 서랍 → 프로필에서 친구 이름을 바꾸고 돌아온 경우. updateRoomInfo 응답을 기다리지 않고
+        // 지금 목록으로 제목·서랍·말풍선을 바로 다시 그린다. 서랍 어댑터는 목록만 바뀌고 알림을 못 받아 이전 이름이 남아 있었다.
+        int version = FriendNames.instance().version();
+        if (version != renderedNamesVersion) {
+            renderedNamesVersion = version;
+            if (roomInfo != null) setChatRoomName(chatMemberList, roomInfo.getRoomName());
+            if (chatRoomMemberAdapter != null) chatRoomMemberAdapter.notifyDataSetChanged();
+            if (chatHistoryAdapter != null) chatHistoryAdapter.notifyDataSetChanged();
+        }
     }
 
     @Override
@@ -460,7 +477,8 @@ public class ChatActivity extends AppCompatActivity implements ChatSendOthersAct
         chatLayoutManager = new LinearLayoutManager(this);
         chatRecyclerView.setLayoutManager(chatLayoutManager);
 
-        chatRecyclerView.setAdapter(new ChatRoomMemberAdapter(chatMemberList));
+        chatRoomMemberAdapter = new ChatRoomMemberAdapter(chatMemberList);
+        chatRecyclerView.setAdapter(chatRoomMemberAdapter);
     }
 
     public void setChatRoomName(List<Member> chatRoomMembers, String chatRoomName) {

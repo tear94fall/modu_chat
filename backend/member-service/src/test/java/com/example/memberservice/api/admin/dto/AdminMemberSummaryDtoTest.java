@@ -17,7 +17,6 @@ class AdminMemberSummaryDtoTest {
                 .username("Alice")
                 .role(Role.ROLE_MEMBER)
                 .profileImage("045dc7b8636dd07cfb83a741bf886b982649b306f82cdc35d3b9904471687f3f.gif")
-                .friends(new ArrayList<>())
                 .profiles(new ArrayList<>())
                 .chatRoomMembers(new ArrayList<>())
                 .build();

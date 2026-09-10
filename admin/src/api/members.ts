@@ -9,6 +9,8 @@ export interface Member {
   profileImage?: string
   wallpaperImage?: string
   createdDate?: string
+  /** 회원 상세의 친구 목록에서만 온다: 그 회원이 이 친구에게 정한 이름 */
+  friendName?: string
 }
 export interface Page<T> { content: T[]; totalElements: number; totalPages: number; number: number; size: number }
 export interface MemberDetail { member: Member; friendCount: number; createdDate?: string; friends: Member[] }

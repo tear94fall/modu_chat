@@ -65,6 +65,7 @@ export default function MemberDetailPage() {
                 <tr>
                   <th aria-label="프로필" />
                   <th>이름</th>
+                  <th>내가 정한 이름</th>
                   <th>이메일</th>
                   <th>사용자 ID</th>
                   <th>권한</th>
@@ -89,6 +90,7 @@ export default function MemberDetailPage() {
                       <RemoteImage filename={f.profileImage} alt={f.username} className="avatar avatar--sm" />
                     </td>
                     <td>{f.username}</td>
+                    <td>{f.friendName || '-'}</td>
                     <td>{f.email}</td>
                     <td>{f.userId}</td>
                     <td>{formatRole(f.role)}</td>

@@ -60,4 +60,11 @@
     <style name="AppTheme.Button" parent="Base.Widget.AppCompat.Button">
         <item name="colorButtonNormal">@color/brand_violet</item>
     </style>
+    <!-- SsoActivity: 화면 없이 대화상자만 띄운다 -->
+    <style name="Theme.Modu.Transparent" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
 </resources>

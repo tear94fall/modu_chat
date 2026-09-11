@@ -1,15 +1,11 @@
 package com.example.authservice.admin;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-import com.example.authservice.auth.dto.TokenResponseDto;
-import com.example.authservice.auth.jwt.JwtTokenProvider;
 import com.example.authservice.member.client.MemberFeignClient;
 import com.example.authservice.member.dto.MemberDto;
 import com.example.authservice.member.dto.Role;
-import com.example.authservice.service.RefreshTokenService;
 import feign.FeignException;
 import feign.Request;
 import feign.Response;
@@ -25,11 +21,9 @@ class AdminLoginServiceTest {
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
     private final String hash = encoder.encode("correct-pw");
     private final MemberFeignClient members = mock(MemberFeignClient.class);
-    private final JwtTokenProvider jwt = mock(JwtTokenProvider.class);
-    private final RefreshTokenService refresh = mock(RefreshTokenService.class);
 
     private AdminLoginService service(String configuredHash) {
-        return new AdminLoginService(members, jwt, refresh, encoder, configuredHash);
+        return new AdminLoginService(members, encoder, configuredHash);
     }
 
     private MemberDto member(Role role) {
@@ -41,16 +35,13 @@ class AdminLoginServiceTest {
     }
 
     @Test
-    void success_issuesAdminTokens() {
+    void success_returnsAdminIdentity() {
         when(members.getMemberByEmail("admin@example.com")).thenReturn(member(Role.ROLE_ADMIN));
-        when(jwt.createJwtAccessToken(eq("admin-1"), eq(List.of("ROLE_ADMIN")))).thenReturn("access");
-        when(jwt.createJwtRefreshToken(eq(List.of("ROLE_ADMIN")))).thenReturn("refresh");
 
-        TokenResponseDto dto = service(hash).login("admin@example.com", "correct-pw");
+        AdminLoginService.AdminMember admin = service(hash).login("admin@example.com", "correct-pw");
 
-        assertEquals("access", dto.getAccessToken());
-        assertEquals("refresh", dto.getRefreshToken());
-        verify(refresh).updateRefreshToken(any());
+        assertEquals("admin-1", admin.userId());
+        assertEquals(List.of("ROLE_ADMIN"), admin.roles());
     }
 
     @Test
@@ -115,11 +106,9 @@ class AdminLoginServiceTest {
         // member-service 가 복구되면 정상 로그인이 되어야 한다 -> 위 5번은 잠금에 반영되지 않았다.
         // (직전 스텁이 계속 던지는 상태라 when(mock.foo())...로 재스텁하면 그 인자 평가 자체가 던져버리니 doReturn 을 쓴다)
         doReturn(member(Role.ROLE_ADMIN)).when(members).getMemberByEmail("admin@example.com");
-        when(jwt.createJwtAccessToken(eq("admin-1"), eq(List.of("ROLE_ADMIN")))).thenReturn("access");
-        when(jwt.createJwtRefreshToken(eq(List.of("ROLE_ADMIN")))).thenReturn("refresh");
 
-        TokenResponseDto dto = s.login("admin@example.com", "correct-pw");
-        assertEquals("access", dto.getAccessToken());
+        AdminLoginService.AdminMember admin = s.login("admin@example.com", "correct-pw");
+        assertEquals("admin-1", admin.userId());
     }
 
     @Test

@@ -19,12 +19,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.modumessenger.Global.App;
 import com.example.modumessenger.Global.DataStoreHelper;
-import com.example.modumessenger.Global.HashUtil;
 import com.example.modumessenger.R;
-import com.example.modumessenger.dto.GoogleLoginRequest;
+import com.example.modumessenger.Global.OAuthClient;
 import com.example.modumessenger.dto.MemberDto;
-import com.example.modumessenger.dto.RequestLoginDto;
-import com.example.modumessenger.dto.SignUpDto;
+import com.example.modumessenger.dto.TokenResponseDto;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -35,8 +33,6 @@ import com.google.android.gms.tasks.Task;
 import com.example.modumessenger.Retrofit.*;
 import com.google.gson.Gson;
 
-import java.util.Arrays;
-import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -44,9 +40,7 @@ import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private static final List<String> supportApp = Arrays.asList("com.example.myapplication", "com.example.moducafe");
     private static final String TAG = "Oauth2Google";
-    private static final int maxLoginRetry = 5;
 
     GoogleSignInClient mGoogleSignInClient;
     SignInButton LoginButton;
@@ -78,7 +72,15 @@ public class LoginActivity extends AppCompatActivity {
 
             LoginButton.setVisibility(View.INVISIBLE);
 
-            LoginMember(new RequestLoginDto(account.getId(), account.getEmail()), 0);
+            // 저장된 계정으로 새 구글 ID 토큰을 받아 교환한다. 서버는 구글 서명으로만 신원을 믿는다.
+            mGoogleSignInClient.silentSignIn().addOnCompleteListener(this, task -> {
+                if (task.isSuccessful() && task.getResult() != null && task.getResult().getIdToken() != null) {
+                    exchangeGoogleIdToken(task.getResult());
+                } else {
+                    Log.w(TAG, "구글 무음 로그인 실패, 버튼으로 다시 로그인");
+                    LoginButton.setVisibility(View.VISIBLE);
+                }
+            });
         }
     }
 
@@ -101,18 +103,17 @@ public class LoginActivity extends AppCompatActivity {
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == Activity.RESULT_OK) {
-                        Log.d(TAG, "구글 소셜 로그인 성공. 백엔드에 회원가입 요청.");
+                        Log.d(TAG, "구글 소셜 로그인 성공. auth-service 에 토큰 교환 요청.");
 
                         Intent intent = result.getData();
                         Task<GoogleSignInAccount> task = getSignedInAccountFromIntent(intent);
 
-                        SignupToBackend(task, "google");
+                        onGoogleSignedIn(task);
                     }
                 });
     }
 
     private void getData() {
-        loginFromAnotherApp();
     }
 
     private void setData() {
@@ -137,35 +138,10 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    private void loginFromAnotherApp() {
-        Intent intent = getIntent();
-        String openApp = intent.getStringExtra("openApp");
-
-        if (supportApp.contains(openApp)) {
-            Intent resultIntent = new Intent();
-            String id = "";
-            String token = "";
-            String response = "fail";
-
-            GoogleSignInAccount account = getLastSignedInAccount(this);
-            if (account != null && account.getEmail() != null) {
-                id = HashUtil.getSHA256Hash(account.getId());
-                token = DataStoreHelper.getDataStoreStr("access-token");
-                response = "success";
-            }
-
-            resultIntent.putExtra("id", id);
-            resultIntent.putExtra("token", token);
-            resultIntent.putExtra("response_message", response);
-            setResult(Activity.RESULT_OK, resultIntent);
-            finish();
-        }
-    }
-
-    private void SignupToBackend(Task<GoogleSignInAccount> completedTask, String auth_type) {
+    private void onGoogleSignedIn(Task<GoogleSignInAccount> completedTask) {
         try {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
-            SignupMember(new GoogleLoginRequest(account.getIdToken(), auth_type));
+            exchangeGoogleIdToken(account);
         } catch (ApiException e) {
             Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
             Toast.makeText(getApplicationContext(),
@@ -178,100 +154,46 @@ public class LoginActivity extends AppCompatActivity {
         startActivityResult.launch(signInIntent);
     }
 
-    private void delayLogin(RequestLoginDto requestLoginDto, int retryCount) {
-        handler.postDelayed(() -> {
-            if (retryCount <= maxLoginRetry) {
-                Toast.makeText(getApplicationContext(), "로그인을 재시도 합니다.", Toast.LENGTH_SHORT).show();
-                LoginMember(requestLoginDto, retryCount + 1);
-            } else {
-                Toast.makeText(getApplicationContext(), "로그인을 재시도 횟수를 초과 하였습니다.", Toast.LENGTH_SHORT).show();
-                handler.removeCallbacksAndMessages(null);
-            }
-        }, 10000);
-    }
+    /**
+     * 구글 ID 토큰을 auth-service 토큰으로 바꾼다. 가입은 서버가 첫 로그인 때 알아서 한다.
+     * 토큰은 예전 헤더 방식과 같은 키에 "Bearer " 를 붙여 저장해 나머지 화면은 그대로 동작한다.
+     */
+    private void exchangeGoogleIdToken(GoogleSignInAccount account) {
+        String idToken = account.getIdToken();
+        if (idToken == null) {
+            Toast.makeText(getApplicationContext(), "구글 ID 토큰을 받지 못했습니다. 다시 시도해 주세요.", Toast.LENGTH_SHORT).show();
+            LoginButton.setVisibility(View.VISIBLE);
+            return;
+        }
+        LoginButton.setVisibility(View.INVISIBLE);
 
-    // Retrofit function
-    public void SignupMember(GoogleLoginRequest googleLoginRequest) {
-        Call<SignUpDto> call = retrofitMemberAPI.RequestSignup(googleLoginRequest);
-
-        call.enqueue(new Callback<SignUpDto>() {
+        Call<TokenResponseDto> call = retrofitAuthAPI.token(OAuthClient.googleForm(idToken));
+        call.enqueue(new Callback<TokenResponseDto>() {
             @Override
-            public void onResponse(@NonNull Call<SignUpDto> call, @NonNull Response<SignUpDto> response) {
-                if(response.isSuccessful()) {
-                    if(response.body() != null) {
-                        SignUpDto signUpDto = response.body();
-
-                        Log.d("회원가입 완료 : ", signUpDto.toString());
-                        LoginButton.setVisibility(View.INVISIBLE);
-
-                        LoginMember(new RequestLoginDto(signUpDto.getUserId(), signUpDto.getEmail()), 0);
-                    } else {
-                        Log.e(TAG, "회원가입 응답 본문이 비어 있습니다. code=" + response.code());
-                        Toast.makeText(getApplicationContext(),
-                                String.format("회원 가입에 실패했습니다 (코드 %d)", response.code()), Toast.LENGTH_SHORT).show();
-
-                        LoginButton.setVisibility(View.VISIBLE);
-                        mGoogleSignInClient.signOut();
-                    }
-                } else {
-                    String errorBody = null;
-                    try {
-                        errorBody = response.errorBody() != null ? response.errorBody().string() : null;
-                    } catch (Exception e) {
-                        Log.e(TAG, "errorBody 읽기 실패: " + e.getMessage());
-                    }
-
-                    Log.e(TAG, "회원가입 실패 code=" + response.code() + " body=" + errorBody);
+            public void onResponse(@NonNull Call<TokenResponseDto> call, @NonNull Response<TokenResponseDto> response) {
+                if (!response.isSuccessful() || response.body() == null || response.body().getAccessToken() == null) {
+                    Log.e(TAG, "토큰 교환 실패 code=" + response.code());
                     Toast.makeText(getApplicationContext(),
-                            String.format("회원 가입에 실패했습니다 (코드 %d)", response.code()), Toast.LENGTH_SHORT).show();
-
+                            String.format("로그인에 실패했습니다 (코드 %d)", response.code()), Toast.LENGTH_SHORT).show();
                     LoginButton.setVisibility(View.VISIBLE);
                     mGoogleSignInClient.signOut();
+                    return;
                 }
+                TokenResponseDto tokens = response.body();
+                setDataStoreObject("access-token", "Bearer " + tokens.getAccessToken());
+                setDataStoreObject("refresh-token", "Bearer " + tokens.getRefreshToken());
+
+                Toast.makeText(getApplicationContext(), "로그인에 성공 하였습니다. 반갑습니다.", Toast.LENGTH_SHORT).show();
+
+                retrofitMemberAPI = RetrofitClient.createMemberApiService(); // recreate with token at interceptor
+                GetUserInfo(account.getEmail(), "google");
             }
 
             @Override
-            public void onFailure(@NonNull Call<SignUpDto> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<TokenResponseDto> call, @NonNull Throwable t) {
                 Log.e("연결실패", t.getMessage());
-                mGoogleSignInClient.signOut();
-            }
-        });
-    }
-
-    public void LoginMember(RequestLoginDto requestLoginDto, int retryCount){
-        Call<Void> call = retrofitAuthAPI.login(requestLoginDto);
-
-        call.enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
-                if(response.isSuccessful()) {
-                    setDataStoreObject("refresh-token", "Bearer" + " " + response.headers().get("refresh-token"));
-                    setDataStoreObject("access-token", "Bearer" + " " + response.headers().get("access-token"));
-
-                    Log.e("refresh jwt 토큰 발급 완료 : ", getDataStoreStr("refresh-token"));
-                    Log.e("access jwt 토큰 발급 완료 : ", getDataStoreStr("access-token"));
-
-                    Toast.makeText(getApplicationContext(),"로그인에 성공 하였습니다. 반갑습니다.", Toast.LENGTH_SHORT).show();
-
-                    retrofitMemberAPI = RetrofitClient.createMemberApiService(); // recreate with token at interceptor
-
-                    GetUserInfo(requestLoginDto.getEmail(), "google");
-
-                    handler.removeCallbacksAndMessages(null);
-                } else {
-                    Log.e("연결이 비정상적 : ", "error code : " + response.code());
-                    Toast.makeText(getApplicationContext(),"연결이 원활하지 않습니다.", Toast.LENGTH_SHORT).show();
-
-                    delayLogin(requestLoginDto, retryCount+1);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
-                Log.e("연결실패", t.getMessage());
-                Toast.makeText(getApplicationContext(),"로그인에 실패하였습니다.", Toast.LENGTH_SHORT).show();
-
-                delayLogin(requestLoginDto, retryCount+1);
+                Toast.makeText(getApplicationContext(), "로그인에 실패하였습니다.", Toast.LENGTH_SHORT).show();
+                LoginButton.setVisibility(View.VISIBLE);
             }
         });
     }

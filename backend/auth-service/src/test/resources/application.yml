@@ -1,0 +1,84 @@
+server:
+  port: 9900
+
+spring:
+  application:
+    name: auth-service
+  cloud:
+    config:
+      enabled: false
+  data:
+    redis:
+      host: localhost
+      port: 6399
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+modu:
+  internal-api:
+    token: test-internal-token
+  admin:
+    password-hash: ""
+  oauth:
+    issuer: http://localhost:8000/auth-service
+    access-token-ttl: 1h
+    refresh-token-ttl: 7d
+    sso-code-ttl: 60s
+    google:
+      audiences: [test-android-client-id]
+    rsa:
+      # 테스트 전용 키. 운영 키는 config-repo 에 {cipher} 로만 둔다.
+      private-key: |
+        -----BEGIN PRIVATE KEY-----
+        MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCUOQRbAThAoTx5
+        EQkQtw9/21dZ3qwucwZdN7j2mMPRphD9BJpu8AUCXsQEFiP/hYHAw0hbjCYopWsZ
+        l0x233S5EAlqRjHLvh5bg06NC/pelDVN1nikRCMAuye+7DrZAO41t7oQyS/jFHcf
+        j9I8PuimkAycpKh+3cEGlcjapxMmE6xY5obWNtM9CXQPzyjgM5XgRo8iPIj1e48x
+        ICa2glMsRetK4Ul9iF4UT0MMLixgVnXjPfSA/Hha5lQULvitfBGiOoCDnPvz3IG2
+        EZR/1+1Y4mDyA1EFTZq1IM2tmp8L2HA1fUn2AvvtQilRx17mSIwQ0WSuxOtSXqQa
+        FpLMvGGxAgMBAAECggEACK229tIhNk2KgicwcfFZ/7k6ydkLGVQkTwB0fMHQk12n
+        GH10wmKc1Hjyfq/CL1Okl4IHok6YLGCVHwQ4Fqy6Q5ywBHA0ObL5yY9sYb9OC0wf
+        u90/JpUTvJb4uonP30VZ7TzC8Pkqq9/WorszytG/IwODrYdJk1YOF4HdJwpJyXye
+        Fd7ic2EfsMYA4csDoDuzmitFbcHFJ3ZzhKOq//4gE81VN5QCDD6WgUbxgokWLEKD
+        71kdJiecatiP2417JFskA+F+uZTN1pRqxci/cfX79ga1YV2vfLB2MB5aKYjrC6Aq
+        n7ecLeQnr/yn+IM5t496x+gMb9CAxSna21E04hOoUQKBgQDGXA/Xr91baL407JJ7
+        wsvzmO+vGZ7D4KpqzeiLJNhydW275tCTdxqikfMKBQegvFwV4UedVmpfO0/ghSAS
+        XNYoChjODA5Gsa4hBQxR+GjRorEmyfFH2kjV+HuwZUUJ72umjubTxkEC/7YHpUK4
+        hojXz26YcUnGgohB1gTmsyC9+QKBgQC/S0e12opMY2q1c95MIQCSMUPr9P0tbIGN
+        lxeKx5PB3RgyQ/ovvtXByhTrUt1yJjEq/tcRe1gzrbllbKTxs2IfXVsDtBUK/oyO
+        E8XzAhfeHewEZXoJaO7cakiHhCNw8uoYGRZkvZqJ9KVvkYTif33moeZV9u886wPl
+        /664rGkPeQKBgQCqr8mKJfDqmYUi8XdTO9pYcX++QuOVVhwO78RtB3WheF7G0+Uj
+        H9gxkDl8o7temvb6dPI094ltDRK89pEUfAJkTdvuYf1e48Ic88UYPBOmYMLjx93x
+        oGoQhVOaBGqWFAmkN091aCHFPNkcVx7Evi++1OYsE0ASq3woesuY4QcJsQKBgB1v
+        E+Wjbsw6L90jqvzDxza3ZeAUnjAzFewXZ4PvGYkm3+Y8F27pSjK7SWS8J169Cau3
+        8pe6BuRMws4cXXTjSSHSV4LGXsaGTFJAMKEnnUyMBhjXFGQGRVqc7/QKHPnwJpz2
+        nz94/SJlBl+YYH4JZ/Hoz2xCxqT09HCbWuMHhFLhAoGAG3uAeGhsWFLk6jZiDuAO
+        2IUimSHbrohxDZeJEQXk6wj3sL18SkGb7J1xiYncxseKVJe3ivqAQxzejD/9K1I+
+        upyDNJf4Nhs6bqqLXdfGqil5kbOZyybOEMN2OzXsAIjLEXjmfykedNPhncWOuUwI
+        J/VIAMukBXBTzh2oghD0N+o=
+        -----END PRIVATE KEY-----
+      public-key: |
+        -----BEGIN PUBLIC KEY-----
+        MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlDkEWwE4QKE8eREJELcP
+        f9tXWd6sLnMGXTe49pjD0aYQ/QSabvAFAl7EBBYj/4WBwMNIW4wmKKVrGZdMdt90
+        uRAJakYxy74eW4NOjQv6XpQ1TdZ4pEQjALsnvuw62QDuNbe6EMkv4xR3H4/SPD7o
+        ppAMnKSoft3BBpXI2qcTJhOsWOaG1jbTPQl0D88o4DOV4EaPIjyI9XuPMSAmtoJT
+        LEXrSuFJfYheFE9DDC4sYFZ14z30gPx4WuZUFC74rXwRojqAg5z789yBthGUf9ft
+        WOJg8gNRBU2atSDNrZqfC9hwNX1J9gL77UIpUcde5kiMENFkrsTrUl6kGhaSzLxh
+        sQIDAQAB
+        -----END PUBLIC KEY-----
+    clients:
+      - id: modu-chat
+        grants: [google_id_token, refresh_token]
+        scopes: [openid, profile, chat]
+        sso-issuer: true
+      - id: modu-commerce
+        grants: [google_id_token, sso_code, refresh_token]
+        scopes: [openid, profile, commerce]
+      - id: modu-admin
+        grants: [admin_password, refresh_token]
+        scopes: [openid, admin]

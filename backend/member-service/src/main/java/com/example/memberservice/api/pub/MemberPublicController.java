@@ -5,7 +5,6 @@ import com.example.memberservice.global.exception.CustomException;
 import com.example.memberservice.member.entity.MemberFriend;
 import com.example.memberservice.member.service.MemberFriendService;
 import com.example.memberservice.member.service.MemberService;
-import com.example.memberservice.member.service.MemberSignupService;
 import com.example.memberservice.profile.client.ProfileFeignClient;
 import com.example.memberservice.profile.dto.ProfileDto;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-/** 안드로이드가 게이트웨이를 거쳐 부르는 회원 API. signup 은 게이트웨이에서 인증 없이 통과한다. */
+/** 안드로이드가 게이트웨이를 거쳐 부르는 회원 API. 가입은 auth-service 의 첫 로그인(내부 API)에서 일어난다. */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api-public/member")
@@ -33,7 +32,6 @@ public class MemberPublicController {
 
     private final MemberService memberService;
     private final MemberFriendService memberFriendService;
-    private final MemberSignupService memberSignupService;
     private final ProfileFeignClient profileFeignClient;
     private final ModelMapper modelMapper;
 
@@ -51,10 +49,6 @@ public class MemberPublicController {
         return ResponseEntity.ok().body(ResponseMemberDto.from(memberDto, profiles));
     }
 
-    @PostMapping("/signup")
-    public ResponseEntity<ResponseMemberDto> createMember(@Valid @RequestBody GoogleLoginRequest googleLoginRequest) {
-        return ResponseEntity.ok().body(memberSignupService.signup(googleLoginRequest));
-    }
 
     @PostMapping("/{userId}")
     public ResponseEntity<ResponseMemberDto> updateMemberProfileInfo(@Valid @PathVariable("userId") String userId, @RequestBody UpdateProfileDto updateProfileDto) {

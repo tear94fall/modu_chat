@@ -16,7 +16,7 @@ import org.springframework.mock.web.server.MockServerWebExchange;
 import reactor.core.publisher.Mono;
 
 /** 라우트 정의가 계층 규칙을 지키는지: public 만 통과, internal/debug 는 어떤 라우트에도 안 잡힌다. */
-@SpringBootTest(properties = "modu.internal-api.token=test-internal-token")
+@SpringBootTest(properties = {"modu.internal-api.token=test-internal-token", "modu.oauth.jwks-uri=http://localhost:9900/oauth2/jwks", "modu.oauth.issuer=http://localhost:8000/auth-service"})
 class GatewayRoutesTest {
 
     @Autowired RouteLocator routeLocator;
@@ -45,10 +45,26 @@ class GatewayRoutesTest {
     }
 
     @Test
-    void noAuthRoutes_matchBeforeWildcards() {
-        assertEquals("auth-service-login", firstMatch(HttpMethod.POST, "/auth-service/api-public/login").orElseThrow().getId());
-        assertEquals("auth-service-reissue", firstMatch(HttpMethod.POST, "/auth-service/api-public/auth/reissue").orElseThrow().getId());
-        assertEquals("member-service-signup", firstMatch(HttpMethod.POST, "/member-service/api-public/member/signup").orElseThrow().getId());
+    void oauth2Endpoints_areNoAuthRoutes() {
+        assertEquals("auth-service-oauth2", firstMatch(HttpMethod.POST, "/auth-service/oauth2/token").orElseThrow().getId());
+        assertEquals("auth-service-oauth2", firstMatch(HttpMethod.POST, "/auth-service/oauth2/revoke").orElseThrow().getId());
+        assertEquals("auth-service-oauth2", firstMatch(HttpMethod.GET, "/auth-service/oauth2/jwks").orElseThrow().getId());
+        assertEquals("auth-service-oauth2", firstMatch(HttpMethod.GET, "/auth-service/userinfo").orElseThrow().getId());
+        assertEquals("auth-service-oauth2", firstMatch(HttpMethod.GET, "/auth-service/.well-known/openid-configuration").orElseThrow().getId());
+    }
+
+    @Test
+    void legacyLoginRoutes_areGone() {
+        // 무검증 로그인·재발급·공개 signup·관리자 로그인은 사라졌다. signup 경로는 이제 JWT 가 필요한 public 라우트에 잡힌다.
+        assertTrue(firstMatch(HttpMethod.POST, "/auth-service/api-public/login").map(r -> r.getId()).filter("auth-service-login"::equals).isEmpty());
+        assertTrue(firstMatch(HttpMethod.POST, "/auth-service/api-public/auth/reissue").map(r -> r.getId()).filter("auth-service-reissue"::equals).isEmpty());
+        assertTrue(firstMatch(HttpMethod.POST, "/auth-service/api-public/admin/login").map(r -> r.getId()).filter("auth-service-admin-login"::equals).isEmpty());
+        assertEquals("member-service-public", firstMatch(HttpMethod.POST, "/member-service/api-public/member/signup").orElseThrow().getId());
+    }
+
+    @Test
+    void ssoCode_isChatProtectedRoute() {
+        assertEquals("auth-service-public", firstMatch(HttpMethod.POST, "/auth-service/api-public/auth/sso-code").orElseThrow().getId());
     }
 
     @Test
@@ -65,8 +81,4 @@ class GatewayRoutesTest {
         assertEquals("storage-service-admin", firstMatch(HttpMethod.GET, "/storage-service/api-admin/view/x.jpg").orElseThrow().getId());
     }
 
-    @Test
-    void adminLogin_isNoAuthRoute() {
-        assertEquals("auth-service-admin-login", firstMatch(HttpMethod.POST, "/auth-service/api-public/admin/login").orElseThrow().getId());
-    }
 }

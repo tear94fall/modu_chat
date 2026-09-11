@@ -18,11 +18,16 @@ public class StripClientIdentityFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        if (!exchange.getRequest().getHeaders().containsKey(AuthorizationHeaderFilter.USER_ID_HEADER)) {
+        boolean hasUser = exchange.getRequest().getHeaders().containsKey(AuthorizationHeaderFilter.USER_ID_HEADER);
+        boolean hasClient = exchange.getRequest().getHeaders().containsKey(AuthorizationHeaderFilter.CLIENT_ID_HEADER);
+        if (!hasUser && !hasClient) {
             return chain.filter(exchange);
         }
         ServerHttpRequest stripped = exchange.getRequest().mutate()
-                .headers(headers -> headers.remove(AuthorizationHeaderFilter.USER_ID_HEADER))
+                .headers(headers -> {
+                    headers.remove(AuthorizationHeaderFilter.USER_ID_HEADER);
+                    headers.remove(AuthorizationHeaderFilter.CLIENT_ID_HEADER);
+                })
                 .build();
         return chain.filter(exchange.mutate().request(stripped).build());
     }

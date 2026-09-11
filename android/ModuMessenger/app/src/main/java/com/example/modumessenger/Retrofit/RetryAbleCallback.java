@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 
 import com.example.modumessenger.BuildConfig;
 import com.example.modumessenger.Global.DataStoreHelper;
+import com.example.modumessenger.Global.OAuthClient;
 import com.example.modumessenger.dto.TokenResponseDto;
 import com.google.gson.GsonBuilder;
 
@@ -49,7 +50,7 @@ public abstract class RetryAbleCallback<T> implements Callback<T> {
             if (retryCount++ < totalRetries) {
                 Log.v(TAG, "Retrying API Call -  (" + retryCount + " / " + totalRetries + ")");
 
-                if(response.code() == 500) {
+                if(response.code() == 401 || response.code() == 500) {
                     reissueToken();
                     retry();
                 }
@@ -83,11 +84,11 @@ public abstract class RetryAbleCallback<T> implements Callback<T> {
     }
 
     private void reissueToken() {
-        String accessToken = DataStoreHelper.getDataStoreStr("access-token");
         String refreshToken = DataStoreHelper.getDataStoreStr("refresh-token");
 
+        // 인터셉터 없는 Retrofit 을 쓴다. 만료된 액세스 토큰을 헤더에 달고 갈 이유가 없다.
         RetrofitAuthAPI retrofitAuthAPI = retrofit.create(RetrofitAuthAPI.class);
-        Call<TokenResponseDto> call = retrofitAuthAPI.reissue(accessToken, refreshToken);
+        Call<TokenResponseDto> call = retrofitAuthAPI.token(OAuthClient.refreshForm(refreshToken));
 
         call.enqueue(new Callback<TokenResponseDto>() {
             @Override

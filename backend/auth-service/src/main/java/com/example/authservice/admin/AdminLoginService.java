@@ -1,12 +1,8 @@
 package com.example.authservice.admin;
 
-import com.example.authservice.auth.dto.TokenResponseDto;
-import com.example.authservice.auth.entity.RefreshToken;
-import com.example.authservice.auth.jwt.JwtTokenProvider;
 import com.example.authservice.member.client.MemberFeignClient;
 import com.example.authservice.member.dto.MemberDto;
 import com.example.authservice.member.dto.Role;
-import com.example.authservice.service.RefreshTokenService;
 import feign.FeignException;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,23 +34,21 @@ public class AdminLoginService {
     private static final long WINDOW_MS = 15 * 60 * 1000L;
     private final java.util.concurrent.ConcurrentHashMap<String, long[]> failures = new java.util.concurrent.ConcurrentHashMap<>(); // [count, windowStartMillis]
 
+    /** 검증에 성공한 관리자. 토큰은 OAuth2 토큰 엔드포인트(admin_password grant)가 만든다. */
+    public record AdminMember(String userId, List<String> roles) {}
+
     private final MemberFeignClient memberFeignClient;
-    private final JwtTokenProvider jwtTokenProvider;
-    private final RefreshTokenService refreshTokenService;
     private final PasswordEncoder passwordEncoder;
     private final String passwordHash;
 
-    public AdminLoginService(MemberFeignClient memberFeignClient, JwtTokenProvider jwtTokenProvider,
-                             RefreshTokenService refreshTokenService, PasswordEncoder passwordEncoder,
+    public AdminLoginService(MemberFeignClient memberFeignClient, PasswordEncoder passwordEncoder,
                              @Value("${modu.admin.password-hash:}") String passwordHash) {
         this.memberFeignClient = memberFeignClient;
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.refreshTokenService = refreshTokenService;
         this.passwordEncoder = passwordEncoder;
         this.passwordHash = passwordHash;
     }
 
-    public TokenResponseDto login(String email, String password) {
+    public AdminMember login(String email, String password) {
         if (isLocked(email)) {
             throw new AdminLoginException();
         }
@@ -84,11 +78,7 @@ public class AdminLoginService {
             throw new AdminLoginException();
         }
         clearFailures(email);
-        List<String> roles = List.of(Role.ROLE_ADMIN.getRoleName());
-        String accessToken = jwtTokenProvider.createJwtAccessToken(member.getUserId(), roles);
-        String refreshToken = jwtTokenProvider.createJwtRefreshToken(roles);
-        refreshTokenService.updateRefreshToken(RefreshToken.createToken(member.getUserId(), refreshToken));
-        return new TokenResponseDto(accessToken, refreshToken);
+        return new AdminMember(member.getUserId(), List.of(Role.ROLE_ADMIN.getRoleName()));
     }
 
     /** 창 안에서 실패가 MAX_FAILURES 이상이면 true. */

@@ -19,12 +19,6 @@ logging:
   level:
     org.hibernate.SQL: debug
 
-security:
-  jwt:
-    token:
-      access-expired: 3600000
-      refresh-expired: 604800000
-
 eureka:
   instance:
     instance-id: auth-service

@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 
 @Slf4j
 @Service
@@ -44,7 +43,6 @@ public class MemberService implements UserDetailsService {
     private final ModelMapper modelMapper;
     private final StorageFeignClient storageFeignClient;
     private final ProfileFeignClient profileFeignClient;
-    private final GoogleIdTokenValidator googleIdTokenValidator;
     private final MemberFriendService memberFriendService;
 
     @Override
@@ -64,36 +62,25 @@ public class MemberService implements UserDetailsService {
     }
 
     /**
-     * ApiLockAop 이 @Order(HIGHEST_PRECEDENCE) 라 트랜잭션 어드바이스보다 먼저 실행되고,
-     * 안쪽 트랜잭션은 AopForTransaction 의 REQUIRES_NEW 가 연다.
-     * 전파 옵션을 덧붙이면 그 트랜잭션이 중단되므로 붙이지 않는다.
-     *
-     * 이미 가입한 계정이면 그대로 돌려준다. 재설치·기기 변경이 곧바로 로그인으로 이어져야 한다
-     * (예전에는 이미 존재하는 이메일이면 예외를 던져서 500 으로 응답이 끊겼다).
+     * auth-service 가 구글 ID 토큰을 검증한 뒤 부른다. 이메일로 찾고 없으면 만든다(가입 = 첫 로그인).
+     * 새 회원이고 구글 프로필 사진이 있으면 storage 에 올려 첫 프로필로 기록한다.
      */
     @ApiLock
-    public ResponseMemberDto createMember(@LockParam GoogleLoginRequest googleLoginRequest) {
-        Payload payload = googleIdTokenValidator.verify(googleLoginRequest.getIdToken());
-        if (payload == null) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED_GOOGLE_ID_TOKEN_ERROR, googleLoginRequest.getIdToken());
-        }
-
-        Optional<Member> registered = memberRepository.findByEmail(payload.getEmail());
+    public MemberDto findOrCreateGoogleMember(@LockParam GoogleAccountDto account) {
+        Optional<Member> registered = memberRepository.findByEmail(account.getEmail());
         if (registered.isPresent()) {
-            return toResponse(MemberDto.createMemberDto(registered.get()));
+            return MemberDto.createMemberDto(registered.get());
         }
 
-        MemberDto created = registerMember(payload);      // 신규 생성만
-        return toResponse(addProfileImage(created));      // 프로필 이미지는 신규일 때만
+        MemberDto created = registerMember(account);
+        if (account.getPicture() != null && !account.getPicture().isBlank()) {
+            return addProfileImage(created);
+        }
+        return created;
     }
 
-    private ResponseMemberDto toResponse(MemberDto memberDto) {
-        List<ProfileDto> profiles = profileFeignClient.getMemberProfiles(memberDto.getId()).getBody();
-        return ResponseMemberDto.from(memberDto, profiles);
-    }
-
-    MemberDto registerMember(Payload payload) {
-        MemberDto memberDto = new MemberDto(payload);
+    MemberDto registerMember(GoogleAccountDto account) {
+        MemberDto memberDto = new MemberDto(account);
         Member member = new Member(memberDto);
 
         // 동시에 들어온 두 요청이 모두 findByEmail 을 통과한 뒤 저장을 시도하면 DB 의 유일 제약

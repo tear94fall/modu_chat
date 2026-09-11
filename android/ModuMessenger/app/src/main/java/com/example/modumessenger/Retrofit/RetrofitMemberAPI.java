@@ -1,12 +1,9 @@
 package com.example.modumessenger.Retrofit;
 
 import com.example.modumessenger.dto.AddFriendDto;
-import com.example.modumessenger.dto.GoogleLoginRequest;
 import com.example.modumessenger.dto.RenameFriendDto;
 import com.example.modumessenger.dto.MemberDto;
 import com.example.modumessenger.dto.PageResponseDto;
-import com.example.modumessenger.dto.RequestLoginDto;
-import com.example.modumessenger.dto.SignUpDto;
 import com.example.modumessenger.dto.UpdateProfileDto;
 
 import java.util.List;
@@ -22,9 +19,6 @@ import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 public interface RetrofitMemberAPI {
-
-    @POST("member-service/api-public/member/signup")
-    Call<SignUpDto> RequestSignup(@Body GoogleLoginRequest googleLoginRequest);
 
     @GET("member-service/api-public/member/{email}")
     Call<MemberDto> RequestUserInfo(@Path("email") String email);

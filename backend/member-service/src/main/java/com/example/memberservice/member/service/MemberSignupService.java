@@ -1,7 +1,7 @@
 package com.example.memberservice.member.service;
 
-import com.example.memberservice.member.dto.GoogleLoginRequest;
-import com.example.memberservice.member.dto.ResponseMemberDto;
+import com.example.memberservice.member.dto.GoogleAccountDto;
+import com.example.memberservice.member.dto.MemberDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -27,12 +27,12 @@ public class MemberSignupService {
      * 진 요청의 트랜잭션은 롤백 표시가 되어 그 안에서는 복구할 수 없으므로, 트랜잭션 밖에서
      * 한 번만 다시 부른다. 그때는 새 트랜잭션이라 상대가 커밋한 회원이 보이고 멱등 경로를 탄다.
      */
-    public ResponseMemberDto signup(GoogleLoginRequest googleLoginRequest) {
+    public MemberDto findOrCreate(GoogleAccountDto account) {
         try {
-            return memberService.createMember(googleLoginRequest);
+            return memberService.findOrCreateGoogleMember(account);
         } catch (DataIntegrityViolationException e) {
             log.warn("동시 가입 경합 감지, 한 번 다시 시도한다: {}", e.getMessage());
-            return memberService.createMember(googleLoginRequest);
+            return memberService.findOrCreateGoogleMember(account);
         }
     }
 }

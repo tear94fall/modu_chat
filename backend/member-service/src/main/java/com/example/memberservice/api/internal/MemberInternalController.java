@@ -1,9 +1,11 @@
 package com.example.memberservice.api.internal;
 
 import com.example.memberservice.member.dto.ChatRoomMemberDto;
+import com.example.memberservice.member.dto.GoogleAccountDto;
 import com.example.memberservice.member.dto.MemberDto;
 import com.example.memberservice.member.entity.Role;
 import com.example.memberservice.member.service.MemberService;
+import com.example.memberservice.member.service.MemberSignupService;
 import com.example.memberservice.profile.dto.AddProfileDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,13 @@ import java.util.List;
 public class MemberInternalController {
 
     private final MemberService memberService;
+    private final MemberSignupService memberSignupService;
+
+    /** auth-service 가 검증한 구글 계정으로 회원을 찾거나 만든다(가입 = 첫 로그인). */
+    @PostMapping("/google")
+    public ResponseEntity<MemberDto> googleMember(@RequestBody GoogleAccountDto account) {
+        return ResponseEntity.ok().body(memberSignupService.findOrCreate(account));
+    }
 
     @GetMapping("/id/{userId}")
     public ResponseEntity<MemberDto> getMember(@Valid @PathVariable("userId") String userId) {

@@ -48,11 +48,18 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/login_app_name" />
 
-    <com.google.android.gms.common.SignInButton
+    <!-- 구글 브랜드 가이드(라이트)대로 흰 바탕·회색 테두리·4색 G 로고. 기본 SignInButton 은 작고 오래된
+         모양이라 화면 폭에 맞춘 Material 버튼으로 바꿨다. 로고 색은 그대로 두어야 하므로 iconTint 를 끈다. -->
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/googleButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="72dp"
+        style="@style/Widget.Modu.GoogleSignInButton"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="64dp"
+        android:text="@string/login_with_google"
+        app:icon="@drawable/ic_google_g"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

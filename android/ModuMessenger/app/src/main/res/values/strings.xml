@@ -20,4 +20,5 @@
 
     <!-- 시작 화면에서 로고 아래에 보이는 문구. iOS 로그인 화면과 같은 말을 쓴다. -->
     <string name="login_tagline">친구와 가볍게 이야기하세요</string>
+    <string name="login_with_google">Google 계정으로 로그인</string>
 </resources>

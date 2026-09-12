@@ -22,6 +22,11 @@
     <color name="chat_input_stroke">#E4E0F5</color>
     <color name="divider">#E6E4EC</color>
 
+    <!-- 구글 로그인 버튼(브랜드 가이드 라이트 테마) -->
+    <color name="google_button_stroke">#747775</color>
+    <color name="google_button_text">#1F1F1F</color>
+    <color name="google_button_ripple">#1F1F1F</color>
+
     <color name="black">#FF000000</color>
     <color name="grey">#808080</color>
     <color name="white">#FFFFFFFF</color>

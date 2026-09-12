@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -26,7 +25,7 @@ import com.example.modumessenger.dto.TokenResponseDto;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.SignInButton;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
 
@@ -43,7 +42,7 @@ public class LoginActivity extends AppCompatActivity {
     private static final String TAG = "Oauth2Google";
 
     GoogleSignInClient mGoogleSignInClient;
-    SignInButton LoginButton;
+    MaterialButton LoginButton;
     ActivityResultLauncher<Intent> startActivityResult;
     Handler handler;
     RetrofitMemberAPI retrofitMemberAPI;
@@ -94,8 +93,6 @@ public class LoginActivity extends AppCompatActivity {
     private void bindingView() {
         setTitle("로그인");
         LoginButton = findViewById(R.id.googleButton);
-        TextView textView = (TextView)LoginButton.getChildAt(0);
-        textView.setText("Google 계정으로 로그인");
     }
 
     private void setLauncher() {

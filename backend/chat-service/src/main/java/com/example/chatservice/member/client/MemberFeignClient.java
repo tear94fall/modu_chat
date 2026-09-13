@@ -25,5 +25,12 @@ public interface MemberFeignClient {
 
     @PutMapping("/api-internal/member/exit")
     List<MemberDto> exitChatRoom(@Valid @RequestBody ChatRoomMemberDto exitMemberDto);
+
+    /**
+     * userId(구글 sub)가 차단한 사람들의 userId. 1:1 방 이력·미읽음에서 뺄 때 쓴다.
+     * X-Internal-Token 은 InternalApiFeignConfig 의 인터셉터가 모든 Feign 호출에 붙인다.
+     */
+    @GetMapping("/api-internal/member/{userId}/blocked-ids")
+    List<String> getBlockedIds(@PathVariable("userId") String userId);
 }
 

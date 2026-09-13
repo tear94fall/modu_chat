@@ -20,6 +20,7 @@ import com.example.chatservice.common.exception.CustomException;
 import com.example.chatservice.kafka.producer.KafkaProducerService;
 import com.example.chatservice.member.client.MemberFeignClient;
 import com.example.chatservice.member.dto.MemberDto;
+import com.example.chatservice.member.service.BlockedIdsCache;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -41,6 +42,7 @@ class ChatRoomServiceTest {
     private ChatRepository chatRepository;
     private MemberFeignClient memberFeignClient;
     private KafkaProducerService kafkaProducerService;
+    private BlockedIdsCache blockedIdsCache;
     private ChatRoomService chatRoomService;
 
     @BeforeEach
@@ -50,6 +52,8 @@ class ChatRoomServiceTest {
         chatRepository = mock(ChatRepository.class);
         memberFeignClient = mock(MemberFeignClient.class);
         kafkaProducerService = mock(KafkaProducerService.class);
+        blockedIdsCache = mock(BlockedIdsCache.class);
+        when(blockedIdsCache.get(any())).thenReturn(Set.of());
 
         chatRoomService = new ChatRoomService(
                 chatRoomMemberRepository,
@@ -57,7 +61,8 @@ class ChatRoomServiceTest {
                 chatRepository,
                 memberFeignClient,
                 new ModelMapper(),
-                kafkaProducerService);
+                kafkaProducerService,
+                blockedIdsCache);
 
         // save 는 넘겨받은 엔티티를 그대로 돌려준다 - JPA 저장 흉내.
         when(chatRoomRepository.save(any(ChatRoom.class)))

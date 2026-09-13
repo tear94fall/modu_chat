@@ -5,6 +5,7 @@ import static com.example.memberservice.member.entity.QMemberFriend.memberFriend
 
 import com.example.memberservice.member.entity.FriendStatus;
 import com.example.memberservice.member.entity.MemberFriend;
+import com.example.memberservice.member.entity.QMember;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -68,6 +69,23 @@ public class MemberFriendRepositoryImpl implements MemberFriendCustomRepository 
                 .from(memberFriend)
                 .join(memberFriend.friend, member)
                 .where(memberFriend.member.id.eq(memberId), memberFriend.status.eq(status))
+                .fetch();
+    }
+
+    /**
+     * 역방향 조회. 정방향과 달리 member 쪽을 select 하고 friend 쪽을 조건으로 건다.
+     * 같은 별칭(member)으로 두 번 조인할 수 없어 QMember 를 하나 더 만든다.
+     */
+    @Override
+    public List<String> findMemberUserIdsByFriendUserIdAndStatus(String friendUserId, FriendStatus status) {
+        QMember blocker = new QMember("blocker");
+
+        return queryFactory
+                .select(blocker.userId)
+                .from(memberFriend)
+                .join(memberFriend.member, blocker)
+                .join(memberFriend.friend, member)
+                .where(member.userId.eq(friendUserId), memberFriend.status.eq(status))
                 .fetch();
     }
 }

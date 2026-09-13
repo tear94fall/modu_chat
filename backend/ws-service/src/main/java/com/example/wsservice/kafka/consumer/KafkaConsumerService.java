@@ -18,7 +18,10 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -42,6 +45,12 @@ public class KafkaConsumerService {
             ChatRoomDto chatRoomDto = chatRoomService.getChatRoom(chatMessage.getRoomId());
             ChatDto chatDto = chatService.getChat(chatMessage.getChatId());
 
+            // 차단 판단은 발신 인스턴스가 이미 했다. 여기서는 메시지에 실려 온 값만 쓴다
+            // (다른 ws 인스턴스에 붙어 있는 세션도 같은 결과가 나오도록).
+            List<String> excluded = chatMessage.getExcludeUserIds();
+            Set<String> excludeUserIds = (excluded == null || excluded.isEmpty())
+                    ? Set.of() : new HashSet<>(excluded);
+
             if (chatRoomDto.getRoomId().equals(chatDto.getRoomId())) {
                 String payload = objectMapper.writeValueAsString(chatDto);
 
@@ -49,6 +58,8 @@ public class KafkaConsumerService {
 
                 chatRoomDto.getMembers().forEach(member -> {
                     String userId = member.getUserId();
+
+                    if (excludeUserIds.contains(userId)) return;
 
                     WebSocketSession s = webSocketHandler.getClients().get(userId);
                     if (s != null) {

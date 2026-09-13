@@ -9,7 +9,8 @@ import jakarta.persistence.*;
 import static jakarta.persistence.FetchType.LAZY;
 
 @Entity
-@Table(indexes = @Index(name = "idx_chat_room_member_member_id", columnList = "member_id"))
+@Table(indexes = @Index(name = "idx_chat_room_member_member_id", columnList = "member_id"),
+        uniqueConstraints = @UniqueConstraint(name = "uk_chat_room_member", columnNames = {"chat_room_id", "member_id"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatRoomMember {

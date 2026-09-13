@@ -11,6 +11,7 @@ import com.example.modumessenger.core.model.ChatRoom
 import com.example.modumessenger.core.model.ChatType
 import com.example.modumessenger.core.model.Member
 import com.example.modumessenger.core.model.SendStatus
+import com.example.modumessenger.core.session.BlockedUsers
 import com.example.modumessenger.core.session.FriendNames
 import com.example.modumessenger.core.session.SessionStore
 import com.example.modumessenger.core.util.ChatRoomNameUtil
@@ -83,6 +84,7 @@ class ChatViewModel @Inject constructor(
     private val storageRepository: StorageRepository,
     private val sessionStore: SessionStore,
     private val friendNames: FriendNames,
+    private val blockedUsers: BlockedUsers,
     @ApplicationScope private val appScope: CoroutineScope,
 ) : ViewModel() {
 
@@ -136,6 +138,11 @@ class ChatViewModel @Inject constructor(
         // 친구 별칭이 바뀌면 보낸 사람 이름과 방 제목을 다시 그린다.
         viewModelScope.launch {
             friendNames.names.collect { rebuild() }
+        }
+
+        // 차단·해제하면 그 사람의 말풍선이 곧바로 사라지거나 다시 보인다.
+        viewModelScope.launch {
+            blockedUsers.ids.collect { rebuild() }
         }
     }
 
@@ -197,7 +204,13 @@ class ChatViewModel @Inject constructor(
                     names = names,
                     maxLength = 0,
                 ),
-                bubbles = buildBubbles(messages, room?.members.orEmpty(), myUserId(), names),
+                bubbles = buildBubbles(
+                    messages = messages,
+                    members = room?.members.orEmpty(),
+                    myUserId = myUserId(),
+                    names = names,
+                    blocked = blockedUsers.ids.value,
+                ),
             )
         }
     }
@@ -311,19 +324,28 @@ class ChatViewModel @Inject constructor(
 
         /**
          * 메시지 목록을 말풍선으로 바꾼다. 묶음 판단은 "같은 발신자 + 같은 짧은 시각" 이다(부록 A §8a).
+         *
+         * [blocked] 에 든 사람이 보낸 메시지는 아예 빼고 나서 묶음을 정한다 — 차단은 서버 흐름을
+         * 바꾸지 않고 앱에서 거르므로(설계 §3), 걸러낸 뒤의 목록이 화면에 보이는 전부다.
          */
         fun buildBubbles(
             messages: List<ChatMessage>,
             members: List<Member>,
             myUserId: String,
             names: Map<String, String>,
+            blocked: Set<String> = emptySet(),
         ): List<ChatBubble> {
             val byUserId = members.associateBy { it.userId }
-            val keys = messages.map { it.sender to ChatTime.shortTime(it.chatTime) }
+            val visible = if (blocked.isEmpty()) {
+                messages
+            } else {
+                messages.filterNot { it.sender.isNotEmpty() && it.sender in blocked }
+            }
+            val keys = visible.map { it.sender to ChatTime.shortTime(it.chatTime) }
 
-            return messages.mapIndexed { index, message ->
+            return visible.mapIndexed { index, message ->
                 val sameAsPrev = index > 0 && keys[index - 1] == keys[index]
-                val sameAsNext = index < messages.lastIndex && keys[index + 1] == keys[index]
+                val sameAsNext = index < visible.lastIndex && keys[index + 1] == keys[index]
                 val group = when {
                     !sameAsPrev && !sameAsNext -> BubbleGroup.SINGLE
                     !sameAsPrev -> BubbleGroup.HEADER

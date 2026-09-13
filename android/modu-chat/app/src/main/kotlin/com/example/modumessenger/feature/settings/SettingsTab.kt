@@ -51,6 +51,9 @@ fun SettingsTab(
     onSetup: () -> Unit,
     onNotice: () -> Unit,
     onAppInfo: () -> Unit,
+    onFavoriteFriends: () -> Unit,
+    onHiddenFriends: () -> Unit,
+    onBlockedFriends: () -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
@@ -90,6 +93,9 @@ fun SettingsTab(
                             "appInfo" -> onAppInfo()
                             "notice" -> onNotice()
                             "setup" -> onSetup()
+                            "favorite" -> onFavoriteFriends()
+                            "hidden" -> onHiddenFriends()
+                            "blocked" -> onBlockedFriends()
                             else -> comingSoon()
                         }
                     }

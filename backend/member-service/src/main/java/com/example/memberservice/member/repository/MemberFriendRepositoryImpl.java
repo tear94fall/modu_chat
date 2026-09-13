@@ -3,8 +3,10 @@ package com.example.memberservice.member.repository;
 import static com.example.memberservice.member.entity.QMember.member;
 import static com.example.memberservice.member.entity.QMemberFriend.memberFriend;
 
+import com.example.memberservice.member.entity.FriendStatus;
 import com.example.memberservice.member.entity.MemberFriend;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
@@ -20,10 +22,17 @@ public class MemberFriendRepositoryImpl implements MemberFriendCustomRepository 
 
     @Override
     public Page<MemberFriend> findPage(Long memberId, FriendSort sort, Pageable pageable) {
+        return findPage(memberId, null, sort, pageable);
+    }
+
+    @Override
+    public Page<MemberFriend> findPage(Long memberId, FriendFilter filter, FriendSort sort, Pageable pageable) {
+        BooleanExpression status = filter == null ? null : filter.predicate();
+
         JPAQuery<MemberFriend> query = queryFactory
                 .selectFrom(memberFriend)
                 .join(memberFriend.friend, member).fetchJoin()
-                .where(memberFriend.member.id.eq(memberId))
+                .where(memberFriend.member.id.eq(memberId), status)
                 .orderBy(sort.orders().toArray(new OrderSpecifier<?>[0]));
 
         if (pageable.isPaged()) {
@@ -39,7 +48,7 @@ public class MemberFriendRepositoryImpl implements MemberFriendCustomRepository 
             return new PageImpl<>(content, pageable, content.size());
         }
         Long total = queryFactory.select(memberFriend.count()).from(memberFriend)
-                .where(memberFriend.member.id.eq(memberId)).fetchOne();
+                .where(memberFriend.member.id.eq(memberId), status).fetchOne();
         return new PageImpl<>(content, pageable, total == null ? 0 : total);
     }
 
@@ -49,6 +58,16 @@ public class MemberFriendRepositoryImpl implements MemberFriendCustomRepository 
                 .selectFrom(memberFriend)
                 .join(memberFriend.friend, member).fetchJoin()
                 .where(memberFriend.member.id.eq(memberId))
+                .fetch();
+    }
+
+    @Override
+    public List<String> findFriendUserIdsByStatus(Long memberId, FriendStatus status) {
+        return queryFactory
+                .select(memberFriend.friend.userId)
+                .from(memberFriend)
+                .join(memberFriend.friend, member)
+                .where(memberFriend.member.id.eq(memberId), memberFriend.status.eq(status))
                 .fetch();
     }
 }

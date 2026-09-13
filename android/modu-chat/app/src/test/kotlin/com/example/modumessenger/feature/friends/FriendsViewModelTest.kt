@@ -3,6 +3,7 @@ package com.example.modumessenger.feature.friends
 import com.example.modumessenger.core.model.Member
 import com.example.modumessenger.core.session.FriendNames
 import com.example.modumessenger.core.session.SessionStore
+import com.example.modumessenger.core.util.FriendFilter
 import com.example.modumessenger.core.util.FriendsPager
 import com.example.modumessenger.data.dto.PageResponseDto
 import com.example.modumessenger.data.dto.UpdateProfileDto
@@ -16,6 +17,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import java.io.IOException
@@ -32,9 +35,12 @@ class FriendsViewModelTest {
     private class FakeMemberRepository(
         private val totalElements: Long,
         private val pageSize: Int,
+        /** `filter=favorite` 로 물었을 때 돌려줄 친구들. */
+        var favorites: List<Member> = emptyList(),
     ) : MemberRepository {
 
         val requestedPages = mutableListOf<Int>()
+        val favoriteRequests = mutableListOf<Pair<Int, Int>>()
         var failNextPage = false
 
         override suspend fun getMe(): Result<Member> = Result.success(Member(id = 1L, userId = "me"))
@@ -48,7 +54,21 @@ class FriendsViewModelTest {
             page: Int,
             size: Int,
             sort: String,
+            filter: FriendFilter,
         ): Result<PageResponseDto<Member>> {
+            if (filter == FriendFilter.FAVORITE) {
+                favoriteRequests += page to size
+                return Result.success(
+                    PageResponseDto(
+                        content = favorites,
+                        page = 0,
+                        size = size,
+                        totalElements = favorites.size.toLong(),
+                        totalPages = 1,
+                        last = true,
+                    ),
+                )
+            }
             requestedPages += page
             if (failNextPage) {
                 failNextPage = false
@@ -72,6 +92,20 @@ class FriendsViewModelTest {
                 ),
             )
         }
+
+        override suspend fun getFriend(friendMemberId: Long): Result<Member> =
+            Result.success(Member(id = friendMemberId))
+
+        override suspend fun setFavorite(friendMemberId: Long, on: Boolean): Result<Member> =
+            Result.success(Member(id = friendMemberId, favorite = on))
+
+        override suspend fun setHidden(friendMemberId: Long, on: Boolean): Result<Member> =
+            Result.success(Member(id = friendMemberId))
+
+        override suspend fun setBlocked(friendMemberId: Long, on: Boolean): Result<Member> =
+            Result.success(Member(id = friendMemberId))
+
+        override suspend fun getBlockedIds(): Result<Set<String>> = Result.success(emptySet())
 
         override suspend fun addFriend(email: String): Result<Member> = Result.success(Member())
 
@@ -152,6 +186,51 @@ class FriendsViewModelTest {
 
         assertEquals(listOf(0, 1, 0), repository.requestedPages)
         assertEquals(pageSize, vm.uiState.value.friends.size)
+    }
+
+    @Test
+    fun `즐겨찾기가 있으면 favorite 로 한 번 물어 구역을 채운다`() = runTest {
+        val repository = FakeMemberRepository(
+            totalElements = 30L,
+            pageSize = pageSize,
+            favorites = listOf(Member(id = 7L, userId = "u7", username = "단짝", favorite = true)),
+        )
+        val vm = viewModel(repository)
+        advanceUntilIdle()
+
+        // 즐겨찾기는 페이징하지 않는다. 첫 페이지를 서버 최대치(100)로 한 번만 묻는다.
+        assertEquals(listOf(0 to FriendsViewModel.FAVORITES_SIZE), repository.favoriteRequests)
+        assertEquals(listOf(7L), vm.uiState.value.favorites.map { it.id })
+        assertTrue(vm.uiState.value.showFavorites)
+    }
+
+    @Test
+    fun `즐겨찾기가 없으면 구역을 감춘다`() = runTest {
+        val repository = FakeMemberRepository(totalElements = 30L, pageSize = pageSize)
+        val vm = viewModel(repository)
+        advanceUntilIdle()
+
+        assertEquals(listOf(0 to FriendsViewModel.FAVORITES_SIZE), repository.favoriteRequests)
+        assertTrue(vm.uiState.value.favorites.isEmpty())
+        assertFalse(vm.uiState.value.showFavorites)
+    }
+
+    @Test
+    fun `refresh 하면 즐겨찾기 구역도 다시 읽는다`() = runTest {
+        val repository = FakeMemberRepository(
+            totalElements = 30L,
+            pageSize = pageSize,
+            favorites = listOf(Member(id = 7L, userId = "u7", username = "단짝", favorite = true)),
+        )
+        val vm = viewModel(repository)
+        advanceUntilIdle()
+
+        repository.favorites = emptyList()
+        vm.refresh()
+        advanceUntilIdle()
+
+        assertEquals(2, repository.favoriteRequests.size)
+        assertFalse(vm.uiState.value.showFavorites)
     }
 
     @Test

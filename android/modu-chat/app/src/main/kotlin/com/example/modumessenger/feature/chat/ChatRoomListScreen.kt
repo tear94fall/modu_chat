@@ -82,11 +82,14 @@ fun ChatRoomListScreen(
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(uiState.rooms, key = { it.roomId }) { room ->
-                    ChatRoomRow(
-                        room = room,
-                        onClick = { onOpenRoom(room.roomId) },
-                        onLongClick = comingSoon,
-                    )
+                    // 새 메시지로 순서가 바뀌거나 방이 빠질 때 자바 앱처럼 밀려 움직이게 한다.
+                    Box(modifier = Modifier.animateItem()) {
+                        ChatRoomRow(
+                            room = room,
+                            onClick = { onOpenRoom(room.roomId) },
+                            onLongClick = comingSoon,
+                        )
+                    }
                 }
             }
         }

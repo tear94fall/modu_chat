@@ -4,8 +4,10 @@ import com.example.memberservice.api.admin.dto.AdminMemberSummaryDto;
 import com.example.memberservice.global.exception.CustomException;
 import com.example.memberservice.global.exception.ErrorCode;
 import com.example.memberservice.member.dto.ResponseFriendDto;
+import com.example.memberservice.member.entity.FriendStatus;
 import com.example.memberservice.member.entity.Member;
 import com.example.memberservice.member.entity.MemberFriend;
+import com.example.memberservice.member.repository.FriendFilter;
 import com.example.memberservice.member.repository.FriendSort;
 import com.example.memberservice.member.repository.MemberFriendRepository;
 import com.example.memberservice.member.repository.MemberRepository;
@@ -38,17 +40,58 @@ public class MemberFriendService {
         return ResponseFriendDto.from(memberFriend);
     }
 
+    /** 친구 목록 한 페이지. filter 기본값(NORMAL)은 숨김·차단한 친구를 뺀다. */
     @Transactional(readOnly = true)
-    public Page<ResponseFriendDto> getFriendsPage(String userId, FriendSort sort, Pageable pageable) {
+    public Page<ResponseFriendDto> getFriendsPage(String userId, FriendFilter filter, FriendSort sort, Pageable pageable) {
         Member me = findMe(userId);
-        return memberFriendRepository.findPage(me.getId(), sort, pageable).map(ResponseFriendDto::from);
+        return memberFriendRepository.findPage(me.getId(), filter, sort, pageable).map(ResponseFriendDto::from);
+    }
+
+    /** 친구 한 명. 친구가 아니면 USERID_NOT_FOUND_ERROR(컨트롤러가 404 로 바꾼다). */
+    @Transactional(readOnly = true)
+    public ResponseFriendDto getFriend(String userId, Long friendMemberId) {
+        return ResponseFriendDto.from(findFriendRow(userId, friendMemberId));
+    }
+
+    /** 즐겨찾기 켜기/끄기. 차단한 친구면 400(엔티티가 던진다). */
+    public ResponseFriendDto setFavorite(String userId, Long friendMemberId, boolean on) {
+        MemberFriend memberFriend = findFriendRow(userId, friendMemberId);
+        memberFriend.setFavorite(on);
+        return ResponseFriendDto.from(memberFriend);
+    }
+
+    /** 숨기기/숨김 해제. 해제하면 NORMAL 로 돌아온다. */
+    public ResponseFriendDto setHidden(String userId, Long friendMemberId, boolean on) {
+        MemberFriend memberFriend = findFriendRow(userId, friendMemberId);
+        if (on) {
+            memberFriend.hide();
+        } else {
+            memberFriend.unhide();
+        }
+        return ResponseFriendDto.from(memberFriend);
+    }
+
+    /** 차단/차단 해제. 차단하면 즐겨찾기가 꺼지고, 해제하면 NORMAL 로 돌아온다. */
+    public ResponseFriendDto setBlocked(String userId, Long friendMemberId, boolean on) {
+        MemberFriend memberFriend = findFriendRow(userId, friendMemberId);
+        if (on) {
+            memberFriend.block();
+        } else {
+            memberFriend.unblock();
+        }
+        return ResponseFriendDto.from(memberFriend);
+    }
+
+    /** 내가 차단한 친구들의 userId. 앱이 메시지·알림을 거를 때 쓴다. */
+    @Transactional(readOnly = true)
+    public List<String> getBlockedUserIds(String userId) {
+        Member me = findMe(userId);
+        return memberFriendRepository.findFriendUserIdsByStatus(me.getId(), FriendStatus.BLOCKED);
     }
 
     /** 별칭 변경. 친구가 아니면 USERID_NOT_FOUND_ERROR. 공백 검증은 컨트롤러가 한다. */
     public ResponseFriendDto renameFriend(String userId, Long friendMemberId, String name) {
-        Member me = findMe(userId);
-        MemberFriend memberFriend = memberFriendRepository.findByMemberIdAndFriendId(me.getId(), friendMemberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, String.valueOf(friendMemberId)));
+        MemberFriend memberFriend = findFriendRow(userId, friendMemberId);
         memberFriend.rename(name.trim());
         return ResponseFriendDto.from(memberFriend);
     }
@@ -75,6 +118,13 @@ public class MemberFriendService {
         return memberFriendRepository.findPage(memberId, FriendSort.NAME_ASC, Pageable.unpaged())
                 .map(AdminMemberSummaryDto::from)
                 .getContent();
+    }
+
+    /** 내가 소유한 친구 행. 내 친구가 아니면(남의 행이면) 못 찾으므로 404 가 된다. */
+    private MemberFriend findFriendRow(String userId, Long friendMemberId) {
+        Member me = findMe(userId);
+        return memberFriendRepository.findByMemberIdAndFriendId(me.getId(), friendMemberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, String.valueOf(friendMemberId)));
     }
 
     private Member findMe(String userId) {

@@ -27,6 +27,9 @@ object Routes {
     const val SEARCH_FRIENDS = "searchFriends"
     const val FIND_FRIENDS = "findFriends"
     const val SET_FRIENDS = "setFriends"
+    const val FAVORITE_FRIENDS = "favoriteFriends"
+    const val HIDDEN_FRIENDS = "hiddenFriends"
+    const val BLOCKED_FRIENDS = "blockedFriends"
 
     const val SETUP = "setup"
     const val ACCOUNT = "account"

@@ -13,6 +13,10 @@ data class Member(
     val profiles: List<Profile> = emptyList(),
     /** 친구 목록 응답에만 들어 있는 "내가 이 친구에게 붙인 이름". */
     val friendName: String? = null,
+    /** 즐겨찾기한 친구인가(친구 응답에만 들어온다). */
+    val favorite: Boolean = false,
+    /** 친구 상태(친구 응답에만 들어온다). 친구가 아니면 [FriendStatus.NORMAL] 이다. */
+    val friendStatus: FriendStatus = FriendStatus.NORMAL,
 )
 
 /** 서버 JSON 은 `"ROLE_ADMIN"`/`"ROLE_USER"` 이고, 매핑은 [com.example.modumessenger.data.dto.roleOf] 가 한다. */

@@ -7,9 +7,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -20,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -62,23 +69,73 @@ fun FriendsTab(
                 onClick = { uiState.me?.let { onOpenProfile(it.id) } },
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-            Text(
-                text = stringResource(R.string.friends_count, uiState.totalCount.toInt()),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            )
         }
-        itemsIndexed(uiState.friends, key = { _, member -> member.id }) { index, member ->
+
+        // 즐겨찾기 구역은 즐겨찾기한 친구가 있을 때만 나온다(설계 §3).
+        if (uiState.showFavorites) {
+            item {
+                SectionHeader(
+                    text = stringResource(R.string.friends_favorites_count, uiState.favorites.size),
+                )
+            }
+            items(uiState.favorites, key = { member -> "favorite-${member.id}" }) { member ->
+                // 자바 앱의 RecyclerView 처럼 항목이 빠지거나 끼어들 때 밀려 움직이게 한다.
+                Box(modifier = Modifier.animateItem()) {
+                    FriendRow(
+                        member = member,
+                        names = names,
+                        onClick = { onOpenProfile(member.id) },
+                    ) {
+                        FavoriteStar()
+                    }
+                }
+            }
+            item { HorizontalDivider(color = MaterialTheme.colorScheme.outline) }
+        }
+
+        item {
+            SectionHeader(text = stringResource(R.string.friends_count, uiState.totalCount.toInt()))
+        }
+        // 즐겨찾기한 친구는 위 구역에만 보인다. 두 번 나오면 헷갈린다. 페이징 인덱스는 원래 목록 기준으로 넘긴다.
+        val visibleFriends = uiState.friends.withIndex().filter { !it.value.favorite }
+        items(visibleFriends, key = { indexed -> indexed.value.id }) { indexed ->
+            val index = indexed.index
+            val member = indexed.value
             LaunchedEffect(index, uiState.friends.size) { viewModel.onItemAppeared(index) }
-            FriendRow(
-                member = member,
-                names = names,
-                onClick = { onOpenProfile(member.id) },
-            )
+            Box(modifier = Modifier.animateItem()) {
+                FriendRow(
+                    member = member,
+                    names = names,
+                    onClick = { onOpenProfile(member.id) },
+                )
+            }
         }
     }
 }
+
+/** 구역 머리글(`"즐겨찾기 N"` / `"친구 N 명"`). */
+@Composable
+private fun SectionHeader(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+    )
+}
+
+/** 즐겨찾기 행 오른쪽의 작은 별. */
+@Composable
+private fun FavoriteStar() {
+    Icon(
+        imageVector = Icons.Filled.Star,
+        contentDescription = stringResource(R.string.friends_favorite_mark),
+        tint = FavoriteStarColor,
+        modifier = Modifier.size(18.dp),
+    )
+}
+
+private val FavoriteStarColor = Color(0xFFFFC107)
 
 @Composable
 private fun MyProfileCard(me: Member?, onClick: () -> Unit) {

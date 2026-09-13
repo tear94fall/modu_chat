@@ -2,9 +2,11 @@ package com.example.modumessenger.feature.profile
 
 import android.net.Uri
 import com.example.modumessenger.core.chat.RoomCreator
+import com.example.modumessenger.core.model.FriendStatus
 import com.example.modumessenger.core.model.Member
 import com.example.modumessenger.core.model.Profile
 import com.example.modumessenger.core.model.ProfileType
+import com.example.modumessenger.core.util.FriendFilter
 import com.example.modumessenger.data.dto.PageResponseDto
 import com.example.modumessenger.data.dto.UpdateProfileDto
 import com.example.modumessenger.data.repository.MemberRepository
@@ -27,9 +29,17 @@ class FakeMemberRepository(
     var updateProfileResult: Result<Member>? = null
     var renameResult: Result<Member>? = null
 
+    /** null 이면 "친구가 아니다"(서버 404) 로 본다. */
+    var friend: Member? = Member(id = 2L, userId = "friend", username = "친구")
+    var flagResult: Result<Member>? = null
+
     val updatedProfiles = mutableListOf<UpdateProfileDto>()
     val renamedTo = mutableListOf<Pair<Long, String>>()
     val deletedImages = mutableListOf<String>()
+    val favoriteCalls = mutableListOf<Pair<Long, Boolean>>()
+    val hiddenCalls = mutableListOf<Pair<Long, Boolean>>()
+    val blockedCalls = mutableListOf<Pair<Long, Boolean>>()
+    val requestedFilters = mutableListOf<FriendFilter>()
 
     override suspend fun getMe(): Result<Member> {
         log.record("getMe")
@@ -58,7 +68,54 @@ class FakeMemberRepository(
         page: Int,
         size: Int,
         sort: String,
-    ): Result<PageResponseDto<Member>> = Result.success(PageResponseDto(content = emptyList()))
+        filter: FriendFilter,
+    ): Result<PageResponseDto<Member>> {
+        requestedFilters += filter
+        return Result.success(PageResponseDto(content = emptyList()))
+    }
+
+    override suspend fun getFriend(friendMemberId: Long): Result<Member> {
+        log.record("getFriend")
+        return friend
+            ?.let { Result.success(it) }
+            ?: Result.failure(NoSuchElementException("친구가 아니다: $friendMemberId"))
+    }
+
+    override suspend fun setFavorite(friendMemberId: Long, on: Boolean): Result<Member> {
+        log.record("setFavorite")
+        favoriteCalls += friendMemberId to on
+        return flagResult ?: Result.success(friendAfter(favorite = on))
+    }
+
+    override suspend fun setHidden(friendMemberId: Long, on: Boolean): Result<Member> {
+        log.record("setHidden")
+        hiddenCalls += friendMemberId to on
+        return flagResult ?: Result.success(
+            friendAfter(status = if (on) FriendStatus.HIDDEN else FriendStatus.NORMAL),
+        )
+    }
+
+    override suspend fun setBlocked(friendMemberId: Long, on: Boolean): Result<Member> {
+        log.record("setBlocked")
+        blockedCalls += friendMemberId to on
+        return flagResult ?: Result.success(
+            friendAfter(
+                favorite = if (on) false else friend?.favorite ?: false,
+                status = if (on) FriendStatus.BLOCKED else FriendStatus.NORMAL,
+            ),
+        )
+    }
+
+    override suspend fun getBlockedIds(): Result<Set<String>> = Result.success(emptySet())
+
+    private fun friendAfter(
+        favorite: Boolean = friend?.favorite ?: false,
+        status: FriendStatus = friend?.friendStatus ?: FriendStatus.NORMAL,
+    ): Member {
+        val updated = (friend ?: member).copy(favorite = favorite, friendStatus = status)
+        friend = updated
+        return updated
+    }
 
     override suspend fun addFriend(email: String): Result<Member> = Result.success(Member())
 

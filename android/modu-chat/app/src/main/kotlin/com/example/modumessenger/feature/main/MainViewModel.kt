@@ -3,6 +3,7 @@ package com.example.modumessenger.feature.main
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.modumessenger.R
+import com.example.modumessenger.core.session.BlockedUsers
 import com.example.modumessenger.core.session.FriendNames
 import com.example.modumessenger.core.session.SessionStore
 import com.example.modumessenger.core.util.DisplayName
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -44,22 +46,26 @@ class MainViewModel @Inject constructor(
     private val pushRepository: PushRepository,
     private val chatRoomApi: ChatRoomApi,
     private val friendNames: FriendNames,
+    private val blockedUsers: BlockedUsers,
     unreadCountSource: UnreadCountSource,
     bannerSource: BannerSource,
 ) : ViewModel() {
 
     val totalUnread: StateFlow<Int> = unreadCountSource.totalUnread
 
-    val banners: Flow<BannerUi> = bannerSource.banner.map { event ->
-        BannerUi(
-            roomId = event.roomId,
-            // 발신자가 친구면 내가 정한 이름, 아니면 userId 를 그대로 보여 준다.
-            senderName = DisplayName.of(event.senderUserId, null, friendNames.names.value)
-                .ifBlank { event.senderUserId },
-            chatType = event.chatType,
-            message = event.message,
-        )
-    }
+    // 차단한 친구가 보낸 메시지는 배너로도 알리지 않는다(차단은 앱에서 거른다).
+    val banners: Flow<BannerUi> = bannerSource.banner
+        .filterNot { event -> blockedUsers.isBlocked(event.senderUserId) }
+        .map { event ->
+            BannerUi(
+                roomId = event.roomId,
+                // 발신자가 친구면 내가 정한 이름, 아니면 userId 를 그대로 보여 준다.
+                senderName = DisplayName.of(event.senderUserId, null, friendNames.names.value)
+                    .ifBlank { event.senderUserId },
+                chatType = event.chatType,
+                message = event.message,
+            )
+        }
 
     private val _messages = MutableSharedFlow<Int>(
         replay = 0,
@@ -97,6 +103,9 @@ class MainViewModel @Inject constructor(
 
             // 친구 별칭은 알림 제목과 방 이름에 쓰이므로 일찍 채운다.
             memberRepository.loadFriendNames()
+
+            // 차단 목록은 말풍선·배너·알림을 거르는 데 쓰인다(실패하면 DataStore 복원값을 그대로 쓴다).
+            memberRepository.getBlockedIds()
         }
     }
 

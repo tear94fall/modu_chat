@@ -3,6 +3,7 @@ package com.example.modumessenger.data.dto
 import com.example.modumessenger.core.model.ChatMessage
 import com.example.modumessenger.core.model.ChatRoom
 import com.example.modumessenger.core.model.ChatType
+import com.example.modumessenger.core.model.FriendStatus
 import com.example.modumessenger.core.model.Member
 import com.example.modumessenger.core.model.Notice
 import com.example.modumessenger.core.model.Profile
@@ -12,6 +13,10 @@ import com.example.modumessenger.core.model.SendStatus
 
 /** 서버 값은 `"ROLE_ADMIN"`/`"ROLE_USER"`. 그 밖의 값(널 포함)은 일반 사용자로 본다. */
 fun roleOf(value: String?): Role = if (value == "ROLE_ADMIN") Role.ADMIN else Role.USER
+
+/** 서버 값은 `"NORMAL"`/`"HIDDEN"`/`"BLOCKED"`. 모르는 값(널 포함)은 평범한 친구로 본다. */
+fun friendStatusOf(value: String?): FriendStatus =
+    FriendStatus.entries.firstOrNull { it.name == value } ?: FriendStatus.NORMAL
 
 /** 모르는 값이면 상태메시지 기록으로 본다(화면이 깨지는 것보다 낫다). */
 fun profileTypeOf(value: String?): ProfileType =
@@ -28,6 +33,8 @@ fun MemberDto.toModel(): Member = Member(
     role = roleOf(role),
     profiles = profiles?.map { it.toModel() } ?: emptyList(),
     friendName = friendName,
+    favorite = favorite,
+    friendStatus = friendStatusOf(status),
 )
 
 fun ProfileDto.toModel(): Profile = Profile(

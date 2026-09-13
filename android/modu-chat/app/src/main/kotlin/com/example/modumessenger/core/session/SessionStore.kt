@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.modumessenger.core.model.FriendStatus
 import com.example.modumessenger.core.model.Member
 import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -70,7 +71,14 @@ class SessionStore @Inject constructor(
         dataStore.edit { prefs -> prefs[KEY_FRIEND_NAMES] = json }
     }
 
-    /** 로그아웃. `fcm-token`, `friend-names` 는 남긴다(기존 앱과 같은 범위). */
+    /** 차단한 친구 userId 목록 원본 JSON(배열). [BlockedUsers] 만 쓴다. */
+    suspend fun blockedIdsJson(): String? = dataStore.data.first()[KEY_BLOCKED_IDS]
+
+    suspend fun saveBlockedIdsJson(json: String) {
+        dataStore.edit { prefs -> prefs[KEY_BLOCKED_IDS] = json }
+    }
+
+    /** 로그아웃. `fcm-token`, `friend-names`, `blocked-ids` 는 남긴다(기존 앱과 같은 범위). */
     suspend fun clearSession() {
         dataStore.edit { prefs ->
             prefs.remove(KEY_MEMBER)
@@ -91,7 +99,17 @@ class SessionStore @Inject constructor(
         // 이 모델로는 안전하게 읽을 수 없다. 없는 것으로 보고 무음 로그인으로 다시 받게 한다.
         if (json.contains("\"ROLE_")) return null
         val member = runCatching { gson.fromJson(json, Member::class.java) }.getOrNull() ?: return null
-        return member.takeIf { it.userId.isNotBlank() }
+        return member.normalized().takeIf { it.userId.isNotBlank() }
+    }
+
+    /**
+     * Gson 은 생성자를 거치지 않으므로, 이 필드가 생기기 전에 저장된 JSON 을 읽으면
+     * null 이 아닌 자리에 null 이 들어온다. 읽는 쪽이 터지지 않게 여기서 기본값으로 메운다.
+     */
+    @Suppress("SENSELESS_COMPARISON")
+    private fun Member.normalized(): Member = when {
+        friendStatus == null -> copy(friendStatus = FriendStatus.NORMAL)
+        else -> this
     }
 
     private fun strip(value: String): String =
@@ -106,5 +124,6 @@ class SessionStore @Inject constructor(
         val KEY_MEMBER = stringPreferencesKey("member")
         val KEY_FCM = stringPreferencesKey("fcm-token")
         val KEY_FRIEND_NAMES = stringPreferencesKey("friend-names")
+        val KEY_BLOCKED_IDS = stringPreferencesKey("blocked-ids")
     }
 }

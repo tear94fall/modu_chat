@@ -7,6 +7,7 @@ import com.example.modumessenger.R
 import com.example.modumessenger.core.model.Member
 import com.example.modumessenger.core.session.FriendNames
 import com.example.modumessenger.core.session.SessionStore
+import com.example.modumessenger.core.util.FriendFilter
 import com.example.modumessenger.core.util.FriendsPager
 import com.example.modumessenger.data.repository.MemberRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,10 +25,16 @@ import javax.inject.Inject
 data class FriendsUiState(
     val me: Member? = null,
     val friends: List<Member> = emptyList(),
+    /** 맨 위 "즐겨찾기" 구역. 페이징하지 않고 최대 [FriendsViewModel.FAVORITES_SIZE] 명만 읽는다. */
+    val favorites: List<Member> = emptyList(),
     /** 서버가 알려 준 전체 친구 수. `"친구 N 명"` 에 쓴다. */
     val totalCount: Long = 0L,
     val isLoading: Boolean = false,
-)
+) {
+
+    /** 즐겨찾기 구역은 즐겨찾기한 친구가 있을 때만 보인다(설계 §3). */
+    val showFavorites: Boolean get() = favorites.isNotEmpty()
+}
 
 /**
  * 친구 탭(부록 A §5). 페이지 크기 50, 끝에서 5개 남으면 다음 페이지를 미리 당긴다.
@@ -77,11 +84,16 @@ class FriendsViewModel @Inject constructor(
         refresh()
     }
 
-    /** 목록을 처음부터 다시 읽는다. [FriendsPager.reset] 이 세대를 올려 늦게 온 옛 응답을 버린다. */
+    /**
+     * 목록을 처음부터 다시 읽는다. [FriendsPager.reset] 이 세대를 올려 늦게 온 옛 응답을 버린다.
+     * 보이던 목록은 지우지 않는다 — 비웠다가 다시 채우면 화면이 한 번 깜빡인다(빈 화면 → 목록, 사진도 다시 로드).
+     * 0페이지 응답이 오면 그때 통째로 바꾼다.
+     */
     fun refresh() {
         pager.reset()
-        _uiState.update { it.copy(friends = emptyList(), totalCount = 0L, isLoading = false) }
+        _uiState.update { it.copy(isLoading = false) }
         loadMe()
+        loadFavorites()
         loadNextPage()
     }
 
@@ -103,7 +115,8 @@ class FriendsViewModel @Inject constructor(
                     if (pager.onLoaded(generation, response)) {
                         _uiState.update {
                             it.copy(
-                                friends = it.friends + response.items,
+                                // 0페이지는 새로고침이므로 기존 목록을 통째로 바꾸고, 그 뒤 페이지는 이어 붙인다.
+                                friends = if (page == 0) response.items else it.friends + response.items,
                                 totalCount = pager.totalElements,
                                 isLoading = false,
                             )
@@ -118,6 +131,20 @@ class FriendsViewModel @Inject constructor(
         }
     }
 
+    /** 즐겨찾기 구역. 실패하면 구역만 비운 채 둔다(아래 목록은 그대로 보인다). */
+    private fun loadFavorites() {
+        val generation = pager.generation
+        viewModelScope.launch {
+            memberRepository
+                .getFriendsPage(page = 0, size = FAVORITES_SIZE, filter = FriendFilter.FAVORITE)
+                .onSuccess { response ->
+                    // 초기화 이후 도착한 옛 응답은 버린다(아래 목록과 같은 규칙).
+                    if (generation != pager.generation) return@onSuccess
+                    _uiState.update { it.copy(favorites = response.items) }
+                }
+        }
+    }
+
     private fun loadMe() {
         viewModelScope.launch {
             memberRepository.getMe().onSuccess { me -> _uiState.update { it.copy(me = me) } }
@@ -126,5 +153,11 @@ class FriendsViewModel @Inject constructor(
 
     private fun emitError(@StringRes res: Int) {
         _errors.tryEmit(res)
+    }
+
+    companion object {
+
+        /** 즐겨찾기 구역은 페이징하지 않는다. 서버가 한 번에 주는 최대치(100)를 그대로 쓴다. */
+        const val FAVORITES_SIZE = 100
     }
 }

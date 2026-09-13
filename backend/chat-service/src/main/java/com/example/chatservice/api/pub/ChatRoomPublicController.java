@@ -17,6 +17,9 @@ import java.util.List;
 @RequestMapping("/api-public/chat")
 public class ChatRoomPublicController {
 
+    /** 게이트웨이가 JWT subject(= 회원의 userId, 구글 sub)를 넣어 주는 헤더. */
+    static final String AUTH_USER_ID_HEADER = "X-Auth-User-Id";
+
     private final ChatRoomService chatRoomService;
 
     @GetMapping("/{memberId}/rooms")
@@ -58,9 +61,16 @@ public class ChatRoomPublicController {
         return ResponseEntity.ok().body(chatRoomService.searchOneOnOneChatRoom(userId, roomUserId));
     }
 
+    /**
+     * 방별 안 읽은 개수. {userId} 는 이름과 달리 member id(숫자 PK)다 — 안드로이드가
+     * myMemberId 를 그대로 넣는다. 차단 조회는 userId(구글 sub) 기준이라
+     * 서비스가 member id 를 한 번 변환하고, 변환에 실패하면 게이트웨이가 넣어 준
+     * X-Auth-User-Id 를 쓴다.
+     */
     @GetMapping("/unread/{userId}")
-    public ResponseEntity<List<ChatRoomLastReadChatDto>> getUnreadChatRoomChat(@PathVariable("userId") String userId) {
-        return ResponseEntity.ok().body(chatRoomService.searchUnreadChatRoom(userId));
+    public ResponseEntity<List<ChatRoomLastReadChatDto>> getUnreadChatRoomChat(@PathVariable("userId") String userId,
+                                                                              @RequestHeader(value = AUTH_USER_ID_HEADER, required = false) String requesterUserId) {
+        return ResponseEntity.ok().body(chatRoomService.searchUnreadChatRoom(userId, requesterUserId));
     }
 
     @PostMapping("/read/{roomId}/{userId}")

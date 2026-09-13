@@ -16,6 +16,9 @@ import java.util.List;
 @RequestMapping("/api-public/chat")
 public class ChatPublicController {
 
+    /** 게이트웨이가 JWT subject(= 회원의 userId, 구글 sub)를 넣어 주는 헤더. 없으면 필터하지 않는다. */
+    static final String AUTH_USER_ID_HEADER = "X-Auth-User-Id";
+
     private final ChatService chatService;
 
     @GetMapping("/{chatId}")
@@ -24,13 +27,15 @@ public class ChatPublicController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ChatDto>> getChatList(@Valid @RequestParam("ids") List<String> ids) {
-        return ResponseEntity.ok().body(chatService.searchChatListById(ids));
+    public ResponseEntity<List<ChatDto>> getChatList(@Valid @RequestParam("ids") List<String> ids,
+                                                     @RequestHeader(value = AUTH_USER_ID_HEADER, required = false) String requesterUserId) {
+        return ResponseEntity.ok().body(chatService.searchChatListById(ids, requesterUserId));
     }
 
     @GetMapping("/{roomId}/chats")
-    public ResponseEntity<List<ChatDto>> getChatRoomHistory(@Valid @PathVariable("roomId") String roomId) {
-        return ResponseEntity.ok().body(chatService.searchChatByRoomId(roomId));
+    public ResponseEntity<List<ChatDto>> getChatRoomHistory(@Valid @PathVariable("roomId") String roomId,
+                                                            @RequestHeader(value = AUTH_USER_ID_HEADER, required = false) String requesterUserId) {
+        return ResponseEntity.ok().body(chatService.searchChatByRoomId(roomId, requesterUserId));
     }
 
     @GetMapping("/{roomId}/page")
@@ -39,18 +44,21 @@ public class ChatPublicController {
     }
 
     @GetMapping("/{roomId}/page/{size}")
-    public ResponseEntity<List<ChatDto>> getChatListSize(@Valid @PathVariable("roomId") String roomId, @Valid @PathVariable("size") String size) {
-        return ResponseEntity.ok().body(chatService.searchChatByRoomIdSize(roomId, size));
+    public ResponseEntity<List<ChatDto>> getChatListSize(@Valid @PathVariable("roomId") String roomId, @Valid @PathVariable("size") String size,
+                                                         @RequestHeader(value = AUTH_USER_ID_HEADER, required = false) String requesterUserId) {
+        return ResponseEntity.ok().body(chatService.searchChatByRoomIdSize(roomId, size, requesterUserId));
     }
 
     @GetMapping("/{roomId}/{chatId}/{size}")
-    public ResponseEntity<List<ChatDto>> getPrevChatList(@Valid @PathVariable("roomId") String roomId, @Valid @PathVariable("chatId") String chatId, @Valid @PathVariable("size") String size) {
-        return ResponseEntity.ok().body(chatService.searchPrevChatByRoomId(roomId, chatId, size));
+    public ResponseEntity<List<ChatDto>> getPrevChatList(@Valid @PathVariable("roomId") String roomId, @Valid @PathVariable("chatId") String chatId, @Valid @PathVariable("size") String size,
+                                                         @RequestHeader(value = AUTH_USER_ID_HEADER, required = false) String requesterUserId) {
+        return ResponseEntity.ok().body(chatService.searchPrevChatByRoomId(roomId, chatId, size, requesterUserId));
     }
 
     @GetMapping("/{roomId}/images/{size}")
-    public ResponseEntity<List<ChatDto>> getImageChatListSize(@Valid @PathVariable("roomId") String roomId, @Valid @PathVariable("size") String size) {
-        return ResponseEntity.ok().body(chatService.searchImageChatByRoomIdSize(roomId, size));
+    public ResponseEntity<List<ChatDto>> getImageChatListSize(@Valid @PathVariable("roomId") String roomId, @Valid @PathVariable("size") String size,
+                                                              @RequestHeader(value = AUTH_USER_ID_HEADER, required = false) String requesterUserId) {
+        return ResponseEntity.ok().body(chatService.searchImageChatByRoomIdSize(roomId, size, requesterUserId));
     }
 
     @GetMapping("/{roomId}/count")

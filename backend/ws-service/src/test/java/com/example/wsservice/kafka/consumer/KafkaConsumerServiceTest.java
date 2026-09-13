@@ -1,5 +1,6 @@
 package com.example.wsservice.kafka.consumer;
 
+import com.example.wsservice.chat.dto.ChatDto;
 import com.example.wsservice.chat.dto.ChatMessage;
 import com.example.wsservice.chat.dto.ChatRoomDto;
 import com.example.wsservice.chat.dto.SubscribeType;
@@ -22,6 +23,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -30,7 +32,9 @@ import static org.mockito.Mockito.when;
 class KafkaConsumerServiceTest {
 
     private static final String TOPIC = "topic-chat-room-created";
+    private static final String BROADCAST_TOPIC = "topic-chat-broadcast";
 
+    private ObjectMapper objectMapper;
     private ChatService chatService;
     private ChatRoomService chatRoomService;
     private WebSocketHandler webSocketHandler;
@@ -46,9 +50,10 @@ class KafkaConsumerServiceTest {
         clients = new ConcurrentHashMap<>();
         when(webSocketHandler.getClients()).thenReturn(clients);
         acknowledgment = mock(Acknowledgment.class);
+        objectMapper = new ObjectMapper();
 
         kafkaConsumerService = new KafkaConsumerService(
-                chatService, chatRoomService, new ObjectMapper(), webSocketHandler);
+                chatService, chatRoomService, objectMapper, webSocketHandler);
     }
 
     private MemberDto member(String userId) {
@@ -60,6 +65,81 @@ class KafkaConsumerServiceTest {
                 .roomId(roomId)
                 .members(List.of(userIds).stream().map(this::member).toList())
                 .build();
+    }
+
+    private ChatDto chat(String roomId) {
+        return ChatDto.builder()
+                .id(7L)
+                .roomId(roomId)
+                .sender("user-a")
+                .message("hello")
+                .chatType(1)
+                .chatTime("2026-09-13 10:00:00")
+                .build();
+    }
+
+    private ConsumerRecord<String, ChatMessage> broadcastRecord(String roomId, List<String> excludeUserIds) {
+        return new ConsumerRecord<>(BROADCAST_TOPIC, 0, 0L, roomId,
+                new ChatMessage(SubscribeType.BROAD_CAST, roomId, "7", null, excludeUserIds));
+    }
+
+    @Test
+    @DisplayName("excludeUserIds 에 든 userId 의 세션에는 브로드캐스트하지 않는다")
+    void receive_skipsExcludedSessions() throws IOException {
+        WebSocketSession sender = mock(WebSocketSession.class);
+        WebSocketSession blocked = mock(WebSocketSession.class);
+        clients.put("user-a", sender);
+        clients.put("user-b", blocked);
+
+        ChatDto chatDto = chat("room-1");
+        when(chatRoomService.getChatRoom("room-1")).thenReturn(roomWithMembers("room-1", "user-a", "user-b"));
+        when(chatService.getChat("7")).thenReturn(chatDto);
+
+        kafkaConsumerService.receive(broadcastRecord("room-1", List.of("user-b")), acknowledgment);
+
+        TextMessage expected = new TextMessage(objectMapper.writeValueAsString(chatDto));
+        verify(sender).sendMessage(expected);
+        verify(blocked, never()).sendMessage(any(TextMessage.class));
+        verify(acknowledgment).acknowledge();
+    }
+
+    @Test
+    @DisplayName("excludeUserIds 가 비어 있으면 멤버 전원에게 보낸다")
+    void receive_withoutExclusion_sendsToEveryone() throws IOException {
+        WebSocketSession a = mock(WebSocketSession.class);
+        WebSocketSession b = mock(WebSocketSession.class);
+        clients.put("user-a", a);
+        clients.put("user-b", b);
+
+        ChatDto chatDto = chat("room-1");
+        when(chatRoomService.getChatRoom("room-1")).thenReturn(roomWithMembers("room-1", "user-a", "user-b"));
+        when(chatService.getChat("7")).thenReturn(chatDto);
+
+        kafkaConsumerService.receive(broadcastRecord("room-1", null), acknowledgment);
+
+        TextMessage expected = new TextMessage(objectMapper.writeValueAsString(chatDto));
+        verify(a).sendMessage(expected);
+        verify(b).sendMessage(expected);
+        verify(acknowledgment).acknowledge();
+    }
+
+    @Test
+    @DisplayName("필드가 없는 옛 메시지(excludeUserIds=null)도 그대로 동작한다")
+    void receive_legacyMessageWithoutField_stillBroadcasts() throws IOException {
+        WebSocketSession a = mock(WebSocketSession.class);
+        clients.put("user-a", a);
+
+        ChatDto chatDto = chat("room-1");
+        when(chatRoomService.getChatRoom("room-1")).thenReturn(roomWithMembers("room-1", "user-a", "user-b"));
+        when(chatService.getChat("7")).thenReturn(chatDto);
+
+        ConsumerRecord<String, ChatMessage> record = new ConsumerRecord<>(BROADCAST_TOPIC, 0, 0L, "room-1",
+                new ChatMessage(SubscribeType.BROAD_CAST, "room-1", "7", null));
+
+        kafkaConsumerService.receive(record, acknowledgment);
+
+        verify(a).sendMessage(new TextMessage(objectMapper.writeValueAsString(chatDto)));
+        verify(acknowledgment).acknowledge();
     }
 
     @Test

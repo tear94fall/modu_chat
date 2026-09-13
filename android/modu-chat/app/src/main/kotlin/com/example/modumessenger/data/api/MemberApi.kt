@@ -1,6 +1,7 @@
 package com.example.modumessenger.data.api
 
 import com.example.modumessenger.data.dto.AddFriendDto
+import com.example.modumessenger.data.dto.FriendFlagDto
 import com.example.modumessenger.data.dto.MemberDto
 import com.example.modumessenger.data.dto.PageResponseDto
 import com.example.modumessenger.data.dto.RenameFriendDto
@@ -27,14 +28,53 @@ interface MemberApi {
         @Body body: UpdateProfileDto,
     ): MemberDto
 
-    /** `sort` 는 서버 `FriendSort` 문자열, `size` 는 서버가 100 까지만 받는다. */
+    /**
+     * `sort` 는 서버 `FriendSort` 문자열, `size` 는 서버가 100 까지만 받는다.
+     * `filter` 는 `normal|favorite|hidden|blocked`(서버 기본값 `normal`), 모르는 값이면 400 이다.
+     */
     @GET("member-service/api-public/member/{userId}/friends")
     suspend fun getFriends(
         @Path("userId") userId: String,
         @Query("sort") sort: String,
         @Query("page") page: Int,
         @Query("size") size: Int,
+        @Query("filter") filter: String,
     ): PageResponseDto<MemberDto>
+
+    /** 친구 한 명의 상태(즐겨찾기·숨김·차단). 친구가 아니면 404. */
+    @GET("member-service/api-public/member/{userId}/friends/{friendMemberId}")
+    suspend fun getFriend(
+        @Path("userId") userId: String,
+        @Path("friendMemberId") friendMemberId: Long,
+    ): MemberDto
+
+    /** 차단한 친구면 400 이다(차단 상태에서는 즐겨찾기를 걸 수 없다). */
+    @PUT("member-service/api-public/member/{userId}/friends/{friendMemberId}/favorite")
+    suspend fun setFavorite(
+        @Path("userId") userId: String,
+        @Path("friendMemberId") friendMemberId: Long,
+        @Body body: FriendFlagDto,
+    ): MemberDto
+
+    /** `on` 이면 HIDDEN, 아니면 NORMAL. */
+    @PUT("member-service/api-public/member/{userId}/friends/{friendMemberId}/hidden")
+    suspend fun setHidden(
+        @Path("userId") userId: String,
+        @Path("friendMemberId") friendMemberId: Long,
+        @Body body: FriendFlagDto,
+    ): MemberDto
+
+    /** `on` 이면 BLOCKED(+ 즐겨찾기 해제), 아니면 NORMAL. */
+    @PUT("member-service/api-public/member/{userId}/friends/{friendMemberId}/blocked")
+    suspend fun setBlocked(
+        @Path("userId") userId: String,
+        @Path("friendMemberId") friendMemberId: Long,
+        @Body body: FriendFlagDto,
+    ): MemberDto
+
+    /** 내가 차단한 친구들의 userId. 차단 메시지를 앱에서 거르는 데 쓴다. */
+    @GET("member-service/api-public/member/{userId}/friends/blocked-ids")
+    suspend fun getBlockedIds(@Path("userId") userId: String): List<String>
 
     @POST("member-service/api-public/member/{userId}/friends")
     suspend fun addFriend(

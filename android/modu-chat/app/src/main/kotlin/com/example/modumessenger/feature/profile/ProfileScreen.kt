@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -21,9 +22,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
@@ -36,7 +42,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -59,11 +67,13 @@ import coil.compose.AsyncImage
 import com.example.modumessenger.R
 import com.example.modumessenger.core.model.ProfileType
 import com.example.modumessenger.core.network.ApiConfig
+import com.example.modumessenger.core.ui.components.ConfirmDialog
 import com.example.modumessenger.core.ui.components.ErrorBox
 import com.example.modumessenger.core.ui.components.LoadingBox
 import com.example.modumessenger.core.ui.components.ProfileImage
 import com.example.modumessenger.core.ui.components.swipeDownToClose
 import com.example.modumessenger.core.ui.theme.BrandViolet
+import com.example.modumessenger.core.ui.theme.ModuRed
 import com.example.modumessenger.core.ui.theme.ModuGrey
 import com.example.modumessenger.core.ui.theme.OnChatBubble
 import com.example.modumessenger.core.ui.theme.ProfileSurface
@@ -130,6 +140,7 @@ fun ProfileScreen(
                     wallpaperImage = member.wallpaperImage,
                     uiState = uiState,
                     onEdit = onEdit,
+                    onToggleFavorite = viewModel::toggleFavorite,
                     onStartChat = viewModel::startChat,
                     onRename = viewModel::showRenameDialog,
                     onWallpaperClick = {
@@ -150,13 +161,52 @@ fun ProfileScreen(
                     modifier = Modifier.align(Alignment.TopStart).padding(12.dp),
                 )
             }
-            ScrimIconButton(
-                onClick = onClose,
-                icon = Icons.Filled.Clear,
-                contentDescription = stringResource(R.string.profile_close_button),
+            Row(
                 modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
-            )
+                horizontalArrangement = Arrangement.spacedBy(TOP_BUTTON_GAP),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (uiState.showFriendActions) {
+                    FriendMenuButton(
+                        isHidden = uiState.isHidden,
+                        isBlocked = uiState.isBlocked,
+                        enabled = !uiState.updatingFlag,
+                        onHide = viewModel::showHideDialog,
+                        onUnhide = { viewModel.setHidden(false) },
+                        onBlock = viewModel::showBlockDialog,
+                        onUnblock = { viewModel.setBlocked(false) },
+                    )
+                }
+                ScrimIconButton(
+                    onClick = onClose,
+                    icon = Icons.Filled.Clear,
+                    contentDescription = stringResource(R.string.profile_close_button),
+                )
+            }
         }
+    }
+
+    if (uiState.hideDialogVisible) {
+        ConfirmDialog(
+            title = stringResource(R.string.profile_hide_confirm_title),
+            text = stringResource(R.string.profile_hide_confirm_text),
+            confirmText = stringResource(R.string.profile_hide_confirm_ok),
+            dismissText = stringResource(R.string.profile_hide_confirm_cancel),
+            onConfirm = { viewModel.setHidden(true) },
+            onDismiss = viewModel::dismissHideDialog,
+        )
+    }
+
+    if (uiState.blockDialogVisible) {
+        ConfirmDialog(
+            title = stringResource(R.string.profile_block_confirm_title),
+            text = stringResource(R.string.profile_block_confirm_text),
+            confirmText = stringResource(R.string.profile_block_confirm_ok),
+            dismissText = stringResource(R.string.profile_block_confirm_cancel),
+            onConfirm = { viewModel.setBlocked(true) },
+            onDismiss = viewModel::dismissBlockDialog,
+            confirmColor = ModuRed,
+        )
     }
 
     if (uiState.renameDialogVisible) {
@@ -179,6 +229,7 @@ private fun ProfileContent(
     wallpaperImage: String,
     uiState: ProfileUiState,
     onEdit: () -> Unit,
+    onToggleFavorite: () -> Unit,
     onStartChat: () -> Unit,
     onRename: () -> Unit,
     onWallpaperClick: () -> Unit,
@@ -215,18 +266,38 @@ private fun ProfileContent(
             }
         }
 
-        Text(
-            text = name.ifBlank { stringResource(R.string.profile_name_placeholder) },
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = OnChatBubble,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
+        Row(
             modifier = Modifier
                 .padding(top = AvatarSize / 2 + 16.dp, start = 32.dp, end = 32.dp)
                 .fillMaxWidth(),
-        )
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = name.ifBlank { stringResource(R.string.profile_name_placeholder) },
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = OnChatBubble,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            // 이름 옆 별. 차단한 친구에게는 걸 수 없어 회색으로 죽는다.
+            if (uiState.showFriendActions) {
+                IconButton(
+                    onClick = onToggleFavorite,
+                    enabled = uiState.canToggleFavorite,
+                    modifier = Modifier.size(36.dp),
+                ) {
+                    Icon(
+                        imageVector = if (uiState.favorite) Icons.Filled.Star else Icons.Filled.StarBorder,
+                        contentDescription = stringResource(R.string.profile_favorite_toggle),
+                        tint = if (uiState.favorite) FavoriteStarColor else ModuGrey,
+                    )
+                }
+            }
+        }
         Text(
             text = statusMessage.ifBlank { stringResource(R.string.profile_status_placeholder) },
             fontSize = 14.sp,
@@ -280,6 +351,63 @@ private fun ProfileContent(
     }
 }
 
+/**
+ * 상단 우측 ⋮ 메뉴. 숨김·차단은 배타라 각각 걸기/풀기 중 하나만 보인다.
+ */
+@Composable
+private fun FriendMenuButton(
+    isHidden: Boolean,
+    isBlocked: Boolean,
+    enabled: Boolean,
+    onHide: () -> Unit,
+    onUnhide: () -> Unit,
+    onBlock: () -> Unit,
+    onUnblock: () -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        ScrimIconButton(
+            onClick = { if (enabled) expanded = true },
+            icon = Icons.Filled.MoreVert,
+            contentDescription = stringResource(R.string.profile_more_menu),
+        )
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            // 차단한 친구는 이미 목록에서 빠져 있으므로 숨기기 항목을 내지 않는다.
+            if (!isBlocked) {
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            stringResource(
+                                if (isHidden) R.string.profile_menu_unhide else R.string.profile_menu_hide,
+                            ),
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        if (isHidden) onUnhide() else onHide()
+                    },
+                )
+            }
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        stringResource(
+                            if (isBlocked) R.string.profile_menu_unblock else R.string.profile_menu_block,
+                        ),
+                    )
+                },
+                onClick = {
+                    expanded = false
+                    if (isBlocked) onUnblock() else onBlock()
+                },
+            )
+        }
+    }
+}
+
+private val FavoriteStarColor = Color(0xFFFFC107)
+
 /** 폭과 같은 정사각형 배경 + 위쪽만 어둡게 까는 스크림. 아래로 쓸어내리면 화면이 닫힌다. */
 @Composable
 private fun Wallpaper(fileName: String, onClose: () -> Unit, onClick: () -> Unit) {
@@ -320,11 +448,16 @@ private fun ScrimIconButton(
     contentDescription: String,
     modifier: Modifier = Modifier,
 ) {
-    IconButton(
-        onClick = onClick,
-        modifier = modifier.size(40.dp).background(Color(0x59000000), CircleShape),
+    // IconButton 은 최소 터치 영역(48dp)을 더해 원이 커 보인다. 원 크기를 그대로 지키려고 Box 로 그린다.
+    Box(
+        modifier = modifier
+            .size(SCRIM_BUTTON_SIZE)
+            .clip(CircleShape)
+            .background(Color(0x59000000))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = contentDescription, tint = Color.White)
+        Icon(icon, contentDescription = contentDescription, tint = Color.White, modifier = Modifier.size(SCRIM_ICON_SIZE))
     }
 }
 
@@ -361,3 +494,8 @@ private fun RenameFriendDialog(
         },
     )
 }
+
+/** 배경 위에 뜨는 둥근 아이콘 버튼. 40dp 가 붙어 있으면 답답해 보여 36dp + 간격 10dp 로 둔다. */
+private val SCRIM_BUTTON_SIZE = 36.dp
+private val SCRIM_ICON_SIZE = 20.dp
+private val TOP_BUTTON_GAP = 10.dp

@@ -16,6 +16,10 @@ data class MemberDto(
     val profiles: List<ProfileDto>? = null,
     /** 친구 목록 응답에만 들어온다. */
     val friendName: String? = null,
+    /** 친구 응답에만 들어온다(`ResponseFriendDto`). */
+    val favorite: Boolean = false,
+    /** `"NORMAL"` / `"HIDDEN"` / `"BLOCKED"`. 문자열로 받아 [friendStatusOf] 가 enum 으로 바꾼다. */
+    val status: String? = null,
 )
 
 data class UpdateProfileDto(
@@ -28,6 +32,9 @@ data class UpdateProfileDto(
 data class AddFriendDto(val email: String)
 
 data class RenameFriendDto(val name: String)
+
+/** 즐겨찾기·숨김·차단 세 API 가 같이 쓰는 본문. */
+data class FriendFlagDto(val on: Boolean)
 
 /** 서버 `PageResponse` 레코드와 모양이 같다. */
 data class PageResponseDto<T>(

@@ -11,11 +11,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -23,22 +20,34 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.modumessenger.R
 import com.example.modumessenger.core.ui.components.ModuTopBar
-import com.example.modumessenger.core.ui.components.rememberComingSoon
 
-/** 친구 설정(부록 A §20). 세 항목 모두 데이터가 없어 `"준비 중입니다"` 만 띄운다. */
+/** 친구 설정(부록 A §20). 세 항목이 각각 즐겨찾기·숨긴 친구·차단 친구 목록으로 간다. */
 @Composable
-fun SetFriendsScreen(onBack: () -> Unit) {
-    val snackbarHostState = remember { SnackbarHostState() }
-    val comingSoon = rememberComingSoon(snackbarHostState)
-
+fun SetFriendsScreen(
+    onBack: () -> Unit,
+    onFavoriteFriends: () -> Unit,
+    onHiddenFriends: () -> Unit,
+    onBlockedFriends: () -> Unit,
+) {
     Scaffold(
         topBar = { ModuTopBar(title = stringResource(R.string.set_friends_title), onBack = onBack) },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            SetFriendsRow(R.drawable.ic_baseline_person_24, R.string.set_friends_favorite, comingSoon)
-            SetFriendsRow(R.drawable.ic_baseline_person_outline_24, R.string.set_friends_hidden, comingSoon)
-            SetFriendsRow(R.drawable.ic_baseline_person_off_24, R.string.set_friends_blocked, comingSoon)
+            SetFriendsRow(
+                R.drawable.ic_baseline_person_24,
+                R.string.set_friends_favorite,
+                onFavoriteFriends,
+            )
+            SetFriendsRow(
+                R.drawable.ic_baseline_person_outline_24,
+                R.string.set_friends_hidden,
+                onHiddenFriends,
+            )
+            SetFriendsRow(
+                R.drawable.ic_baseline_person_off_24,
+                R.string.set_friends_blocked,
+                onBlockedFriends,
+            )
         }
     }
 }

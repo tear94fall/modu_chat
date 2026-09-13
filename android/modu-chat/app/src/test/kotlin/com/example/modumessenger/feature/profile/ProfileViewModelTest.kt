@@ -1,6 +1,8 @@
 package com.example.modumessenger.feature.profile
 
 import androidx.lifecycle.SavedStateHandle
+import com.example.modumessenger.R
+import com.example.modumessenger.core.model.FriendStatus
 import com.example.modumessenger.core.model.Member
 import com.example.modumessenger.core.model.Profile
 import com.example.modumessenger.core.model.ProfileType
@@ -13,6 +15,9 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -20,6 +25,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProfileViewModelTest {
@@ -146,5 +152,162 @@ class ProfileViewModelTest {
         advanceUntilIdle()
 
         assertEquals(listOf(listOf(1L, 2L)), roomCreator.requested)
+    }
+
+    // ---------- 즐겨찾기·숨김·차단(설계 §3) ----------
+
+    /** 스낵바로 흘린 문구를 모은다. `messages` 는 replay 가 없어 곧바로 붙어 있어야 한다. */
+    private fun TestScope.collectMessages(vm: ProfileViewModel): MutableList<ProfileMessage> {
+        val collected = mutableListOf<ProfileMessage>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            vm.messages.collect { collected += it }
+        }
+        return collected
+    }
+
+    @Test
+    fun `친구면 별과 메뉴가 보이고 친구가 아니면 숨긴다`() = runTest {
+        val friend = Member(id = 2L, userId = "friend", username = "친구")
+        val repository = FakeMemberRepository(member = friend, me = me)
+        repository.friend = friend.copy(favorite = true)
+        val vm = viewModel(memberId = friend.id, repository = repository)
+        advanceUntilIdle()
+
+        assertTrue(vm.uiState.value.isFriend)
+        assertTrue(vm.uiState.value.showFriendActions)
+        assertTrue(vm.uiState.value.favorite)
+
+        val stranger = FakeMemberRepository(member = friend, me = me)
+        stranger.friend = null
+        val strangerVm = viewModel(memberId = friend.id, repository = stranger)
+        advanceUntilIdle()
+
+        assertFalse(strangerVm.uiState.value.isFriend)
+        assertFalse(strangerVm.uiState.value.showFriendActions)
+    }
+
+    @Test
+    fun `내 프로필에서는 별도 메뉴도 없다`() = runTest {
+        val repository = FakeMemberRepository(member = me, me = me)
+        val vm = viewModel(memberId = me.id, repository = repository)
+        advanceUntilIdle()
+
+        assertFalse(vm.uiState.value.showFriendActions)
+        assertFalse(vm.uiState.value.canToggleFavorite)
+        // 내 프로필에서는 친구 상태를 묻지도 않는다.
+        assertTrue(repository.favoriteCalls.isEmpty())
+    }
+
+    @Test
+    fun `별을 누르면 즐겨찾기를 걸고 다시 누르면 뺀다`() = runTest {
+        val friend = Member(id = 2L, userId = "friend", username = "친구")
+        val repository = FakeMemberRepository(member = friend, me = me)
+        val vm = viewModel(memberId = friend.id, repository = repository)
+        advanceUntilIdle()
+        val messages = collectMessages(vm)
+
+        vm.toggleFavorite()
+        advanceUntilIdle()
+
+        assertEquals(listOf(2L to true), repository.favoriteCalls)
+        assertTrue(vm.uiState.value.favorite)
+        assertEquals(R.string.profile_favorite_added, messages.last().res)
+
+        vm.toggleFavorite()
+        advanceUntilIdle()
+
+        assertEquals(listOf(2L to true, 2L to false), repository.favoriteCalls)
+        assertFalse(vm.uiState.value.favorite)
+        assertEquals(R.string.profile_favorite_removed, messages.last().res)
+    }
+
+    @Test
+    fun `차단한 친구는 별 토글이 죽는다`() = runTest {
+        val friend = Member(id = 2L, userId = "friend", username = "친구")
+        val repository = FakeMemberRepository(member = friend, me = me)
+        repository.friend = friend.copy(friendStatus = FriendStatus.BLOCKED)
+        val vm = viewModel(memberId = friend.id, repository = repository)
+        advanceUntilIdle()
+
+        assertTrue(vm.uiState.value.isBlocked)
+        assertFalse(vm.uiState.value.canToggleFavorite)
+
+        vm.toggleFavorite()
+        advanceUntilIdle()
+
+        assertTrue(repository.favoriteCalls.isEmpty())
+    }
+
+    @Test
+    fun `숨기기는 확인 팝업을 거쳐 숨김으로 바뀌고 해제는 바로 푼다`() = runTest {
+        val friend = Member(id = 2L, userId = "friend", username = "친구")
+        val repository = FakeMemberRepository(member = friend, me = me)
+        val vm = viewModel(memberId = friend.id, repository = repository)
+        advanceUntilIdle()
+        val messages = collectMessages(vm)
+
+        vm.showHideDialog()
+        assertTrue(vm.uiState.value.hideDialogVisible)
+
+        vm.setHidden(true)
+        advanceUntilIdle()
+
+        assertEquals(listOf(2L to true), repository.hiddenCalls)
+        assertFalse(vm.uiState.value.hideDialogVisible)
+        assertTrue(vm.uiState.value.isHidden)
+        assertEquals(R.string.profile_hidden_done, messages.last().res)
+
+        vm.setHidden(false)
+        advanceUntilIdle()
+
+        assertEquals(listOf(2L to true, 2L to false), repository.hiddenCalls)
+        assertFalse(vm.uiState.value.isHidden)
+        assertEquals(R.string.profile_hidden_undone, messages.last().res)
+    }
+
+    @Test
+    fun `차단은 확인 팝업을 거쳐 차단으로 바뀌고 즐겨찾기는 풀린다`() = runTest {
+        val friend = Member(id = 2L, userId = "friend", username = "친구")
+        val repository = FakeMemberRepository(member = friend, me = me)
+        repository.friend = friend.copy(favorite = true)
+        val vm = viewModel(memberId = friend.id, repository = repository)
+        advanceUntilIdle()
+        val messages = collectMessages(vm)
+
+        vm.showBlockDialog()
+        assertTrue(vm.uiState.value.blockDialogVisible)
+
+        vm.setBlocked(true)
+        advanceUntilIdle()
+
+        assertEquals(listOf(2L to true), repository.blockedCalls)
+        assertFalse(vm.uiState.value.blockDialogVisible)
+        assertTrue(vm.uiState.value.isBlocked)
+        assertFalse(vm.uiState.value.favorite)
+        assertEquals(R.string.profile_blocked_done, messages.last().res)
+
+        vm.setBlocked(false)
+        advanceUntilIdle()
+
+        assertEquals(listOf(2L to true, 2L to false), repository.blockedCalls)
+        assertFalse(vm.uiState.value.isBlocked)
+        assertEquals(R.string.profile_blocked_undone, messages.last().res)
+    }
+
+    @Test
+    fun `바꾸지 못하면 상태는 그대로 두고 실패 문구만 띄운다`() = runTest {
+        val friend = Member(id = 2L, userId = "friend", username = "친구")
+        val repository = FakeMemberRepository(member = friend, me = me)
+        val vm = viewModel(memberId = friend.id, repository = repository)
+        advanceUntilIdle()
+        val messages = collectMessages(vm)
+
+        repository.flagResult = Result.failure(IOException("offline"))
+        vm.setBlocked(true)
+        advanceUntilIdle()
+
+        assertFalse(vm.uiState.value.isBlocked)
+        assertFalse(vm.uiState.value.updatingFlag)
+        assertEquals(R.string.profile_flag_failed, messages.last().res)
     }
 }

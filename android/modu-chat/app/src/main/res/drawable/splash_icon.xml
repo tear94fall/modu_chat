@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  시스템 스플래시(core-splashscreen)는 아이콘을 원형 마스크로 그리며 안전 영역은 가운데 2/3 다.
+  캔버스를 꽉 채운 modu_logo 를 그대로 주면 가장자리가 잘리고 확대돼 보인다.
+  런처 아이콘과 같은 전경(안전 영역에 맞춰 0.95 배·중앙 정렬)을 흰 배경 위에 두어
+  흰 화면 가운데 번개만 온전히 보이게 한다.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/white" />
+    <foreground android:drawable="@drawable/modu_ic_launcher_foreground" />
+</adaptive-icon>

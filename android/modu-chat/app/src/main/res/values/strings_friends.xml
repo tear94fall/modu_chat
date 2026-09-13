@@ -31,4 +31,19 @@
     <string name="set_friends_favorite">즐겨찾기</string>
     <string name="set_friends_hidden">숨김친구</string>
     <string name="set_friends_blocked">차단친구</string>
+
+    <!-- 친구 탭 즐겨찾기 구역 -->
+    <string name="friends_favorites_count">즐겨찾기 %1$d</string>
+    <string name="friends_favorite_mark">즐겨찾기</string>
+
+    <!-- 즐겨찾기·숨긴 친구·차단 친구 목록 -->
+    <string name="favorite_friends_title">즐겨찾기</string>
+    <string name="hidden_friends_title">숨긴 친구</string>
+    <string name="blocked_friends_title">차단 친구</string>
+    <string name="favorite_friends_empty">즐겨찾기한 친구가 없습니다.</string>
+    <string name="hidden_friends_empty">숨긴 친구가 없습니다.</string>
+    <string name="blocked_friends_empty">차단한 친구가 없습니다.</string>
+    <string name="favorite_friends_action">해제</string>
+    <string name="hidden_friends_action">숨김 해제</string>
+    <string name="blocked_friends_action">차단 해제</string>
 </resources>

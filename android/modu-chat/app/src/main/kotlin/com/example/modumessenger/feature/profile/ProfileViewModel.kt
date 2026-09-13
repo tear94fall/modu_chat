@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.modumessenger.R
 import com.example.modumessenger.core.chat.RoomCreator
+import com.example.modumessenger.core.model.FriendStatus
 import com.example.modumessenger.core.model.Member
 import com.example.modumessenger.core.network.ApiException
 import com.example.modumessenger.core.session.FriendNames
@@ -37,6 +38,14 @@ data class ProfileUiState(
     val renameDialogVisible: Boolean = false,
     val renameInput: String = "",
     val startingChat: Boolean = false,
+    /** 서버가 "내 친구" 라고 알려 줬다. 친구가 아니면 별·⋮ 메뉴를 모두 숨긴다. */
+    val isFriend: Boolean = false,
+    val favorite: Boolean = false,
+    val friendStatus: FriendStatus = FriendStatus.NORMAL,
+    /** 즐겨찾기·숨김·차단 요청이 날아가는 중. 두 번 누르는 것을 막는다. */
+    val updatingFlag: Boolean = false,
+    val hideDialogVisible: Boolean = false,
+    val blockDialogVisible: Boolean = false,
 ) {
 
     /** `프로필 편집` 은 내 프로필에서만 보인다. */
@@ -54,6 +63,16 @@ data class ProfileUiState(
 
     /** 빈 이름으로는 저장할 수 없다. */
     val canSaveRename: Boolean get() = renameInput.trim().isNotEmpty()
+
+    val isHidden: Boolean get() = friendStatus == FriendStatus.HIDDEN
+
+    val isBlocked: Boolean get() = friendStatus == FriendStatus.BLOCKED
+
+    /** 별 토글과 ⋮ 메뉴는 남의 프로필이면서 내 친구일 때만 보인다. */
+    val showFriendActions: Boolean get() = !isMe && isFriend
+
+    /** 차단한 친구에게는 즐겨찾기를 걸 수 없다(서버도 400 을 준다). */
+    val canToggleFavorite: Boolean get() = showFriendActions && !isBlocked && !updatingFlag
 }
 
 /** 화면 밖으로 나가는 일(방 열기)은 상태가 아니라 사건으로 흘린다. */
@@ -110,6 +129,8 @@ class ProfileViewModel @Inject constructor(
             val isMe = me != null && me.id == memberId
             _uiState.update { it.copy(isMe = isMe, isLoading = it.member == null) }
 
+            if (!isMe) loadFriendStatus() else _uiState.update { it.copy(isFriend = false) }
+
             memberRepository.getMember(memberId)
                 .onSuccess { member ->
                     _uiState.update {
@@ -124,6 +145,110 @@ class ProfileViewModel @Inject constructor(
                 }
         }
     }
+
+    /** 남의 프로필이면 친구 상태(즐겨찾기·숨김·차단)를 함께 읽는다. 친구가 아니면 404 라 별·메뉴가 사라진다. */
+    private fun loadFriendStatus() {
+        viewModelScope.launch {
+            memberRepository.getFriend(memberId)
+                .onSuccess { friend ->
+                    _uiState.update {
+                        it.copy(
+                            isFriend = true,
+                            favorite = friend.favorite,
+                            friendStatus = friend.friendStatus,
+                        )
+                    }
+                }
+                .onFailure {
+                    _uiState.update { it.copy(isFriend = false) }
+                }
+        }
+    }
+
+    /** 이름 옆 별. 차단 상태에서는 눌리지 않는다. */
+    fun toggleFavorite() {
+        val state = _uiState.value
+        if (!state.canToggleFavorite) return
+        val on = !state.favorite
+        _uiState.update { it.copy(updatingFlag = true) }
+
+        viewModelScope.launch {
+            memberRepository.setFavorite(memberId, on)
+                .onSuccess { friend -> onFlagChanged(friend, favoriteMessage(on)) }
+                .onFailure { onFlagFailed() }
+        }
+    }
+
+    fun showHideDialog() {
+        if (!_uiState.value.showFriendActions) return
+        _uiState.update { it.copy(hideDialogVisible = true) }
+    }
+
+    fun dismissHideDialog() {
+        _uiState.update { it.copy(hideDialogVisible = false) }
+    }
+
+    fun showBlockDialog() {
+        if (!_uiState.value.showFriendActions) return
+        _uiState.update { it.copy(blockDialogVisible = true) }
+    }
+
+    fun dismissBlockDialog() {
+        _uiState.update { it.copy(blockDialogVisible = false) }
+    }
+
+    /** 숨기기는 확인 팝업을 거친다. 해제는 바로 한다. */
+    fun setHidden(on: Boolean) {
+        val state = _uiState.value
+        if (!state.showFriendActions || state.updatingFlag) return
+        _uiState.update { it.copy(updatingFlag = true, hideDialogVisible = false) }
+
+        viewModelScope.launch {
+            memberRepository.setHidden(memberId, on)
+                .onSuccess { friend -> onFlagChanged(friend, hiddenMessage(on)) }
+                .onFailure { onFlagFailed() }
+        }
+    }
+
+    /** 차단은 확인 팝업을 거친다. 해제는 바로 한다. */
+    fun setBlocked(on: Boolean) {
+        val state = _uiState.value
+        if (!state.showFriendActions || state.updatingFlag) return
+        _uiState.update { it.copy(updatingFlag = true, blockDialogVisible = false) }
+
+        viewModelScope.launch {
+            // 차단 목록(BlockedUsers) 갱신은 리포지토리가 한다.
+            memberRepository.setBlocked(memberId, on)
+                .onSuccess { friend -> onFlagChanged(friend, blockedMessage(on)) }
+                .onFailure { onFlagFailed() }
+        }
+    }
+
+    private fun onFlagChanged(friend: Member, message: Int) {
+        _uiState.update {
+            it.copy(
+                isFriend = true,
+                favorite = friend.favorite,
+                friendStatus = friend.friendStatus,
+                updatingFlag = false,
+            )
+        }
+        _messages.tryEmit(ProfileMessage(message))
+    }
+
+    private fun onFlagFailed() {
+        _uiState.update { it.copy(updatingFlag = false) }
+        _messages.tryEmit(ProfileMessage(R.string.profile_flag_failed))
+    }
+
+    private fun favoriteMessage(on: Boolean): Int =
+        if (on) R.string.profile_favorite_added else R.string.profile_favorite_removed
+
+    private fun hiddenMessage(on: Boolean): Int =
+        if (on) R.string.profile_hidden_done else R.string.profile_hidden_undone
+
+    private fun blockedMessage(on: Boolean): Int =
+        if (on) R.string.profile_blocked_done else R.string.profile_blocked_undone
 
     fun showRenameDialog() {
         val member = _uiState.value.member ?: return

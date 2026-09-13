@@ -6,7 +6,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.modumessenger.feature.chat.chatGraph
+import com.example.modumessenger.feature.friends.BlockedFriendsScreen
+import com.example.modumessenger.feature.friends.FavoriteFriendsScreen
 import com.example.modumessenger.feature.friends.FindFriendsScreen
+import com.example.modumessenger.feature.friends.HiddenFriendsScreen
 import com.example.modumessenger.feature.friends.SearchFriendsScreen
 import com.example.modumessenger.feature.friends.SetFriendsScreen
 import com.example.modumessenger.feature.login.LoginScreen
@@ -73,6 +76,9 @@ fun ModuNavHost(
                 onFindFriends = { navController.navigate(Routes.FIND_FRIENDS) },
                 onSearchFriends = { navController.navigate(Routes.SEARCH_FRIENDS) },
                 onSetFriends = { navController.navigate(Routes.SET_FRIENDS) },
+                onFavoriteFriends = { navController.navigate(Routes.FAVORITE_FRIENDS) },
+                onHiddenFriends = { navController.navigate(Routes.HIDDEN_FRIENDS) },
+                onBlockedFriends = { navController.navigate(Routes.BLOCKED_FRIENDS) },
                 onSetup = { navController.navigate(Routes.SETUP) },
                 onNotice = { navController.navigate(Routes.NOTICE) },
                 onAppInfo = { navController.navigate(Routes.APP_INFO) },
@@ -96,7 +102,33 @@ fun ModuNavHost(
         }
 
         composable(Routes.SET_FRIENDS) {
-            SetFriendsScreen(onBack = { navController.popBackStack() })
+            SetFriendsScreen(
+                onBack = { navController.popBackStack() },
+                onFavoriteFriends = { navController.navigate(Routes.FAVORITE_FRIENDS) },
+                onHiddenFriends = { navController.navigate(Routes.HIDDEN_FRIENDS) },
+                onBlockedFriends = { navController.navigate(Routes.BLOCKED_FRIENDS) },
+            )
+        }
+
+        composable(Routes.FAVORITE_FRIENDS) {
+            FavoriteFriendsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenProfile = { memberId -> navController.navigate(Routes.profile(memberId)) },
+            )
+        }
+
+        composable(Routes.HIDDEN_FRIENDS) {
+            HiddenFriendsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenProfile = { memberId -> navController.navigate(Routes.profile(memberId)) },
+            )
+        }
+
+        composable(Routes.BLOCKED_FRIENDS) {
+            BlockedFriendsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenProfile = { memberId -> navController.navigate(Routes.profile(memberId)) },
+            )
         }
 
         composable(Routes.SETUP) {

@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.example.modumessenger.core.model.ChatType
 import com.example.modumessenger.core.model.Member
 import com.example.modumessenger.core.model.SendStatus
+import com.example.modumessenger.core.session.BlockedUsers
 import com.example.modumessenger.core.session.FriendNames
 import com.example.modumessenger.core.session.SessionStore
 import com.example.modumessenger.data.dto.ChatDto
@@ -16,6 +17,7 @@ import com.google.gson.Gson
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -42,6 +44,7 @@ class ChatViewModelTest {
     init {
         coEvery { sessionStore.memberNow() } returns Member(id = 7L, userId = ME, username = "나")
         coEvery { sessionStore.friendNamesJson() } returns null
+        coEvery { sessionStore.blockedIdsJson() } returns null
         chatRoomApi.rooms = listOf(
             ChatRoomDto(
                 roomId = ROOM,
@@ -58,7 +61,7 @@ class ChatViewModelTest {
         )
     }
 
-    private fun TestScope.viewModel(): ChatViewModel {
+    private fun TestScope.viewModel(blocked: Set<String> = emptySet()): ChatViewModel {
         val dispatcher = UnconfinedTestDispatcher(testScheduler)
         val scope = CoroutineScope(backgroundScope.coroutineContext + dispatcher)
         val repository = ChatRepository(
@@ -71,12 +74,16 @@ class ChatViewModelTest {
             scope = scope,
         )
         repository.setIdentity(ME, "7")
+        val blockedUsers = BlockedUsers(sessionStore, Gson(), scope)
+        if (blocked.isNotEmpty()) scope.launch { blockedUsers.replaceAll(blocked) }
+        advanceUntilIdle()
         val viewModel = ChatViewModel(
             savedStateHandle = SavedStateHandle(mapOf(Routes.ARG_ROOM_ID to ROOM)),
             chatRepository = repository,
             storageRepository = storage,
             sessionStore = sessionStore,
             friendNames = FriendNames(sessionStore, Gson(), scope),
+            blockedUsers = blockedUsers,
             appScope = scope,
         )
         advanceUntilIdle()
@@ -275,5 +282,61 @@ class ChatViewModelTest {
         const val ROOM = "room-1"
         const val ME = "me"
         const val OTHER = "other"
+    }
+    // ---------- 차단(설계 §3) ----------
+
+    @Test
+    fun `차단한 사람의 메시지는 말풍선에서 빠진다`() = runTest {
+        val viewModel = viewModel(blocked = setOf(OTHER))
+
+        socket.incoming.emit(
+            com.example.modumessenger.data.socket.SocketEvent.Chat(
+                chat(id = 1L, sender = OTHER, message = "차단한 사람"),
+            ),
+        )
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.bubbles.isEmpty())
+    }
+
+    @Test
+    fun `차단하지 않은 사람의 메시지는 그대로 보인다`() = runTest {
+        val viewModel = viewModel(blocked = setOf("someone-else"))
+
+        socket.incoming.emit(
+            com.example.modumessenger.data.socket.SocketEvent.Chat(
+                chat(id = 1L, sender = OTHER, message = "잘 보인다"),
+            ),
+        )
+        advanceUntilIdle()
+
+        assertEquals("잘 보인다", viewModel.uiState.value.bubbles.single().message.message)
+    }
+
+    @Test
+    fun `말풍선 묶음은 차단한 사람을 걸러낸 뒤에 정한다`() {
+        val messages = listOf(
+            message(1L, OTHER, "2026-09-12 10:00:00"),
+            message(2L, "blocked", "2026-09-12 10:00:10"),
+            message(3L, OTHER, "2026-09-12 10:00:20"),
+        )
+        val members = listOf(
+            Member(id = 8L, userId = OTHER, username = "친구"),
+            Member(id = 9L, userId = "blocked", username = "차단"),
+        )
+
+        val bubbles = ChatViewModel.buildBubbles(
+            messages = messages,
+            members = members,
+            myUserId = ME,
+            names = emptyMap(),
+            blocked = setOf("blocked"),
+        )
+
+        assertEquals(2, bubbles.size)
+        assertEquals(listOf(1L, 3L), bubbles.map { it.message.id })
+        // 가운데가 빠졌으니 남은 둘은 같은 시각 묶음의 머리와 꼬리다.
+        assertEquals(BubbleGroup.HEADER, bubbles[0].group)
+        assertEquals(BubbleGroup.TAIL, bubbles[1].group)
     }
 }

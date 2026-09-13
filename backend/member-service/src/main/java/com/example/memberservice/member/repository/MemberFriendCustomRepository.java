@@ -19,4 +19,12 @@ public interface MemberFriendCustomRepository {
 
     /** 해당 상태인 친구들의 userId. 차단 목록을 앱에 내려줄 때 쓴다. */
     List<String> findFriendUserIdsByStatus(Long memberId, FriendStatus status);
+
+    /**
+     * 역방향: 이 userId 를 해당 상태로 등록한 사람들의 userId.
+     * (member_friend 에서 friend.userId = friendUserId 인 행의 member.userId)
+     * ws-service 가 "누가 나를 차단했나"를 물어볼 때 쓴다. member 를 먼저 찾지 않고
+     * userId 로 바로 조인하므로 없는 userId 면 빈 목록이다.
+     */
+    List<String> findMemberUserIdsByFriendUserIdAndStatus(String friendUserId, FriendStatus status);
 }

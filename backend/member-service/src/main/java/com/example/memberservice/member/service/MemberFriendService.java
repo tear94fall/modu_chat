@@ -89,6 +89,16 @@ public class MemberFriendService {
         return memberFriendRepository.findFriendUserIdsByStatus(me.getId(), FriendStatus.BLOCKED);
     }
 
+    /**
+     * 나를 차단한 사람들의 userId. ws-service 가 1:1 방에서 전달·푸시를 거를 때 쓴다.
+     * 상대가 나를 차단했는지는 내 존재 여부와 무관하게 member_friend 행으로 판정하므로
+     * 회원을 먼저 찾지 않는다(없는 userId 면 빈 목록).
+     */
+    @Transactional(readOnly = true)
+    public List<String> getBlockedByUserIds(String userId) {
+        return memberFriendRepository.findMemberUserIdsByFriendUserIdAndStatus(userId, FriendStatus.BLOCKED);
+    }
+
     /** 별칭 변경. 친구가 아니면 USERID_NOT_FOUND_ERROR. 공백 검증은 컨트롤러가 한다. */
     public ResponseFriendDto renameFriend(String userId, Long friendMemberId, String name) {
         MemberFriend memberFriend = findFriendRow(userId, friendMemberId);

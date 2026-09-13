@@ -4,6 +4,7 @@ import com.example.memberservice.member.dto.ChatRoomMemberDto;
 import com.example.memberservice.member.dto.GoogleAccountDto;
 import com.example.memberservice.member.dto.MemberDto;
 import com.example.memberservice.member.entity.Role;
+import com.example.memberservice.member.service.MemberFriendService;
 import com.example.memberservice.member.service.MemberService;
 import com.example.memberservice.member.service.MemberSignupService;
 import com.example.memberservice.profile.dto.AddProfileDto;
@@ -22,6 +23,7 @@ public class MemberInternalController {
 
     private final MemberService memberService;
     private final MemberSignupService memberSignupService;
+    private final MemberFriendService memberFriendService;
 
     /** auth-service 가 검증한 구글 계정으로 회원을 찾거나 만든다(가입 = 첫 로그인). */
     @PostMapping("/google")
@@ -62,6 +64,18 @@ public class MemberInternalController {
     @GetMapping("/{userId}/role")
     public ResponseEntity<Role> getUserRole(@PathVariable("userId") String userId) {
         return ResponseEntity.ok().body(memberService.getUserById(userId).getRole());
+    }
+
+    /** userId 가 차단한 사람들의 userId. chat-service 가 이력·미읽음에서 뺄 때 쓴다. */
+    @GetMapping("/{userId}/blocked-ids")
+    public ResponseEntity<List<String>> getBlockedIds(@PathVariable("userId") String userId) {
+        return ResponseEntity.ok().body(memberFriendService.getBlockedUserIds(userId));
+    }
+
+    /** userId 를 차단한 사람들의 userId(역방향). ws-service 가 전달·푸시에서 뺄 때 쓴다. */
+    @GetMapping("/{userId}/blocked-by")
+    public ResponseEntity<List<String>> getBlockedBy(@PathVariable("userId") String userId) {
+        return ResponseEntity.ok().body(memberFriendService.getBlockedByUserIds(userId));
     }
 
     @GetMapping("/by-email/{email}")

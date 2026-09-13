@@ -16,6 +16,11 @@ public class KafkaConsumerService {
 
     private final KafkaProducerService kafkaProducerService;
 
+    /**
+     * topic-chat-save 를 topic-chat-broadcast 로 넘긴다. 받은 객체를 그대로 다시 보낸다 —
+     * ws-service 가 실어 보낸 excludeUserIds(1:1 차단 제외 대상)까지 손대지 않고 전달해야
+     * 다른 ws 인스턴스도 같은 판단을 할 수 있다.
+     */
     @KafkaListener(
             topics = "topic-chat-save",
             groupId = "${spring.kafka.consumer.group-id}",

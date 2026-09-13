@@ -17,6 +17,7 @@ import com.example.chatservice.kafka.producer.KafkaProducerService;
 import com.example.chatservice.member.client.MemberFeignClient;
 import com.example.chatservice.member.dto.MemberDto;
 import com.example.chatservice.member.dto.ChatRoomMemberDto;
+import com.example.chatservice.member.service.BlockedIdsCache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -45,6 +46,10 @@ public class ChatRoomService {
     private final MemberFeignClient memberFeignClient;
     private final ModelMapper modelMapper;
     private final KafkaProducerService kafkaProducerService;
+    private final BlockedIdsCache blockedIdsCache;
+
+    /** 1:1 방의 정의: 방 멤버가 정확히 2명. */
+    private static final int ONE_ON_ONE_MEMBER_COUNT = 2;
 
     public List<ChatRoomDto> searchChatRoomByUserId(String memberId) {
         List<ChatRoomMember> chatRoomMemberList = chatRoomMemberRepository.findAllByMemberId(Long.valueOf(memberId));
@@ -214,14 +219,28 @@ public class ChatRoomService {
         return addNewChatRoomMember(chatRoom, invited);
     }
 
-    public List<ChatRoomLastReadChatDto> searchUnreadChatRoom(String userId) {
+    /**
+     * 방별 안 읽은 개수.
+     *
+     * memberId 는 경로 변수 이름이 {userId} 지만 실제로는 member id(숫자 PK)다 —
+     * 안드로이드가 myMemberId 를 그대로 넣는다(ChatRepository.refreshUnreadCounts).
+     * 차단 목록은 userId(구글 sub) 로만 조회할 수 있어서 이미 있는 findMyUserId 로
+     * 한 번 변환하고, member-service 가 죽어 변환에 실패하면 게이트웨이가 넣어 준
+     * X-Auth-User-Id(authUserId) 로 대신한다. 둘 다 없으면 필터 없이 예전처럼 센다.
+     */
+    public List<ChatRoomLastReadChatDto> searchUnreadChatRoom(String memberId, String authUserId) {
         List<ChatRoomMember> chatRoomMemberList =
-                chatRoomMemberRepository.findAllByMemberId(Long.valueOf(userId));
+                chatRoomMemberRepository.findAllByMemberId(Long.valueOf(memberId));
 
         // 마지막 메시지를 내가 보냈다면 그 방은 이미 본 것으로 본다.
         // chat.sender 는 member id 가 아니라 userId 문자열이라 한 번 조회해 둔다.
-        String myUserId = findMyUserId(userId);
+        String myUserId = findMyUserId(memberId);
+        if (myUserId == null) {
+            myUserId = authUserId;
+        }
         Map<Long, String> senderByChatId = findLastChatSenders(chatRoomMemberList);
+        Set<String> blockedSenders = blockedIdsCache.get(myUserId);
+        final String me = myUserId;
 
         return chatRoomMemberList.stream()
                 .map(chatRoomMember -> {
@@ -231,18 +250,25 @@ public class ChatRoomService {
                     Long lastReadChatId = parseIdOrZero(chatRoomMember.getLastReadChatId());
                     Long lastSendChatId = parseIdOrZero(chatRoomMember.getChatRoom().getLastChatId());
 
+                    // 차단은 1:1 방에서만 적용한다. 단체방은 서버가 그대로 두고 앱이 거른다.
+                    Set<String> excluded = isOneOnOne(chatRoomMember.getChatRoom()) ? blockedSenders : Set.of();
+
                     Long unreadChatCount = 0L;
                     if (lastSendChatId > lastReadChatId
-                            && !sentByMe(senderByChatId, lastSendChatId, myUserId)) {
+                            && !sentByMe(senderByChatId, lastSendChatId, me)) {
                         // BETWEEN 은 양끝을 포함한다. 마지막으로 '읽은' 메시지는 빼야 하므로 +1.
                         unreadChatCount = chatRepository.countByRoomIdAndIdBetween(
-                                roomId, lastReadChatId + 1, lastSendChatId);
+                                roomId, lastReadChatId + 1, lastSendChatId, excluded);
                     }
 
                     return ChatRoomLastReadChatDto.createChatRoomLastReadChatDto(
                             roomId, lastSendChatId, lastReadChatId, unreadChatCount);
                 })
                 .toList();
+    }
+
+    private boolean isOneOnOne(ChatRoom chatRoom) {
+        return chatRoom.getChatRoomMemberList().size() == ONE_ON_ONE_MEMBER_COUNT;
     }
 
     /** 마지막 메시지의 발신자가 나인지. 판단할 수 없으면 false 라서 기존 계산이 그대로 남는다. */

@@ -210,7 +210,9 @@ public class ChatRoomService {
             throw new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userIds.toString());
         }
 
-        ChatRoomDto chatRoomDto = addNewChatRoomMember(chatRoom, members);
+        // 예전에는 여기서 members 로 한 번, member-service 응답으로 또 한 번 추가해 같은 회원이 두 줄씩 생겼다.
+        // member-service 에 초대를 알린 뒤 그 응답(실제 초대된 회원)만 한 번 추가한다.
+        ChatRoomDto chatRoomDto = modelMapper.map(chatRoom, ChatRoomDto.class);
 
         ChatRoomMemberDto memberInviteDto = new ChatRoomMemberDto(chatRoomDto, members);
 
@@ -409,16 +411,29 @@ public class ChatRoomService {
                 .flatMap(chatRoomRepository::findById);
     }
 
+    /**
+     * 방에 없는 회원만 추가한다. 같은 회원을 두 번 넣으면 방 목록 조회가 그 방을 두 번 돌려주고
+     * 코틀린 앱은 방 id 를 목록 키로 쓰기 때문에 바로 죽는다. DB 에도 (방, 회원) 유니크 제약이 있다.
+     */
     private ChatRoomDto addNewChatRoomMember(ChatRoom chatRoom, List<MemberDto> members) {
+        Set<Long> existing = chatRoom.getChatRoomMemberList().stream()
+                .map(ChatRoomMember::getMemberId)
+                .collect(Collectors.toSet());
         List<ChatRoomMember> chatRoomMemberList = members.stream()
-                .map(member -> {
-                    ChatRoomMember chatRoomMember = new ChatRoomMember(member.getId(), chatRoom.getLastChatId(), chatRoom);
+                .map(MemberDto::getId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .filter(id -> !existing.contains(id))
+                .map(id -> {
+                    ChatRoomMember chatRoomMember = new ChatRoomMember(id, chatRoom.getLastChatId(), chatRoom);
                     chatRoom.getChatRoomMemberList().add(chatRoomMember);
                     return chatRoomMember;
                 })
                 .collect(Collectors.toList());
 
-        chatRoomMemberRepository.saveAll(chatRoomMemberList);
+        if (!chatRoomMemberList.isEmpty()) {
+            chatRoomMemberRepository.saveAll(chatRoomMemberList);
+        }
         ChatRoom newRoom = chatRoomRepository.save(chatRoom);
 
         return modelMapper.map(newRoom, ChatRoomDto.class);

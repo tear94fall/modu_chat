@@ -157,6 +157,26 @@ class ChatRoomServiceTest {
     }
 
     @Test
+    @DisplayName("초대하면 member-service 가 돌려준 회원을 한 번씩만 추가하고, 이미 있는 회원은 건너뛴다")
+    void addMemberChatRoom_addsInvitedOnce_andSkipsExistingMembers() {
+        ChatRoom room = new ChatRoom("room-1", "새로운 채팅방", "", "", "", "2026-09-13 00:00:00");
+        room.getChatRoomMemberList().add(new ChatRoomMember(1L, "", room));
+        when(chatRoomRepository.findByRoomId("room-1")).thenReturn(Optional.of(room));
+        when(memberFeignClient.getMembersByUserId(List.of("user-1", "user-2")))
+                .thenReturn(List.of(member(1L), member(2L)));
+        // member-service 는 실제 초대된 회원 목록을 돌려준다(이미 있는 1 도 같이 돌려주는 상황).
+        when(memberFeignClient.inviteChatRoom(any())).thenReturn(List.of(member(1L), member(2L)));
+
+        chatRoomService.addMemberChatRoom("room-1", List.of("user-1", "user-2"));
+
+        assertThat(room.getChatRoomMemberList())
+                .extracting(ChatRoomMember::getMemberId)
+                .containsExactlyInAnyOrder(1L, 2L);
+        // 예전 버그: 초대 전 목록과 응답 목록으로 두 번 저장해 같은 회원이 두 줄씩 생겼다.
+        verify(chatRoomMemberRepository, times(1)).saveAll(anyList());
+    }
+
+    @Test
     @DisplayName("속한 방이 없으면 member-service 를 호출하지 않고 빈 목록을 돌려준다")
     void searchChatRoomByUserId_withNoRooms_returnsEmptyWithoutMemberLookup() {
         when(chatRoomMemberRepository.findAllByMemberId(48L)).thenReturn(List.of());

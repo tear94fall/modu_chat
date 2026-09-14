@@ -232,6 +232,19 @@ class ChatRepositoryTest {
     }
 
     @Test
+    fun `서버가 같은 방을 두 번 줘도 목록에는 한 번만 남는다`() = runTest {
+        // 멤버 행이 중복된 방은 서버 목록에 여러 번 실려 온다. 목록 키가 겹치면 화면이 죽으므로 방 id 로 걸러야 한다.
+        chatRoomApi.rooms = listOf(
+            roomDto(OTHER_ROOM, "2026-08-26 09:00:00"),
+            roomDto(ACTIVE_ROOM, "2026-08-26 10:00:00"),
+            roomDto(ACTIVE_ROOM, "2026-08-26 10:00:00"),
+        )
+        val repository = openedRepository()
+
+        assertEquals(listOf(ACTIVE_ROOM, OTHER_ROOM), repository.rooms.value.map { it.roomId })
+    }
+
+    @Test
     fun `방 목록은 마지막 대화 시각 내림차순이다`() = runTest {
         val repository = openedRepository()
 

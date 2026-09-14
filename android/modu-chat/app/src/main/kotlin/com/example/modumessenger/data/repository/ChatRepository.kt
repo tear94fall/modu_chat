@@ -374,7 +374,10 @@ class ChatRepository @Inject constructor(
             // 그 호출이 실패하는 구간에도 배지가 깜빡이지 않게 기존 값을 들고 간다.
             val previous = roomCache.associate { it.roomId to it.unreadCount }
             roomCache.clear()
-            roomCache.addAll(rooms.map { it.copy(unreadCount = previous[it.roomId] ?: it.unreadCount) })
+            // 서버가 같은 방을 두 번 주면(멤버 행 중복) 목록 키가 겹쳐 화면이 죽는다. 방 id 로 한 번만 남긴다.
+            roomCache.addAll(
+                rooms.distinctBy { it.roomId }.map { it.copy(unreadCount = previous[it.roomId] ?: it.unreadCount) },
+            )
             publishRoomsLocked()
         }
     }

@@ -25,10 +25,35 @@ describe('Layout', () => {
   it('links to the main sections', () => {
     renderLayout()
 
-    expect(screen.getByText('회원')).toBeInTheDocument()
-    expect(screen.getByText('채팅방')).toBeInTheDocument()
-    expect(screen.getByText('상품')).toBeInTheDocument()
-    expect(screen.getByText('푸시')).toBeInTheDocument()
-    expect(screen.getByText('앱 설정')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '회원' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '채팅방' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '상품' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '푸시' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '앱 설정' })).toBeInTheDocument()
+  })
+
+  it('groups the menu by service: 회원 / 채팅 / 커머스', () => {
+    const { container } = renderLayout()
+
+    // 섹션 제목 → 그 아래 링크 순서. 푸시·앱 설정은 채팅 앱 기능이라 채팅 묶음에 들어간다.
+    const sections = Array.from(container.querySelectorAll('.nav-section')).map((section) => ({
+      title: section.querySelector('.nav-section-title')?.textContent,
+      links: Array.from(section.querySelectorAll('a')).map((a) => a.textContent),
+    }))
+
+    expect(sections).toEqual([
+      { title: '회원', links: ['회원'] },
+      { title: '채팅', links: ['채팅방', '푸시', '앱 설정'] },
+      { title: '커머스', links: ['상품'] },
+    ])
+  })
+
+  it('keeps 내 정보 and 로그아웃 in the footer, outside the sections', () => {
+    const { container } = renderLayout()
+
+    const footer = container.querySelector('.sidebar-footer')
+    expect(footer?.querySelector('a')?.textContent).toBe('내 정보')
+    expect(footer?.querySelector('button')?.textContent).toBe('로그아웃')
+    expect(footer?.closest('.nav-section')).toBeNull()
   })
 })

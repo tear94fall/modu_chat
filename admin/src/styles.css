@@ -79,7 +79,21 @@ h2 {
 .sidebar-nav {
   display: flex;
   flex-direction: column;
+  gap: 16px;
+}
+
+.nav-section {
+  display: flex;
+  flex-direction: column;
   gap: 4px;
+}
+
+.nav-section-title {
+  padding: 0 10px 2px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #8b93a7;
 }
 
 .sidebar-footer {

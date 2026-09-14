@@ -723,3 +723,26 @@ textarea:focus {
   width: auto;
   margin: 0;
 }
+
+/* 상품 관리 */
+a.btn {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.product-thumb {
+  display: block;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.product-preview {
+  display: block;
+  width: 160px;
+  height: 160px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #eef0f3;
+}

@@ -81,4 +81,18 @@ class GatewayRoutesTest {
         assertEquals("storage-service-admin", firstMatch(HttpMethod.GET, "/storage-service/api-admin/view/x.jpg").orElseThrow().getId());
     }
 
+    @Test
+    void commerceAdmin_routesToCommerceServiceByContainerName() {
+        Route route = firstMatch(HttpMethod.POST, "/commerce-service/api-admin/v1/products").orElseThrow();
+        assertEquals("commerce-service-admin", route.getId());
+        // commerce-service 는 Eureka 에 없다. modu-infra 네트워크의 컨테이너 이름으로 간다.
+        assertEquals("http://commerce-service:8200", route.getUri().toString());
+    }
+
+    @Test
+    void commerceAppApi_isNotRoutedThroughGateway() {
+        // 앱은 commerce-service(8200)를 직접 부른다. 게이트웨이에는 admin 계층만 연다.
+        assertTrue(firstMatch(HttpMethod.GET, "/commerce-service/api/v1/products").isEmpty());
+    }
+
 }

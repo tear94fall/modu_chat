@@ -128,6 +128,16 @@ spring:
             - AddRequestHeader=X-Internal-Token, ${modu.internal-api.token}
             - RewritePath=/storage-service/(?<segment>.*), /$\{segment}
 
+        # commerce-service 는 Eureka 에 등록하지 않는 별도 저장소(modu_commerce) 서비스라 컨테이너 이름으로 간다.
+        # 내부 토큰 대신 commerce 가 Authorization 헤더의 JWT(aud=modu-admin, ROLE_ADMIN)를 다시 검증한다.
+        - id: commerce-service-admin
+          uri: ${COMMERCE_SERVICE_URI:http://commerce-service:8200}
+          predicates:
+            - Path=/commerce-service/api-admin/**
+          filters:
+            - AuthorizationHeaderFilter=ROLE_ADMIN,modu-admin
+            - RewritePath=/commerce-service/(?<segment>.*), /$\{segment}
+
         # ---- WebSocket. HTTP API 계층과 무관하므로 경로 그대로 ----
         - id: ws-service
           uri: lb:ws://WS-SERVICE

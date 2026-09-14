@@ -95,6 +95,7 @@ services:
     networks:
       - modu-infra
       - pinpoint
+      - redis-cluster
     restart: always
 
   chat-service:
@@ -145,6 +146,7 @@ services:
     networks:
       - modu-infra
       - pinpoint
+      - redis-cluster
     restart: always
 
   profile-service:
@@ -278,6 +280,11 @@ networks:
   pinpoint:
     external: true
     name: pinpoint-docker_pinpoint
+  # Redis 클러스터 노드는 modu_infra 의 클러스터 전용 네트워크 IP(10.90.0.x)를 광고한다.
+  # Redisson(member-service)은 그 IP 로 붙으므로 auth-service·member-service 는 이 네트워크에도 참여한다.
+  redis-cluster:
+    external: true
+    name: modu-data_redis-cluster
 
 volumes:
   pinpoint-agent:

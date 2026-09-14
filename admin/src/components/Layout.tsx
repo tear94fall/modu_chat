@@ -29,6 +29,9 @@ export default function Layout() {
           <NavLink to="/rooms" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
             채팅방
           </NavLink>
+          <NavLink to="/products" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+            상품
+          </NavLink>
           <NavLink to="/push" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
             푸시
           </NavLink>

@@ -39,6 +39,14 @@
 - [Debezium](https://debezium.io/)
 - [Zipkin](https://zipkin.io/)
 
+### 로컬 실행
+
+인프라(MySQL, MongoDB, Redis, Kafka, RabbitMQ, MinIO)와 관측성 스택(Prometheus, Grafana, Pinpoint)은 modu_infra(https://github.com/tear94fall/modu_infra, 이 저장소 옆에 clone) 저장소에서 따로 띄웁니다.
+이 디렉터리의 `docker-compose.yml` 에는 애플리케이션 서비스만 있습니다.
+
+1. modu_infra 의 `README.md` 순서대로 `modu-infra` 네트워크, pinpoint-docker, data, monitoring 을 먼저 띄웁니다.
+2. `backend` 에서 `docker compose up -d --build`
+
 ## Project Architecture
 
 ### MSA (Micro Service Architecture)

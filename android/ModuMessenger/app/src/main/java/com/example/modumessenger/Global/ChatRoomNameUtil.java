@@ -31,13 +31,19 @@ public class ChatRoomNameUtil {
      */
     public static String resolve(String roomName, List<Member> members,
                                  String myUserId, String myUsername, int maxLength) {
+        return resolve(FriendNames.instance(), roomName, members, myUserId, myUsername, maxLength);
+    }
+
+    /** 참여자 이름은 내가 정한 별칭({@link DisplayName})으로 보여준다. names 를 받는 오버로드는 테스트용이다. */
+    public static String resolve(FriendNames names, String roomName, List<Member> members,
+                                 String myUserId, String myUsername, int maxLength) {
         if (hasCustomName(roomName)) {
             return truncate(roomName, maxLength);
         }
 
         List<String> others = members == null ? List.of() : members.stream()
                 .filter(m -> m.getUserId() != null && !m.getUserId().equals(myUserId))
-                .map(Member::getUsername)
+                .map(m -> DisplayName.of(names, m.getUserId(), m.getUsername()))
                 .collect(Collectors.toList());
 
         if (others.isEmpty()) {

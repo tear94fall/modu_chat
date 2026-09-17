@@ -1,253 +1,9 @@
-version: '3.8'
+name: modu-messenger
+
+# 인프라(MySQL, MongoDB, Redis, Kafka, RabbitMQ, MinIO)와 관측성 스택은 ~/workspace/modu_infra 에서 먼저 띄운다.
+# 서비스는 external 네트워크 modu-infra 에서 컨테이너 이름으로 인프라에 접근한다.
 
 services:
-  mysql-member:
-    image: mysql
-    container_name: mysql-member
-    ports:
-      - 3306:3306
-    volumes:
-      - mysql-member:/var/lib/mysql
-    environment:
-      MYSQL_DATABASE: modu-chat
-      MYSQL_USER: user 
-      MYSQL_PASSWORD: ${MYSQL_USER_PASSWORD}
-      MYSQL_ROOT_HOST: '%'
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    networks:
-      - modu-chat-network
-      - observability
-    healthcheck:
-      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -u root --password=$$MYSQL_ROOT_PASSWORD']
-      interval: 10s
-      timeout: 2s
-      retries: 100
-    restart: always
-  
-  mysql-chat:
-    image: mysql
-    container_name: mysql-chat
-    ports:
-      - 3307:3306
-    volumes:
-      - mysql-chat:/var/lib/mysql
-    environment:
-      MYSQL_DATABASE: modu-chat
-      MYSQL_USER: user 
-      MYSQL_PASSWORD: ${MYSQL_USER_PASSWORD}
-      MYSQL_ROOT_HOST: '%'
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    networks:
-      - modu-chat-network
-      - observability
-    healthcheck:
-      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -u root --password=$$MYSQL_ROOT_PASSWORD']
-      interval: 10s
-      timeout: 2s
-      retries: 100
-    restart: always
-  
-  mysql-push:
-    image: mysql
-    container_name: mysql-push
-    ports:
-      - 3308:3306
-    volumes:
-      - mysql-push:/var/lib/mysql
-    environment:
-      MYSQL_DATABASE: modu-chat
-      MYSQL_USER: user 
-      MYSQL_PASSWORD: ${MYSQL_USER_PASSWORD}
-      MYSQL_ROOT_HOST: '%'
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    networks:
-      - modu-chat-network
-      - observability
-    healthcheck:
-      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -u root --password=$$MYSQL_ROOT_PASSWORD']
-      interval: 10s
-      timeout: 2s
-      retries: 100
-    restart: always
-  
-  mysql-profile:
-    image: mysql
-    container_name: mysql-profile
-    ports:
-      - 3309:3306
-    volumes:
-      - mysql-profile:/var/lib/mysql
-    environment:
-      MYSQL_DATABASE: modu-chat
-      MYSQL_USER: user 
-      MYSQL_PASSWORD: ${MYSQL_USER_PASSWORD}
-      MYSQL_ROOT_HOST: '%'
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    networks:
-      - modu-chat-network
-      - observability
-    healthcheck:
-      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -u root --password=$$MYSQL_ROOT_PASSWORD']
-      interval: 10s
-      timeout: 2s
-      retries: 100
-    restart: always
-
-  mongo-01:
-    container_name: mongo-01
-    image: mongo
-    volumes:
-      - mongo-01:/data/db
-      - ./infra/mongodb/rs-init.sh:/scripts/rs-init.sh
-      - ./infra/mongodb/mongodb.key:/mongodb.key
-    ports:
-      - 27017:27017
-    links:
-      - mongo-02
-      - mongo-03
-    restart: always
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
-    command: ["--keyFile", "./mongodb.key",  "--bind_ip_all", "--replSet", "mongo-rs" ]
-    networks:
-      - modu-chat-network
-      - observability
-
-  mongo-02:
-    container_name: mongo-02
-    image: mongo
-    volumes:
-      - mongo-02:/data/db
-      - ./infra/mongodb/mongodb.key:/mongodb.key
-    ports:
-      - 27018:27017
-    restart: always
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
-    command: ["--keyFile", "./mongodb.key", "--bind_ip_all", "--replSet", "mongo-rs" ]
-    networks:
-      - modu-chat-network
-      - observability
-
-  mongo-03:
-    container_name: mongo-03
-    image: mongo
-    volumes:
-      - mongo-03:/data/db
-      - ./infra/mongodb/mongodb.key:/mongodb.key
-    ports:
-      - 27019:27017
-    restart: always
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
-    command: ["--keyFile", "./mongodb.key",  "--bind_ip_all", "--replSet", "mongo-rs" ]
-    networks:
-      - modu-chat-network
-      - observability
-
-  redis:
-    image: redis:alpine
-    command: redis-server --port 6379
-    container_name: redis
-    hostname: redis
-    labels:
-      - "name=redis"
-      - "mode=standalone"
-    ports:
-      - 6379:6379
-    networks:
-      - modu-chat-network
-      - observability
-  
-  rabbitmq:
-    image: rabbitmq:management
-    container_name: rabbitmq
-    ports:
-      - 5672:5672
-      - 15672:15672
-      - 25672:25672
-    networks:
-      - modu-chat-network
-      - observability
-
-  zookeeper:
-    image: confluentinc/cp-zookeeper:latest
-    container_name: zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    ports:
-      - "2181:2181"
-    networks:
-      - modu-chat-network
-
-  kafka:
-    image: confluentinc/cp-kafka:latest
-    hostname: kafka-broker-1
-    container_name: kafka
-    ports:
-      - "29092:29092"
-    depends_on:
-      - zookeeper
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_INTERNAL://localhost:29092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    networks:
-      - modu-chat-network
-      - observability
-
-  kafka-ui:
-    container_name: kafka-ui
-    image: provectuslabs/kafka-ui:latest
-    ports:
-      - 9009:8080
-    depends_on:
-      - zookeeper
-      - kafka
-    environment:
-      KAFKA_CLUSTERS_0_NAME: kafka-ui
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
-      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
-    networks:
-      - modu-chat-network
-
-  debezium:
-    image: debezium/connect:latest
-    container_name: debezium
-    ports:
-      - 8083:8083
-    environment:
-      GROUP_ID: 1
-      CONFIG_STORAGE_TOPIC: debezium-config
-      OFFSET_STORAGE_TOPIC: debezium-offset
-      STATUS_STORAGE_TOPIC: debezium-status
-      BOOTSTRAP_SERVERS: kafka:9092
-    networks:
-      - modu-chat-network
-
-  minio:
-    image: minio/minio
-    command: server /data --console-address ":9001"
-    container_name: minio
-    environment:
-      MINIO_ROOT_USER: minio
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    restart: always
-    shm_size: '1gb'
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    networks:
-      - modu-chat-network
-    volumes:
-      - /var/modu-chat/minio/data:/data
-
   config-service:
     build:
       context: ./config-service
@@ -263,8 +19,7 @@ services:
       - ./config-repo:/config-repo:ro
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
-      - modu-chat-network
-      - observability
+      - modu-infra
       - pinpoint
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8888/actuator/health | grep -q UP || exit 1"]
@@ -290,8 +45,7 @@ services:
       config-service:
         condition: service_healthy
     networks:
-      - modu-chat-network
-      - observability
+      - modu-infra
       - pinpoint
     restart: always
 
@@ -315,8 +69,7 @@ services:
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
-      - modu-chat-network
-      - observability
+      - modu-infra
       - pinpoint
     restart: always
 
@@ -337,14 +90,12 @@ services:
         condition: service_healthy
       discovery-service:
         condition: service_started
-      redis:
-        condition: service_started
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
-      - modu-chat-network
-      - observability
+      - modu-infra
       - pinpoint
+      - redis-cluster
     restart: always
 
   chat-service:
@@ -361,21 +112,14 @@ services:
       - JAVA_TOOL_OPTIONS=${CHAT_AGENT_OPTS:-}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
-      kafka:
-        condition: service_started
       config-service:
         condition: service_healthy
-      mysql-chat:
-        condition: service_healthy
       discovery-service:
-        condition: service_started
-      redis:
         condition: service_started
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
-      - modu-chat-network
-      - observability
+      - modu-infra
       - pinpoint
     restart: always
 
@@ -393,22 +137,16 @@ services:
       - JAVA_TOOL_OPTIONS=${MEMBER_AGENT_OPTS:-}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
-      kafka:
-        condition: service_started
       config-service:
         condition: service_healthy
-      mysql-member:
-        condition: service_healthy
       discovery-service:
-        condition: service_started
-      redis:
         condition: service_started
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
-      - modu-chat-network
-      - observability
+      - modu-infra
       - pinpoint
+      - redis-cluster
     restart: always
 
   profile-service:
@@ -425,19 +163,14 @@ services:
       - JAVA_TOOL_OPTIONS=${PROFILE_AGENT_OPTS:-}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
-      kafka:
-        condition: service_started
       config-service:
-        condition: service_healthy
-      mysql-profile:
         condition: service_healthy
       discovery-service:
         condition: service_started
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
-      - modu-chat-network
-      - observability
+      - modu-infra
       - pinpoint
     restart: always
 
@@ -457,17 +190,12 @@ services:
     depends_on:
       config-service:
         condition: service_healthy
-      mysql-push:
-        condition: service_healthy
       discovery-service:
-        condition: service_started
-      redis:
         condition: service_started
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
-      - modu-chat-network
-      - observability
+      - modu-infra
       - pinpoint
     restart: always
 
@@ -486,19 +214,12 @@ services:
       - JAVA_TOOL_OPTIONS=${STORAGE_AGENT_OPTS:-}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
-      kafka:
-        condition: service_started
       config-service:
         condition: service_healthy
-      minio:
-        condition: service_started
       discovery-service:
         condition: service_started
-      redis:
-        condition: service_started
     networks:
-      - modu-chat-network
-      - observability
+      - modu-infra
       - pinpoint
     restart: always
     volumes:
@@ -519,21 +240,14 @@ services:
       - JAVA_TOOL_OPTIONS=${WS_SERVICE_AGENT_OPTS:-}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
-      kafka:
-        condition: service_started
       config-service:
         condition: service_healthy
-      mysql-chat:
-        condition: service_healthy
       discovery-service:
-        condition: service_started
-      redis:
         condition: service_started
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
-      - modu-chat-network
-      - observability
+      - modu-infra
       - pinpoint
     restart: always
 
@@ -549,42 +263,30 @@ services:
       - JAVA_TOOL_OPTIONS=${CHAT_STORE_AGENT_OPTS:-}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     depends_on:
-      kafka:
-        condition: service_started
       config-service:
         condition: service_healthy
-      mysql-chat:
-        condition: service_healthy
       discovery-service:
-        condition: service_started
-      redis:
         condition: service_started
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
-      - modu-chat-network
-      - observability
+      - modu-infra
       - pinpoint
     restart: always
 
 networks:
-  modu-chat-network:
-    driver: bridge
-  observability:
+  modu-infra:
     external: true
   pinpoint:
     external: true
     name: pinpoint-docker_pinpoint
+  # Redis 클러스터 노드는 modu_infra 의 클러스터 전용 네트워크 IP(10.90.0.x)를 광고한다.
+  # Redisson(member-service)은 그 IP 로 붙으므로 auth-service·member-service 는 이 네트워크에도 참여한다.
+  redis-cluster:
+    external: true
+    name: modu-data_redis-cluster
 
 volumes:
-  mysql-data:
-  mysql-member:
-  mysql-chat:
-  mysql-push:
-  mysql-profile:
-  mongo-01:
-  mongo-02:
-  mongo-03:
   pinpoint-agent:
     external: true
     name: pinpoint-docker_data-volume

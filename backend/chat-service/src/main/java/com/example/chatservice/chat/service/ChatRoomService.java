@@ -10,16 +10,19 @@ import com.example.chatservice.chat.entity.ChatRoomMember;
 import com.example.chatservice.chat.repository.ChatRepository;
 import com.example.chatservice.chat.repository.ChatRoomMemberRepository;
 import com.example.chatservice.chat.repository.ChatRoomRepository;
+import com.example.chatservice.chat.repository.ChatRoomSort;
 import com.example.chatservice.common.exception.CustomException;
 import com.example.chatservice.common.exception.ErrorCode;
 import com.example.chatservice.kafka.producer.KafkaProducerService;
 import com.example.chatservice.member.client.MemberFeignClient;
 import com.example.chatservice.member.dto.MemberDto;
 import com.example.chatservice.member.dto.ChatRoomMemberDto;
+import com.example.chatservice.member.service.BlockedIdsCache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,9 +46,17 @@ public class ChatRoomService {
     private final MemberFeignClient memberFeignClient;
     private final ModelMapper modelMapper;
     private final KafkaProducerService kafkaProducerService;
+    private final BlockedIdsCache blockedIdsCache;
+
+    /** 1:1 방의 정의: 방 멤버가 정확히 2명. */
+    private static final int ONE_ON_ONE_MEMBER_COUNT = 2;
 
     public List<ChatRoomDto> searchChatRoomByUserId(String memberId) {
         List<ChatRoomMember> chatRoomMemberList = chatRoomMemberRepository.findAllByMemberId(Long.valueOf(memberId));
+        if (chatRoomMemberList.isEmpty()) {
+            // 빈 id 목록으로 member-service 를 부르면 경로 변수가 비어 404 → 500 이 된다. 방이 없으면 바로 빈 목록.
+            return List.of();
+        }
 
         List<ChatRoom> chatRooms = chatRoomMemberList
                 .stream()
@@ -118,10 +129,20 @@ public class ChatRoomService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 같은 멤버 구성의 방이 이미 있으면 새로 만들지 않고 그 방을 돌려준다.
+     * 클라이언트는 응답의 roomId 로 이동하므로 자연스럽게 기존 방으로 들어간다.
+     */
     public ChatRoomDto createChatRoom(List<Long> ids) {
-        List<MemberDto> members = memberFeignClient.getMembersById(ids);
+        List<Long> memberIds = ids.stream().distinct().toList();
+        List<MemberDto> members = memberFeignClient.getMembersById(memberIds);
         if(members.isEmpty()) {
             throw new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, ids.toString());
+        }
+
+        Optional<ChatRoom> existingRoom = findChatRoomByExactMembers(members);
+        if (existingRoom.isPresent()) {
+            return new ChatRoomDto(existingRoom.get(), members);
         }
 
         //legacy
@@ -189,7 +210,9 @@ public class ChatRoomService {
             throw new CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, userIds.toString());
         }
 
-        ChatRoomDto chatRoomDto = addNewChatRoomMember(chatRoom, members);
+        // 예전에는 여기서 members 로 한 번, member-service 응답으로 또 한 번 추가해 같은 회원이 두 줄씩 생겼다.
+        // member-service 에 초대를 알린 뒤 그 응답(실제 초대된 회원)만 한 번 추가한다.
+        ChatRoomDto chatRoomDto = modelMapper.map(chatRoom, ChatRoomDto.class);
 
         ChatRoomMemberDto memberInviteDto = new ChatRoomMemberDto(chatRoomDto, members);
 
@@ -198,14 +221,28 @@ public class ChatRoomService {
         return addNewChatRoomMember(chatRoom, invited);
     }
 
-    public List<ChatRoomLastReadChatDto> searchUnreadChatRoom(String userId) {
+    /**
+     * 방별 안 읽은 개수.
+     *
+     * memberId 는 경로 변수 이름이 {userId} 지만 실제로는 member id(숫자 PK)다 —
+     * 안드로이드가 myMemberId 를 그대로 넣는다(ChatRepository.refreshUnreadCounts).
+     * 차단 목록은 userId(구글 sub) 로만 조회할 수 있어서 이미 있는 findMyUserId 로
+     * 한 번 변환하고, member-service 가 죽어 변환에 실패하면 게이트웨이가 넣어 준
+     * X-Auth-User-Id(authUserId) 로 대신한다. 둘 다 없으면 필터 없이 예전처럼 센다.
+     */
+    public List<ChatRoomLastReadChatDto> searchUnreadChatRoom(String memberId, String authUserId) {
         List<ChatRoomMember> chatRoomMemberList =
-                chatRoomMemberRepository.findAllByMemberId(Long.valueOf(userId));
+                chatRoomMemberRepository.findAllByMemberId(Long.valueOf(memberId));
 
         // 마지막 메시지를 내가 보냈다면 그 방은 이미 본 것으로 본다.
         // chat.sender 는 member id 가 아니라 userId 문자열이라 한 번 조회해 둔다.
-        String myUserId = findMyUserId(userId);
+        String myUserId = findMyUserId(memberId);
+        if (myUserId == null) {
+            myUserId = authUserId;
+        }
         Map<Long, String> senderByChatId = findLastChatSenders(chatRoomMemberList);
+        Set<String> blockedSenders = blockedIdsCache.get(myUserId);
+        final String me = myUserId;
 
         return chatRoomMemberList.stream()
                 .map(chatRoomMember -> {
@@ -215,18 +252,25 @@ public class ChatRoomService {
                     Long lastReadChatId = parseIdOrZero(chatRoomMember.getLastReadChatId());
                     Long lastSendChatId = parseIdOrZero(chatRoomMember.getChatRoom().getLastChatId());
 
+                    // 차단은 1:1 방에서만 적용한다. 단체방은 서버가 그대로 두고 앱이 거른다.
+                    Set<String> excluded = isOneOnOne(chatRoomMember.getChatRoom()) ? blockedSenders : Set.of();
+
                     Long unreadChatCount = 0L;
                     if (lastSendChatId > lastReadChatId
-                            && !sentByMe(senderByChatId, lastSendChatId, myUserId)) {
+                            && !sentByMe(senderByChatId, lastSendChatId, me)) {
                         // BETWEEN 은 양끝을 포함한다. 마지막으로 '읽은' 메시지는 빼야 하므로 +1.
                         unreadChatCount = chatRepository.countByRoomIdAndIdBetween(
-                                roomId, lastReadChatId + 1, lastSendChatId);
+                                roomId, lastReadChatId + 1, lastSendChatId, excluded);
                     }
 
                     return ChatRoomLastReadChatDto.createChatRoomLastReadChatDto(
                             roomId, lastSendChatId, lastReadChatId, unreadChatCount);
                 })
                 .toList();
+    }
+
+    private boolean isOneOnOne(ChatRoom chatRoom) {
+        return chatRoom.getChatRoomMemberList().size() == ONE_ON_ONE_MEMBER_COUNT;
     }
 
     /** 마지막 메시지의 발신자가 나인지. 판단할 수 없으면 false 라서 기존 계산이 그대로 남는다. */
@@ -357,24 +401,57 @@ public class ChatRoomService {
         findChatRoomMember.updateLastReadChatId(chatRoom.getLastChatId());
     }
 
+    /** 멤버 id 집합이 정확히 일치하는 방을 DB 집계로 찾는다. 1:1 방과 그룹방 모두 해당한다. */
+    private Optional<ChatRoom> findChatRoomByExactMembers(List<MemberDto> members) {
+        Set<Long> wantedMemberIds = members.stream()
+                .map(MemberDto::getId)
+                .collect(Collectors.toSet());
+
+        return chatRoomMemberRepository.findRoomIdByExactMemberIds(wantedMemberIds)
+                .flatMap(chatRoomRepository::findById);
+    }
+
+    /**
+     * 방에 없는 회원만 추가한다. 같은 회원을 두 번 넣으면 방 목록 조회가 그 방을 두 번 돌려주고
+     * 코틀린 앱은 방 id 를 목록 키로 쓰기 때문에 바로 죽는다. DB 에도 (방, 회원) 유니크 제약이 있다.
+     */
     private ChatRoomDto addNewChatRoomMember(ChatRoom chatRoom, List<MemberDto> members) {
+        Set<Long> existing = chatRoom.getChatRoomMemberList().stream()
+                .map(ChatRoomMember::getMemberId)
+                .collect(Collectors.toSet());
         List<ChatRoomMember> chatRoomMemberList = members.stream()
-                .map(member -> {
-                    ChatRoomMember chatRoomMember = new ChatRoomMember(member.getId(), chatRoom.getLastChatId(), chatRoom);
+                .map(MemberDto::getId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .filter(id -> !existing.contains(id))
+                .map(id -> {
+                    ChatRoomMember chatRoomMember = new ChatRoomMember(id, chatRoom.getLastChatId(), chatRoom);
                     chatRoom.getChatRoomMemberList().add(chatRoomMember);
                     return chatRoomMember;
                 })
                 .collect(Collectors.toList());
 
-        chatRoomMemberRepository.saveAll(chatRoomMemberList);
+        if (!chatRoomMemberList.isEmpty()) {
+            chatRoomMemberRepository.saveAll(chatRoomMemberList);
+        }
         ChatRoom newRoom = chatRoomRepository.save(chatRoom);
 
         return modelMapper.map(newRoom, ChatRoomDto.class);
     }
 
-    /** 백오피스 방 목록. 멤버 수를 세기 위해 같은 트랜잭션 안에서 컬렉션을 초기화한다. */
+    /**
+     * 백오피스 방 목록. 멤버 수를 세기 위해 같은 트랜잭션 안에서 컬렉션을 초기화한다.
+     * 정렬은 {@link ChatRoomSort} 가 정한다 — 멤버 수만 엔티티 속성이 아니라서 전용 질의로 간다.
+     * pageable 에는 쪽 번호와 크기만 있으면 된다. 정렬은 여기서 붙인다.
+     */
     @Transactional(readOnly = true)
-    public Page<AdminChatRoomSummaryDto> searchChatRoomsForAdmin(Pageable pageable) {
-        return chatRoomRepository.findAll(pageable).map(AdminChatRoomSummaryDto::new);
+    public Page<AdminChatRoomSummaryDto> searchChatRoomsForAdmin(ChatRoomSort sort, Pageable pageable) {
+        PageRequest request = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort.sort());
+        Page<ChatRoom> rooms = switch (sort) {
+            case MEMBER_COUNT_ASC -> chatRoomRepository.findAllOrderByMemberCountAsc(request);
+            case MEMBER_COUNT_DESC -> chatRoomRepository.findAllOrderByMemberCountDesc(request);
+            default -> chatRoomRepository.findAll(request);
+        };
+        return rooms.map(AdminChatRoomSummaryDto::new);
     }
 }

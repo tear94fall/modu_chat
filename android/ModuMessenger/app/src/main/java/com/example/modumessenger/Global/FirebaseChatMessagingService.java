@@ -87,9 +87,12 @@ public class FirebaseChatMessagingService extends FirebaseMessagingService {
 
         int chatType = Integer.parseInt(type);
 
-        if (chatType == ChatType.CHAT_TYPE_IMAGE) {
-            message = "새로운 사진";
-        }
+        // 발신자 이름은 이 기기에 저장된 별칭 → 서버가 준 senderName 순으로 정한다.
+        NotificationText text = NotificationText.build(FriendNames.instance(),
+                title, remoteMessage.getData().get("sender"), remoteMessage.getData().get("senderName"),
+                remoteMessage.getData().get("memberCount"), message, chatType == ChatType.CHAT_TYPE_IMAGE);
+        title = text.getTitle();
+        message = text.getBody();
 
         Intent intent = new Intent(this, ChatActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);

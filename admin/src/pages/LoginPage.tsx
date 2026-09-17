@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { login } from '../api/auth'
-import { setToken } from '../auth/token'
+import { setRefreshToken, setToken } from '../auth/token'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -15,8 +15,9 @@ export default function LoginPage() {
     setError(null)
     setSubmitting(true)
     try {
-      const { accessToken } = await login(email, password)
+      const { accessToken, refreshToken } = await login(email, password)
       setToken(accessToken)
+      setRefreshToken(refreshToken)
       navigate('/members')
     } catch {
       setError('이메일 또는 비밀번호가 올바르지 않습니다')

@@ -32,7 +32,6 @@ class MemberServiceTest {
                 .statusMessage("기존상태")
                 .profileImage("profile.jpg")
                 .wallpaperImage("wallpaper.jpg")
-                .friends(new ArrayList<>())
                 .profiles(new ArrayList<>())
                 .chatRoomMembers(new ArrayList<>())
                 .build();

@@ -7,6 +7,7 @@ import com.example.chatservice.chat.repository.ChatRepository;
 import com.example.chatservice.chat.repository.ChatRoomRepository;
 import com.example.chatservice.common.exception.CustomException;
 import com.example.chatservice.common.exception.ErrorCode;
+import com.example.chatservice.member.service.BlockedIdsCache;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -15,34 +16,45 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class ChatService {
+    /** 1:1 방의 정의: 방 멤버가 정확히 2명. */
+    private static final int ONE_ON_ONE_MEMBER_COUNT = 2;
+
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRepository chatRepository;
     private final ModelMapper modelMapper;
+    private final BlockedIdsCache blockedIdsCache;
 
-    public List<ChatDto> searchChatByRoomId(String roomId) {
-        List<Chat> chatList = chatRepository.findAllByRoomId(roomId);
+    /**
+     * 방 전체 이력. requesterUserId(게이트웨이가 넣는 X-Auth-User-Id)가 있고 1:1 방이면
+     * 그 사람이 차단한 발신자의 메시지를 뺀다. 헤더가 없으면(내부 호출) 필터 없음.
+     */
+    public List<ChatDto> searchChatByRoomId(String roomId, String requesterUserId) {
+        List<Chat> chatList = chatRepository.findAllByRoomId(roomId, blockedSendersIn(roomId, requesterUserId));
         return chatList
                 .stream()
                 .map(c -> modelMapper.map(c, ChatDto.class))
                 .collect(Collectors.toList());
     }
 
-    public List<ChatDto> searchChatByRoomIdSize(String roomId, String size) {
-        List<Chat> chatList = chatRepository.findByRoomIdSize(roomId, Long.parseLong(size));
+    public List<ChatDto> searchChatByRoomIdSize(String roomId, String size, String requesterUserId) {
+        List<Chat> chatList = chatRepository.findByRoomIdSize(roomId, Long.parseLong(size),
+                blockedSendersIn(roomId, requesterUserId));
         return chatList
                 .stream()
                 .map(c -> modelMapper.map(c, ChatDto.class))
                 .collect(Collectors.toList());
     }
 
-    public List<ChatDto> searchPrevChatByRoomId(String roomId, String chatId, String size) {
-        List<Chat> chatList = chatRepository.findByRoomIdAndChatId(roomId, Long.parseLong(chatId), Long.parseLong(size));
+    public List<ChatDto> searchPrevChatByRoomId(String roomId, String chatId, String size, String requesterUserId) {
+        List<Chat> chatList = chatRepository.findByRoomIdAndChatId(roomId, Long.parseLong(chatId), Long.parseLong(size),
+                blockedSendersIn(roomId, requesterUserId));
         return chatList
                 .stream()
                 .map(c -> modelMapper.map(c, ChatDto.class))
@@ -57,8 +69,9 @@ public class ChatService {
                 .collect(Collectors.toList());
     }
 
-    public List<ChatDto> searchImageChatByRoomIdSize(String roomId, String size) {
-        List<Chat> chatList = chatRepository.findByImageChatSize(roomId, Long.parseLong(size));
+    public List<ChatDto> searchImageChatByRoomIdSize(String roomId, String size, String requesterUserId) {
+        List<Chat> chatList = chatRepository.findByImageChatSize(roomId, Long.parseLong(size),
+                blockedSendersIn(roomId, requesterUserId));
         return chatList
                 .stream()
                 .map(c -> modelMapper.map(c, ChatDto.class))
@@ -80,13 +93,17 @@ public class ChatService {
         return modelMapper.map(chat, ChatDto.class);
     }
 
-    public List<ChatDto> searchChatListById(List<String> chatIdList) {
+    /**
+     * id 목록 조회는 방이 섞여 올 수 있다. 방마다 1:1 인지 따지는 일은 질의가 대신한다
+     * (방 멤버 수 = 2 인 방의 차단된 발신자만 제외).
+     */
+    public List<ChatDto> searchChatListById(List<String> chatIdList, String requesterUserId) {
         List<Long> chatIds = chatIdList
                 .stream()
                 .map(Long::parseLong)
                 .collect(Collectors.toList());
 
-        List<Chat> chatList = chatRepository.findAllByIdIn(chatIds);
+        List<Chat> chatList = chatRepository.findAllByIdIn(chatIds, blockedIdsCache.get(requesterUserId));
 
         return chatList
                 .stream()
@@ -130,6 +147,26 @@ public class ChatService {
     public String searchChatCount(String roomId) {
         Long id = chatRepository.countByRoomId(roomId);
         return id.toString();
+    }
+
+    /**
+     * 이 요청에서 뺄 발신자들. 단체방이면 빈 집합이라 질의가 그대로 돌아간다.
+     * 방을 먼저 보는 이유: 단체방에는 필터가 없으므로 member-service 를 부를 필요도 없다.
+     */
+    private Set<String> blockedSendersIn(String roomId, String requesterUserId) {
+        if (requesterUserId == null || requesterUserId.isBlank()) {
+            return Set.of();
+        }
+        if (!isOneOnOneRoom(roomId)) {
+            return Set.of();
+        }
+        return blockedIdsCache.get(requesterUserId);
+    }
+
+    private boolean isOneOnOneRoom(String roomId) {
+        return chatRoomRepository.findByRoomId(roomId)
+                .map(room -> room.getChatRoomMemberList().size() == ONE_ON_ONE_MEMBER_COUNT)
+                .orElse(false);
     }
 
     /** 백오피스 방 메시지 목록. 최신 순 페이징. */

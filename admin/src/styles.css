@@ -45,10 +45,19 @@ h2 {
 }
 
 .sidebar .brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: #fff;
   font-weight: 600;
   font-size: 0.95rem;
   margin-bottom: 16px;
+}
+
+.sidebar .brand-logo {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 .nav-link {
@@ -70,7 +79,21 @@ h2 {
 .sidebar-nav {
   display: flex;
   flex-direction: column;
+  gap: 16px;
+}
+
+.nav-section {
+  display: flex;
+  flex-direction: column;
   gap: 4px;
+}
+
+.nav-section-title {
+  padding: 0 10px 2px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #8b93a7;
 }
 
 .sidebar-footer {
@@ -121,6 +144,30 @@ td {
 tbody tr[onclick],
 tbody tr {
   cursor: pointer;
+}
+
+/* 정렬 가능한 표 머리글. 버튼이지만 다른 머리글 글씨와 똑같이 보여야 한다. */
+th .sortable-header {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+th .sortable-header:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* 지금 정렬 중인 열에만 붙는다. 오름차순이 ▼, 내림차순이 ▲ — 엑셀과 같은 방향이다. */
+.sort-arrow {
+  margin-left: 4px;
+  font-size: 0.75rem;
 }
 
 tbody tr:hover {
@@ -300,6 +347,21 @@ textarea:focus {
   flex: 1;
 }
 
+/* 목록 위의 검색 줄. 정렬은 표 머리글이 맡는다. */
+.list-controls {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* 검색창은 왼쪽에 두되 화면 끝까지 늘리지 않는다. 표 위에 입력칸만 길게 뻗으면 보기 나쁘다. */
+.list-controls .search-form {
+  flex: 0 1 420px;
+  margin-bottom: 0;
+}
+
 /* 파일 업로드 */
 .file-field {
   display: flex;
@@ -388,6 +450,11 @@ textarea:focus {
 
 .back-link:hover {
   text-decoration: underline;
+}
+
+.member-columns .profile-card {
+  max-width: none;
+  margin-bottom: 0;
 }
 
 .profile-card {
@@ -555,6 +622,42 @@ textarea:focus {
   white-space: nowrap;
 }
 
+/*
+ * 목록 표(회원/채팅방). 열 너비는 colgroup 의 비율로 고정한다.
+ * table-layout: fixed 라야 브라우저가 내용 길이를 재지 않고 그 비율을 그대로 쓴다 —
+ * 안 그러면 페이지를 넘길 때마다 그 페이지에서 제일 긴 값을 따라 열이 들썩인다.
+ * 넘치는 값은 말줄임표로 자르고, 전체 값은 셀의 title 로 남겨 둔다.
+ */
+.list-table {
+  table-layout: fixed;
+}
+
+.list-table th,
+.list-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 머리글 버튼도 셀 안에서 잘려야 한다. 인라인 그대로면 셀을 비집고 나간다. */
+.list-table th .sortable-header {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 순번 열. 자릿수가 오른쪽에서 맞아야 눈으로 훑기 좋다. */
+.list-table .num-cell {
+  text-align: right;
+}
+
+/* 프로필 열도 colgroup 이 정한 몫을 쓴다. 내용에 맞춰 줄어드는 width: 1% 는 여기선 방해된다. */
+.list-table .avatar-cell {
+  width: auto;
+}
+
 .info-card .detail-grid {
   border-top: none;
   padding: 0 0 16px;
@@ -568,7 +671,9 @@ textarea:focus {
 }
 
 /* 채팅방 상세: 2단 레이아웃 */
-.room-columns {
+/* 상세 화면의 2단 배치. 좁아지면 아래 미디어쿼리에서 한 줄로 접힌다. */
+.room-columns,
+.member-columns {
   display: grid;
   grid-template-columns: minmax(260px, 1fr) 2fr;
   gap: 16px;
@@ -576,7 +681,8 @@ textarea:focus {
 }
 
 @media (max-width: 900px) {
-  .room-columns {
+  .room-columns,
+  .member-columns {
     grid-template-columns: 1fr;
   }
 }
@@ -617,4 +723,40 @@ textarea:focus {
 .result-text {
   color: var(--color-success);
   margin: 12px 0;
+}
+
+/* 공지 작성 폼의 체크박스 한 줄. 라벨과 상자를 같은 줄에 둔다. */
+.form-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.form-check input {
+  width: auto;
+  margin: 0;
+}
+
+/* 상품 관리 */
+a.btn {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.product-thumb {
+  display: block;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.product-preview {
+  display: block;
+  width: 160px;
+  height: 160px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #eef0f3;
 }

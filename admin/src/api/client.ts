@@ -37,6 +37,8 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw new ApiError(401, 'unauthorized')
   }
   if (!res.ok) throw new ApiError(res.status, await res.text())
-  if (res.status === 204) return undefined as T
-  return (await res.json()) as T
+  // 204 나 본문 없는 200(예: /oauth2/revoke)은 값이 없다.
+  const text = await res.text()
+  if (res.status === 204 || text.length === 0) return undefined as T
+  return JSON.parse(text) as T
 }

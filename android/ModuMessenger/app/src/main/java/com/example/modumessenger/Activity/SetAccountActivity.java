@@ -10,6 +10,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.modumessenger.Global.App;
+import com.example.modumessenger.Global.OAuthClient;
 import com.example.modumessenger.Global.DataStoreHelper;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitAuthAPI;
@@ -95,19 +96,21 @@ public class SetAccountActivity extends AppCompatActivity {
 
     // Retrofit function
     public void RequestLogout() {
-        Call<Void> call = retrofitAuthAPI.logout();
+        // 리프레시 토큰을 폐기한다. 실패해도 로컬 토큰은 지우고 로그인 화면으로 간다.
+        Call<Void> call = retrofitAuthAPI.revoke(OAuthClient.stripBearer(DataStoreHelper.getDataStoreStr("refresh-token")), OAuthClient.CLIENT_ID);
 
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
-                if(response.isSuccessful()) {
-                    Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-                    logoutGoogle(intent);
+                if (!response.isSuccessful()) {
+                    Log.e("로그아웃", "revoke 실패 code=" + response.code() + " (로컬 토큰은 지운다)");
                 }
+                Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                logoutGoogle(intent);
             }
 
             @Override

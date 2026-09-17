@@ -14,6 +14,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.Adapter.SearchFriendsAdapter;
+import com.example.modumessenger.Global.DisplayName;
+import com.example.modumessenger.Global.FriendNames;
 import com.example.modumessenger.R;
 import com.example.modumessenger.Retrofit.RetrofitClient;
 import com.example.modumessenger.Retrofit.RetrofitMemberAPI;
@@ -142,7 +144,8 @@ public class SearchActivity extends AppCompatActivity {
                     if(response.body() != null) {
                         Log.d("친구 추가 요청 : ", response.body().toString());
                         MemberDto memberDto = response.body();
-                        Toast.makeText(getApplicationContext(), memberDto.getUsername() + "님과 친구가 되었습니다.", Toast.LENGTH_SHORT).show();
+                        FriendNames.instance().put(memberDto.getUserId(), memberDto.getFriendName());
+                        Toast.makeText(getApplicationContext(), DisplayName.of(memberDto.getUserId(), memberDto.getUsername()) + "님과 친구가 되었습니다.", Toast.LENGTH_SHORT).show();
                     }
                 }
             }

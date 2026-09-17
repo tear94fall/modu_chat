@@ -1,5 +1,6 @@
 package com.example.wsservice.handler;
 
+import com.example.wsservice.block.BlockRelationCache;
 import com.example.wsservice.chat.dto.ChatDto;
 import com.example.wsservice.chat.dto.ChatMessage;
 import com.example.wsservice.chat.dto.ChatRoomDto;
@@ -8,6 +9,7 @@ import com.example.wsservice.chat.service.ChatService;
 import com.example.wsservice.fcm.dto.FcmMessageDto;
 import com.example.wsservice.fcm.service.FcmService;
 import com.example.wsservice.kafka.producer.KafkaProducerService;
+import com.example.wsservice.member.dto.MemberDto;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.example.wsservice.chat.dto.SubscribeType.*;
@@ -34,6 +37,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     private final ChatRoomService chatRoomService;
     private final FcmService fcmService;
     private final KafkaProducerService kafkaProducerService;
+    private final BlockRelationCache blockRelationCache;
 
     private static final ConcurrentHashMap<String, WebSocketSession> CLIENTS = new ConcurrentHashMap<String, WebSocketSession>();
 
@@ -61,12 +65,43 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
         ChatRoomDto updateChatRoomDto = chatRoomService.updateChatRoom(chatRoomDto.getRoomId(), chatRoomDto);
 
-        ChatMessage chatMessage = new ChatMessage(BROAD_CAST, updateChatRoomDto.getRoomId(), chatId.toString(), null);
+        // 차단은 전달·푸시에서만 뺀다 - 저장과 lastChat 갱신은 그대로라 발신자에게는 정상으로 보이고,
+        // 차단 해제 후에는 그 기간 메시지가 이력에서 다시 보인다.
+        List<String> excludeUserIds = resolveExcludeUserIds(chatRoomDto, recvChatDto.getSender());
+
+        ChatMessage chatMessage = new ChatMessage(BROAD_CAST, updateChatRoomDto.getRoomId(), chatId.toString(), null,
+                excludeUserIds.isEmpty() ? null : excludeUserIds);
 
         kafkaProducerService.sendMessage(chatMessage.getRoomId(), chatMessage);
 
-        FcmMessageDto fcmMessageDto = new FcmMessageDto(updateChatRoomDto, recvChatDto);
+        // 1:1 방의 푸시 대상은 상대 한 명뿐이다. 그 상대가 제외 대상이면 보낼 곳이 없다.
+        if (!excludeUserIds.isEmpty()) return;
+
+        // 푸시는 참여자 목록이 있는 조회 DTO 로 만든다. updateChatRoom 응답은 ModelMapper 매핑이라 members 가 비어
+        // senderName/memberCount 를 채울 수 없다. chatRoomDto 는 위 updateLastChat 로 마지막 메시지도 이미 반영돼 있다.
+        FcmMessageDto fcmMessageDto = new FcmMessageDto(chatRoomDto, recvChatDto);
         fcmService.sendFcmMessage(fcmMessageDto);
+    }
+
+    /**
+     * 1:1 방(멤버 정확히 2명)에서 상대가 발신자를 차단했으면 상대 userId 를 돌려준다.
+     * 단체방은 서버가 그대로 두고 앱 필터에 맡긴다(카카오톡과 같은 동작).
+     */
+    private List<String> resolveExcludeUserIds(ChatRoomDto chatRoomDto, String sender) {
+        List<MemberDto> members = chatRoomDto.getMembers();
+        if (members == null || members.size() != 2 || sender == null) return List.of();
+
+        String other = members.stream()
+                .map(MemberDto::getUserId)
+                .filter(userId -> userId != null && !userId.equals(sender))
+                .findFirst()
+                .orElse(null);
+
+        if (other == null) return List.of();
+
+        Set<String> blockedBy = blockRelationCache.blockedBy(sender);
+
+        return blockedBy.contains(other) ? List.of(other) : List.of();
     }
 
     /**

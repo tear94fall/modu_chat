@@ -10,6 +10,11 @@
     <!-- Android 13(API 33)부터는 알림 표시에 런타임 권한이 필요하다. FCM 푸시가 뜨려면 필수. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- 다른 모두 앱(커머스)이 SSO 코드를 요청할 때 필요한 권한. 같은 키로 서명된 앱만 얻는다. -->
+    <permission
+        android:name="com.example.modumessenger.permission.SSO"
+        android:protectionLevel="signature" />
+
     <application
         android:name=".Global.App"
         android:allowBackup="true"
@@ -22,6 +27,16 @@
 
         <!-- activities -->
         <activity android:name=".Activity.LoginActivity" android:exported="true"/>
+        <activity
+            android:name=".Activity.SsoActivity"
+            android:exported="true"
+            android:permission="com.example.modumessenger.permission.SSO"
+            android:theme="@style/Theme.Modu.Transparent">
+            <intent-filter>
+                <action android:name="com.example.modumessenger.action.REQUEST_SSO_CODE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <activity android:name=".Activity.MainActivity" />
         <activity android:name=".Activity.ProfileActivity" />
         <activity android:name=".Activity.ProfileEditActivity" />

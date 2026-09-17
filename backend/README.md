@@ -39,6 +39,14 @@
 - [Debezium](https://debezium.io/)
 - [Zipkin](https://zipkin.io/)
 
+### 로컬 실행
+
+인프라(MySQL, MongoDB, Redis, Kafka, RabbitMQ, MinIO)와 관측성 스택(Prometheus, Grafana, Pinpoint)은 modu_infra(https://github.com/tear94fall/modu_infra, 이 저장소 옆에 clone) 저장소에서 따로 띄웁니다.
+이 디렉터리의 `docker-compose.yml` 에는 애플리케이션 서비스만 있습니다.
+
+1. modu_infra 의 `README.md` 순서대로 `modu-infra` 네트워크, pinpoint-docker, data, monitoring 을 먼저 띄웁니다.
+2. `backend` 에서 `docker compose up -d --build`
+
 ## Project Architecture
 
 ### MSA (Micro Service Architecture)
@@ -163,6 +171,19 @@ MSA 구조에서는 다양한 서비스들이 존재하게 됩니다. 이들은 
 서비스 운영중 설정 정보가 변경된다고 하더라도 spring bus를 이용해 설정 정보를 broad-cast 하게 변경 할수 있습니다.  
 spring bus 는 설정 정보 변경시 rabbit mq를 통해 변경된 설정 정보를 전달합니다.  
 변경 정보를 전달 하기 위해서 config-server에 busrefresh 요청을 전송하고, 변경된 내용은 각 서비스에 전달되고 반영됩니다.  
+
+### Redis Cluster
+Redis 클러스터(마스터 3 + 레플리카 3, `redis-node-1`~`redis-node-6`)는 [modu_infra](https://github.com/tear94fall/modu_infra) 의 `data` 스택이 띄운다. 슬롯 배정은 별도 init 컨테이너 없이 `redis-node-1` 이 최초 기동 때 한 번만 수행한다.  
+
+클러스터 클라이언트는 처음 준 주소로 토폴로지만 읽고, 그 뒤로는 **노드가 광고한 주소**로 노드마다 직접 붙는다. 그래서 광고 주소가 어디서 통하느냐가 전부다.  
+- 노드는 modu_infra 의 클러스터 전용 네트워크(`modu-data_redis-cluster`, 10.90.0.0/24)의 고정 IP(10.90.0.11~16)를 `cluster-announce-ip` 로, 컨테이너 이름을 `cluster-announce-hostname` 으로 광고한다.  
+- Lettuce(auth-service) 는 호스트명을 따라가고, Redisson 3.18(member-service) 은 IP 를 따라가므로 두 서비스는 `modu-infra` 외에 external 네트워크 `modu-data_redis-cluster` 에도 참여한다. 그래서 modu_infra `data` 스택이 먼저 떠 있어야 한다.  
+
+이 주소들은 도커 네트워크 안에서만 통하므로 클러스터는 컨테이너 전용이다.  
+서비스를 도커 밖 IDE 에서 `local` 프로필로 띄울 때는 modu_infra 의 단일 노드 `redis`(localhost:6379)를 쓴다. 두 서비스 코드는 `spring.data.redis.cluster.nodes` 유무로 자동 분기한다.  
+
+단일 노드에서는 CROSSSLOT 같은 클러스터 제약이 드러나지 않으므로, 여러 키를 한 명령으로 다루는 코드는 도커 스택에서 확인한다.  
+클러스터를 직접 들여다볼 때는 `docker exec -it redis-node-1 redis-cli -c` 를 쓴다.  
 
 ### 도커를 이용한 컨테이너 기반 운영환경
 MSA 구조에서 서비스는 단일로 구동이 되기도 하지만, 트래픽의 부하 분산을 위해서 다수의 서비스를 운영하기도 합니다.  

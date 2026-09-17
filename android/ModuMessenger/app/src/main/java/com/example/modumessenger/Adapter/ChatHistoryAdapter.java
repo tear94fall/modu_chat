@@ -21,6 +21,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.modumessenger.Activity.ChatImageActivity;
 import com.example.modumessenger.Activity.ProfileActivity;
 import com.example.modumessenger.R;
+import com.example.modumessenger.Global.ChatSenderUtil;
+import com.example.modumessenger.Global.DisplayName;
 import com.example.modumessenger.entity.Member;
 import com.example.modumessenger.RoomDatabase.Database.ChatDatabase;
 import com.example.modumessenger.RoomDatabase.Entity.ChatEntity;
@@ -199,11 +201,9 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.chatList.sort(Comparator.comparing(ChatBubble::getChatTime, Comparator.naturalOrder()));
     }
 
+    /** 참여자 목록이 아직 안 왔거나 방을 나간 사람이면 자리표시자를 돌려준다. null 은 없다. */
     public Member getChatSendMember(String sender) {
-        return memberList.stream()
-                .filter(chatRoomMember -> chatRoomMember.getUserId().equals(sender))
-                .findFirst()
-                .orElse(null);
+        return ChatSenderUtil.resolve(memberList, sender);
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -464,6 +464,10 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
 
         public void setUserClickEvent(Member member) {
+            if (!ChatSenderUtil.isKnown(member)) {
+                this.senderImage.setOnClickListener(null);
+                return;
+            }
             this.senderImage.setOnClickListener(v -> {
                 startProfileActivity(v, member);
             });
@@ -474,7 +478,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             setProfileImage(senderImage, member.getProfileImage());
 
             setUserClickEvent(member);
-            chatSender.setText(member.getUsername());
+            chatSender.setText(DisplayName.of(member.getUserId(), member.getUsername()));
             chatMessage.setText(chatBubble.getChatMsg());
             chatTime.setText(getShortTime(chatBubble.getChatTime()));
             if(chatType == LEFT_TEXT_HEADER.getType()) {
@@ -529,6 +533,10 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
 
         public void setUserClickEvent(Member member) {
+            if (!ChatSenderUtil.isKnown(member)) {
+                this.senderImage.setOnClickListener(null);
+                return;
+            }
             this.senderImage.setOnClickListener(v -> {
                 startProfileActivity(v, member);
             });
@@ -554,7 +562,7 @@ public class ChatHistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             setUserClickEvent(member);
             setChatImageClickEvent(chatBubble);
-            chatSender.setText(member.getUsername());
+            chatSender.setText(DisplayName.of(member.getUserId(), member.getUsername()));
             chatTime.setText(getShortTime(chatBubble.getChatTime()));
             if(chatType == LEFT_IMAGE_HEADER.getType()) {
                 chatTime.setVisibility(View.INVISIBLE);

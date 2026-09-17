@@ -48,11 +48,6 @@ public class Member extends BaseTimeEntity {
     private String wallpaperImage;
 
     @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "friends", joinColumns = @JoinColumn(name = "id"))
-    @Column(name = "friends")
-    private List<Long> friends;
-
-    @ElementCollection(fetch = FetchType.LAZY)
     private List<Long> profiles;
 
     @ElementCollection(fetch = FetchType.LAZY)
@@ -92,10 +87,6 @@ public class Member extends BaseTimeEntity {
         this.wallpaperImage = updateProfileDto.getWallpaperImage();
     }
 
-    public void addFriends(Long id) {
-        this.friends.add(id);
-    }
-
     @Builder
     public Member(String userId,
                   String auth,
@@ -105,7 +96,6 @@ public class Member extends BaseTimeEntity {
                   String statusMessage,
                   String profileImage,
                   String wallpaperImage,
-                  List<Long> friends,
                   List<Long> profiles,
                   List<Long> chatRoomMembers
         ) {
@@ -117,7 +107,6 @@ public class Member extends BaseTimeEntity {
         this.statusMessage = statusMessage;
         this.profileImage = profileImage;
         this.wallpaperImage = wallpaperImage;
-        this.friends = friends;
         this.profiles = profiles;
         this.chatRoomMembers = chatRoomMembers;
     }
@@ -131,7 +120,6 @@ public class Member extends BaseTimeEntity {
         this.statusMessage = memberDto.getStatusMessage();
         this.profileImage = memberDto.getProfileImage();
         this.wallpaperImage = memberDto.getWallpaperImage();
-        this.friends = new ArrayList<>();
         this.profiles = new ArrayList<>();
         this.chatRoomMembers = new ArrayList<>();
     }
@@ -146,7 +134,6 @@ public class Member extends BaseTimeEntity {
                 .statusMessage(memberDto.getStatusMessage())
                 .profileImage(memberDto.getProfileImage())
                 .wallpaperImage(memberDto.getWallpaperImage())
-                .friends(new ArrayList<>())
                 .profiles(new ArrayList<>())
                 .chatRoomMembers(new ArrayList<>())
                 .build();

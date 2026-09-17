@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 
 
 @Data
@@ -40,14 +39,14 @@ public class MemberDto implements Serializable {
         setWallpaperImage(member.getWallpaperImage());
     }
 
-    public MemberDto(Payload payload) {
-        setUserId(payload.getSubject());
-        setEmail(payload.getEmail());
+    public MemberDto(GoogleAccountDto account) {
+        setUserId(account.getSub());
+        setEmail(account.getEmail());
         setAuth("google");
         setRole(Role.ROLE_MEMBER);
-        setUsername((String) payload.get("name"));
+        setUsername(account.getName());
         setStatusMessage("");
-        setProfileImage((String) payload.get("picture"));
+        setProfileImage(account.getPicture() == null ? "" : account.getPicture());
         setWallpaperImage("");
     }
 

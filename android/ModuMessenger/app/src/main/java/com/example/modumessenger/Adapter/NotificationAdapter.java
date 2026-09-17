@@ -6,7 +6,6 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -15,7 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.R;
 import com.example.modumessenger.dto.NotificationDto;
-import com.example.modumessenger.entity.CommonData;
+import com.example.modumessenger.entity.Notice;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,9 +23,9 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
     private final List<NotificationDto> notificationList;
 
-    public NotificationAdapter(List<CommonData> notificationList) {
-        this.notificationList = notificationList.stream()
-                .map(commonData -> new NotificationDto(commonData.getKey(), commonData.getValue()))
+    public NotificationAdapter(List<Notice> notices) {
+        this.notificationList = notices.stream()
+                .map(NotificationDto::from)
                 .collect(Collectors.toList());
     }
 
@@ -60,7 +59,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         TextView notificationDate;
         TextView notificationTitle;
         TextView notificationContent;
-        ImageView notificationImage;
+        TextView notificationWriter;
         ImageButton spreadImageButton;
         ConstraintLayout detailLayout;
 
@@ -69,16 +68,16 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             notificationDate = itemView.findViewById(R.id.notification_date);
             notificationTitle = itemView.findViewById(R.id.notification_title);
             notificationContent = itemView.findViewById(R.id.notification_detail_content);
-            notificationImage = itemView.findViewById(R.id.notification_detail_image);
+            notificationWriter = itemView.findViewById(R.id.notification_writer);
             spreadImageButton = itemView.findViewById(R.id.notification_spread_image_button);
             detailLayout = itemView.findViewById(R.id.notification_detail_layout);
         }
 
         public void setNotification(NotificationDto notificationDto) {
-            this.notificationDate.setText(notificationDto.getKey());
-            this.notificationTitle.setText(notificationDto.getValue());
-            this.notificationContent.setText(notificationDto.getValue());
-            this.notificationImage.setImageResource(R.drawable.modu_banner);
+            this.notificationDate.setText(notificationDto.getDate());
+            this.notificationTitle.setText(notificationDto.getTitle());
+            this.notificationContent.setText(notificationDto.getContent());
+            this.notificationWriter.setText(notificationDto.getWriter());
         }
 
         public void setContentHide(NotificationDto notificationDto) {

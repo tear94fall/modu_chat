@@ -12,3 +12,8 @@ export function formatRole(role?: string): string {
   if (role === 'ROLE_MEMBER') return '일반 회원'
   return role ?? ''
 }
+
+/** 89000 → "89,000원". 앱의 가격 표기와 같게 둔다. */
+export function formatPrice(price: number): string {
+  return `${price.toLocaleString('ko-KR')}원`
+}

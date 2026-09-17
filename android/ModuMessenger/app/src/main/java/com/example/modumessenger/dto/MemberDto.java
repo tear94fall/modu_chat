@@ -18,6 +18,8 @@ public class MemberDto {
     private String profileImage;
     private String wallpaperImage;
     private List<ProfileDto> profiles;
+    /** 내가 정한 친구 이름(친구 목록 응답에서만 온다) */
+    private String friendName;
 
     public Long getId() { return this.id; }
     public String getUserId() { return this.userId; }
@@ -29,6 +31,9 @@ public class MemberDto {
     public String getProfileImage() { return this.profileImage; }
     public String getWallpaperImage() { return this.wallpaperImage; }
     public List<ProfileDto> getProfiles() { return this.profiles; }
+
+    public String getFriendName() { return friendName; }
+    public void setFriendName(String friendName) { this.friendName = friendName; }
 
     public void setId(Long id) { this.id = id; }
     public void setUserId(String userId) { this.userId = userId; }

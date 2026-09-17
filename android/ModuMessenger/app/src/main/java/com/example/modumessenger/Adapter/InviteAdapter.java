@@ -2,6 +2,7 @@ package com.example.modumessenger.Adapter;
 
 import static com.example.modumessenger.Global.GlideUtil.setProfileImage;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,6 +16,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.modumessenger.Activity.ProfileActivity;
+import com.example.modumessenger.Global.DisplayName;
 import com.example.modumessenger.R;
 import com.example.modumessenger.dto.MemberDto;
 
@@ -48,6 +50,19 @@ public class InviteAdapter extends RecyclerView.Adapter<InviteAdapter.AddChatVie
         holder.setAddChatButton(member);
     }
 
+    /** 다음 페이지를 뒤에 이어 붙인다. */
+    public void addAll(List<MemberDto> members) {
+        int start = this.addFriendsList.size();
+        this.addFriendsList.addAll(members);
+        notifyItemRangeInserted(start, members.size());
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    public void clear() {
+        this.addFriendsList.clear();
+        notifyDataSetChanged();
+    }
+
     @Override
     public int getItemCount() {
         return addFriendsList.size();
@@ -79,7 +94,7 @@ public class InviteAdapter extends RecyclerView.Adapter<InviteAdapter.AddChatVie
         }
 
         public void setUserInfo(MemberDto member) {
-            this.username.setText(member.getUsername());
+            this.username.setText(DisplayName.of(member.getUserId(), member.getUsername()));
             this.statusMessage.setText(member.getStatusMessage());
             setProfileImage(profileImage, member.getProfileImage());
         }

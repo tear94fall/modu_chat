@@ -3,6 +3,10 @@ package com.example.modumessenger.feature.settings
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
+import com.example.modumessenger.core.ui.theme.BrandViolet
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -58,12 +62,23 @@ private fun SetupRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = null,
-            modifier = Modifier.size(24.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        // 설정 탭 격자·채팅방 첨부(+) 버튼과 같은 모양: 옅은 보라 원 위에 보라 아이콘.
+        Box(
+            modifier = Modifier
+                .size(SETUP_ICON_CIRCLE)
+                .background(BrandViolet.copy(alpha = 0.15f), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                modifier = Modifier.size(SETUP_ICON_SIZE),
+                tint = BrandViolet,
+            )
+        }
         Text(text = stringResource(labelRes), style = MaterialTheme.typography.bodyLarge)
     }
 }
+
+private val SETUP_ICON_CIRCLE = 36.dp
+private val SETUP_ICON_SIZE = 20.dp

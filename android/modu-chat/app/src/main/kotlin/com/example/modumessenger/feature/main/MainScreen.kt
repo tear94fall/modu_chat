@@ -235,4 +235,5 @@ private fun MainTab.icon(): Painter = when (this) {
     MainTab.SETTINGS -> rememberVectorPainter(Icons.Filled.Settings)
 }
 
+/** 하단 탭바 높이. 아이콘 아래 글자까지 여유 있게 들어가는 60dp(45dp 는 글자가 바닥에 붙는다). */
 private val BOTTOM_NAV_HEIGHT = 60.dp

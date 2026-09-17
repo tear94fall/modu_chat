@@ -12,6 +12,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 
 /** 브랜드 보라 배경에 흰 글자·아이콘. 모든 화면의 상단바가 이것을 쓴다. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,6 +34,8 @@ fun ModuTopBar(
             }
         },
         actions = actions,
+        // Material3 기본 높이(64dp)는 기존 앱 툴바(?attr/actionBarSize = 56dp)보다 높다.
+        expandedHeight = TOP_BAR_HEIGHT,
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.primary,
             titleContentColor = MaterialTheme.colorScheme.onPrimary,
@@ -41,3 +44,6 @@ fun ModuTopBar(
         ),
     )
 }
+
+/** 기존 앱 툴바 높이(`?attr/actionBarSize`). */
+val TOP_BAR_HEIGHT = 56.dp

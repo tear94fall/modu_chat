@@ -49,7 +49,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -67,6 +66,8 @@ import coil.compose.AsyncImage
 import com.example.modumessenger.R
 import com.example.modumessenger.core.model.ProfileType
 import com.example.modumessenger.core.network.ApiConfig
+import com.example.modumessenger.core.ui.components.CircleIconButton
+import com.example.modumessenger.core.ui.components.StatusBarBand
 import com.example.modumessenger.core.ui.components.ConfirmDialog
 import com.example.modumessenger.core.ui.components.ErrorBox
 import com.example.modumessenger.core.ui.components.LoadingBox
@@ -120,6 +121,8 @@ fun ProfileScreen(
 
     Scaffold(
         containerColor = ProfileSurface,
+        // 상단바가 없는 화면이라 상태 바 자리를 보라 띠로 채운다(투명 상태 바 위 흰 시계가 읽히도록).
+        topBar = { StatusBarBand() },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -154,7 +157,7 @@ fun ProfileScreen(
 
             // 기록·닫기 아이콘은 배경사진 위에 떠 있다(스크림 덕분에 밝은 사진에서도 읽힌다).
             if (uiState.showHistoryButton) {
-                ScrimIconButton(
+                CircleIconButton(
                     onClick = { onHistory(viewModel.memberId) },
                     icon = Icons.Filled.Image,
                     contentDescription = stringResource(R.string.profile_history_button),
@@ -177,7 +180,7 @@ fun ProfileScreen(
                         onUnblock = { viewModel.setBlocked(false) },
                     )
                 }
-                ScrimIconButton(
+                CircleIconButton(
                     onClick = onClose,
                     icon = Icons.Filled.Clear,
                     contentDescription = stringResource(R.string.profile_close_button),
@@ -367,7 +370,7 @@ private fun FriendMenuButton(
     var expanded by remember { mutableStateOf(false) }
 
     Box {
-        ScrimIconButton(
+        CircleIconButton(
             onClick = { if (enabled) expanded = true },
             icon = Icons.Filled.MoreVert,
             contentDescription = stringResource(R.string.profile_more_menu),
@@ -440,27 +443,6 @@ private fun Wallpaper(fileName: String, onClose: () -> Unit, onClick: () -> Unit
     }
 }
 
-/** 사진 위에 얹는 동그란 아이콘 버튼(`circle_icon_button_scrim` 과 같은 모양). */
-@Composable
-private fun ScrimIconButton(
-    onClick: () -> Unit,
-    icon: ImageVector,
-    contentDescription: String,
-    modifier: Modifier = Modifier,
-) {
-    // IconButton 은 최소 터치 영역(48dp)을 더해 원이 커 보인다. 원 크기를 그대로 지키려고 Box 로 그린다.
-    Box(
-        modifier = modifier
-            .size(SCRIM_BUTTON_SIZE)
-            .clip(CircleShape)
-            .background(Color(0x59000000))
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(icon, contentDescription = contentDescription, tint = Color.White, modifier = Modifier.size(SCRIM_ICON_SIZE))
-    }
-}
-
 /** 친구 이름 변경(부록 A §13). 저장 버튼은 이름이 비어 있으면 눌리지 않는다. */
 @Composable
 private fun RenameFriendDialog(
@@ -496,6 +478,4 @@ private fun RenameFriendDialog(
 }
 
 /** 배경 위에 뜨는 둥근 아이콘 버튼. 40dp 가 붙어 있으면 답답해 보여 36dp + 간격 10dp 로 둔다. */
-private val SCRIM_BUTTON_SIZE = 36.dp
-private val SCRIM_ICON_SIZE = 20.dp
 private val TOP_BUTTON_GAP = 10.dp

@@ -3,6 +3,10 @@ package com.example.modumessenger.feature.settings
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
+import com.example.modumessenger.core.ui.theme.BrandViolet
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -146,12 +150,20 @@ private fun SettingGridCell(item: SettingGridItem, onClick: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Icon(
-            painter = painterResource(item.icon),
-            contentDescription = null,
-            modifier = Modifier.size(28.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        // 채팅방의 첨부(+) 버튼과 같은 모양: 옅은 보라 원 위에 보라 아이콘.
+        Box(
+            modifier = Modifier
+                .size(SETTING_ICON_CIRCLE)
+                .background(BrandViolet.copy(alpha = 0.15f), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(item.icon),
+                contentDescription = null,
+                modifier = Modifier.size(SETTING_ICON_SIZE),
+                tint = BrandViolet,
+            )
+        }
         Text(
             text = stringResource(item.label),
             style = MaterialTheme.typography.labelMedium,
@@ -159,3 +171,6 @@ private fun SettingGridCell(item: SettingGridItem, onClick: () -> Unit) {
         )
     }
 }
+
+private val SETTING_ICON_CIRCLE = 48.dp
+private val SETTING_ICON_SIZE = 26.dp

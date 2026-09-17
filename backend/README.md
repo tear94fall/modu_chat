@@ -94,7 +94,7 @@ gateway 뒤에 위치한 서비스에 대한 정보를 알고 있다고 하더�
 앱과 다른 서비스가 둘 다 쓰는 엔드포인트는 두 컨트롤러에 각각 둡니다.
 내부 토큰은 `backend/.env` 의 `INTERNAL_API_TOKEN` 으로 각 컨테이너에 전달됩니다.
 `ADMIN_PASSWORD_HASH` (auth-service): 관리자 로그인 비밀번호의 bcrypt 해시.
-`ADMIN_ALLOWED_ORIGIN` (gateway): 백오피스 프런트엔드가 서비스되는 origin (CORS 허용 origin).
+`ADMIN_ALLOWED_ORIGIN` (gateway): 백오피스 프런트엔드가 서비스되는 origin (CORS 허용 origin). 백오피스는 별도 저장소 [modu_admin](https://github.com/tear94fall/modu_admin) 이다(2026-09-18 에 `admin/` 에서 분리, 기본 개발 서버 `http://localhost:5173`).
 
 schedule-service 는 config-server 를 쓰지 않아 자체 `application.yml` 에서 정의합니다.
 `.env` 에 `INTERNAL_API_TOKEN` 이 없으면 서비스가 기동을 거부합니다 (빈 토큰 방지).

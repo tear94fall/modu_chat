@@ -1,12 +1,23 @@
 package com.example.modumessenger.feature.friends
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.colorResource
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -79,7 +90,8 @@ fun FriendRow(
 }
 
 /**
- * 친구 추가·친구 찾기의 검색줄. 기존 앱의 `SearchView` 자리다.
+ * 친구 추가·친구 찾기의 검색줄. 기존 앱의 툴바 `SearchView` 자리다.
+ * Material3 OutlinedTextField 는 56dp 라 너무 높아, 채팅 입력칸과 같은 알약형 40dp 로 그린다.
  * 빈 값으로 제출하면 화면이 `"입력된 값이 없습니다."` 를 띄운다.
  */
 @Composable
@@ -90,15 +102,16 @@ fun FriendSearchField(
     modifier: Modifier = Modifier,
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
-    OutlinedTextField(
+    val shape = RoundedCornerShape(SEARCH_FIELD_HEIGHT / 2)
+    BasicTextField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
         singleLine = true,
-        placeholder = { Text(stringResource(R.string.friends_search_hint)) },
-        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+        textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(
             onSearch = {
@@ -106,5 +119,39 @@ fun FriendSearchField(
                 onSubmit()
             },
         ),
+        decorationBox = { inner ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(SEARCH_FIELD_HEIGHT)
+                    .clip(shape)
+                    .background(colorResource(R.color.chat_input_fill))
+                    .border(1.dp, colorResource(R.color.chat_input_stroke), shape)
+                    .padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Filled.Search,
+                    contentDescription = null,
+                    tint = colorResource(R.color.grey),
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                    if (query.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.friends_search_hint),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colorResource(R.color.grey),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    inner()
+                }
+            }
+        },
     )
 }
+
+private val SEARCH_FIELD_HEIGHT = 40.dp

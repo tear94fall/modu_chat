@@ -27,7 +27,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -60,6 +59,8 @@ import coil.compose.AsyncImage
 import com.example.modumessenger.R
 import com.example.modumessenger.core.network.ApiConfig
 import com.example.modumessenger.core.ui.components.ProfileImage
+import com.example.modumessenger.core.ui.components.CircleIconButton
+import com.example.modumessenger.core.ui.components.StatusBarBand
 import com.example.modumessenger.core.ui.theme.BrandViolet
 import com.example.modumessenger.core.ui.theme.ProfileSurface
 
@@ -112,6 +113,8 @@ fun ProfileEditScreen(
 
     Scaffold(
         containerColor = ProfileSurface,
+        // 상단바가 없는 화면이라 상태 바 자리를 보라 띠로 채운다(투명 상태 바 위 흰 시계가 읽히도록).
+        topBar = { StatusBarBand() },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -138,16 +141,16 @@ fun ProfileEditScreen(
                                 .background(Color.White, CircleShape)
                                 .padding(4.dp),
                         )
-                        IconButton(
+                        // 기존 앱: 36dp 흰 원 + 22dp 보라 카메라(`circle_icon_button`, padding 7dp).
+                        CircleIconButton(
                             onClick = { viewModel.openSheet(ProfileEditTarget.PROFILE_IMAGE) },
-                            modifier = Modifier.size(36.dp).background(Color.White, CircleShape),
-                        ) {
-                            Icon(
-                                Icons.Filled.PhotoCamera,
-                                contentDescription = stringResource(R.string.profile_edit_image_button),
-                                tint = BrandViolet,
-                            )
-                        }
+                            icon = Icons.Filled.PhotoCamera,
+                            contentDescription = stringResource(R.string.profile_edit_image_button),
+                            size = 36.dp,
+                            iconSize = 22.dp,
+                            background = Color.White,
+                            tint = BrandViolet,
+                        )
                     }
                 }
 
@@ -183,20 +186,12 @@ fun ProfileEditScreen(
                 }
             }
 
-            IconButton(
+            CircleIconButton(
                 onClick = onClose,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(12.dp)
-                    .size(40.dp)
-                    .background(Color(0x59000000), CircleShape),
-            ) {
-                Icon(
-                    Icons.Filled.Clear,
-                    contentDescription = stringResource(R.string.profile_close_button),
-                    tint = Color.White,
-                )
-            }
+                icon = Icons.Filled.Clear,
+                contentDescription = stringResource(R.string.profile_close_button),
+                modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
+            )
         }
     }
 
@@ -232,20 +227,12 @@ private fun EditableWallpaper(fileName: String, onEdit: () -> Unit) {
                 .height(ScrimHeight)
                 .background(Brush.verticalGradient(listOf(Color(0x59000000), Color(0x00000000)))),
         )
-        IconButton(
+        CircleIconButton(
             onClick = onEdit,
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(12.dp)
-                .size(40.dp)
-                .background(Color(0x59000000), CircleShape),
-        ) {
-            Icon(
-                Icons.Filled.PhotoCamera,
-                contentDescription = stringResource(R.string.profile_edit_wallpaper_button),
-                tint = Color.White,
-            )
-        }
+            icon = Icons.Filled.PhotoCamera,
+            contentDescription = stringResource(R.string.profile_edit_wallpaper_button),
+            modifier = Modifier.align(Alignment.TopStart).padding(12.dp),
+        )
     }
 }
 

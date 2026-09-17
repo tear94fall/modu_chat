@@ -9,8 +9,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.DrawerDefaults
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.border
@@ -29,7 +34,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.HorizontalDivider
@@ -50,6 +55,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -61,6 +67,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -68,6 +75,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.example.modumessenger.core.ui.components.CircleIconButton
+import com.example.modumessenger.core.ui.components.StatusBarBand
+import com.example.modumessenger.core.ui.theme.BrandViolet
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -166,6 +176,20 @@ fun ChatScreen(
         }
     }
 
+    // 키보드가 올라오는 동안 목록을 맨 아래에 붙인다(기존 앱 adjustResize + scrollToPosition 과 같은 동작).
+    // 인셋이 프레임마다 커지므로 매번 마지막 항목으로 맞추고, 내려갈 때는 손대지 않는다
+    // (키보드를 닫을 때 위로 올려 둔 위치가 튀지 않게).
+    val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
+    var lastImeBottom by remember { mutableIntStateOf(imeBottom) }
+    LaunchedEffect(imeBottom) {
+        val opening = imeBottom > lastImeBottom
+        lastImeBottom = imeBottom
+        if (!opening) return@LaunchedEffect
+        val size = uiState.bubbles.size
+        if (size > 0) listState.scrollToItem(size - 1)
+        viewModel.onAtBottomChanged(true)
+    }
+
     val scrollToBottom: () -> Unit = {
         scope.launch {
             val size = uiState.bubbles.size
@@ -180,7 +204,12 @@ fun ChatScreen(
             drawerState = drawerState,
             drawerContent = {
                 CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                    ModalDrawerSheet {
+                    // 상태 바가 투명이라 흰 시트가 그 뒤까지 차오르면 흰 시계가 안 보인다.
+                    // 시트는 위 인셋을 직접 처리하지 않고, 그 자리에 상단바와 같은 보라 띠를 깐다.
+                    ModalDrawerSheet(
+                        windowInsets = DrawerDefaults.windowInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom),
+                    ) {
+                        StatusBarBand()
                         ChatDrawerContent(
                             uiState = uiState,
                             names = names,
@@ -357,17 +386,26 @@ private fun ChatInputRow(
     onAttach: () -> Unit,
     onSend: () -> Unit,
 ) {
+    // 입력칸은 말풍선 한 줄(14sp 글자 + 위아래 8dp = 36dp)과 같은 높이. 버튼도 같은 36dp 원이다.
+    // 줄 전체는 구분선 1dp + 여백 5dp + 36dp + 여백 6dp = 48dp. 입력칸이 여러 줄이면 그만큼만 늘어난다.
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 8.dp, vertical = 6.dp),
+            .padding(start = 8.dp, end = 8.dp, top = 5.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(onClick = onAttach) {
-            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.chat_attach))
-        }
-        // 기존 앱의 입력칸(minHeight 44dp, 22dp 둥근 채움 + 테두리, 최대 4줄)과 같은 높이로 맞춘다.
+        // `+` 도 보내기처럼 원 바탕을 깐다. 주된 동작(보내기)과 구분되게 옅은 보라 원에 보라 아이콘.
+        CircleIconButton(
+            onClick = onAttach,
+            icon = Icons.Filled.Add,
+            contentDescription = stringResource(R.string.chat_attach),
+            size = INPUT_BUTTON_SIZE,
+            iconSize = 22.dp,
+            background = BrandViolet.copy(alpha = 0.15f),
+            tint = BrandViolet,
+        )
+        // 말풍선과 같은 글자 크기(bodyMedium)·여백(8dp)이라 한 줄일 때 높이가 말풍선과 같다(최대 4줄).
         // Material3 TextField 는 최소 56dp 라 세로로 너무 길다.
         BasicTextField(
             value = value,
@@ -375,7 +413,7 @@ private fun ChatInputRow(
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 4.dp),
-            textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
+            textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
             maxLines = 4,
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
@@ -387,13 +425,13 @@ private fun ChatInputRow(
                         .clip(RoundedCornerShape(INPUT_RADIUS))
                         .background(colorResource(R.color.chat_input_fill))
                         .border(1.dp, colorResource(R.color.chat_input_stroke), RoundedCornerShape(INPUT_RADIUS))
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
                     contentAlignment = Alignment.CenterStart,
                 ) {
                     if (value.isEmpty()) {
                         Text(
                             text = stringResource(R.string.chat_input_hint),
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = colorResource(R.color.grey),
                         )
                     }
@@ -401,13 +439,16 @@ private fun ChatInputRow(
                 }
             },
         )
-        IconButton(onClick = onSend) {
-            Icon(
-                Icons.Filled.Send,
-                contentDescription = stringResource(R.string.chat_send),
-                tint = MaterialTheme.colorScheme.primary,
-            )
-        }
+        // 보내기는 보라 원에 흰 아이콘(`bg_send_button`).
+        CircleIconButton(
+            onClick = onSend,
+            icon = Icons.AutoMirrored.Filled.Send,
+            contentDescription = stringResource(R.string.chat_send),
+            size = INPUT_BUTTON_SIZE,
+            iconSize = 18.dp,
+            background = BrandViolet,
+            tint = Color.White,
+        )
     }
 }
 
@@ -563,5 +604,6 @@ internal fun shortenStatus(statusMessage: String): String =
 private const val DRAWER_IMAGE_COUNT = 3
 private val DRAWER_IMAGE_SIZE = 96.dp
 
-private val INPUT_MIN_HEIGHT = 44.dp
-private val INPUT_RADIUS = 22.dp
+private val INPUT_MIN_HEIGHT = 36.dp
+private val INPUT_BUTTON_SIZE = 36.dp
+private val INPUT_RADIUS = 18.dp

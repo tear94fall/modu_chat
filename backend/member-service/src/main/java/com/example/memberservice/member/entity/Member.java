@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -52,6 +53,49 @@ public class Member extends BaseTimeEntity {
 
     @ElementCollection(fetch = FetchType.LAZY)
     private List<Long> chatRoomMembers;
+
+    /** 탈퇴한 회원의 표시 이름. 남은 사람들의 대화·방 멤버 목록에서 이렇게 보인다. */
+    public static final String WITHDRAWN_USERNAME = "탈퇴한 회원";
+
+    /** VARCHAR DEFAULT 'ACTIVE' 라 ddl-auto: update 로 컬럼이 붙어도 기존 행은 ACTIVE 다. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, columnDefinition = "VARCHAR(16) DEFAULT 'ACTIVE'")
+    private MemberStatus status = MemberStatus.ACTIVE;
+
+    @Column(name = "withdrawn_date")
+    private LocalDateTime withdrawnDate;
+
+    public boolean isWithdrawn() {
+        return status == MemberStatus.WITHDRAWN;
+    }
+
+    /**
+     * 탈퇴. 행은 남기되 개인정보는 비운다. userId 는 채팅 기록과의 연결이라 그대로 두고,
+     * 이메일은 유일 제약(NOT NULL)이 있어 자리표시자로 바꿔 같은 구글 계정이 다시 가입할 수 있게 한다.
+     */
+    public void withdraw() {
+        this.status = MemberStatus.WITHDRAWN;
+        this.withdrawnDate = LocalDateTime.now();
+        this.email = "withdrawn:" + userId;
+        this.username = WITHDRAWN_USERNAME;
+        this.statusMessage = "";
+        this.profileImage = "";
+        this.wallpaperImage = "";
+        if (this.profiles != null) this.profiles.clear();
+        if (this.chatRoomMembers != null) this.chatRoomMembers.clear();
+    }
+
+    /** 탈퇴했던 사람이 같은 구글 계정으로 다시 로그인하면 같은 행을 되살린다(채팅 기록의 userId 가 그대로 이어진다). */
+    public void reactivate(String email, String username) {
+        this.status = MemberStatus.ACTIVE;
+        this.withdrawnDate = null;
+        this.email = email;
+        this.username = username;
+        this.statusMessage = "";
+        this.profileImage = "";
+        this.wallpaperImage = "";
+        this.role = Role.ROLE_MEMBER;
+    }
 
     public void addProfile(Long id) {
         this.profiles.add(id);

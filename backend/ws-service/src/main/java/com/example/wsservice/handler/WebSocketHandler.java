@@ -80,7 +80,13 @@ public class WebSocketHandler extends TextWebSocketHandler {
         // 푸시는 참여자 목록이 있는 조회 DTO 로 만든다. updateChatRoom 응답은 ModelMapper 매핑이라 members 가 비어
         // senderName/memberCount 를 채울 수 없다. chatRoomDto 는 위 updateLastChat 로 마지막 메시지도 이미 반영돼 있다.
         FcmMessageDto fcmMessageDto = new FcmMessageDto(chatRoomDto, recvChatDto);
-        fcmService.sendFcmMessage(fcmMessageDto);
+        try {
+            fcmService.sendFcmMessage(fcmMessageDto);
+        } catch (RuntimeException e) {
+            // 푸시는 부가 기능이다. 여기서 예외가 새어 나가면 ExceptionWebSocketHandlerDecorator 가
+            // 발신자 세션을 닫아 버려, 이미 저장·브로드캐스트된 메시지의 에코를 발신자만 못 받는다.
+            log.warn("[ws] push failed for room {} chat {}: {}", chatRoomDto.getRoomId(), chatId, e.getMessage());
+        }
     }
 
     /**

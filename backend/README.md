@@ -41,11 +41,14 @@
 
 ### 로컬 실행
 
-인프라(MySQL, MongoDB, Redis, Kafka, RabbitMQ, MinIO)와 관측성 스택(Prometheus, Grafana, Pinpoint)은 modu_infra(https://github.com/tear94fall/modu_infra, 이 저장소 옆에 clone) 저장소에서 따로 띄웁니다.
-이 디렉터리의 `docker-compose.yml` 에는 애플리케이션 서비스만 있습니다.
+인프라(MySQL, MongoDB, Redis, Kafka, RabbitMQ, MinIO)와 관측성 스택(Prometheus, Grafana, Pinpoint)은 modu_infra(https://github.com/tear94fall/modu_infra), 플랫폼(config-service, discovery-service, gateway-service)은 modu_platform(https://github.com/tear94fall/modu_platform) 저장소에서 따로 띄웁니다(둘 다 이 저장소 옆에 clone).
+이 디렉터리의 `docker-compose.yml` 에는 메신저 애플리케이션 서비스(auth, member, chat, ws, push, storage, profile, chat-store)만 있습니다.
 
 1. modu_infra 의 `README.md` 순서대로 `modu-infra` 네트워크, pinpoint-docker, data, monitoring 을 먼저 띄웁니다.
-2. `backend` 에서 `docker compose up -d --build`
+2. modu_platform 의 `README.md` 대로 config-service, discovery-service, gateway-service 를 띄웁니다. 설정 파일(`config-repo/`)도 그 저장소에 있습니다 — 메신저 서비스는 `messenger/` 폴더의 설정을 받습니다.
+3. `backend` 에서 `docker compose up -d --build`. 플랫폼이 아직 안 떠 있으면 서비스가 설정을 못 받아 기동에 실패하고 compose 가 재시작합니다(fail-fast). Eureka 등록에 1분쯤 걸리므로 그 사이 게이트웨이의 503 은 정상입니다.
+
+`.env` 의 `INTERNAL_API_TOKEN` 은 modu_platform, modu_commerce 의 `.env` 와 같은 값이어야 합니다. `ENCRYPT_KEY` 는 이제 modu_platform 에서만 씁니다.
 
 ## Project Architecture
 
@@ -94,11 +97,11 @@ gateway 뒤에 위치한 서비스에 대한 정보를 알고 있다고 하더�
 앱과 다른 서비스가 둘 다 쓰는 엔드포인트는 두 컨트롤러에 각각 둡니다.
 내부 토큰은 `backend/.env` 의 `INTERNAL_API_TOKEN` 으로 각 컨테이너에 전달됩니다.
 `ADMIN_PASSWORD_HASH` (auth-service): 관리자 로그인 비밀번호의 bcrypt 해시.
-`ADMIN_ALLOWED_ORIGIN` (gateway): 백오피스 프런트엔드가 서비스되는 origin (CORS 허용 origin).
+`ADMIN_ALLOWED_ORIGIN` (gateway): 백오피스 프런트엔드가 서비스되는 origin (CORS 허용 origin). 백오피스는 별도 저장소 [modu_admin](https://github.com/tear94fall/modu_admin) 이다(2026-09-18 에 `admin/` 에서 분리, 기본 개발 서버 `http://localhost:5173`).
 
 schedule-service 는 config-server 를 쓰지 않아 자체 `application.yml` 에서 정의합니다.
 `.env` 에 `INTERNAL_API_TOKEN` 이 없으면 서비스가 기동을 거부합니다 (빈 토큰 방지).
-config-server 가 죽어 있으면 토큰을 못 받아 기동에 실패합니다 (`optional:` 이지만 이 프로퍼티는 필수).
+config-server(modu_platform 의 config-service)가 죽어 있으면 설정을 못 받아 기동에 실패합니다(`fail-fast`).
 
 ### Spring Cloud Eureka
 모놀리식 구조에서는 하나의 서비스에서 사용자 인증 부터 리소스 접근에 대한 모든 요청을 처리 하였습니다.  

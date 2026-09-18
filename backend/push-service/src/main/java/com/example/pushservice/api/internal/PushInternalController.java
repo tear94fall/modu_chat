@@ -21,6 +21,13 @@ public class PushInternalController {
 
     private final FcmService fcmService;
 
+    /** 회원 탈퇴(member-service). 그 회원의 FCM 토큰을 지운다. */
+    @DeleteMapping("/token/{userId}")
+    public ResponseEntity<Void> deleteToken(@PathVariable("userId") String userId) {
+        fcmService.deleteFcmToken(userId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/chat")
     public ResponseEntity<Void> pushMessage(@RequestBody FcmMessageDto fcmMessageDto) throws FirebaseMessagingException {
         fcmService.sendTopicMessageWithData(fcmMessageDto);

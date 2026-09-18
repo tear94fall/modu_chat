@@ -11,4 +11,6 @@ public interface MemberFriendRepository extends JpaRepository<MemberFriend, Long
     Optional<MemberFriend> findByMemberIdAndFriendId(Long memberId, Long friendId);
 
     long countByMemberId(Long memberId);
+    /** 회원 탈퇴: 내가 추가한 친구와 나를 추가한 친구 행을 모두 지운다. */
+    void deleteAllByMember_IdOrFriend_Id(Long memberId, Long friendMemberId);
 }

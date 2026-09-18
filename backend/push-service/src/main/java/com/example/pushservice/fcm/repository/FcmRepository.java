@@ -13,4 +13,6 @@ public interface FcmRepository extends JpaRepository<FcmToken, Long> {
 
     /** upsert 후 같은 userId 의 나머지(오래된) 중복 행을 정리한다. */
     void deleteByUserIdAndIdNot(String userId, Long id);
+    /** 회원 탈퇴: 그 userId 의 행을 전부 지운다(과거 중복 행 포함). */
+    void deleteAllByUserId(String userId);
 }

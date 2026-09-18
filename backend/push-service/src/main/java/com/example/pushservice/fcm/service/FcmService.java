@@ -41,6 +41,12 @@ public class FcmService {
         return saved;
     }
 
+    /** 회원 탈퇴 때 member-service 가 부른다. 토큰이 없어도 조용히 지나간다. */
+    @Transactional
+    public void deleteFcmToken(String userId) {
+        fcmRepository.deleteAllByUserId(userId);
+    }
+
     public FcmToken searchFcmToken(String userId) {
         return fcmRepository.findFirstByUserIdOrderByIdDesc(userId).orElse(null);
     }

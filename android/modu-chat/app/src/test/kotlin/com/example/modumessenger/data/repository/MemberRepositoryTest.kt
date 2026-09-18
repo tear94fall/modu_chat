@@ -36,6 +36,7 @@ class MemberRepositoryTest {
     private val me = Member(id = 1L, userId = "me", email = "me@modu.com", username = "나")
 
     private class FakeMemberApi : MemberApi {
+        override suspend fun withdraw(userId: String) = Unit
 
         var friends: List<MemberDto> = emptyList()
         var friend: MemberDto = MemberDto(id = 2L, userId = "friend", username = "친구")

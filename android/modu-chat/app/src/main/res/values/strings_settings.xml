@@ -24,6 +24,10 @@
     <string name="account_logout">로그아웃</string>
     <string name="account_logout_message">로그아웃 하시겠습니까?</string>
     <string name="account_cancel">취소</string>
+    <string name="account_withdraw">회원 탈퇴</string>
+    <string name="account_withdraw_message">탈퇴하면 참여 중인 채팅방에서 나가고 친구 목록에서 사라지며, 되돌릴 수 없습니다. 같은 Google 계정으로 다시 가입할 수 있습니다.</string>
+    <string name="account_withdraw_confirm">탈퇴</string>
+    <string name="account_withdraw_failed">탈퇴 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.</string>
 
     <!-- 공지사항(부록 A §23) -->
     <string name="notice_title">공지사항</string>

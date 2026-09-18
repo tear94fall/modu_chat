@@ -59,6 +59,20 @@ public class MemberPublicController {
         return ResponseEntity.ok().body(ResponseMemberDto.from(memberDto, profiles));
     }
 
+    /**
+     * 회원 탈퇴. 본인만 할 수 있다 — 게이트웨이가 JWT subject 를 넣어 주는 X-Auth-User-Id 와 경로의 userId 가 같아야 한다.
+     * 관리자가 대신 탈퇴시키는 기능은 두지 않는다.
+     */
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<Void> withdraw(@PathVariable("userId") String userId,
+                                         @RequestHeader(value = "X-Auth-User-Id", required = false) String authUserId) {
+        if (authUserId == null || !authUserId.equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        memberService.withdraw(userId);
+        return ResponseEntity.noContent().build();
+    }
+
     private static final int FRIENDS_DEFAULT_SIZE = 50;
     private static final int FRIENDS_MAX_SIZE = 100;
 

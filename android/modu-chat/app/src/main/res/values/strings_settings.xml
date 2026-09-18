@@ -18,6 +18,7 @@
     <string name="setup_app_version">버전정보</string>
     <string name="setup_notice">공지사항</string>
     <string name="setup_friends">친구설정</string>
+    <string name="setup_lock">화면 잠금</string>
 
     <!-- 계정 설정(부록 A §22) -->
     <string name="account_title">계정 설정</string>
@@ -35,9 +36,10 @@
 
     <!-- 버전 정보(부록 A §24) -->
     <string name="app_info_title">버전 정보</string>
-    <string name="app_info_server_version">서버 버전 : %1$s</string>
-    <string name="app_info_app_version">앱 버전 : %1$s</string>
-    <string name="app_info_os_version">os 버전 : 안드로이드 %1$s</string>
+    <string name="app_info_server_version">서버 버전</string>
+    <string name="app_info_app_version">앱 버전</string>
+    <string name="app_info_os_version">OS 버전</string>
+    <string name="app_info_os_value">안드로이드 %1$s</string>
 
     <!-- SSO 동의 팝업(부록 A §3) -->
     <string name="sso_dialog_title">모두 계정으로 로그인</string>

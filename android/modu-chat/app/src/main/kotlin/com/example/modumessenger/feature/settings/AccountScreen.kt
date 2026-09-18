@@ -1,17 +1,10 @@
 package com.example.modumessenger.feature.settings
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,11 +16,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.modumessenger.R
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.PersonOff
 import com.example.modumessenger.core.ui.components.ConfirmDialog
+import com.example.modumessenger.core.ui.components.SettingsRow
 import com.example.modumessenger.core.ui.components.ModuTopBar
 import com.example.modumessenger.core.ui.theme.ModuRed
 import com.example.modumessenger.feature.login.GoogleSignInHelper
@@ -64,27 +60,21 @@ fun AccountScreen(
         topBar = { ModuTopBar(title = stringResource(R.string.account_title), onBack = onBack) },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        Column(
-            modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Button(
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            SettingsRow(
+                title = stringResource(R.string.account_logout),
                 onClick = { showDialog = true },
                 enabled = !isWorking,
-                modifier = Modifier.fillMaxWidth().height(52.dp),
-            ) {
-                Text(stringResource(R.string.account_logout))
-            }
-            // 탈퇴는 되돌릴 수 없는 동작이라 빨간 테두리 버튼으로 로그아웃과 구분한다.
-            OutlinedButton(
+                iconVector = Icons.AutoMirrored.Filled.Logout,
+            )
+            // 탈퇴는 되돌릴 수 없는 동작이라 글자만 빨갛게 해 로그아웃과 구분한다.
+            SettingsRow(
+                title = stringResource(R.string.account_withdraw),
                 onClick = { showWithdrawDialog = true },
                 enabled = !isWorking,
-                modifier = Modifier.fillMaxWidth().height(52.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = ModuRed),
-                border = BorderStroke(1.dp, ModuRed),
-            ) {
-                Text(stringResource(R.string.account_withdraw))
-            }
+                iconVector = Icons.Filled.PersonOff,
+                titleColor = ModuRed,
+            )
         }
     }
 

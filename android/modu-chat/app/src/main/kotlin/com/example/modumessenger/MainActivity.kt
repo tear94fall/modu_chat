@@ -5,7 +5,14 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
+import android.view.WindowManager
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
+import com.example.modumessenger.core.lock.AppLock
+import com.example.modumessenger.feature.lock.LockScreen
+import com.example.modumessenger.feature.login.GoogleSignInHelper
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -45,13 +52,14 @@ import javax.inject.Inject
  * - 토큰 갱신이 끝내 실패하면 `SessionEvents.loggedOut` 이 와서 로그인 화면으로 되돌린다.
  */
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     @Inject lateinit var sessionStore: SessionStore
 
     @Inject lateinit var sessionEvents: SessionEvents
     @Inject lateinit var socketLifecycle: SocketLifecycle
     @Inject lateinit var chatRepository: ChatRepository
+    @Inject lateinit var appLock: AppLock
 
     /** false 면 아직 세션 판정 전 = 시스템 스플래시 유지. */
     private var sessionDecided by mutableStateOf(false)
@@ -74,18 +82,40 @@ class MainActivity : ComponentActivity() {
         setContent {
             ModuTheme {
                 val navController = rememberNavController()
+                val locked by appLock.isLocked.collectAsState()
+                val loggedIn by sessionStore.isLoggedIn.collectAsState(initial = false)
 
-                ModuNavHost(
-                    startDestination = Routes.SPLASH,
-                    navController = navController,
-                    onMainResume = { lifecycleScope.launch { chatRepository.refreshRooms() } },
-                    onLoggedIn = { socketLifecycle.connectFromSession() },
-                    awaitLoggedIn = {
-                        val loggedIn = sessionStore.isLoggedIn.first()
-                        sessionDecided = true
-                        loggedIn
-                    },
-                )
+                // 잠금 게이트: NavHost 위를 덮는다. 백스택은 그대로라 풀리면 보던 화면으로 돌아간다.
+                Box(modifier = Modifier.fillMaxSize()) {
+                    ModuNavHost(
+                        startDestination = Routes.SPLASH,
+                        navController = navController,
+                        onMainResume = { lifecycleScope.launch { chatRepository.refreshRooms() } },
+                        onLoggedIn = { socketLifecycle.connectFromSession() },
+                        awaitLoggedIn = {
+                            val loggedIn = sessionStore.isLoggedIn.first()
+                            sessionDecided = true
+                            loggedIn
+                        },
+                    )
+                    if (locked && loggedIn) {
+                        LockScreen(
+                            // 잠금 화면에서 뒤로 가기는 앱을 뒤로 보낼 뿐 잠금을 풀지 않는다.
+                            onBack = { moveTaskToBack(true) },
+                            // 세션 정리와 로그인 화면 이동은 loggedOut 구독자가 한다. 여기서는 구글 쪽만 끊는다.
+                            onLoggedOut = { GoogleSignInHelper.signOut(this@MainActivity) },
+                        )
+                    }
+                }
+
+                // 잠겨 있는 동안만 최근 앱 화면·스크린샷에서 내용을 가린다.
+                LaunchedEffect(locked) {
+                    if (locked) {
+                        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                    } else {
+                        window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                    }
+                }
 
                 val currentRoute = navController.currentBackStackEntryAsState().value
                     ?.destination?.route

@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.example.modumessenger.R
 import com.example.modumessenger.core.model.Member
 import com.example.modumessenger.core.session.SessionEvents
+import com.example.modumessenger.core.session.SessionLogout
 import com.example.modumessenger.core.session.SessionStore
 import com.example.modumessenger.data.repository.AccountRepository
 import com.example.modumessenger.data.repository.AuthRepository
@@ -54,7 +55,7 @@ class AccountViewModelTest {
     private fun viewModel(account: AccountRepository, auth: FakeAuthRepository = FakeAuthRepository(), push: FakePushRepository = FakePushRepository()): AccountViewModel {
         val sessionStore: SessionStore = mockk(relaxed = true)
         coEvery { sessionStore.memberNow() } returns Member(id = 11, userId = "me", username = "나", email = "me@x.y")
-        return AccountViewModel(auth, push, FakeChatRoomApi(), sessionStore, SessionEvents(), account)
+        return AccountViewModel(SessionLogout(auth, push, FakeChatRoomApi(), sessionStore, SessionEvents()), account)
     }
 
     @Test

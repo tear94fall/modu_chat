@@ -425,6 +425,63 @@ class ChatRepositoryTest {
     }
 
     @Test
+    fun `에코가 유실된 내 메시지는 갭 복구가 임시 말풍선을 대체한다`() = runTest {
+        val repository = openedRepository()
+
+        // 서버가 저장·브로드캐스트는 했지만 내 세션이 닫혀 에코를 못 받은 상황
+        assertTrue(repository.sendText(ACTIVE_ROOM, "안녕"))
+        advanceUntilIdle()
+        assertEquals(SendStatus.SENDING, repository.activeMessages.value.single().status)
+
+        chatApi.recent = listOf(chat(20L, ACTIVE_ROOM, ME, "안녕"))
+        socket.incoming.emit(SocketEvent.Reconnected)
+        advanceUntilIdle()
+
+        val settled = repository.activeMessages.value
+        assertEquals("임시 말풍선이 남으면 같은 메시지가 두 개로 보인다", listOf(20L), settled.map { it.id })
+        assertEquals(SendStatus.SENT, settled.single().status)
+    }
+
+    @Test
+    fun `갭 복구에도 없는 내 메시지는 FAILED 가 되어 다시 보낼 수 있다`() = runTest {
+        val repository = openedRepository()
+
+        assertTrue(repository.sendText(ACTIVE_ROOM, "사라진 메시지"))
+        advanceUntilIdle()
+
+        chatApi.recent = listOf(chat(21L, ACTIVE_ROOM, OTHER, "다른 사람 메시지"))
+        socket.incoming.emit(SocketEvent.Reconnected)
+        advanceUntilIdle()
+
+        val lost = repository.activeMessages.value.single { it.id < 0L }
+        assertEquals(SendStatus.FAILED, lost.status)
+        assertTrue("실패로 바뀐 말풍선은 재전송할 수 있다", repository.resendFailed(lost.id))
+    }
+
+    @Test
+    fun `갭 복구는 이미 받은 메시지로 임시 말풍선을 걷어내지 않는다`() = runTest {
+        val repository = openedRepository()
+
+        // 첫 "ㅋㅋ" 는 에코가 정상으로 돌아왔다
+        assertTrue(repository.sendText(ACTIVE_ROOM, "ㅋㅋ"))
+        socket.incoming.emit(SocketEvent.Chat(chat(30L, ACTIVE_ROOM, ME, "ㅋㅋ")))
+        advanceUntilIdle()
+
+        // 재연결 직후(갭 복구 전) 보낸 두 번째 "ㅋㅋ" 는 아직 서버 응답 전이다
+        assertTrue(repository.sendText(ACTIVE_ROOM, "ㅋㅋ"))
+        advanceUntilIdle()
+
+        chatApi.recent = listOf(chat(30L, ACTIVE_ROOM, ME, "ㅋㅋ"))
+        socket.incoming.emit(SocketEvent.Reconnected)
+        advanceUntilIdle()
+
+        val ids = repository.activeMessages.value.map { it.id }
+        assertEquals("이미 있던 30 은 두 번째 에코를 소비하지 않는다", 2, ids.size)
+        assertTrue(ids.contains(30L))
+        assertTrue(ids.any { it < 0L })
+    }
+
+    @Test
     fun `전달된 READ 는 재연결 때 다시 보내지 않는다`() = runTest {
         val repository = openedRepository() // READ 가 정상 전달됐다
         socket.sent.clear()

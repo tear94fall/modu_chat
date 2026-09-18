@@ -11,3 +11,9 @@ spring:
 
   config:
     import: optional:configserver:${CONFIG_SERVER_URI:http://localhost:8888}
+  cloud:
+    config:
+      # modu_platform 의 config-service. 공통(application.yml) + 메신저 공통(messenger/messenger.yml) + 이 서비스 파일을 받는다.
+      # 설정 서버를 못 만나면 기본값으로 조용히 뜨지 않고 기동에 실패한다(compose 의 restart 가 다시 띄운다).
+      name: messenger,${spring.application.name}
+      fail-fast: true

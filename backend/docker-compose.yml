@@ -1,77 +1,12 @@
 name: modu-messenger
 
-# 인프라(MySQL, MongoDB, Redis, Kafka, RabbitMQ, MinIO)와 관측성 스택은 ~/workspace/modu_infra 에서 먼저 띄운다.
-# 서비스는 external 네트워크 modu-infra 에서 컨테이너 이름으로 인프라에 접근한다.
+# 인프라(MySQL, MongoDB, Redis, Kafka, RabbitMQ, MinIO)와 관측성 스택은 ~/workspace/modu_infra 에서,
+# 플랫폼(config-service, discovery-service, gateway-service)은 ~/workspace/modu_platform 에서 먼저 띄운다.
+# 서비스는 external 네트워크 modu-infra 에서 컨테이너 이름으로 인프라·플랫폼에 접근한다.
+# 다른 compose 프로젝트라 depends_on 을 걸 수 없다. 설정을 못 받으면 서비스가 기동에 실패하고(fail-fast)
+# restart: always 가 다시 띄우므로, 플랫폼이 뜨면 자연히 따라 올라온다.
 
 services:
-  config-service:
-    build:
-      context: ./config-service
-      dockerfile: ./Dockerfile
-    container_name: config-service
-    ports:
-      - 8888:8888
-    environment:
-      - ENCRYPT_KEY=${ENCRYPT_KEY:-}
-      - RABBITMQ_HOST=rabbitmq
-      - JAVA_TOOL_OPTIONS=${CONFIG_AGENT_OPTS:-}
-    volumes:
-      - ./config-repo:/config-repo:ro
-      - pinpoint-agent:/pinpoint-agent:ro
-    networks:
-      - modu-infra
-      - pinpoint
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8888/actuator/health | grep -q UP || exit 1"]
-      interval: 5s
-      timeout: 3s
-      retries: 40
-      start_period: 20s
-    restart: always
-
-  discovery-service:
-    container_name: discovery-service
-    build:
-      context: ./eureka-server
-      dockerfile: Dockerfile
-    ports:
-      - 8761:8761
-    environment:
-      - CONFIG_SERVER_URI=http://config-service:8888
-      - JAVA_TOOL_OPTIONS=${DISCOVERY_AGENT_OPTS:-}
-    volumes:
-      - pinpoint-agent:/pinpoint-agent:ro
-    depends_on:
-      config-service:
-        condition: service_healthy
-    networks:
-      - modu-infra
-      - pinpoint
-    restart: always
-
-  gateway-service:
-    build:
-      context: ./gateway-service
-      dockerfile: ./Dockerfile
-    container_name: gateway-service
-    ports:
-      - 8000:8000
-    environment:
-      - CONFIG_SERVER_URI=http://config-service:8888
-      - JAVA_TOOL_OPTIONS=${GATEWAY_AGENT_OPTS:-}
-      - ADMIN_ALLOWED_ORIGIN=${ADMIN_ALLOWED_ORIGIN:-http://localhost:5173}
-      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
-    depends_on:
-      config-service:
-        condition: service_healthy
-      discovery-service:
-        condition: service_started
-    volumes:
-      - pinpoint-agent:/pinpoint-agent:ro
-    networks:
-      - modu-infra
-      - pinpoint
-    restart: always
 
   auth-service:
     build:
@@ -85,11 +20,6 @@ services:
       - JAVA_TOOL_OPTIONS=${AUTH_AGENT_OPTS:-}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
       - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH:-}
-    depends_on:
-      config-service:
-        condition: service_healthy
-      discovery-service:
-        condition: service_started
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -111,11 +41,6 @@ services:
       - spring.datasource.username=root
       - JAVA_TOOL_OPTIONS=${CHAT_AGENT_OPTS:-}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
-    depends_on:
-      config-service:
-        condition: service_healthy
-      discovery-service:
-        condition: service_started
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -136,11 +61,6 @@ services:
       - spring.datasource.username=root
       - JAVA_TOOL_OPTIONS=${MEMBER_AGENT_OPTS:-}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
-    depends_on:
-      config-service:
-        condition: service_healthy
-      discovery-service:
-        condition: service_started
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -162,11 +82,6 @@ services:
       - spring.datasource.username=root
       - JAVA_TOOL_OPTIONS=${PROFILE_AGENT_OPTS:-}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
-    depends_on:
-      config-service:
-        condition: service_healthy
-      discovery-service:
-        condition: service_started
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -187,11 +102,6 @@ services:
       - spring.datasource.username=root
       - JAVA_TOOL_OPTIONS=${PUSH_AGENT_OPTS:-}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
-    depends_on:
-      config-service:
-        condition: service_healthy
-      discovery-service:
-        condition: service_started
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -213,11 +123,6 @@ services:
       - minio.endpoint=http://minio:9000
       - JAVA_TOOL_OPTIONS=${STORAGE_AGENT_OPTS:-}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
-    depends_on:
-      config-service:
-        condition: service_healthy
-      discovery-service:
-        condition: service_started
     networks:
       - modu-infra
       - pinpoint
@@ -239,11 +144,6 @@ services:
       - spring.datasource.username=root
       - JAVA_TOOL_OPTIONS=${WS_SERVICE_AGENT_OPTS:-}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
-    depends_on:
-      config-service:
-        condition: service_healthy
-      discovery-service:
-        condition: service_started
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -262,11 +162,6 @@ services:
       - CONFIG_SERVER_URI=http://config-service:8888
       - JAVA_TOOL_OPTIONS=${CHAT_STORE_AGENT_OPTS:-}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
-    depends_on:
-      config-service:
-        condition: service_healthy
-      discovery-service:
-        condition: service_started
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:

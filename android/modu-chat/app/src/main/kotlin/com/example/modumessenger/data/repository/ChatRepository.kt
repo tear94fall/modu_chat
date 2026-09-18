@@ -175,8 +175,29 @@ class ChatRepository @Inject constructor(
         refreshRooms()
 
         val roomId = activeRoomId ?: return
+        // 끊기기 전에 보냈지만 에코를 못 받은 임시 말풍선. 갭 복구가 같은 내용의 실제 메시지로
+        // 대체하지 못한 것은 서버에 닿지 못한 것이므로 FAILED 로 바꿔 다시 보낼 수 있게 한다.
+        val unresolved = mutex.withLock { pendingEchoes.toList() }
         safeCall { chatApi.getRecent(roomId, GAP_RECOVERY_SIZE) }
-            .onSuccess { dtos -> dtos.forEach { handleChat(it, isGapRecovery = true) } }
+            .onSuccess { dtos ->
+                dtos.forEach { handleChat(it, isGapRecovery = true) }
+                markLostEchoesFailed(roomId, unresolved)
+            }
+    }
+
+    private suspend fun markLostEchoesFailed(roomId: String, tempIds: List<Long>) {
+        mutex.withLock {
+            if (roomId != activeRoomId) return@withLock
+
+            var changed = false
+            tempIds.forEach { tempId ->
+                if (!pendingEchoes.remove(tempId)) return@forEach
+                val echo = activeRoomIndex[tempId] ?: return@forEach
+                activeRoomIndex[tempId] = echo.copy(status = SendStatus.FAILED)
+                changed = true
+            }
+            if (changed) publishActiveLocked()
+        }
     }
 
     /** 패키지 가시성. 테스트가 소켓 없이 라우팅 규칙을 검증한다. */
@@ -201,10 +222,23 @@ class ChatRepository @Inject constructor(
                 // 내가 보낸 메시지의 브로드캐스트라면 먼저 올려 둔 에코를 걷어낸다. 전송 순서대로
                 // 돌아오므로 가장 오래된 에코를 대체한다. 갭 복구분은 실시간 전송이 아니므로
                 // 에코를 소비하지 않는다.
+                val incoming = dto.toModel()
                 if (mine && !isGapRecovery && pendingEchoes.isNotEmpty()) {
                     activeRoomIndex.remove(pendingEchoes.removeFirst())
+                } else if (mine && isGapRecovery && !activeRoomIndex.containsKey(chatId)) {
+                    // 서버가 저장·브로드캐스트는 했는데 내 세션이 닫혀 에코를 못 받은 메시지(푸시 실패로
+                    // 세션이 끊기던 경우). 순서를 믿을 수 없으므로 내용이 같은 가장 오래된 임시 말풍선을
+                    // 걷어낸다. 이미 받은 메시지(id 가 있음)는 에코를 소비하지 않는다.
+                    val matched = pendingEchoes.firstOrNull { tempId ->
+                        val echo = activeRoomIndex[tempId]
+                        echo != null && echo.message == incoming.message && echo.chatType == incoming.chatType
+                    }
+                    if (matched != null) {
+                        pendingEchoes.remove(matched)
+                        activeRoomIndex.remove(matched)
+                    }
                 }
-                activeRoomIndex[chatId] = dto.toModel()
+                activeRoomIndex[chatId] = incoming
                 publishActiveLocked()
             }
             active

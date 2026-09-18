@@ -197,6 +197,26 @@ class WebSocketHandlerTest {
     }
 
     @Test
+    @DisplayName("푸시 전송이 실패해도 세션을 닫지 않는다 - 저장과 브로드캐스트는 이미 끝났으므로 예외를 삼킨다")
+    void fcmFailure_doesNotPropagate() throws Exception {
+        ChatRoomDto chatRoomDto = room("room-1", "user-a", "user-b");
+        when(chatRoomService.getChatRoom("room-1")).thenReturn(chatRoomDto);
+        when(chatService.saveChat(any())).thenReturn(9L);
+        when(chatRoomService.updateChatRoom(eq("room-1"), any())).thenReturn(chatRoomDto);
+        when(blockRelationCache.blockedBy("user-a")).thenReturn(Set.of());
+        org.mockito.Mockito.doThrow(new RuntimeException("push-service 500"))
+                .when(fcmService).sendFcmMessage(any(FcmMessageDto.class));
+
+        WebSocketSession session = session("user-a", true);
+
+        // 예외가 새어 나가면 ExceptionWebSocketHandlerDecorator 가 발신자 세션을 닫고 에코가 유실된다
+        handler.handleTextMessage(session, chatFrame("room-1", "user-a"));
+
+        assertThat(capturedBroadcast("room-1").getChatId()).isEqualTo("9");
+        verify(session, never()).close(any(CloseStatus.class));
+    }
+
+    @Test
     @DisplayName("단체방은 차단이 있어도 제외하지 않고 푸시도 그대로 보낸다")
     void groupRoomBlocked_doesNotExclude() throws Exception {
         ChatRoomDto chatRoomDto = room("room-2", "user-a", "user-b", "user-c");

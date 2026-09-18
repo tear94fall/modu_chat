@@ -1,5 +1,7 @@
 package com.example.modumessenger.core.di
 
+import com.example.modumessenger.data.repository.AccountRepository
+import com.example.modumessenger.data.repository.AccountRepositoryImpl
 import com.example.modumessenger.data.repository.AuthRepository
 import com.example.modumessenger.data.repository.AuthRepositoryImpl
 import com.example.modumessenger.data.repository.CommonRepository
@@ -27,6 +29,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAccountRepository(impl: AccountRepositoryImpl): AccountRepository
 
     @Binds
     @Singleton

@@ -19,6 +19,8 @@ import com.example.chatservice.member.dto.MemberDto;
 import com.example.chatservice.member.dto.ChatRoomMemberDto;
 import com.example.chatservice.member.service.BlockedIdsCache;
 import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -190,6 +192,28 @@ public class ChatRoomService {
         List<MemberDto> invited = memberFeignClient.exitChatRoom(memberInviteDto);
 
         return addNewChatRoomMember(chatRoom, invited);
+    }
+
+    /**
+     * 회원 탈퇴: 이 회원이 든 모든 방에서 멤버 행을 지운다. 비게 된 방은 방째 지운다(대화도 cascade 로 함께).
+     * member-service 가 내부 API 로 부르므로 member-service 를 다시 부르지 않는다(그쪽이 자기 목록을 정리한다).
+     *
+     * @return 이 회원이 들어 있던 방들의 PK
+     */
+    @Transactional
+    public List<Long> exitAllChatRooms(Long memberId) {
+        List<ChatRoomMember> memberships = chatRoomMemberRepository.findAllByMemberId(memberId);
+        List<Long> roomIds = new ArrayList<>();
+        for (ChatRoomMember membership : memberships) {
+            ChatRoom room = membership.getChatRoom();
+            roomIds.add(room.getId());
+            room.getChatRoomMemberList().remove(membership);
+            chatRoomMemberRepository.delete(membership);
+            if (room.getChatRoomMemberList().isEmpty()) {
+                chatRoomRepository.delete(room);
+            }
+        }
+        return roomIds;
     }
 
     public ChatRoomDto updateChatRoom(String roomId, ChatRoomDto chatRoomDto) {

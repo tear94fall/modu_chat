@@ -186,4 +186,38 @@ class ChatRoomServiceTest {
         assertThat(rooms).isEmpty();
         verify(memberFeignClient, never()).getMembersById(anyList());
     }
+
+    @Test
+    void exitAllChatRooms_removesMemberships_andDeletesRoomsLeftEmpty() {
+        ChatRoom shared = new ChatRoom("같이 있는 방");
+        ChatRoomMember meInShared = new ChatRoomMember(7L, "0", shared);
+        ChatRoomMember otherInShared = new ChatRoomMember(8L, "0", shared);
+        shared.getChatRoomMemberList().addAll(List.of(meInShared, otherInShared));
+
+        ChatRoom alone = new ChatRoom("혼자 남은 방");
+        ChatRoomMember meAlone = new ChatRoomMember(7L, "0", alone);
+        alone.getChatRoomMemberList().add(meAlone);
+
+        when(chatRoomMemberRepository.findAllByMemberId(7L)).thenReturn(List.of(meInShared, meAlone));
+
+        List<Long> left = chatRoomService.exitAllChatRooms(7L);
+
+        // 두 방 모두에서 내 멤버 행이 지워진다.
+        verify(chatRoomMemberRepository).delete(meInShared);
+        verify(chatRoomMemberRepository).delete(meAlone);
+        assertThat(shared.getChatRoomMemberList()).containsExactly(otherInShared);
+        // 남는 사람이 있는 방은 그대로, 비게 된 방은 지운다.
+        verify(chatRoomRepository, never()).delete(shared);
+        verify(chatRoomRepository).delete(alone);
+        assertThat(left).hasSize(2);
+    }
+
+    @Test
+    void exitAllChatRooms_withNoRooms_doesNothing() {
+        when(chatRoomMemberRepository.findAllByMemberId(9L)).thenReturn(List.of());
+
+        assertThat(chatRoomService.exitAllChatRooms(9L)).isEmpty();
+        verify(chatRoomMemberRepository, never()).delete(any(ChatRoomMember.class));
+        verify(chatRoomRepository, never()).delete(any(ChatRoom.class));
+    }
 }

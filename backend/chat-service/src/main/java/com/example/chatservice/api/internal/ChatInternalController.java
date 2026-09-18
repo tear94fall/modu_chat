@@ -1,5 +1,7 @@
 package com.example.chatservice.api.internal;
 
+import java.util.List;
+
 import com.example.chatservice.chat.dto.ChatDto;
 import com.example.chatservice.chat.dto.ChatRoomDto;
 import com.example.chatservice.chat.service.ChatService;
@@ -20,6 +22,12 @@ public class ChatInternalController {
 
     private final ChatService chatService;
     private final ChatRoomService chatRoomService;
+
+    /** 회원 탈퇴(member-service). 이 회원이 든 모든 방에서 나가고, 비게 된 방은 지운다. 들어 있던 방 PK 목록을 돌려준다. */
+    @DeleteMapping("/member/{memberId}/rooms")
+    public ResponseEntity<List<Long>> exitAllChatRooms(@PathVariable("memberId") Long memberId) {
+        return ResponseEntity.ok().body(chatRoomService.exitAllChatRooms(memberId));
+    }
 
     @PostMapping
     public ResponseEntity<Long> createChat(@Valid @RequestBody ChatDto chatDto) {

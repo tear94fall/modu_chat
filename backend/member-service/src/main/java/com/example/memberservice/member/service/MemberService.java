@@ -15,6 +15,9 @@ import com.example.memberservice.profile.dto.AddProfileDto;
 import com.example.memberservice.profile.dto.ProfileDto;
 import com.example.memberservice.profile.dto.ProfileType;
 import com.example.memberservice.storage.client.StorageFeignClient;
+import com.example.memberservice.member.repository.MemberFriendRepository;
+import com.example.memberservice.notice.client.PushFeignClient;
+import com.example.memberservice.chat.client.ChatFeignClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -45,6 +48,9 @@ public class MemberService implements UserDetailsService {
     private final StorageFeignClient storageFeignClient;
     private final ProfileFeignClient profileFeignClient;
     private final MemberFriendService memberFriendService;
+    private final MemberFriendRepository memberFriendRepository;
+    private final ChatFeignClient chatFeignClient;
+    private final PushFeignClient pushFeignClient;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -73,11 +79,53 @@ public class MemberService implements UserDetailsService {
             return MemberDto.createMemberDto(registered.get());
         }
 
+        // 탈퇴했던 계정(같은 구글 sub)이면 새 행을 만들지 않고 그 행을 되살린다. uk_member_user_id 때문에도 그래야 한다.
+        Optional<Member> withdrawn = memberRepository.findByUserId(account.getSub()).filter(Member::isWithdrawn);
+        if (withdrawn.isPresent()) {
+            Member member = withdrawn.get();
+            member.reactivate(account.getEmail(), account.getName());
+            MemberDto revived = MemberDto.createMemberDto(member);
+            if (account.getPicture() != null && !account.getPicture().isBlank()) {
+                return addProfileImage(revived);
+            }
+            return revived;
+        }
+
         MemberDto created = registerMember(account);
         if (account.getPicture() != null && !account.getPicture().isBlank()) {
             return addProfileImage(created);
         }
         return created;
+    }
+
+    /**
+     * 회원 탈퇴(본인만, 컨트롤러가 확인한다). 이미 탈퇴한 회원이면 아무것도 하지 않는다.
+     * 다른 서비스 정리(방 나가기·푸시 토큰)가 실패하면 예외가 그대로 올라가 탈퇴도 되지 않는다 — 앱이 다시 시도한다.
+     * 사진 파일 삭제만은 실패해도 탈퇴를 막지 않는다.
+     */
+    public void withdraw(String userId) {
+        Member member = memberRepository.findByUserId(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_ID_NOT_FOUND_ERROR, userId));
+        if (member.isWithdrawn()) {
+            return;
+        }
+
+        chatFeignClient.exitAllChatRooms(member.getId());
+        pushFeignClient.deleteToken(userId);
+        memberFriendRepository.deleteAllByMember_IdOrFriend_Id(member.getId(), member.getId());
+        deleteFileQuietly(member.getProfileImage());
+        deleteFileQuietly(member.getWallpaperImage());
+
+        member.withdraw();
+    }
+
+    private void deleteFileQuietly(String file) {
+        if (file == null || file.isBlank()) return;
+        try {
+            storageFeignClient.delete(file);
+        } catch (RuntimeException e) {
+            log.warn("탈퇴 회원의 파일 삭제 실패, 계속 진행 file={} message={}", file, e.getMessage());
+        }
     }
 
     MemberDto registerMember(GoogleAccountDto account) {

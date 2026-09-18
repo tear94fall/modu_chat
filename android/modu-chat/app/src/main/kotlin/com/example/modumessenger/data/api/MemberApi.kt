@@ -7,6 +7,7 @@ import com.example.modumessenger.data.dto.PageResponseDto
 import com.example.modumessenger.data.dto.RenameFriendDto
 import com.example.modumessenger.data.dto.UpdateProfileDto
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.HTTP
 import retrofit2.http.POST
@@ -21,6 +22,10 @@ interface MemberApi {
 
     @GET("member-service/api-public/member/member/{id}")
     suspend fun getMember(@Path("id") id: Long): MemberDto
+
+    /** 회원 탈퇴(본인). 서버는 204 로 답하고, 남의 userId 면 403 이다. */
+    @DELETE("member-service/api-public/member/{userId}")
+    suspend fun withdraw(@Path("userId") userId: String)
 
     @POST("member-service/api-public/member/{userId}")
     suspend fun updateMember(

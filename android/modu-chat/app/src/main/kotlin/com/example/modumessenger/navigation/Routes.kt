@@ -35,6 +35,7 @@ object Routes {
     const val ACCOUNT = "account"
     const val NOTICE = "notice"
     const val APP_INFO = "appInfo"
+    const val LOCK_SETTINGS = "lockSettings"
 
     const val ARG_MEMBER_ID = "memberId"
     const val ARG_ROOM_ID = "roomId"

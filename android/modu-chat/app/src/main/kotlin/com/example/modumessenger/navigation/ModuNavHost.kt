@@ -12,6 +12,7 @@ import com.example.modumessenger.feature.friends.FindFriendsScreen
 import com.example.modumessenger.feature.friends.HiddenFriendsScreen
 import com.example.modumessenger.feature.friends.SearchFriendsScreen
 import com.example.modumessenger.feature.friends.SetFriendsScreen
+import com.example.modumessenger.feature.lock.LockSettingsScreen
 import com.example.modumessenger.feature.login.LoginScreen
 import com.example.modumessenger.feature.login.SplashScreen
 import com.example.modumessenger.feature.main.MainScreen
@@ -138,7 +139,12 @@ fun ModuNavHost(
                 onAppInfo = { navController.navigate(Routes.APP_INFO) },
                 onNotice = { navController.navigate(Routes.NOTICE) },
                 onSetFriends = { navController.navigate(Routes.SET_FRIENDS) },
+                onLockSettings = { navController.navigate(Routes.LOCK_SETTINGS) },
             )
+        }
+
+        composable(Routes.LOCK_SETTINGS) {
+            LockSettingsScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Routes.ACCOUNT) {

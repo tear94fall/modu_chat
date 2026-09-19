@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 앱 잠금 -->
+    <string name="lock_title">잠금 해제</string>
+    <string name="lock_enter_pin">PIN 을 입력하세요</string>
+    <string name="lock_wrong_pin">PIN 이 틀렸습니다 (%1$d/%2$d)</string>
+    <string name="lock_locked_out">%1$d초 후 다시 시도할 수 있습니다</string>
+    <string name="lock_forgot">PIN 을 잊으셨나요?</string>
+    <string name="lock_forgot_title">PIN 을 잊으셨나요?</string>
+    <string name="lock_forgot_message">로그아웃하면 잠금이 해제됩니다. 다시 로그인해 주세요.</string>
+    <string name="lock_forgot_confirm">로그아웃</string>
+    <string name="lock_cancel">취소</string>
+    <string name="lock_biometric">지문으로 잠금 해제</string>
+    <string name="lock_biometric_prompt_title">잠금 해제</string>
+    <string name="lock_biometric_prompt_negative">PIN 입력</string>
+    <string name="lock_delete_digit">지우기</string>
+
+    <!-- 잠금 설정 -->
+    <string name="lock_settings_title">화면 잠금</string>
+    <string name="lock_settings_enable">화면 잠금 사용</string>
+    <string name="lock_settings_enable_desc">앱을 열 때 PIN 이나 지문을 요구합니다</string>
+    <string name="lock_settings_change_pin">PIN 변경</string>
+    <string name="lock_settings_biometric">지문으로 잠금 해제</string>
+    <string name="lock_settings_biometric_unavailable">이 기기에 등록된 지문이나 얼굴이 없습니다</string>
+    <string name="lock_settings_grace">잠금 유예 시간</string>
+    <string name="lock_grace_immediate">즉시</string>
+    <string name="lock_grace_30s">30초</string>
+    <string name="lock_grace_1m">1분</string>
+    <string name="lock_grace_5m">5분</string>
+    <string name="lock_setup_new">새 PIN 을 입력하세요</string>
+    <string name="lock_setup_confirm">PIN 을 한 번 더 입력하세요</string>
+    <string name="lock_setup_mismatch">PIN 이 일치하지 않습니다. 처음부터 다시 입력하세요</string>
+    <string name="lock_setup_current">현재 PIN 을 입력하세요</string>
+    <string name="lock_settings_enabled_done">화면 잠금을 켰습니다</string>
+    <string name="lock_settings_disabled_done">화면 잠금을 껐습니다</string>
+    <string name="lock_settings_pin_changed">PIN 을 변경했습니다</string>
+</resources>

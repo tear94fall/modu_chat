@@ -18,6 +18,13 @@ sealed interface SocketEvent {
         val lastReadChatId: Long,
     ) : SocketEvent
 
+    /** 메시지 하나의 반응 집계가 바뀌었다(누가 남겼든). 반응자 본인도 받는다. */
+    data class Reaction(
+        val roomId: String,
+        val chatId: Long,
+        val reactions: List<com.example.modumessenger.core.model.Reaction>,
+    ) : SocketEvent
+
     /** 내가 멤버로 들어간 방이 새로 만들어졌다. 프레임에는 roomId 뿐이다. */
     data class RoomCreated(val roomId: String) : SocketEvent
 

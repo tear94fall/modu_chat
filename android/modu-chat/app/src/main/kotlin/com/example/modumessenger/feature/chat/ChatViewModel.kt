@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.modumessenger.R
 import com.example.modumessenger.core.di.ApplicationScope
 import com.example.modumessenger.core.model.ChatMessage
+import com.example.modumessenger.core.model.ReactionEmoji
 import com.example.modumessenger.core.model.ChatRoom
 import com.example.modumessenger.core.model.ChatType
 import com.example.modumessenger.core.model.Member
@@ -48,6 +49,8 @@ data class ChatBubble(
     val senderImage: String,
     val senderMemberId: Long?,
     val shortTime: String,
+    /** 내가 이 메시지에 남긴 이모지 키. 없으면 null. */
+    val myReaction: String? = null,
 ) {
     val showSender: Boolean get() = group == BubbleGroup.HEADER || group == BubbleGroup.SINGLE
     val showTime: Boolean get() = group == BubbleGroup.TAIL || group == BubbleGroup.SINGLE
@@ -311,6 +314,13 @@ class ChatViewModel @Inject constructor(
         _messages.tryEmit(ChatUiMessage(res, args.toList()))
     }
 
+    /** 남의 말풍선에 이모지를 남긴다(토글). 소켓이 끊겨 못 보냈으면 스낵바. */
+    fun react(chatId: Long, emoji: String) {
+        viewModelScope.launch {
+            if (!chatRepository.react(chatId, emoji)) _messages.tryEmit(ChatUiMessage(R.string.chat_reaction_failed))
+        }
+    }
+
     companion object {
 
         const val PAGE_SIZE = 20
@@ -363,11 +373,13 @@ class ChatViewModel @Inject constructor(
                     senderImage = member?.profileImage.orEmpty(),
                     senderMemberId = member?.id?.takeIf { it > 0L },
                     shortTime = keys[index].second,
+                    myReaction = ReactionEmoji.mine(message.reactions, myUserId),
                 )
             }
         }
 
         /** 이미지 말풍선인지. 파일·음성은 본문(파일 이름)을 글자로 보여 준다. */
+
         fun isImage(message: ChatMessage): Boolean = message.chatType == ChatType.IMAGE
     }
 }

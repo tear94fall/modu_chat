@@ -1,8 +1,10 @@
 package com.example.modumessenger.feature.chat
 
 import androidx.lifecycle.SavedStateHandle
+import com.example.modumessenger.core.model.ChatMessage
 import com.example.modumessenger.core.model.ChatType
 import com.example.modumessenger.core.model.Member
+import com.example.modumessenger.core.model.Reaction
 import com.example.modumessenger.core.model.SendStatus
 import com.example.modumessenger.core.session.BlockedUsers
 import com.example.modumessenger.core.session.FriendNames
@@ -207,6 +209,20 @@ class ChatViewModelTest {
     }
 
     // ---------- 말풍선 묶음 ----------
+
+    @Test
+    fun `말풍선은 내가 남긴 반응 이모지를 안다`() {
+        val messages = listOf(
+            ChatMessage(id = 1L, sender = OTHER, message = "a", chatTime = "2026-09-12 10:00:00",
+                reactions = listOf(Reaction("LIKE", 2, listOf(ME, OTHER)))),
+            ChatMessage(id = 2L, sender = OTHER, message = "b", chatTime = "2026-09-12 10:00:00",
+                reactions = listOf(Reaction("HEART", 1, listOf(OTHER)))),
+        )
+        val bubbles = ChatViewModel.buildBubbles(messages, emptyList(), ME, emptyMap())
+
+        assertEquals("LIKE", bubbles[0].myReaction)
+        assertEquals(null, bubbles[1].myReaction)
+    }
 
     @Test
     fun `같은 발신자와 같은 시각이면 처음은 헤더 가운데는 본문 끝은 꼬리다`() {

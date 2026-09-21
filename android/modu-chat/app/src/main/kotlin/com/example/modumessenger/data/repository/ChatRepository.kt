@@ -3,6 +3,8 @@ package com.example.modumessenger.data.repository
 import com.example.modumessenger.core.di.ApplicationScope
 import com.example.modumessenger.core.di.IoDispatcher
 import com.example.modumessenger.core.model.ChatMessage
+import com.example.modumessenger.core.model.Reaction
+import com.example.modumessenger.core.model.ReactionEmoji
 import com.example.modumessenger.core.model.ChatRoom
 import com.example.modumessenger.core.model.ChatType
 import com.example.modumessenger.core.model.SendStatus
@@ -157,6 +159,7 @@ class ChatRepository @Inject constructor(
         when (event) {
             is SocketEvent.Chat -> handleChat(event.dto, isGapRecovery = false)
             is SocketEvent.Read -> onReadCursorAdvanced(event.roomId, event.userId, event.lastReadChatId)
+            is SocketEvent.Reaction -> onReactionsChanged(event.roomId, event.chatId, event.reactions)
 
             // 방 이름·멤버는 프레임에 없다. 목록을 통째로 다시 받아 채운다.
             is SocketEvent.RoomCreated -> scope.launch { refreshRooms() }
@@ -253,6 +256,48 @@ class ChatRepository @Inject constructor(
             _banner.tryEmit(
                 BannerEvent(roomId, dto.sender.orEmpty(), dto.message.orEmpty(), dto.chatType),
             )
+        }
+    }
+
+    // ---------- 반응 ----------
+
+    /**
+     * 남의 메시지에 이모지 하나를 남긴다(같은 이모지면 취소, 다른 이모지면 교체). 화면에 먼저 반영하고 프레임을 보낸다.
+     * 서버 확정(REACTION 프레임)이 곧 돌아와 집계를 덮어쓴다. 못 보냈으면 되돌리고 false.
+     */
+    suspend fun react(chatId: Long, emoji: String): Boolean {
+        val me = myUserId
+        if (me.isEmpty() || chatId <= 0L) return false
+
+        val roomId = mutex.withLock {
+            val message = activeRoomIndex[chatId] ?: return@withLock null
+            if (message.sender == me) return@withLock null
+            activeRoomIndex[chatId] = message.copy(reactions = ReactionEmoji.toggle(message.reactions, me, emoji))
+            publishActiveLocked()
+            message.roomId.ifEmpty { activeRoomId }
+        } ?: return false
+
+        val frame = mapOf("type" to "REACTION", "roomId" to roomId, "chatId" to chatId.toString(), "sender" to me, "emoji" to emoji)
+        val delivered = socket.send(gson.toJson(frame))
+        if (!delivered) {
+            mutex.withLock {
+                val message = activeRoomIndex[chatId] ?: return@withLock
+                // 되돌리기 = 같은 토글을 한 번 더.
+                activeRoomIndex[chatId] = message.copy(reactions = ReactionEmoji.toggle(message.reactions, me, emoji))
+                publishActiveLocked()
+            }
+        }
+        return delivered
+    }
+
+    /** 서버가 확정한 집계로 덮어쓴다. 활성 방의 메시지가 아니면 무시한다(이력을 다시 읽을 때 채워진다). */
+    internal suspend fun onReactionsChanged(roomId: String, chatId: Long, reactions: List<Reaction>) {
+        mutex.withLock {
+            if (roomId != activeRoomId) return@withLock
+            val message = activeRoomIndex[chatId] ?: return@withLock
+            if (message.reactions == reactions) return@withLock
+            activeRoomIndex[chatId] = message.copy(reactions = reactions)
+            publishActiveLocked()
         }
     }
 

@@ -21,6 +21,17 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import android.view.HapticFeedbackConstants
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,21 +59,31 @@ fun ChatBubbleRow(
     onResend: (Long) -> Unit,
     onDelete: (Long) -> Unit,
     modifier: Modifier = Modifier,
+    onReact: (Long, String) -> Unit = { _, _ -> },
+    onShowReactors: (Long) -> Unit = {},
 ) {
     if (bubble.isMine) {
-        RightBubble(bubble, onOpenImage, onResend, onDelete, modifier)
+        RightBubble(bubble, onOpenImage, onResend, onDelete, onShowReactors, modifier)
     } else {
-        LeftBubble(bubble, onOpenProfile, onOpenImage, modifier)
+        LeftBubble(bubble, onOpenProfile, onOpenImage, onReact, onShowReactors, modifier)
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun LeftBubble(
     bubble: ChatBubble,
     onOpenProfile: (Long) -> Unit,
     onOpenImage: (Long) -> Unit,
+    onReact: (Long, String) -> Unit,
+    onShowReactors: (Long) -> Unit,
     modifier: Modifier,
 ) {
+    // 길게 누르면 말풍선 위에 이모지 바. 말풍선이 바뀌면(id) 상태도 새로.
+    var showBar by remember(bubble.message.id) { mutableStateOf(false) }
+    // 길게 누른 순간의 말풍선 세로 중심. 화면 위쪽 절반이면 바를 말풍선 아래에 띄운다(위에 띄우면 가려지거나 잘린다).
+    var barBelow by remember(bubble.message.id) { mutableStateOf(false) }
+    val view = LocalView.current
     Row(
         modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -92,9 +113,42 @@ private fun LeftBubble(
                 )
             }
             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                BubbleBody(bubble = bubble, mine = false, onOpenImage = onOpenImage)
+                // 말풍선과 같은 둥근 모서리로 잘라야 길게 누를 때 리플이 각지지 않는다.
+                var bubbleCenterY by remember { mutableStateOf(0f) }
+                Box(
+                    modifier = Modifier
+                        .onGloballyPositioned { coords -> bubbleCenterY = coords.positionInWindow().y + coords.size.height / 2f }
+                        .clip(RoundedCornerShape(BUBBLE_RADIUS))
+                        .combinedClickable(
+                            onClick = { if (ChatViewModel.isImage(bubble.message)) onOpenImage(bubble.message.id) },
+                            onLongClick = {
+                                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                barBelow = bubbleCenterY < view.rootView.height / 2f
+                                showBar = true
+                            },
+                        ),
+                ) {
+                    if (showBar) {
+                        ReactionBar(
+                            current = bubble.myReaction,
+                            below = barBelow,
+                            onPick = { emoji ->
+                                showBar = false
+                                onReact(bubble.message.id, emoji)
+                            },
+                            onDismiss = { showBar = false },
+                        )
+                    }
+                    BubbleBody(bubble = bubble, mine = false, onOpenImage = onOpenImage, handlesClick = false)
+                }
                 MetaColumn(bubble = bubble, alignment = Alignment.Start)
             }
+            ReactionChips(
+                reactions = bubble.message.reactions,
+                myReaction = bubble.myReaction,
+                onTap = { emoji -> onReact(bubble.message.id, emoji) },
+                onShowReactors = { onShowReactors(bubble.message.id) },
+            )
         }
     }
 }
@@ -105,10 +159,12 @@ private fun RightBubble(
     onOpenImage: (Long) -> Unit,
     onResend: (Long) -> Unit,
     onDelete: (Long) -> Unit,
+    onShowReactors: (Long) -> Unit,
     modifier: Modifier,
 ) {
+    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp), horizontalAlignment = Alignment.End) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.Bottom,
     ) {
@@ -122,6 +178,14 @@ private fun RightBubble(
         }
         Spacer(modifier = Modifier.width(4.dp))
         BubbleBody(bubble = bubble, mine = true, onOpenImage = onOpenImage)
+    }
+    // 내 말풍선의 반응은 보기만 한다(내 메시지에는 남길 수 없다). 누르면 누가 남겼는지.
+    ReactionChips(
+        reactions = bubble.message.reactions,
+        myReaction = null,
+        onTap = null,
+        onShowReactors = { onShowReactors(bubble.message.id) },
+    )
     }
 }
 
@@ -178,18 +242,27 @@ private fun MetaColumn(bubble: ChatBubble, alignment: Alignment.Horizontal) {
 }
 
 /** 본문. 이미지면 200dp 폭 사진, 아니면 글자다(파일·음성은 저장 파일 이름이 본문이다). */
+/** [handlesClick] 가 false 면 사진을 눌러도 여기서 열지 않는다 — 바깥 상자가 탭·길게 누르기를 함께 받는다(상대 말풍선). */
 @Composable
-private fun BubbleBody(bubble: ChatBubble, mine: Boolean, onOpenImage: (Long) -> Unit) {
+private fun BubbleBody(bubble: ChatBubble, mine: Boolean, onOpenImage: (Long) -> Unit, handlesClick: Boolean = true) {
     if (ChatViewModel.isImage(bubble.message)) {
+        // 옛 앱처럼 사진을 말풍선 색 바탕 안에 여백을 두고 넣는다 — 그 바탕이 테두리가 된다(내 사진은 내 말풍선 색).
         // 세로로 긴 사진(스크린샷 등)이 화면을 다 덮지 않게 높이를 제한한다. 전체는 눌러서 뷰어로 본다.
-        ChatImage(
-            fileName = bubble.message.message,
+        Box(
             modifier = Modifier
-                .width(IMAGE_WIDTH)
-                .heightIn(min = IMAGE_MIN_HEIGHT, max = IMAGE_MAX_HEIGHT)
                 .clip(RoundedCornerShape(BUBBLE_RADIUS))
-                .clickable { onOpenImage(bubble.message.id) },
-        )
+                .background(if (mine) colorResource(R.color.chat_bubble) else MaterialTheme.colorScheme.surfaceVariant)
+                .then(if (handlesClick) Modifier.clickable { onOpenImage(bubble.message.id) } else Modifier)
+                .padding(IMAGE_FRAME),
+        ) {
+            ChatImage(
+                fileName = bubble.message.message,
+                modifier = Modifier
+                    .width(IMAGE_WIDTH)
+                    .heightIn(min = IMAGE_MIN_HEIGHT, max = IMAGE_MAX_HEIGHT)
+                    .clip(RoundedCornerShape(BUBBLE_RADIUS - IMAGE_FRAME)),
+            )
+        }
         return
     }
 
@@ -230,4 +303,6 @@ private val IMAGE_MIN_HEIGHT = 120.dp
 private val IMAGE_MAX_HEIGHT = 260.dp
 private val ACTION_SIZE = 32.dp
 private val BUBBLE_RADIUS = 12.dp
+/** 사진 둘레의 말풍선 색 테두리 두께. */
+private val IMAGE_FRAME = 4.dp
 private val TEXT_MAX_WIDTH_SP = 250.sp

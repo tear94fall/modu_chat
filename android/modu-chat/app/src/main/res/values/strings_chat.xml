@@ -22,6 +22,9 @@
     <string name="chat_cancel">취소</string>
     <string name="chat_resend_message">메시지를 다시 보낼까요?</string>
     <string name="chat_delete_message">이 메시지를 삭제할까요?</string>
+    <string name="chat_reaction_failed">연결 중입니다. 반응을 남기지 못했습니다.</string>
+    <string name="chat_reactions_title">반응</string>
+    <string name="chat_ok">확인</string>
     <string name="chat_send_failed">연결 중입니다. 잠시 후 다시 시도해주세요.</string>
     <string name="chat_jump_to_bottom">아래로 %1$d</string>
     <string name="chat_load_failed">채팅을 불러오지 못했습니다.</string>

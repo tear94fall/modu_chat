@@ -10,6 +10,14 @@ data class ChatDto(
     val sender: String? = null,
     val message: String? = null,
     val chatTime: String? = null,
+    val reactions: List<ReactionSummaryDto>? = null,
+)
+
+/** 서버의 ReactionSummaryDto 와 같은 모양. 이력 조회와 REACTION 프레임 둘 다 이걸 쓴다. */
+data class ReactionSummaryDto(
+    val emoji: String? = null,
+    val count: Int = 0,
+    val userIds: List<String>? = null,
 )
 
 data class ChatRoomDto(

@@ -13,6 +13,8 @@ data class ChatMessage(
     val chatTime: String = "",
     val unreadCount: Int = 0,
     val status: SendStatus = SendStatus.SENT,
+    /** 이모지별 반응 집계. 이력 조회와 REACTION 프레임으로 채워진다. */
+    val reactions: List<Reaction> = emptyList(),
 )
 
 enum class SendStatus { SENDING, SENT, FAILED }

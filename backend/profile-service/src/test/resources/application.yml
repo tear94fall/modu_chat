@@ -16,7 +16,8 @@ spring:
 
   datasource:
     driver-class-name: org.h2.Driver
-    url: jdbc:h2:mem:db;MODE=MYSQL
+    # 컬럼 이름 value 가 H2 예약어라 테이블이 안 만들어진다(MySQL 은 허용). 예약어에서 뺀다.
+    url: jdbc:h2:mem:db;MODE=MYSQL;NON_KEYWORDS=VALUE
     username: sa
     password:
 

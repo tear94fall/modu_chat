@@ -2,6 +2,8 @@ package com.example.wsservice.chat.client;
 
 import com.example.wsservice.chat.dto.ChatDto;
 import com.example.wsservice.chat.dto.ChatRoomDto;
+import com.example.wsservice.chat.dto.ReactionRequestDto;
+import com.example.wsservice.chat.dto.ReactionResultDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +24,10 @@ public interface ChatFeignClient {
 
     @PostMapping("/api-internal/chat/{roomId}/room")
     ChatRoomDto updateChatRoom(@PathVariable("roomId") String roomId, @RequestBody ChatRoomDto chatRoomDto);
+
+    @PostMapping("/api-internal/chat/reaction/{roomId}/{chatId}/{userId}")
+    ReactionResultDto react(@PathVariable("roomId") String roomId, @PathVariable("chatId") String chatId,
+                            @PathVariable("userId") String userId, @RequestBody ReactionRequestDto request);
 
     @PostMapping("/api-internal/chat/read/{roomId}/{userId}")
     void updateLastReadChat(@PathVariable("roomId") String roomId, @PathVariable("userId") String userId);

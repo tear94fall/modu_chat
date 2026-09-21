@@ -7,5 +7,6 @@ public enum SubscribeType {
     BROAD_CAST,
     USER,
     READ,
-    ROOM_CREATED;
+    ROOM_CREATED,
+    REACTION;
 }

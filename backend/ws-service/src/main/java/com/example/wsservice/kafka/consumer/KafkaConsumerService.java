@@ -114,6 +114,38 @@ public class KafkaConsumerService {
         }
     }
 
+    /** 반응 집계를 방 인원 전부에게(반응자 본인 포함 — 앱의 낙관적 표시를 확정한다). */
+    @KafkaListener(
+            topics = "topic-chat-reaction",
+            containerFactory = "kafkaListenerContainerFactory"
+    )
+    public void receiveReaction(ConsumerRecord<String, ChatMessage> consumerRecord, Acknowledgment acknowledgment) {
+        try {
+            ChatMessage chatMessage = consumerRecord.value();
+            ChatRoomDto chatRoomDto = chatRoomService.getChatRoom(chatMessage.getRoomId());
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", "REACTION");
+            payload.put("roomId", chatMessage.getRoomId());
+            payload.put("chatId", chatMessage.getChatId());
+            payload.put("reactions", chatMessage.getReactions() == null ? List.of() : chatMessage.getReactions());
+            TextMessage textMessage = new TextMessage(objectMapper.writeValueAsString(payload));
+            chatRoomDto.getMembers().forEach(member -> {
+                WebSocketSession s = webSocketHandler.getClients().get(member.getUserId());
+                if (s != null) {
+                    try {
+                        s.sendMessage(textMessage);
+                    } catch (IOException e) {
+                        log.error("failed to push reaction to {}", member.getUserId(), e);
+                    }
+                }
+            });
+        } catch (Exception e) {
+            log.error("reaction broadcast failed", e);
+        } finally {
+            acknowledgment.acknowledge();
+        }
+    }
+
     /**
      * 방 생성을 멤버들에게 알린다. chat-service 는 커밋 이후에만 이 이벤트를 보내므로
      * getChatRoom 조회는 항상 성공한다. 프레임은 roomId 만 싣는다 - 안드로이드는

@@ -4,6 +4,9 @@ import com.example.wsservice.block.BlockRelationCache;
 import com.example.wsservice.chat.dto.ChatDto;
 import com.example.wsservice.chat.dto.ChatMessage;
 import com.example.wsservice.chat.dto.ChatRoomDto;
+import com.example.wsservice.chat.dto.ReactionResultDto;
+import com.example.wsservice.chat.dto.ReactionSummaryDto;
+import com.example.wsservice.fcm.dto.FcmUserMessageDto;
 import com.example.wsservice.chat.dto.SubscribeType;
 import com.example.wsservice.chat.service.ChatRoomService;
 import com.example.wsservice.chat.service.ChatService;
@@ -282,5 +285,60 @@ class WebSocketHandlerTest {
                         new ChatMessage(SubscribeType.BROAD_CAST, "room-1", "7", null, List.of("user-b"))),
                 ChatMessage.class);
         assertThat(withExclusion.getExcludeUserIds()).containsExactly("user-b");
+    }
+
+    @Test
+    @DisplayName("REACTION 프레임: chat-service 결과를 반응 토픽에 싣고, 남겨졌으면 작성자에게만 푸시한다")
+    void reactionFrame_broadcastsAndPushesAuthor() throws Exception {
+        when(chatRoomService.getChatRoom("room-1")).thenReturn(room("room-1", "user-a", "user-b"));
+        ReactionResultDto result = ReactionResultDto.builder()
+                .chatId(7L).roomId("room-1").authorUserId("user-a").added(true).emoji("LIKE")
+                .reactions(List.of(new ReactionSummaryDto("LIKE", 1, List.of("user-b"))))
+                .build();
+        when(chatService.react("room-1", "7", "user-b", "LIKE")).thenReturn(result);
+
+        TextMessage frame = new TextMessage("{\"type\":\"REACTION\",\"roomId\":\"room-1\",\"chatId\":\"7\",\"sender\":\"user-b\",\"emoji\":\"LIKE\"}");
+        handler.handleTextMessage(session("user-b", true), frame);
+
+        ArgumentCaptor<ChatMessage> captor = ArgumentCaptor.forClass(ChatMessage.class);
+        verify(kafkaProducerService).sendReactionMessage(eq("room-1"), captor.capture());
+        assertThat(captor.getValue().getType()).isEqualTo(SubscribeType.REACTION);
+        assertThat(captor.getValue().getChatId()).isEqualTo("7");
+        assertThat(captor.getValue().getUserId()).isEqualTo("user-b");
+        assertThat(captor.getValue().getReactions()).hasSize(1);
+
+        ArgumentCaptor<FcmUserMessageDto> push = ArgumentCaptor.forClass(FcmUserMessageDto.class);
+        verify(fcmService).sendUserMessage(push.capture());
+        assertThat(push.getValue().getUserId()).isEqualTo("user-a");
+        assertThat(push.getValue().getBody()).isEqualTo("user-b님이 👍 반응을 남겼습니다");
+        assertThat(push.getValue().getData()).containsEntry("roomId", "room-1").containsEntry("sender", "user-b").containsEntry("kind", "REACTION");
+        verify(kafkaProducerService, never()).sendMessage(anyString(), any());
+    }
+
+    @Test
+    @DisplayName("반응 취소는 브로드캐스트만 하고 푸시하지 않는다")
+    void reactionRemoval_doesNotPush() throws Exception {
+        when(chatRoomService.getChatRoom("room-1")).thenReturn(room("room-1", "user-a", "user-b"));
+        when(chatService.react("room-1", "7", "user-b", "LIKE")).thenReturn(ReactionResultDto.builder()
+                .chatId(7L).roomId("room-1").authorUserId("user-a").added(false).reactions(List.of()).build());
+
+        handler.handleTextMessage(session("user-b", true),
+                new TextMessage("{\"type\":\"REACTION\",\"roomId\":\"room-1\",\"chatId\":\"7\",\"sender\":\"user-b\",\"emoji\":\"LIKE\"}"));
+
+        verify(kafkaProducerService).sendReactionMessage(eq("room-1"), any());
+        verify(fcmService, never()).sendUserMessage(any());
+    }
+
+    @Test
+    @DisplayName("chat-service 가 거부하면(내 메시지 등) 아무것도 보내지 않고 세션도 살아 있다")
+    void reactionRejected_isDropped() throws Exception {
+        when(chatRoomService.getChatRoom("room-1")).thenReturn(room("room-1", "user-a", "user-b"));
+        when(chatService.react("room-1", "7", "user-a", "LIKE")).thenThrow(new RuntimeException("400 own chat"));
+
+        handler.handleTextMessage(session("user-a", true),
+                new TextMessage("{\"type\":\"REACTION\",\"roomId\":\"room-1\",\"chatId\":\"7\",\"sender\":\"user-a\",\"emoji\":\"LIKE\"}"));
+
+        verify(kafkaProducerService, never()).sendReactionMessage(anyString(), any());
+        verify(fcmService, never()).sendUserMessage(any());
     }
 }

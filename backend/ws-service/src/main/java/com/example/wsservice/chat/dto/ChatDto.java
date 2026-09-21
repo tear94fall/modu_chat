@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Data
 @Builder
@@ -19,6 +20,8 @@ public class ChatDto implements Serializable {
     private String message;
     private String chatTime;
     private ChatRoomDto chatRoomDto;
+    /** 이모지별 반응 집계(chat-service 가 채운다). 새 메시지 브로드캐스트에는 비어 있다. */
+    private List<ReactionSummaryDto> reactions;
 
     public ChatDto(String msg, String roomId, String sender, String chatTime, int type, ChatRoomDto chatRoomDto) {
         this.message = msg;

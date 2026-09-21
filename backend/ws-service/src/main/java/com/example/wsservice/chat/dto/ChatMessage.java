@@ -26,8 +26,25 @@ public class ChatMessage {
      */
     private List<String> excludeUserIds;
 
+    /** type=REACTION: 메시지 작성자(푸시 대상), 남겨진 이모지 키(취소면 null), 남겨졌는지, 갱신된 집계. */
+    private String authorUserId;
+    private String emoji;
+    private Boolean added;
+    private List<ReactionSummaryDto> reactions;
+
     /** 제외 대상이 없는 기존 4-인자 형태. */
     public ChatMessage(SubscribeType type, String roomId, String chatId, String userId) {
-        this(type, roomId, chatId, userId, null);
+        this(type, roomId, chatId, userId, null, null, null, null, null);
+    }
+
+    /** 제외 대상만 있는 기존 5-인자 형태. */
+    public ChatMessage(SubscribeType type, String roomId, String chatId, String userId, List<String> excludeUserIds) {
+        this(type, roomId, chatId, userId, excludeUserIds, null, null, null, null);
+    }
+
+    /** 반응 브로드캐스트. */
+    public static ChatMessage reaction(ReactionResultDto result, String reactorUserId) {
+        return new ChatMessage(SubscribeType.REACTION, result.getRoomId(), String.valueOf(result.getChatId()), reactorUserId, null,
+                result.getAuthorUserId(), result.getEmoji(), result.isAdded(), result.getReactions());
     }
 }

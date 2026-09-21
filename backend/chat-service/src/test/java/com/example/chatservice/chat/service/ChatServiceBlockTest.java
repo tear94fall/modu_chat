@@ -34,6 +34,7 @@ class ChatServiceBlockTest {
     private ChatRoomRepository chatRoomRepository;
     private ChatRepository chatRepository;
     private BlockedIdsCache blockedIdsCache;
+    private ChatReactionService chatReactionService;
     private ChatService chatService;
 
     @BeforeEach
@@ -41,7 +42,9 @@ class ChatServiceBlockTest {
         chatRoomRepository = mock(ChatRoomRepository.class);
         chatRepository = mock(ChatRepository.class);
         blockedIdsCache = mock(BlockedIdsCache.class);
-        chatService = new ChatService(chatRoomRepository, chatRepository, new ModelMapper(), blockedIdsCache);
+        chatReactionService = mock(ChatReactionService.class);
+        when(chatReactionService.withReactions(any())).thenAnswer(inv -> inv.getArgument(0));
+        chatService = new ChatService(chatRoomRepository, chatRepository, new ModelMapper(), blockedIdsCache, chatReactionService);
 
         when(blockedIdsCache.get(anyString())).thenReturn(BLOCKED);
         when(chatRepository.findAllByRoomId(anyString(), any())).thenReturn(List.of());

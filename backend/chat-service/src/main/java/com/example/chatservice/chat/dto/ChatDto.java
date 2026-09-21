@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Data
 @Builder
@@ -19,6 +20,8 @@ public class ChatDto implements Serializable {
     private String message;
     private String chatTime;
     private ChatRoomDto chatRoomDto;
+    /** 이모지별 반응 집계. 이력 조회에서만 채워진다(소켓 프레임의 채팅에는 없음 — 새 메시지는 반응이 없다). */
+    private List<ReactionSummaryDto> reactions;
 
     public ChatDto(String msg, String roomId, String sender, String chatTime, int type, ChatRoomDto chatRoomDto) {
         this.message = msg;

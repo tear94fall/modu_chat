@@ -3,6 +3,8 @@ package com.example.wsservice.kafka.consumer;
 import com.example.wsservice.chat.dto.ChatDto;
 import com.example.wsservice.chat.dto.ChatMessage;
 import com.example.wsservice.chat.dto.ChatRoomDto;
+import com.example.wsservice.chat.dto.ReactionSummaryDto;
+import com.example.wsservice.chat.dto.SubscribeType;
 import com.example.wsservice.chat.dto.SubscribeType;
 import com.example.wsservice.chat.service.ChatRoomService;
 import com.example.wsservice.chat.service.ChatService;
@@ -13,6 +15,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -187,6 +190,29 @@ class KafkaConsumerServiceTest {
 
         kafkaConsumerService.receiveRoomCreated(record, acknowledgment);
 
+        verify(acknowledgment).acknowledge();
+    }
+
+    @Test
+    @DisplayName("반응 토픽: 집계를 방 인원 전원에게 REACTION 프레임으로 보낸다(반응자 본인 포함)")
+    void receiveReaction_sendsSummaryToEveryone() throws IOException {
+        WebSocketSession a = mock(WebSocketSession.class);
+        WebSocketSession b = mock(WebSocketSession.class);
+        clients.put("user-a", a);
+        clients.put("user-b", b);
+        when(chatRoomService.getChatRoom("room-1")).thenReturn(roomWithMembers("room-1", "user-a", "user-b"));
+        ChatMessage message = new ChatMessage(SubscribeType.REACTION, "room-1", "7", "user-b", null,
+                "user-a", "LIKE", true, List.of(new ReactionSummaryDto("LIKE", 1, List.of("user-b"))));
+
+        kafkaConsumerService.receiveReaction(new ConsumerRecord<>("topic-chat-reaction", 0, 0L, "room-1", message), acknowledgment);
+
+        ArgumentCaptor<TextMessage> captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(a).sendMessage(captor.capture());
+        verify(b).sendMessage(any(TextMessage.class));
+        String payload = captor.getValue().getPayload();
+        org.assertj.core.api.Assertions.assertThat(payload).contains("\"type\":\"REACTION\"").contains("\"chatId\":\"7\"")
+                .contains("\"emoji\":\"LIKE\"").contains("\"userIds\":[\"user-b\"]");
+        verify(chatService, never()).getChat(any());
         verify(acknowledgment).acknowledge();
     }
 }

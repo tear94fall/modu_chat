@@ -1,6 +1,7 @@
 package com.example.pushservice.fcm.service;
 
 import com.example.pushservice.fcm.dto.FcmMessageDto;
+import com.example.pushservice.fcm.dto.FcmUserMessageDto;
 import com.example.pushservice.fcm.dto.RequestPushMessage;
 import com.example.pushservice.fcm.entity.FcmToken;
 import com.example.pushservice.fcm.repository.FcmRepository;
@@ -86,6 +87,22 @@ public class FcmService {
                 .build();
         Message msg = Message.builder().setTopic(fcmMessageDto.getTopic()).setNotification(notification).build();
         sendMessage(message);
+    }
+
+    /**
+     * userId 한 명에게 데이터 푸시. 토큰이 없으면(로그아웃·탈퇴) 보낼 곳이 없으니 false.
+     * 채팅 푸시와 같은 data 키(type/title/message + 호출자 data)를 실어 앱의 같은 코드가 띄운다.
+     */
+    public boolean sendUserMessageWithData(FcmUserMessageDto dto) throws FirebaseMessagingException {
+        FcmToken token = searchFcmToken(dto.getUserId());
+        if (token == null || token.getFcmToken() == null || token.getFcmToken().isBlank()) return false;
+        Message.Builder builder = Message.builder()
+                .setToken(token.getFcmToken())
+                .putData("title", dto.getTitle() == null ? "" : dto.getTitle())
+                .putData("message", dto.getBody() == null ? "" : dto.getBody());
+        if (dto.getData() != null) builder.putAllData(dto.getData());
+        sendMessage(builder.build());
+        return true;
     }
 
     public void sendMessage(Message message) throws FirebaseMessagingException {

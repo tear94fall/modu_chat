@@ -1,6 +1,7 @@
 package com.example.pushservice.api.internal;
 
 import com.example.pushservice.fcm.dto.FcmMessageDto;
+import com.example.pushservice.fcm.dto.FcmUserMessageDto;
 import com.example.pushservice.fcm.dto.RequestPushMessage;
 import com.example.pushservice.fcm.service.FcmService;
 import com.google.firebase.messaging.FirebaseMessagingException;
@@ -32,6 +33,12 @@ public class PushInternalController {
     public ResponseEntity<Void> pushMessage(@RequestBody FcmMessageDto fcmMessageDto) throws FirebaseMessagingException {
         fcmService.sendTopicMessageWithData(fcmMessageDto);
         return ResponseEntity.ok().build();
+    }
+
+    /** ws-service 가 반응 알림처럼 한 사람에게만 보낼 때. 토큰이 없으면 204. */
+    @PostMapping("/user")
+    public ResponseEntity<Void> pushUser(@RequestBody FcmUserMessageDto dto) throws FirebaseMessagingException {
+        return fcmService.sendUserMessageWithData(dto) ? ResponseEntity.ok().build() : ResponseEntity.noContent().build();
     }
 
     /** 공지를 올린 서비스가 전체 발송을 맡길 때 쓴다. 백오피스의 /api-admin/push/broadcast 와 같은 동작이다. */

@@ -30,6 +30,7 @@ public class ChatService {
     private final ChatRepository chatRepository;
     private final ModelMapper modelMapper;
     private final BlockedIdsCache blockedIdsCache;
+    private final ChatReactionService chatReactionService;
 
     /**
      * 방 전체 이력. requesterUserId(게이트웨이가 넣는 X-Auth-User-Id)가 있고 1:1 방이면
@@ -37,60 +38,62 @@ public class ChatService {
      */
     public List<ChatDto> searchChatByRoomId(String roomId, String requesterUserId) {
         List<Chat> chatList = chatRepository.findAllByRoomId(roomId, blockedSendersIn(roomId, requesterUserId));
-        return chatList
+        return chatReactionService.withReactions(chatList
                 .stream()
                 .map(c -> modelMapper.map(c, ChatDto.class))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
     }
 
     public List<ChatDto> searchChatByRoomIdSize(String roomId, String size, String requesterUserId) {
         List<Chat> chatList = chatRepository.findByRoomIdSize(roomId, Long.parseLong(size),
                 blockedSendersIn(roomId, requesterUserId));
-        return chatList
+        return chatReactionService.withReactions(chatList
                 .stream()
                 .map(c -> modelMapper.map(c, ChatDto.class))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
     }
 
     public List<ChatDto> searchPrevChatByRoomId(String roomId, String chatId, String size, String requesterUserId) {
         List<Chat> chatList = chatRepository.findByRoomIdAndChatId(roomId, Long.parseLong(chatId), Long.parseLong(size),
                 blockedSendersIn(roomId, requesterUserId));
-        return chatList
+        return chatReactionService.withReactions(chatList
                 .stream()
                 .map(c -> modelMapper.map(c, ChatDto.class))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
     }
 
     public List<ChatDto> searchChatByRoomIdPaging(String roomId, Pageable pageable) {
         List<Chat> chatList = chatRepository.findByRoomIdPaging(roomId, pageable);
-        return chatList
+        return chatReactionService.withReactions(chatList
                 .stream()
                 .map(c -> modelMapper.map(c, ChatDto.class))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
     }
 
     public List<ChatDto> searchImageChatByRoomIdSize(String roomId, String size, String requesterUserId) {
         List<Chat> chatList = chatRepository.findByImageChatSize(roomId, Long.parseLong(size),
                 blockedSendersIn(roomId, requesterUserId));
-        return chatList
+        return chatReactionService.withReactions(chatList
                 .stream()
                 .map(c -> modelMapper.map(c, ChatDto.class))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
     }
 
     public List<ChatDto> searchChatByMessage(String roomId, String message) {
         List<Chat> chatList = chatRepository.findByMessage(roomId, message);
-        return chatList
+        return chatReactionService.withReactions(chatList
                 .stream()
                 .map(c -> modelMapper.map(c, ChatDto.class))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
     }
 
     public ChatDto searchChatById(String chatId) {
         Long id = Long.parseLong(chatId);
         Chat chat = chatRepository.findById(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.CHAT_NOT_FOUND_ERROR, chatId));
-        return modelMapper.map(chat, ChatDto.class);
+        ChatDto dto = modelMapper.map(chat, ChatDto.class);
+        dto.setReactions(chatReactionService.summaryOf(id));
+        return dto;
     }
 
     /**
@@ -105,10 +108,10 @@ public class ChatService {
 
         List<Chat> chatList = chatRepository.findAllByIdIn(chatIds, blockedIdsCache.get(requesterUserId));
 
-        return chatList
+        return chatReactionService.withReactions(chatList
                 .stream()
                 .map(c -> modelMapper.map(c, ChatDto.class))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
     }
 
     public Long saveChat(ChatDto chatDto) {

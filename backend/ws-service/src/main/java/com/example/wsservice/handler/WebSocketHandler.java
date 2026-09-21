@@ -3,6 +3,11 @@ package com.example.wsservice.handler;
 import com.example.wsservice.block.BlockRelationCache;
 import com.example.wsservice.chat.dto.ChatDto;
 import com.example.wsservice.chat.dto.ChatMessage;
+import com.example.wsservice.chat.dto.ReactionEmojiText;
+import com.example.wsservice.chat.dto.ReactionResultDto;
+import com.example.wsservice.fcm.dto.FcmUserMessageDto;
+import java.util.HashMap;
+import java.util.Map;
 import com.example.wsservice.chat.dto.ChatRoomDto;
 import com.example.wsservice.chat.service.ChatRoomService;
 import com.example.wsservice.chat.service.ChatService;
@@ -50,6 +55,10 @@ public class WebSocketHandler extends TextWebSocketHandler {
         JsonNode typeNode = payload.get("type");
         if (typeNode != null && "READ".equals(typeNode.asText())) {
             handleReadMessage(payload);
+            return;
+        }
+        if (typeNode != null && "REACTION".equals(typeNode.asText())) {
+            handleReactionMessage(payload);
             return;
         }
 
@@ -139,6 +148,63 @@ public class WebSocketHandler extends TextWebSocketHandler {
         ChatMessage readMessage = new ChatMessage(READ, roomId, cursor, userId);
 
         kafkaProducerService.sendReadMessage(roomId, readMessage);
+    }
+
+    /**
+     * 반응 프레임 `{type:"REACTION", roomId, chatId, sender, emoji}`. chat-service 가 토글하고(같은 이모지면 취소),
+     * 결과 집계를 방 인원에게 브로드캐스트한다. 남겨진 경우에만 메시지 작성자에게 푸시 한 통.
+     * chat-service 가 거부하면(내 메시지·모르는 이모지) 프레임을 버리고 로그만 남긴다 — 세션은 닫지 않는다.
+     */
+    private void handleReactionMessage(JsonNode payload) {
+        JsonNode roomIdNode = payload.get("roomId");
+        JsonNode chatIdNode = payload.get("chatId");
+        JsonNode senderNode = payload.get("sender");
+        JsonNode emojiNode = payload.get("emoji");
+        if (roomIdNode == null || chatIdNode == null || senderNode == null || emojiNode == null) {
+            log.warn("[ws] malformed REACTION frame: {}", payload);
+            return;
+        }
+        String roomId = roomIdNode.asText();
+        String chatId = chatIdNode.asText();
+        String userId = senderNode.asText();
+        ChatRoomDto chatRoomDto = chatRoomService.getChatRoom(roomId);
+        if (chatRoomDto.checkChatRoomMember(userId)) return;
+
+        ReactionResultDto result;
+        try {
+            result = chatService.react(roomId, chatId, userId, emojiNode.asText());
+        } catch (RuntimeException e) {
+            log.warn("[ws] reaction rejected for room {} chat {} by {}: {}", roomId, chatId, userId, e.getMessage());
+            return;
+        }
+        kafkaProducerService.sendReactionMessage(roomId, ChatMessage.reaction(result, userId));
+
+        if (!result.isAdded() || result.getAuthorUserId() == null || result.getAuthorUserId().equals(userId)) return;
+        try {
+            fcmService.sendUserMessage(reactionPush(chatRoomDto, result, userId));
+        } catch (RuntimeException e) {
+            log.warn("[ws] reaction push failed for room {} chat {}: {}", roomId, chatId, e.getMessage());
+        }
+    }
+
+    /** "준섭님이 👍 반응을 남겼습니다". 앱은 채팅 푸시와 같은 data 모양을 기대한다(roomId·sender·senderName·memberCount·type). */
+    static FcmUserMessageDto reactionPush(ChatRoomDto chatRoomDto, ReactionResultDto result, String reactorUserId) {
+        List<MemberDto> members = chatRoomDto.getMembers() == null ? List.of() : chatRoomDto.getMembers();
+        String reactorName = members.stream()
+                .filter(m -> reactorUserId.equals(m.getUserId()))
+                .map(m -> m.getUsername() == null ? "" : m.getUsername())
+                .findFirst()
+                .orElse("");
+        String body = reactorName + "님이 " + ReactionEmojiText.of(result.getEmoji()) + " 반응을 남겼습니다";
+        Map<String, String> data = new HashMap<>();
+        data.put("roomId", chatRoomDto.getRoomId());
+        data.put("sender", reactorUserId);
+        data.put("senderName", reactorName);
+        data.put("memberCount", String.valueOf(members.size()));
+        data.put("type", "1");
+        data.put("kind", "REACTION");
+        data.put("chatId", String.valueOf(result.getChatId()));
+        return new FcmUserMessageDto(result.getAuthorUserId(), chatRoomDto.getRoomName(), body, data);
     }
 
     @Override

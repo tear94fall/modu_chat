@@ -18,7 +18,12 @@ import com.example.modumessenger.core.session.SessionStore
 import com.example.modumessenger.core.util.ChatRoomNameUtil
 import com.example.modumessenger.core.util.ChatTime
 import com.example.modumessenger.core.util.DisplayName
+import com.example.modumessenger.core.model.AudioPlayback
+import com.example.modumessenger.core.model.FileDownloadUi
+import com.example.modumessenger.core.model.FileInfo
+import com.example.modumessenger.data.repository.AttachmentRepository
 import com.example.modumessenger.data.repository.ChatRepository
+import com.example.modumessenger.feature.chat.audio.AudioPlayer
 import com.example.modumessenger.data.repository.StorageRepository
 import com.example.modumessenger.navigation.Routes
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -68,6 +73,12 @@ data class ChatUiState(
     /** 0 이면 "아래로" 배지를 감춘다. */
     val jumpToBottomCount: Int = 0,
     val isLeaving: Boolean = false,
+    /** 파일 말풍선이 보여 줄 원본 이름·크기. 저장 이름 → 정보. */
+    val fileInfos: Map<String, FileInfo> = emptyMap(),
+    /** 파일 말풍선의 내려받기 상태. 저장 이름 → 상태. 없으면 아직 안 받은 것. */
+    val fileDownloads: Map<String, FileDownloadUi> = emptyMap(),
+    /** 음성 말풍선이 재생 전에도 보여 줄 길이(ms). 저장 이름 → 길이. */
+    val audioDurations: Map<String, Long> = emptyMap(),
 ) {
     val memberCount: Int get() = room?.members?.size ?: 0
     val memberUserIds: List<String> get() = room?.members?.map { it.userId }.orEmpty()
@@ -85,6 +96,8 @@ class ChatViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val chatRepository: ChatRepository,
     private val storageRepository: StorageRepository,
+    private val attachmentRepository: AttachmentRepository,
+    private val audioPlayer: AudioPlayer,
     private val sessionStore: SessionStore,
     private val friendNames: FriendNames,
     private val blockedUsers: BlockedUsers,
@@ -108,6 +121,9 @@ class ChatViewModel @Inject constructor(
     /** 스낵바로 띄울 문구. */
     val messages: SharedFlow<ChatUiMessage> = _messages.asSharedFlow()
 
+    /** 지금 재생 중인 음성. 말풍선이 자기 파일일 때만 진행 상태를 그린다. */
+    val audio: StateFlow<AudioPlayback?> = audioPlayer.state
+
     private val _leftRoom = MutableSharedFlow<Unit>(replay = 0, extraBufferCapacity = 1)
 
     /** 방을 나갔다. 화면이 뒤로 간다. */
@@ -124,6 +140,9 @@ class ChatViewModel @Inject constructor(
     private var initialized = false
 
     private var loadingPrev = false
+
+    private val requestingInfo = mutableSetOf<String>()
+    private val requestingDuration = mutableSetOf<String>()
 
     init {
         viewModelScope.launch {
@@ -151,9 +170,80 @@ class ChatViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
+        // 방을 나가면 음성도 멈춘다.
+        audioPlayer.stop()
         // viewModelScope 는 이미 취소됐다. 읽음 처리는 끝까지 가야 하므로 앱 스코프에서 돈다.
         appScope.launch { chatRepository.closeRoom(roomId) }
     }
+
+    // ---------- 파일·음성 ----------
+
+    /** 파일 말풍선이 처음 그려질 때 원본 이름·크기를 받아 두고, 이미 받아 둔 파일이 있는지도 본다. */
+    fun requestFileInfo(fileName: String) {
+        if (fileName.isBlank() || _uiState.value.fileInfos.containsKey(fileName) || fileName in requestingInfo) return
+        requestingInfo += fileName
+        viewModelScope.launch {
+            attachmentRepository.fileInfo(fileName)
+                .onSuccess { info ->
+                    _uiState.update { it.copy(fileInfos = it.fileInfos + (fileName to info)) }
+                    attachmentRepository.findDownloaded(info)?.let { downloaded ->
+                        setDownload(fileName, FileDownloadUi(FileDownloadUi.State.DONE, downloaded))
+                    }
+                }
+            requestingInfo -= fileName
+        }
+    }
+
+    /**
+     * 파일 말풍선을 눌렀을 때. 아직 안 받았으면 Downloads 에 원본 이름으로 저장하고, 받는 중이면 무시하고,
+     * 이미 받았으면 다시 받지 않고 다른 앱으로 연다.
+     */
+    fun openOrDownloadFile(fileName: String) {
+        val current = _uiState.value.fileDownloads[fileName] ?: FileDownloadUi()
+        when (current.state) {
+            FileDownloadUi.State.DOWNLOADING -> return
+            FileDownloadUi.State.DONE -> {
+                val file = current.file ?: return
+                val type = _uiState.value.fileInfos[fileName]?.contentType.orEmpty()
+                if (!attachmentRepository.open(file, type)) emit(R.string.chat_file_open_failed)
+                return
+            }
+            FileDownloadUi.State.IDLE -> Unit
+        }
+        setDownload(fileName, FileDownloadUi(FileDownloadUi.State.DOWNLOADING))
+        viewModelScope.launch {
+            attachmentRepository.saveToDownloads(fileName)
+                .onSuccess { file ->
+                    setDownload(fileName, FileDownloadUi(FileDownloadUi.State.DONE, file))
+                    emit(R.string.chat_file_download_done, file.displayName)
+                }
+                .onFailure {
+                    setDownload(fileName, FileDownloadUi())
+                    emit(R.string.chat_file_download_failed)
+                }
+        }
+    }
+
+    private fun setDownload(fileName: String, download: FileDownloadUi) {
+        _uiState.update { it.copy(fileDownloads = it.fileDownloads + (fileName to download)) }
+    }
+
+    /** 음성 말풍선이 처음 그려질 때 길이를 읽어 둔다(재생 전에도 총 길이를 보여 주기 위해). */
+    fun requestAudioDuration(fileName: String) {
+        if (fileName.isBlank() || _uiState.value.audioDurations.containsKey(fileName) || fileName in requestingDuration) return
+        requestingDuration += fileName
+        viewModelScope.launch {
+            attachmentRepository.audioDuration(fileName)
+                .onSuccess { ms -> _uiState.update { it.copy(audioDurations = it.audioDurations + (fileName to ms)) } }
+            requestingDuration -= fileName
+        }
+    }
+
+    fun toggleAudio(fileName: String) = audioPlayer.toggle(fileName)
+
+    fun seekAudio(positionMs: Long) = audioPlayer.seekTo(positionMs)
+
+    fun toggleAudioMute() = audioPlayer.toggleMute()
 
     // ---------- 방 정보 ----------
 

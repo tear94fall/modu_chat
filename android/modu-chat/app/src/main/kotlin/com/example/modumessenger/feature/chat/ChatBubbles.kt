@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -44,6 +44,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import coil.size.Precision
+import coil.size.Size
 import com.example.modumessenger.R
 import com.example.modumessenger.core.network.ApiConfig
 import com.example.modumessenger.core.ui.components.ProfileImage
@@ -241,13 +244,21 @@ private fun MetaColumn(bubble: ChatBubble, alignment: Alignment.Horizontal) {
     }
 }
 
-/** 본문. 이미지면 200dp 폭 사진, 아니면 글자다(파일·음성은 저장 파일 이름이 본문이다). */
+/** 본문. 이미지면 비율을 지킨 사진([ImageBubbleSize]), 아니면 글자다(파일·음성은 저장 파일 이름이 본문이다). */
 /** [handlesClick] 가 false 면 사진을 눌러도 여기서 열지 않는다 — 바깥 상자가 탭·길게 누르기를 함께 받는다(상대 말풍선). */
 @Composable
 private fun BubbleBody(bubble: ChatBubble, mine: Boolean, onOpenImage: (Long) -> Unit, handlesClick: Boolean = true) {
     if (ChatViewModel.isImage(bubble.message)) {
+        val fileName = bubble.message.message
+        // 서버 메시지에는 사진 크기가 없다. 로드된 뒤 실제 크기로 상자를 잡고, 그 전에는 4:3 자리를 둔다.
+        var boxSize by remember(fileName) { mutableStateOf(ImageBubbleSize.PLACEHOLDER) }
+        val density = LocalDensity.current
+        // 상자보다 작은 캐시 비트맵을 늘려 쓰지 않도록 최대 상자 크기로 정확히 디코딩해 둔다.
+        // 어떤 비율이든 말풍선의 긴 변은 이 상자를 넘지 않으므로 이 한 장으로 충분하다.
+        val requestSize = with(density) {
+            Size(ImageBubbleSize.MAX_WIDTH.roundToPx(), ImageBubbleSize.MAX_HEIGHT.roundToPx())
+        }
         // 옛 앱처럼 사진을 말풍선 색 바탕 안에 여백을 두고 넣는다 — 그 바탕이 테두리가 된다(내 사진은 내 말풍선 색).
-        // 세로로 긴 사진(스크린샷 등)이 화면을 다 덮지 않게 높이를 제한한다. 전체는 눌러서 뷰어로 본다.
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(BUBBLE_RADIUS))
@@ -256,11 +267,13 @@ private fun BubbleBody(bubble: ChatBubble, mine: Boolean, onOpenImage: (Long) ->
                 .padding(IMAGE_FRAME),
         ) {
             ChatImage(
-                fileName = bubble.message.message,
+                fileName = fileName,
                 modifier = Modifier
-                    .width(IMAGE_WIDTH)
-                    .heightIn(min = IMAGE_MIN_HEIGHT, max = IMAGE_MAX_HEIGHT)
+                    .size(boxSize)
                     .clip(RoundedCornerShape(BUBBLE_RADIUS - IMAGE_FRAME)),
+                precision = Precision.EXACT,
+                requestSize = requestSize,
+                onLoaded = { width, height -> boxSize = ImageBubbleSize.of(width, height) },
             )
         }
         return
@@ -282,25 +295,48 @@ private fun BubbleBody(bubble: ChatBubble, mine: Boolean, onOpenImage: (Long) ->
     )
 }
 
-/** 채팅 사진. [ProfileImage] 와 같은 주소 규칙을 쓰되 동그랗게 자르지 않는다. */
+/**
+ * 채팅 사진. [ProfileImage] 와 같은 주소 규칙을 쓰되 동그랗게 자르지 않는다.
+ *
+ * 말풍선·드로어 미리보기는 기본값(잘라서 채움, 크기 대충 맞음)으로 충분하다. 전체 보기는
+ * [contentScale] 을 [ContentScale.Fit] 으로, [precision] 을 [Precision.EXACT] 로 준다 —
+ * Coil 은 크기가 대충 맞아도 되는 요청이면 말풍선용으로 작게 디코딩해 둔 비트맵을 그대로
+ * 돌려주므로, 화면 크기로 늘리면 뭉개진다. EXACT 면 화면 크기에 맞춰 다시 디코딩한다.
+ */
 @Composable
-fun ChatImage(fileName: String, modifier: Modifier = Modifier) {
+fun ChatImage(
+    fileName: String,
+    modifier: Modifier = Modifier,
+    contentScale: ContentScale = ContentScale.Crop,
+    precision: Precision = Precision.INEXACT,
+    /** 디코딩할 크기. 없으면 Coil 이 그려지는 크기로 정한다. 말풍선처럼 그려지는 크기가 나중에 정해질 때 준다. */
+    requestSize: Size? = null,
+    /** 사진이 로드되면 실제 픽셀 크기(가로, 세로)를 알려 준다. 말풍선이 비율을 잡는 데 쓴다. */
+    onLoaded: ((width: Int, height: Int) -> Unit)? = null,
+) {
     val placeholder = painterResource(R.drawable.basic_profile_image)
+    val context = LocalContext.current
+    val url = fileName.takeIf { it.isNotBlank() }?.let { ApiConfig.imageUrl(it) }
     AsyncImage(
-        model = fileName.takeIf { it.isNotBlank() }?.let { ApiConfig.imageUrl(it) },
+        model = ImageRequest.Builder(context)
+            .data(url)
+            .precision(precision)
+            .apply { if (requestSize != null) size(requestSize) }
+            .build(),
         contentDescription = null,
         modifier = modifier,
-        contentScale = ContentScale.Crop,
+        contentScale = contentScale,
         placeholder = placeholder,
         error = placeholder,
         fallback = placeholder,
+        onSuccess = { state ->
+            val drawable = state.result.drawable
+            onLoaded?.invoke(drawable.intrinsicWidth, drawable.intrinsicHeight)
+        },
     )
 }
 
 private val AVATAR_SIZE = 40.dp
-private val IMAGE_WIDTH = 200.dp
-private val IMAGE_MIN_HEIGHT = 120.dp
-private val IMAGE_MAX_HEIGHT = 260.dp
 private val ACTION_SIZE = 32.dp
 private val BUBBLE_RADIUS = 12.dp
 /** 사진 둘레의 말풍선 색 테두리 두께. */

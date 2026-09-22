@@ -11,6 +11,7 @@ import com.example.modumessenger.core.model.SendStatus
 import com.example.modumessenger.core.network.safeCall
 import com.example.modumessenger.core.session.SessionStore
 import com.example.modumessenger.core.util.ChatTime
+import com.example.modumessenger.core.util.ChatPreview
 import com.example.modumessenger.data.api.ChatApi
 import com.example.modumessenger.data.api.ChatRoomApi
 import com.example.modumessenger.data.dto.ChatDto
@@ -488,8 +489,9 @@ class ChatRepository @Inject constructor(
             val index = roomCache.indexOfFirst { it.roomId == roomId }
             if (index < 0) return@withLock
 
+            // 사진·파일·음성은 파일 이름 대신 종류 표식을 둔다. 서버가 목록에 주는 값과 같다.
             roomCache[index] = roomCache[index].copy(
-                lastChatMsg = dto.message.orEmpty(),
+                lastChatMsg = ChatPreview.markerOf(dto.chatType, dto.message.orEmpty()),
                 lastChatId = chatId.toString(),
                 lastChatTime = dto.chatTime.orEmpty(),
             )

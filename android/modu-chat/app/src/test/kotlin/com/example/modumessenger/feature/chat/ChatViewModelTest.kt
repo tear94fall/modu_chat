@@ -83,6 +83,8 @@ class ChatViewModelTest {
             savedStateHandle = SavedStateHandle(mapOf(Routes.ARG_ROOM_ID to ROOM)),
             chatRepository = repository,
             storageRepository = storage,
+            attachmentRepository = FakeAttachmentRepository(),
+            audioPlayer = FakeAudioPlayer(),
             sessionStore = sessionStore,
             friendNames = FriendNames(sessionStore, Gson(), scope),
             blockedUsers = blockedUsers,

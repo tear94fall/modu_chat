@@ -7,12 +7,19 @@ import com.example.modumessenger.data.dto.ChatDto
 import com.example.modumessenger.data.dto.ChatReadCursorDto
 import com.example.modumessenger.data.dto.ChatRoomDto
 import com.example.modumessenger.data.dto.ChatRoomUnreadDto
+import com.example.modumessenger.core.model.AudioPlayback
+import com.example.modumessenger.core.model.DownloadedFile
+import com.example.modumessenger.core.model.FileInfo
+import com.example.modumessenger.data.repository.AttachmentRepository
 import com.example.modumessenger.data.repository.StorageRepository
+import com.example.modumessenger.feature.chat.audio.AudioPlayer
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import java.io.File
 import com.example.modumessenger.data.socket.ChatSocket
 import com.example.modumessenger.data.socket.ConnectionState
 import com.example.modumessenger.data.socket.SocketEvent
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 
 /** 보낸 프레임만 모아 두는 가짜 소켓. [sendResult] 로 전송 실패를 흉내 낸다. */
@@ -72,4 +79,43 @@ class FakeStorageRepository : StorageRepository {
 
     override suspend fun upload(uri: Uri): Result<String> = uploadResult
     override fun takePictureUri(): Uri = Uri.EMPTY
+}
+
+/** 파일 정보는 저장 이름 그대로, 내려받기·캐시는 실패 없이 끝난다. */
+class FakeAttachmentRepository : AttachmentRepository {
+    var infos: Map<String, FileInfo> = emptyMap()
+    val downloaded = mutableListOf<String>()
+
+    override suspend fun fileInfo(name: String): Result<FileInfo> =
+        Result.success(infos[name] ?: FileInfo(name, name, -1L, "application/octet-stream"))
+
+    override suspend fun saveToDownloads(name: String): Result<DownloadedFile> {
+        downloaded += name
+        return Result.success(DownloadedFile(infos[name]?.originalName ?: name, Uri.EMPTY))
+    }
+
+    override suspend fun findDownloaded(info: FileInfo): DownloadedFile? = null
+    override fun open(file: DownloadedFile, contentType: String): Boolean = true
+    override suspend fun cacheFile(name: String): Result<File> = Result.success(File(name))
+    override suspend fun audioDuration(name: String): Result<Long> = Result.success(10_000L)
+}
+
+/** 상태만 기억하는 재생기. */
+class FakeAudioPlayer : AudioPlayer {
+    private val _state = MutableStateFlow<AudioPlayback?>(null)
+    override val state: StateFlow<AudioPlayback?> = _state
+
+    override fun toggle(fileName: String) {
+        val current = _state.value
+        _state.value = if (current?.fileName == fileName) {
+            current.copy(isPlaying = !current.isPlaying)
+        } else {
+            AudioPlayback(fileName = fileName, isPlaying = true, durationMs = 10_000L)
+        }
+    }
+
+    override fun pause() { _state.value = _state.value?.copy(isPlaying = false) }
+    override fun seekTo(positionMs: Long) { _state.value = _state.value?.copy(positionMs = positionMs) }
+    override fun toggleMute() { _state.value = _state.value?.copy(isMuted = !(_state.value?.isMuted ?: false)) }
+    override fun stop() { _state.value = null }
 }

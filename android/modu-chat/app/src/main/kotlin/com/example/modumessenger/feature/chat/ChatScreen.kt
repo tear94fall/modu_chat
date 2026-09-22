@@ -111,6 +111,17 @@ fun ChatScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val names by viewModel.names.collectAsStateWithLifecycle()
+    val audio by viewModel.audio.collectAsStateWithLifecycle()
+    val attachmentActions = remember(viewModel) {
+        AttachmentActions(
+            onNeedFileInfo = viewModel::requestFileInfo,
+            onOpenOrDownload = viewModel::openOrDownloadFile,
+            onNeedAudioDuration = viewModel::requestAudioDuration,
+            onToggleAudio = viewModel::toggleAudio,
+            onSeekAudio = viewModel::seekAudio,
+            onToggleMute = viewModel::toggleAudioMute,
+        )
+    }
     val snackbarHostState = remember { SnackbarHostState() }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val listState = rememberLazyListState()
@@ -292,6 +303,13 @@ fun ChatScreen(
                                         onDelete = { id -> deleteTarget = id },
                                         onReact = viewModel::react,
                                         onShowReactors = { id -> reactorsTarget = id },
+                                        attachments = AttachmentUi(
+                                            fileInfos = uiState.fileInfos,
+                                            fileDownloads = uiState.fileDownloads,
+                                            audio = audio,
+                                            audioDurations = uiState.audioDurations,
+                                        ),
+                                        attachmentActions = attachmentActions,
                                     )
                                 }
                             }

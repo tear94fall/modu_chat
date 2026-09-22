@@ -1,6 +1,7 @@
 package com.example.modumessenger.data.repository
 
 import app.cash.turbine.test
+import com.example.modumessenger.core.model.Reaction
 import com.example.modumessenger.core.model.SendStatus
 import com.example.modumessenger.core.session.SessionStore
 import com.example.modumessenger.data.api.ChatApi
@@ -514,6 +515,54 @@ class ChatRepositoryTest {
         advanceUntilIdle()
 
         assertEquals(before + 1, chatRoomApi.roomsCalls)
+    }
+
+    // ---------- 반응 ----------
+
+    @Test
+    fun `남의 메시지에 반응하면 먼저 그리고 REACTION 프레임을 보낸다`() = runTest {
+        val repository = openedRepository()
+        socket.incoming.emit(SocketEvent.Chat(chat(5L, ACTIVE_ROOM, OTHER, "안녕")))
+        advanceUntilIdle()
+
+        assertTrue(repository.react(5L, "LIKE"))
+        advanceUntilIdle()
+
+        val message = repository.activeMessages.value.single()
+        assertEquals(listOf(Reaction("LIKE", 1, listOf(ME))), message.reactions)
+        val frame = socket.sent.single { it.contains("\"type\":\"REACTION\"") }
+        assertTrue(frame.contains("\"chatId\":\"5\"") && frame.contains("\"emoji\":\"LIKE\"") && frame.contains("\"sender\":\"$ME\""))
+
+        // 서버 확정 프레임이 집계를 덮어쓴다(다른 사람 것이 같이 실려 온다).
+        socket.incoming.emit(SocketEvent.Reaction(ACTIVE_ROOM, 5L, listOf(Reaction("LIKE", 2, listOf(ME, OTHER)))))
+        advanceUntilIdle()
+        assertEquals(2, repository.activeMessages.value.single().reactions.single().count)
+    }
+
+    @Test
+    fun `내 메시지에는 반응할 수 없고, 못 보냈으면 되돌린다`() = runTest {
+        val repository = openedRepository()
+        socket.incoming.emit(SocketEvent.Chat(chat(5L, ACTIVE_ROOM, ME, "내 글")))
+        socket.incoming.emit(SocketEvent.Chat(chat(6L, ACTIVE_ROOM, OTHER, "남의 글")))
+        advanceUntilIdle()
+
+        assertFalse(repository.react(5L, "LIKE"))
+        assertTrue(socket.sent.none { it.contains("REACTION") })
+
+        socket.sendResult = false
+        assertFalse(repository.react(6L, "LIKE"))
+        advanceUntilIdle()
+        assertTrue(repository.activeMessages.value.first { it.id == 6L }.reactions.isEmpty())
+    }
+
+    @Test
+    fun `다른 방의 REACTION 프레임은 무시한다`() = runTest {
+        val repository = openedRepository()
+        socket.incoming.emit(SocketEvent.Chat(chat(5L, ACTIVE_ROOM, OTHER, "안녕")))
+        socket.incoming.emit(SocketEvent.Reaction(OTHER_ROOM, 5L, listOf(Reaction("LIKE", 1, listOf(OTHER)))))
+        advanceUntilIdle()
+
+        assertTrue(repository.activeMessages.value.single().reactions.isEmpty())
     }
 
     private companion object {

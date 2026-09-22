@@ -52,6 +52,8 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -83,6 +85,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.modumessenger.R
+import com.example.modumessenger.core.model.ReactionEmoji
 import com.example.modumessenger.core.model.Member
 import com.example.modumessenger.core.ui.components.ConfirmDialog
 import com.example.modumessenger.core.ui.components.ModuTopBar
@@ -119,6 +122,7 @@ fun ChatScreen(
     var showAttachSheet by remember { mutableStateOf(false) }
     var resendTarget by remember { mutableStateOf<Long?>(null) }
     var deleteTarget by remember { mutableStateOf<Long?>(null) }
+    var reactorsTarget by remember { mutableStateOf<Long?>(null) }
     var showExitDialog by remember { mutableStateOf(false) }
     var atBottom by remember { mutableStateOf(true) }
     var pendingScrollToBottom by remember { mutableStateOf(false) }
@@ -264,6 +268,8 @@ fun ChatScreen(
                                         onOpenImage = { id -> onOpenImages(listOf(id.toString())) },
                                         onResend = { id -> resendTarget = id },
                                         onDelete = { id -> deleteTarget = id },
+                                        onReact = viewModel::react,
+                                        onShowReactors = { id -> reactorsTarget = id },
                                     )
                                 }
                             }
@@ -321,6 +327,30 @@ fun ChatScreen(
             },
             onDismiss = { resendTarget = null },
         )
+    }
+
+    reactorsTarget?.let { id ->
+        val bubble = uiState.bubbles.firstOrNull { it.message.id == id }
+        if (bubble == null || bubble.message.reactions.isEmpty()) {
+            reactorsTarget = null
+        } else {
+            val names by viewModel.names.collectAsStateWithLifecycle()
+            val unknown = stringResource(R.string.chat_unknown_sender)
+            val byUserId = uiState.room?.members.orEmpty().associateBy { it.userId }
+            val lines = bubble.message.reactions.joinToString("\n") { reaction ->
+                val who = reaction.userIds.joinToString(", ") { userId ->
+                    val member = byUserId[userId]
+                    DisplayName.of(userId, member?.username, names).ifBlank { unknown }
+                }
+                "${ReactionEmoji.text(reaction.emoji)} $who"
+            }
+            AlertDialog(
+                onDismissRequest = { reactorsTarget = null },
+                title = { Text(stringResource(R.string.chat_reactions_title)) },
+                text = { Text(lines) },
+                confirmButton = { TextButton(onClick = { reactorsTarget = null }) { Text(stringResource(R.string.chat_ok)) } },
+            )
+        }
     }
 
     deleteTarget?.let { id ->

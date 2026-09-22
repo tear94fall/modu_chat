@@ -7,6 +7,9 @@ import com.example.modumessenger.data.dto.ChatDto
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.JsonParser
+import com.google.gson.reflect.TypeToken
+import com.example.modumessenger.data.dto.ReactionSummaryDto
+import com.example.modumessenger.data.dto.toReactions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -224,6 +227,14 @@ class OkHttpChatSocket @Inject constructor(
 
                     TYPE_ROOM_CREATED -> emit(SocketEvent.RoomCreated(json.get(FIELD_ROOM_ID).asString))
 
+                    TYPE_REACTION -> emit(
+                        SocketEvent.Reaction(
+                            roomId = json.get(FIELD_ROOM_ID).asString,
+                            chatId = parseCursor(json.get(FIELD_CHAT_ID)),
+                            reactions = (gson.fromJson<List<ReactionSummaryDto>>(json.get(FIELD_REACTIONS), REACTION_LIST_TYPE) ?: emptyList()).toReactions(),
+                        ),
+                    )
+
                     else -> {
                         val dto = gson.fromJson(text, ChatDto::class.java)
                         if (dto != null) emit(SocketEvent.Chat(dto))
@@ -292,5 +303,9 @@ class OkHttpChatSocket @Inject constructor(
         private const val FIELD_LAST_READ_CHAT_ID = "lastReadChatId"
         private const val TYPE_READ = "READ"
         private const val TYPE_ROOM_CREATED = "ROOM_CREATED"
+        private const val TYPE_REACTION = "REACTION"
+        private const val FIELD_CHAT_ID = "chatId"
+        private const val FIELD_REACTIONS = "reactions"
+        private val REACTION_LIST_TYPE = object : TypeToken<List<ReactionSummaryDto>>() {}.type
     }
 }

@@ -1,0 +1,2 @@
+rootProject.name = "member-service"
+include("lock-processor")

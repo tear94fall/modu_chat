@@ -1,6 +1,7 @@
 package com.example.modumessenger.data.dto
 
 import com.example.modumessenger.core.model.ChatMessage
+import com.example.modumessenger.core.model.Reaction
 import com.example.modumessenger.core.model.ChatRoom
 import com.example.modumessenger.core.model.ChatType
 import com.example.modumessenger.core.model.FriendStatus
@@ -55,7 +56,14 @@ fun ChatDto.toModel(): ChatMessage = ChatMessage(
     chatTime = chatTime.orEmpty(),
     unreadCount = 0,
     status = SendStatus.SENT,
+    reactions = reactions.orEmpty().toReactions(),
 )
+
+fun List<ReactionSummaryDto>.toReactions(): List<Reaction> = mapNotNull { dto ->
+    val emoji = dto.emoji?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+    val userIds = dto.userIds.orEmpty()
+    Reaction(emoji = emoji, count = if (dto.count > 0) dto.count else userIds.size, userIds = userIds)
+}
 
 fun ChatRoomDto.toModel(): ChatRoom = ChatRoom(
     roomId = roomId.orEmpty(),

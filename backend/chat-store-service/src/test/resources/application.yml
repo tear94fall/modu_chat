@@ -1,0 +1,30 @@
+server:
+  port: 8100
+
+spring:
+  application:
+    name: chat-store-service
+
+  # 테스트는 config-server 를 쓰지 않는다. enabled: false 면
+  # Spring Cloud Commons 의 spring.config.import 필수 검사도 통과한다.
+  cloud:
+    config:
+      enabled: false
+
+  kafka:
+    consumer:
+      bootstrap-servers: localhost:29092
+      group-id: chat-store
+      auto-offset-reset: latest
+      enable-auto-commit: false
+    listener:
+      # 컨텍스트만 띄운다. 브로커에 붙지 않는다.
+      auto-startup: false
+
+eureka:
+  client:
+    enabled: false
+
+modu:
+  internal-api:
+    token: test-internal-token

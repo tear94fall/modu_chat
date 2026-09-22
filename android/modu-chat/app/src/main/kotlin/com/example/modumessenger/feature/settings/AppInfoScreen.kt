@@ -2,14 +2,11 @@ package com.example.modumessenger.feature.settings
 
 import android.os.Build
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -22,7 +19,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.modumessenger.R
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Android
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.PhoneAndroid
 import com.example.modumessenger.core.ui.components.ModuTopBar
+import com.example.modumessenger.core.ui.components.SettingsRow
 
 /**
  * 버전 정보(부록 A §24). 기존 앱과 같은 순서로 서버/앱/os 세 줄을 그린다.
@@ -46,26 +48,28 @@ fun AppInfoScreen(
         topBar = { ModuTopBar(title = stringResource(R.string.app_info_title), onBack = onBack) },
     ) { padding ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp),
+            modifier = Modifier.fillMaxSize().padding(padding),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Image(
                 painter = painterResource(R.drawable.modu_logo),
                 contentDescription = null,
-                modifier = Modifier.size(120.dp).padding(bottom = 12.dp),
+                modifier = Modifier.padding(vertical = 24.dp).size(96.dp),
             )
-            Text(
-                text = stringResource(R.string.app_info_server_version, serverVersion),
-                style = MaterialTheme.typography.bodyLarge,
+            SettingsRow(
+                title = stringResource(R.string.app_info_server_version),
+                iconVector = Icons.Filled.Cloud,
+                value = serverVersion,
             )
-            Text(
-                text = stringResource(R.string.app_info_app_version, versionName),
-                style = MaterialTheme.typography.bodyLarge,
+            SettingsRow(
+                title = stringResource(R.string.app_info_app_version),
+                iconVector = Icons.Filled.PhoneAndroid,
+                value = versionName,
             )
-            Text(
-                text = stringResource(R.string.app_info_os_version, Build.VERSION.RELEASE ?: ""),
-                style = MaterialTheme.typography.bodyLarge,
+            SettingsRow(
+                title = stringResource(R.string.app_info_os_version),
+                iconVector = Icons.Filled.Android,
+                value = stringResource(R.string.app_info_os_value, Build.VERSION.RELEASE ?: ""),
             )
         }
     }

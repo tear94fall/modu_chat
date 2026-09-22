@@ -3,7 +3,11 @@ package com.example.modumessenger.sso
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
+import androidx.compose.runtime.collectAsState
+import com.example.modumessenger.core.lock.AppLock
+import com.example.modumessenger.feature.lock.LockScreen
+import com.example.modumessenger.feature.login.GoogleSignInHelper
 import androidx.activity.compose.setContent
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -30,11 +34,13 @@ import javax.inject.Inject
  * 실패는 전부 `RESULT_CANCELED` + `reason` extra 로 알린다.
  */
 @AndroidEntryPoint
-class SsoActivity : ComponentActivity() {
+class SsoActivity : FragmentActivity() {
 
     @Inject lateinit var authRepository: AuthRepository
 
     @Inject lateinit var sessionStore: SessionStore
+
+    @Inject lateinit var appLock: AppLock
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,6 +73,19 @@ class SsoActivity : ComponentActivity() {
                 }
 
                 if (!ready) return@ModuTheme
+
+                // 앱 잠금이 걸려 있으면 다른 앱의 로그인도 먼저 잠금을 풀어야 한다. 아니면 잠금 우회 통로가 된다.
+                val locked by appLock.isLocked.collectAsState()
+                if (locked) {
+                    LockScreen(
+                        onBack = { cancel(REASON_DENIED) },
+                        onLoggedOut = {
+                            GoogleSignInHelper.signOut(this@SsoActivity)
+                            cancel(REASON_NOT_LOGGED_IN)
+                        },
+                    )
+                    return@ModuTheme
+                }
 
                 AlertDialog(
                     onDismissRequest = { if (!working) cancel(REASON_DENIED) },

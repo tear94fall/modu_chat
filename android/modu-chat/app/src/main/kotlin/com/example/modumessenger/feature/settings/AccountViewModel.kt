@@ -2,13 +2,9 @@ package com.example.modumessenger.feature.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.modumessenger.core.session.SessionEvents
-import com.example.modumessenger.core.session.SessionStore
-import com.example.modumessenger.data.api.ChatRoomApi
 import com.example.modumessenger.R
+import com.example.modumessenger.core.session.SessionLogout
 import com.example.modumessenger.data.repository.AccountRepository
-import com.example.modumessenger.data.repository.AuthRepository
-import com.example.modumessenger.data.repository.PushRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,11 +22,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class AccountViewModel @Inject constructor(
-    private val authRepository: AuthRepository,
-    private val pushRepository: PushRepository,
-    private val chatRoomApi: ChatRoomApi,
-    private val sessionStore: SessionStore,
-    private val sessionEvents: SessionEvents,
+    private val sessionLogout: SessionLogout,
     private val accountRepository: AccountRepository,
 ) : ViewModel() {
 
@@ -58,10 +50,7 @@ class AccountViewModel @Inject constructor(
     fun logout() {
         if (_isWorking.value) return
         _isWorking.value = true
-        viewModelScope.launch {
-            unsubscribeMyRooms()
-            finishSession()
-        }
+        viewModelScope.launch { finishSession() }
     }
 
     /**
@@ -79,25 +68,13 @@ class AccountViewModel @Inject constructor(
                 _messages.tryEmit(R.string.account_withdraw_failed)
                 return@launch
             }
-            unsubscribeMyRooms()
             finishSession()
         }
     }
 
-    /** 1) 세션이 지워지기 전에 방 토픽을 끊는다(방 id 가 필요하다). */
-    private suspend fun unsubscribeMyRooms() {
-        val me = sessionStore.memberNow() ?: return
-        val roomIds = runCatching { chatRoomApi.getRooms(me.id.toString()) }
-            .getOrNull()
-            ?.mapNotNull { it.roomId }
-            .orEmpty()
-        if (roomIds.isNotEmpty()) pushRepository.unsubscribeRooms(roomIds)
-    }
-
-    /** 2) revoke 를 시도하고 세션을 지운 뒤 3) 앱 전체에 알린다(소켓 종료 등은 구독자가 한다). */
+    /** 토픽 해제 → revoke → 세션 삭제 → 앱 전체 알림은 [SessionLogout] 이 한다. */
     private suspend fun finishSession() {
-        authRepository.logout()
-        sessionEvents.notifyLoggedOut()
+        sessionLogout.run()
         _isWorking.value = false
         _loggedOut.tryEmit(Unit)
     }

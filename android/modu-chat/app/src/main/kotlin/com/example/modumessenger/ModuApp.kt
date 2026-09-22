@@ -7,6 +7,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.example.modumessenger.core.app.AppForeground
+import com.example.modumessenger.core.lock.LockLifecycle
 import com.example.modumessenger.data.socket.SocketLifecycle
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -19,6 +20,7 @@ import javax.inject.Inject
 class ModuApp : Application(), ImageLoaderFactory {
 
     @Inject lateinit var socketLifecycle: SocketLifecycle
+    @Inject lateinit var lockLifecycle: LockLifecycle
     @Inject lateinit var imageLoader: dagger.Lazy<ImageLoader>
 
     /** 앱 전체의 AsyncImage 가 인증 헤더가 붙은 로더를 쓴다(storage-service /view 는 토큰이 필요하다). */
@@ -27,6 +29,7 @@ class ModuApp : Application(), ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
         socketLifecycle.start()
+        lockLifecycle.start()
         ProcessLifecycleOwner.get().lifecycle.addObserver(
             object : DefaultLifecycleObserver {
                 override fun onStart(owner: LifecycleOwner) {

@@ -24,12 +24,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.size.Precision
 import com.example.modumessenger.R
 import com.example.modumessenger.core.ui.components.BottomGradient
 
@@ -61,9 +63,12 @@ fun ChatImageScreen(
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+                // 잘라 채우면 가로가 긴 사진의 양옆이 사라진다. 원본 비율 그대로 화면 안에 맞춘다.
                 ChatImage(
                     fileName = uiState.fileNames[page],
-                    modifier = Modifier.fillMaxWidth().align(Alignment.Center),
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit,
+                    precision = Precision.EXACT,
                 )
             }
 

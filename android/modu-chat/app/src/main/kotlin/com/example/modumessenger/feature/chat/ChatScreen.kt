@@ -3,6 +3,7 @@ package com.example.modumessenger.feature.chat
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -127,6 +128,8 @@ fun ChatScreen(
     var atBottom by remember { mutableStateOf(true) }
     var pendingScrollToBottom by remember { mutableStateOf(false) }
     var firstScrollDone by remember { mutableStateOf(false) }
+    /** 입장 직후와 맨 아래에 있을 때 true. 사진이 로드돼 목록이 커져도 맨 아래를 유지한다. */
+    var stickToBottom by remember { mutableStateOf(true) }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.onResume() }
 
@@ -149,8 +152,27 @@ fun ChatScreen(
     LaunchedEffect(listState) {
         snapshotFlow { !listState.canScrollForward }.collect { bottom ->
             atBottom = bottom
+            if (bottom) stickToBottom = true
             viewModel.onAtBottomChanged(bottom)
         }
+    }
+
+    // 사용자가 손으로 위로 올리기 시작하면 맨 아래 붙이기를 멈춘다. 다시 맨 아래에 닿으면 위에서 켜진다.
+    LaunchedEffect(listState) {
+        listState.interactionSource.interactions.collect { interaction ->
+            if (interaction is DragInteraction.Start) stickToBottom = false
+        }
+    }
+
+    // 사진 말풍선은 로드된 뒤 실제 비율로 커진다(4:3 자리 → 실제 크기). 그만큼 목록이 늘어나면
+    // 마지막 메시지가 화면 밖으로 밀리므로, 맨 아래에 붙어 있는 동안에는 항목 크기가 바뀔 때마다
+    // 마지막 항목에 다시 붙인다. 위로 올려 둔 상태에서는 건드리지 않는다.
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.sumOf { it.size } to listState.layoutInfo.totalItemsCount }
+            .collect { (_, total) ->
+                if (!stickToBottom || !firstScrollDone || total == 0) return@collect
+                if (listState.canScrollForward) listState.scrollToItem(total - 1)
+            }
     }
 
     // 맨 위에 닿으면 이전 메시지를 붙이고, 보이던 자리를 그대로 유지한다.

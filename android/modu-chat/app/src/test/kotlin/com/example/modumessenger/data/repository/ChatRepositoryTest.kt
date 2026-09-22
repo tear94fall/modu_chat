@@ -206,6 +206,23 @@ class ChatRepositoryTest {
     }
 
     @Test
+    fun `소켓으로 받은 사진 메시지는 목록에 파일 이름 대신 image 표식을 남긴다`() = runTest {
+        val repository = openedRepository()
+
+        socket.incoming.emit(
+            SocketEvent.Chat(
+                chat(8L, OTHER_ROOM, OTHER, "760ffc7db9c0c6033a4293139fdf8bd862d974cf06d98424fb7324e7779475e8.jpg")
+                    .copy(chatType = 2),
+            ),
+        )
+        advanceUntilIdle()
+
+        val room = repository.rooms.value.first { it.roomId == OTHER_ROOM }
+        assertEquals("image", room.lastChatMsg)
+        assertEquals("8", room.lastChatId)
+    }
+
+    @Test
     fun `내 메시지는 배너도 미읽음도 없다`() = runTest {
         val repository = openedRepository()
 

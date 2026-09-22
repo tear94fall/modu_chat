@@ -8,6 +8,7 @@ import com.example.modumessenger.core.model.ChatRoom
 import com.example.modumessenger.core.model.Member
 import com.example.modumessenger.core.session.FriendNames
 import com.example.modumessenger.core.session.SessionStore
+import com.example.modumessenger.core.util.ChatPreview
 import com.example.modumessenger.core.util.ChatRoomNameUtil
 import com.example.modumessenger.core.util.ChatTime
 import com.example.modumessenger.data.repository.ChatRepository
@@ -109,13 +110,8 @@ class ChatRoomListViewModel @Inject constructor(
         /** 격자 아바타는 최대 4개. */
         const val AVATAR_GRID_MAX = 4
 
-        /** 본문이 이 값들이면 문구로 바꿔 보여 준다(기존 앱과 같은 문자열 비교). */
-        fun previewResOf(lastChatMsg: String): Int? = when (lastChatMsg) {
-            "image" -> R.string.chat_preview_image
-            "file" -> R.string.chat_preview_file
-            "audio" -> R.string.chat_preview_audio
-            else -> null
-        }
+        /** 본문이 종류 표식(또는 저장 파일 이름)이면 문구로 바꿔 보여 준다. 규칙은 [ChatPreview]. */
+        fun previewResOf(lastChatMsg: String): Int? = ChatPreview.resOf(lastChatMsg)
 
         /** 마지막 메시지나 시각이 비어 있으면 시각을 그리지 않는다. */
         fun lastTimeOf(room: ChatRoom): String =

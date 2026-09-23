@@ -90,4 +90,20 @@
     <!-- ===== 사진 보기(부록 A §17) ===== -->
     <string name="chat_images_close">X</string>
     <string name="chat_images_load_failed">사진을 불러오지 못했습니다.</string>
+
+    <!-- ===== 파일·음성 말풍선 ===== -->
+    <string name="chat_file_icon">파일</string>
+    <string name="chat_file_download_hint">눌러서 저장</string>
+    <string name="chat_file_downloading">받는 중…</string>
+    <string name="chat_file_saved_hint">저장됨 · 눌러서 열기</string>
+    <string name="chat_file_open_failed">이 파일을 열 수 있는 앱이 없습니다.</string>
+    <string name="chat_file_download_done">다운로드 폴더에 저장했습니다: %1$s</string>
+    <string name="chat_file_download_failed">파일을 내려받지 못했습니다.</string>
+    <string name="chat_audio_play">재생</string>
+    <string name="chat_audio_pause">일시정지</string>
+    <string name="chat_audio_mute">음소거</string>
+    <string name="chat_audio_unmute">음소거 해제</string>
+    <string name="chat_audio_seek">재생 위치</string>
+    <string name="chat_audio_label">음성 메시지</string>
+    <string name="chat_audio_failed">음성을 불러오지 못했습니다.</string>
 </resources>

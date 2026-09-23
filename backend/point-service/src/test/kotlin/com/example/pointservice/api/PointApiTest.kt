@@ -113,6 +113,14 @@ class PointApiTest {
         mockMvc.perform(get("/api-internal/point/$user/balance").header("X-Internal-Token", token))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.balance").value(60))
+        mockMvc.perform(get("/api-internal/point/$user/history").header("X-Internal-Token", token).param("size", "1"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.totalElements").value(2))
+            .andExpect(jsonPath("$.totalPages").value(2))
+            .andExpect(jsonPath("$.content[0].type").value("SPEND"))
+            .andExpect(jsonPath("$.content[0].amount").value(-40))
+            .andExpect(jsonPath("$.content[0].balanceAfter").value(60))
+        mockMvc.perform(get("/api-internal/point/$user/history")).andExpect(status().isForbidden)
     }
 
     @Test

@@ -42,7 +42,7 @@
 ### 로컬 실행
 
 인프라(MySQL, MongoDB, Redis, Kafka, RabbitMQ, MinIO)와 관측성 스택(Prometheus, Grafana, Pinpoint)은 modu_infra(https://github.com/tear94fall/modu_infra), 플랫폼(config-service, discovery-service, gateway-service)은 modu_platform(https://github.com/tear94fall/modu_platform) 저장소에서 따로 띄웁니다(둘 다 이 저장소 옆에 clone).
-이 디렉터리의 `docker-compose.yml` 에는 메신저 애플리케이션 서비스(auth, member, chat, ws, push, storage, profile, chat-store)만 있습니다.
+이 디렉터리의 `docker-compose.yml` 에는 메신저 애플리케이션 서비스(auth, member, chat, ws, push, storage, profile, chat-store, point)만 있습니다. point-service 는 그로스(이벤트·출석·초대) 포인트 원장으로, 사용자를 userId 로만 식별해 채팅 DB 와 독립적입니다(`point-service/sql/schema.sql` 로 `modu-point` 스키마를 한 번 만들어 둡니다).
 
 1. modu_infra 의 `README.md` 순서대로 `modu-infra` 네트워크, pinpoint-docker, data, monitoring 을 먼저 띄웁니다.
 2. modu_platform 의 `README.md` 대로 config-service, discovery-service, gateway-service 를 띄웁니다. 설정 파일(`config-repo/`)도 그 저장소에 있습니다 — 메신저 서비스는 `messenger/` 폴더의 설정을 받습니다.

@@ -64,6 +64,7 @@ data class SpendRequestDto(
     @field:Size(max = 200) val memo: String? = null,
 )
 
+/** 사용·환불 결과. 같은 refId 가 두 번 오면 [applied] 가 false 다. */
 data class SpendResultDto(val applied: Boolean, val amount: Long, val balance: Long)
 
 /** 관리자 수동 조정. 양수는 지급, 음수는 회수. */

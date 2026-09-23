@@ -34,6 +34,11 @@ class PointInternalController(private val pointService: PointService) {
     fun spend(@Valid @RequestBody request: SpendRequestDto): ResponseEntity<SpendResultDto> =
         ResponseEntity.ok(pointService.spend(request.userId, request.amount, request.refId, request.memo))
 
+    /** 사용 취소(환불). 같은 refId 로 다시 오면 applied=false. */
+    @PostMapping("/refund")
+    fun refund(@Valid @RequestBody request: SpendRequestDto): ResponseEntity<SpendResultDto> =
+        ResponseEntity.ok(pointService.refund(request.userId, request.amount, request.refId, request.memo))
+
     @GetMapping("/{userId}/balance")
     fun balance(@PathVariable("userId") userId: String): ResponseEntity<PointBalanceDto> =
         ResponseEntity.ok(pointService.balance(userId))

@@ -113,13 +113,28 @@ class PointApiTest {
         mockMvc.perform(get("/api-internal/point/$user/balance").header("X-Internal-Token", token))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.balance").value(60))
+        // 환불: 되돌리고, 같은 refId 는 한 번만
+        mockMvc.perform(
+            post("/api-internal/point/refund").header("X-Internal-Token", token).contentType(MediaType.APPLICATION_JSON)
+                .content("""{"userId":"$user","amount":40,"refId":"refund:order:1","memo":"주문 취소"}"""),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.applied").value(true))
+            .andExpect(jsonPath("$.balance").value(100))
+        mockMvc.perform(
+            post("/api-internal/point/refund").header("X-Internal-Token", token).contentType(MediaType.APPLICATION_JSON)
+                .content("""{"userId":"$user","amount":40,"refId":"refund:order:1"}"""),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.applied").value(false))
+            .andExpect(jsonPath("$.balance").value(100))
         mockMvc.perform(get("/api-internal/point/$user/history").header("X-Internal-Token", token).param("size", "1"))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.totalElements").value(2))
-            .andExpect(jsonPath("$.totalPages").value(2))
-            .andExpect(jsonPath("$.content[0].type").value("SPEND"))
-            .andExpect(jsonPath("$.content[0].amount").value(-40))
-            .andExpect(jsonPath("$.content[0].balanceAfter").value(60))
+            .andExpect(jsonPath("$.totalElements").value(3))
+            .andExpect(jsonPath("$.totalPages").value(3))
+            .andExpect(jsonPath("$.content[0].type").value("REFUND"))
+            .andExpect(jsonPath("$.content[0].amount").value(40))
+            .andExpect(jsonPath("$.content[0].balanceAfter").value(100))
         mockMvc.perform(get("/api-internal/point/$user/history")).andExpect(status().isForbidden)
     }
 

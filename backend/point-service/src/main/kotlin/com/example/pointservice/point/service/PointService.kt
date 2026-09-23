@@ -93,6 +93,18 @@ class PointService(
         return SpendResultDto(true, amount, balance)
     }
 
+    /** 사용 취소(환불). 주문 취소처럼 앞서 차감한 포인트를 돌려준다. 같은 refId 로 다시 오면 돌려주지 않고 현재 잔액만 준다. */
+    fun refund(userId: String, amount: Long, refId: String, memo: String? = null): SpendResultDto {
+        if (amount <= 0L) throw CustomException(ErrorCode.INVALID_AMOUNT, amount.toString())
+        val account = lockOrCreate(userId)
+        if (transactionRepository.existsByUserIdAndRefId(userId, refId)) {
+            return SpendResultDto(false, 0L, account.balance)
+        }
+        val balance = account.apply(amount)
+        transactionRepository.save(PointTransaction(userId, PointTransactionType.REFUND, amount, balance, now(), refId = refId, memo = memo))
+        return SpendResultDto(true, amount, balance)
+    }
+
     /** 관리자 수동 조정. 회수는 잔액을 넘을 수 없다. */
     fun adjust(userId: String, request: AdjustRequestDto): PointBalanceDto {
         if (request.amount == 0L) throw CustomException(ErrorCode.INVALID_AMOUNT, "0")

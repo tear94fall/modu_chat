@@ -113,12 +113,15 @@ class ChatRoomListViewModel @Inject constructor(
         /** 본문이 종류 표식(또는 저장 파일 이름)이면 문구로 바꿔 보여 준다. 규칙은 [ChatPreview]. */
         fun previewResOf(lastChatMsg: String): Int? = ChatPreview.resOf(lastChatMsg)
 
-        /** 마지막 메시지나 시각이 비어 있으면 시각을 그리지 않는다. */
+        /**
+         * 마지막 메시지 시각. 오늘이면 시각, 어제면 '어제', 올해면 '9월 1일', 그 이전이면 '2025. 12. 31.'([ChatTime.listTime]).
+         * 마지막 메시지나 시각이 비어 있으면 그리지 않는다.
+         */
         fun lastTimeOf(room: ChatRoom): String =
             if (room.lastChatMsg.isEmpty() || room.lastChatTime.isEmpty()) {
                 ""
             } else {
-                ChatTime.shortTime(room.lastChatTime)
+                ChatTime.listTime(room.lastChatTime)
             }
 
         /** 0 이하면 뱃지를 감춘다(null). */

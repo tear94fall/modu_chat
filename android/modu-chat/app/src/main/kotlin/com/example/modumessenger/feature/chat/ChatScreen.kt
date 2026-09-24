@@ -295,6 +295,8 @@ fun ChatScreen(
                                 contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp),
                             ) {
                                 items(uiState.bubbles, key = { it.message.id }) { bubble ->
+                                    // 날짜 구분선은 별도 항목이 아니라 그 날 첫 말풍선의 위에 붙인다(항목 수·키가 그대로라 스크롤 고정 로직이 그대로 돈다).
+                                    bubble.dateDivider?.let { ChatDateDivider(text = it) }
                                     ChatBubbleRow(
                                         bubble = bubble,
                                         onOpenProfile = onOpenProfile,

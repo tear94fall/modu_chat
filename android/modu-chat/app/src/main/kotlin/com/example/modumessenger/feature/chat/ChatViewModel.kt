@@ -56,6 +56,8 @@ data class ChatBubble(
     val shortTime: String,
     /** 내가 이 메시지에 남긴 이모지 키. 없으면 null. */
     val myReaction: String? = null,
+    /** 날짜가 바뀌는 첫 메시지면 그 위에 그릴 날짜(`2026년 9월 24일 목요일`). 아니면 null. */
+    val dateDivider: String? = null,
 ) {
     val showSender: Boolean get() = group == BubbleGroup.HEADER || group == BubbleGroup.SINGLE
     val showTime: Boolean get() = group == BubbleGroup.TAIL || group == BubbleGroup.SINGLE
@@ -423,7 +425,8 @@ class ChatViewModel @Inject constructor(
             !wasAtBottom && lastSender.isNotEmpty() && lastSender != myUserId
 
         /**
-         * 메시지 목록을 말풍선으로 바꾼다. 묶음 판단은 "같은 발신자 + 같은 짧은 시각" 이다(부록 A §8a).
+         * 메시지 목록을 말풍선으로 바꾼다. 묶음 판단은 "같은 발신자 + 같은 날짜 + 같은 짧은 시각" 이다(부록 A §8a).
+         * 날짜(폰 시간대 기준)가 바뀌는 첫 메시지에는 [ChatBubble.dateDivider] 를 붙인다. 시각을 못 읽는 메시지는 앞 메시지와 같은 날로 본다.
          *
          * [blocked] 에 든 사람이 보낸 메시지는 아예 빼고 나서 묶음을 정한다 — 차단은 서버 흐름을
          * 바꾸지 않고 앱에서 거르므로(설계 §3), 걸러낸 뒤의 목록이 화면에 보이는 전부다.
@@ -434,6 +437,7 @@ class ChatViewModel @Inject constructor(
             myUserId: String,
             names: Map<String, String>,
             blocked: Set<String> = emptySet(),
+            zone: java.time.ZoneId = java.time.ZoneId.systemDefault(),
         ): List<ChatBubble> {
             val byUserId = members.associateBy { it.userId }
             val visible = if (blocked.isEmpty()) {
@@ -441,9 +445,13 @@ class ChatViewModel @Inject constructor(
             } else {
                 messages.filterNot { it.sender.isNotEmpty() && it.sender in blocked }
             }
-            val keys = visible.map { it.sender to ChatTime.shortTime(it.chatTime) }
+            // 날짜를 못 읽으면 앞 메시지의 날짜를 이어 쓴다(구분선을 엉뚱하게 넣지 않게).
+            val dates = visible.runningFold(null as java.time.LocalDate?) { prev, m -> ChatTime.localDate(m.chatTime, zone) ?: prev }.drop(1)
+            val times = visible.map { ChatTime.shortTime(it.chatTime, zone = zone) }
+            val keys = visible.indices.map { Triple(visible[it].sender, dates[it], times[it]) }
 
             return visible.mapIndexed { index, message ->
+                val newDay = dates[index] != null && (index == 0 || dates[index] != dates[index - 1])
                 val sameAsPrev = index > 0 && keys[index - 1] == keys[index]
                 val sameAsNext = index < visible.lastIndex && keys[index + 1] == keys[index]
                 val group = when {
@@ -462,8 +470,9 @@ class ChatViewModel @Inject constructor(
                         ?.takeIf { it.isNotBlank() },
                     senderImage = member?.profileImage.orEmpty(),
                     senderMemberId = member?.id?.takeIf { it > 0L },
-                    shortTime = keys[index].second,
+                    shortTime = times[index],
                     myReaction = ReactionEmoji.mine(message.reactions, myUserId),
+                    dateDivider = if (newDay) ChatTime.dayDivider(message.chatTime, zone) else null,
                 )
             }
         }

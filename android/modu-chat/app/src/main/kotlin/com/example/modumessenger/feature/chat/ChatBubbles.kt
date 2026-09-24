@@ -83,6 +83,23 @@ import com.example.modumessenger.core.ui.components.ProfileImage
 /**
  * 말풍선 한 줄(부록 A §8a). 왼쪽/오른쪽 구분과 묶음 위치에 따라 아바타·이름·시각이 나타났다 사라진다.
  */
+
+/** 날짜가 바뀌는 곳에 두는 가운데 정렬 알약(`2026년 9월 24일 목요일`). 말풍선 목록과 같은 항목 안에서 말풍선 위에 그린다. */
+@Composable
+fun ChatDateDivider(text: String, modifier: Modifier = Modifier) {
+    Box(modifier = modifier.fillMaxWidth().padding(vertical = 10.dp), contentAlignment = Alignment.Center) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            color = colorResource(R.color.grey),
+            modifier = Modifier
+                .background(colorResource(R.color.chat_input_fill), RoundedCornerShape(12.dp))
+                .padding(horizontal = 12.dp, vertical = 4.dp)
+                .semantics { contentDescription = text },
+        )
+    }
+}
+
 @Composable
 fun ChatBubbleRow(
     bubble: ChatBubble,

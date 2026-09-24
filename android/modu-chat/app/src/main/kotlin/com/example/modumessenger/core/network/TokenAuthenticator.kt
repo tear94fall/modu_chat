@@ -11,6 +11,7 @@ import okhttp3.Authenticator
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
+import retrofit2.HttpException
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -20,7 +21,11 @@ import javax.inject.Singleton
  *
  * - 단일 비행: 여러 요청이 동시에 401 을 받아도 갱신은 한 번만 한다([mutex]). 뒤늦게 들어온 요청은
  *   이미 바뀐 토큰이 있으면 그것으로만 재시도한다.
- * - 갱신 실패(400/401 등) → 세션을 지우고 [SessionEvents.notifyLoggedOut] 으로 로그인 화면으로 보낸다.
+ * - 서버가 refresh 토큰을 거절(400·401)하거나 refresh 토큰이 없으면 → 세션을 지우고 [SessionEvents.notifyLoggedOut] 으로
+ *   로그인 화면으로 보낸다(로그아웃 구독자가 소켓을 끊고 앱 잠금도 지운다).
+ * - 연결 실패·타임아웃·서버 오류(5xx, 게이트웨이 503)는 일시 장애다. 세션은 그대로 두고 이 요청만 원래의 401 로 실패시킨다.
+ *   다음 요청의 401 이 다시 갱신을 시도하므로 연결이 돌아오면 저절로 정상화된다.
+ *   (예전에는 모든 실패를 로그아웃으로 처리해, 토큰이 만료된 순간 연결이 끊기거나 서버가 재시작 중이면 로그인과 PIN 이 풀렸다.)
  * - 갱신 호출은 인터셉터·Authenticator 가 없는 별도 클라이언트([AuthApi] `@Named("plain")`)로 한다.
  */
 @Singleton
@@ -52,8 +57,17 @@ class TokenAuthenticator @Inject constructor(
                     return@withLock null
                 }
 
-                val tokens = runCatching { plainAuthApi.token(OAuthClient.refreshForm(refresh)) }.getOrNull()
-                val newAccess = tokens?.accessToken
+                val tokens =
+                    try {
+                        plainAuthApi.token(OAuthClient.refreshForm(refresh))
+                    } catch (e: HttpException) {
+                        if (e.code() == 400 || e.code() == 401) giveUp()
+                        return@withLock null
+                    } catch (e: Exception) {
+                        // 연결 실패·타임아웃 등. 세션은 살아 있다.
+                        return@withLock null
+                    }
+                val newAccess = tokens.accessToken
                 if (newAccess.isNullOrBlank()) {
                     giveUp()
                     return@withLock null

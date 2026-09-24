@@ -1,5 +1,6 @@
 package com.example.chatservice.chat.service
 
+import com.example.chatservice.api.admin.dto.AdminChatRoomDetailDto
 import com.example.chatservice.api.admin.dto.AdminChatRoomSummaryDto
 import com.example.chatservice.chat.dto.ChatReadCursorDto
 import com.example.chatservice.chat.dto.ChatRoomDto
@@ -77,6 +78,14 @@ class ChatRoomService(
         val members = memberFeignClient.getMembersById(chatRoomMemberIds)
 
         return ChatRoomDto(chatRoom, members)
+    }
+
+    /** 백오피스 방 상세. [searchChatRoomByRoomId] 와 같고 생성 시각이 더 붙는다. */
+    fun searchChatRoomForAdmin(roomId: String): AdminChatRoomDetailDto {
+        val chatRoom = chatRoomRepository.findByRoomId(roomId)
+            .orElseThrow { CustomException(ErrorCode.CHATROOM_NOT_FOUND_ERROR, roomId) }
+        val members = memberFeignClient.getMembersById(chatRoom.chatRoomMemberList.map { it.memberId!! })
+        return AdminChatRoomDetailDto.of(chatRoom, members)
     }
 
     fun searchOneOnOneChatRoom(userId: String, roomUserId: String): List<ChatRoomDto> {

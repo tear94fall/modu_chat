@@ -1,8 +1,8 @@
 package com.example.chatservice.api.admin
 
+import com.example.chatservice.api.admin.dto.AdminChatRoomDetailDto
 import com.example.chatservice.api.admin.dto.AdminChatRoomSummaryDto
 import com.example.chatservice.chat.dto.ChatDto
-import com.example.chatservice.chat.dto.ChatRoomDto
 import com.example.chatservice.chat.repository.ChatRoomSort
 import com.example.chatservice.chat.service.ChatRoomService
 import com.example.chatservice.chat.service.ChatService
@@ -53,8 +53,8 @@ class ChatAdminController(
     }
 
     @GetMapping("/rooms/{roomId}")
-    fun room(@PathVariable("roomId") roomId: String): ResponseEntity<ChatRoomDto> =
-        ResponseEntity.ok(chatRoomService.searchChatRoomByRoomId(roomId))
+    fun room(@PathVariable("roomId") roomId: String): ResponseEntity<AdminChatRoomDetailDto> =
+        ResponseEntity.ok(chatRoomService.searchChatRoomForAdmin(roomId))
 
     @GetMapping("/rooms/{roomId}/chats")
     fun chats(

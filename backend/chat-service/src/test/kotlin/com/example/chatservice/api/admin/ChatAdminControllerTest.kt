@@ -1,5 +1,6 @@
 package com.example.chatservice.api.admin
 
+import com.example.chatservice.api.admin.dto.AdminChatRoomDetailDto
 import com.example.chatservice.api.admin.dto.AdminChatRoomSummaryDto
 import com.example.chatservice.chat.entity.ChatRoom
 import com.example.chatservice.chat.repository.ChatRoomSort
@@ -49,6 +50,31 @@ class ChatAdminControllerTest {
             .andExpect(jsonPath("$.totalElements").value(1))
             .andExpect(jsonPath("$.content[0].roomName").value("room-name"))
             .andExpect(jsonPath("$.content[0].roomImage").value("room.jpg"))
+    }
+
+    @Test
+    fun rooms_includeCreatedDateInUtcFormat() {
+        val room = ChatRoom("r1", "room-name", "room.jpg", "hi", "1", "2026-09-17 15:15:22")
+        room.prePersist()
+        whenever(chatRoomService.searchChatRoomsForAdmin(any(), any())).thenReturn(PageImpl(listOf(AdminChatRoomSummaryDto(room))))
+        mockMvc.perform(get("/api-admin/chat/rooms").header("X-Internal-Token", "test-internal-token"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.content[0].createdDate").value(org.hamcrest.Matchers.matchesPattern("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}")))
+            .andExpect(jsonPath("$.content[0].lastChatTime").value("2026-09-17 15:15:22"))
+    }
+
+    @Test
+    fun room_detailCarriesCreatedDate() {
+        val detail = AdminChatRoomDetailDto(
+            id = 1L, roomId = "r1", roomName = "room-name", roomImage = "", lastChatMsg = "hi", lastChatId = "1",
+            lastChatTime = "2026-09-17 15:15:22", members = emptyList(), createdDate = "2026-09-10 01:02:03",
+        )
+        whenever(chatRoomService.searchChatRoomForAdmin("r1")).thenReturn(detail)
+        mockMvc.perform(get("/api-admin/chat/rooms/r1").header("X-Internal-Token", "test-internal-token"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.roomId").value("r1"))
+            .andExpect(jsonPath("$.createdDate").value("2026-09-10 01:02:03"))
+            .andExpect(jsonPath("$.members").isArray)
     }
 
     @Test

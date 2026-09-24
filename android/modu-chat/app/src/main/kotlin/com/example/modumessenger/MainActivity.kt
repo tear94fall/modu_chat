@@ -74,10 +74,15 @@ class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        // 회전·다크 모드·접기 등으로 다시 만들어진 액티비티는 NavHost 가 보던 화면을 복원하고, 세션을 판정하는 SPLASH 는
+        // 이미 백스택에서 빠져 다시 돌지 않는다. 여기서 붙잡으면 창이 영영 그려지지 않는다(검은 화면, 터치 불가).
+        // 그래서 시스템 스플래시는 처음 켤 때만 판정까지 잡아 둔다.
+        if (savedInstanceState != null) sessionDecided = true
         // Compose 스플래시가 바로 같은 그림을 이어 그리므로, 시스템 스플래시는 세션 판정까지만 잡아 둔다.
         splashScreen.setKeepOnScreenCondition { !sessionDecided }
 
-        pendingRoomId.value = intent?.getStringExtra(EXTRA_ROOM_ID)
+        // 알림으로 들어온 방은 처음 만들 때만 읽는다. 다시 만들어질 때 같은 intent 를 또 읽으면 방이 한 번 더 열린다.
+        if (savedInstanceState == null) pendingRoomId.value = intent?.getStringExtra(EXTRA_ROOM_ID)
 
         setContent {
             ModuTheme {

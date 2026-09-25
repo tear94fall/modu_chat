@@ -19,7 +19,6 @@ services:
       - CONFIG_SERVER_URI=http://config-service:8888
       - JAVA_TOOL_OPTIONS=${AUTH_AGENT_OPTS:-}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
-      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH:-}
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:

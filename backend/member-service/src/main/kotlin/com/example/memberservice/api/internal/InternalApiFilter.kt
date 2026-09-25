@@ -12,7 +12,7 @@ import org.springframework.web.filter.OncePerRequestFilter
 import org.springframework.web.util.UrlPathHelper
 
 /**
- * `/api-internal`, `/api-debug`, `/api-admin` 아래 경로는 앱이 직접 부르지 않는다. 게이트웨이에 라우트가 없어
+ * `/api-internal`, `/api-debug`, `/api-admin`, `/api-staff`, `/api-super` 아래 경로는 앱이 직접 부르지 않는다. 게이트웨이에 라우트가 없어
  * 외부에서는 못 오지만, 서비스 포트로 직접 오는 요청은 막을 수 없으므로 여기서
  * X-Internal-Token 을 검사한다. 토큰은 modu.internal-api.token 이다.
  *
@@ -49,6 +49,12 @@ class InternalApiFilter(@Value("\${modu.internal-api.token}") expectedToken: Str
         const val DEBUG_PREFIX = "/api-debug/"
         const val ADMIN_PREFIX = "/api-admin/"
 
+        /** 직원 콘솔(모두 인터널). 게이트웨이가 직원 권한(ROLE_INTERNAL, ROLE_SUPER)을 보고 내부 토큰을 붙인다. */
+        const val STAFF_PREFIX = "/api-staff/"
+
+        /** 직원 관리(최상위 관리자). 게이트웨이가 ROLE_SUPER 를 보고 내부 토큰을 붙인다. */
+        const val SUPER_PREFIX = "/api-super/"
+
         /** 하위 호환: 기존 테스트가 참조한다. */
         const val PREFIX = INTERNAL_PREFIX
 
@@ -62,8 +68,9 @@ class InternalApiFilter(@Value("\${modu.internal-api.token}") expectedToken: Str
 
         internal fun isGuarded(normalizedPath: String): Boolean =
             normalizedPath.startsWith(INTERNAL_PREFIX) || normalizedPath.startsWith(DEBUG_PREFIX) ||
-                normalizedPath.startsWith(ADMIN_PREFIX) ||
+                normalizedPath.startsWith(ADMIN_PREFIX) || normalizedPath.startsWith(STAFF_PREFIX) ||
+                normalizedPath.startsWith(SUPER_PREFIX) ||
                 normalizedPath == "/api-internal" || normalizedPath == "/api-debug" ||
-                normalizedPath == "/api-admin"
+                normalizedPath == "/api-admin" || normalizedPath == "/api-staff" || normalizedPath == "/api-super"
     }
 }

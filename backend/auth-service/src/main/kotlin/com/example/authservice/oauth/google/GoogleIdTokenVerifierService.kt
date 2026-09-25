@@ -28,6 +28,7 @@ class GoogleIdTokenVerifierService(private val props: OAuthProperties) {
                 p.email,
                 p["name"]?.toString() ?: "",
                 p["picture"]?.toString() ?: "",
+                p.emailVerified == true,
             )
         } catch (e: OAuth2AuthenticationException) {
             throw e

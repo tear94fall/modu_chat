@@ -30,7 +30,16 @@ class OAuthProperties {
 
         /** true 면 이 클라이언트로 로그인한 사용자가 다른 앱에 SSO 코드를 발급해 줄 수 있다. */
         var ssoIssuer: Boolean = false
+
+        /**
+         * true 면 직원 콘솔 클라이언트다. 구글 로그인이 회원을 만들지 않고 직원(member-service staff)만 받으며,
+         * 토큰의 roles 는 직원 권한에서 온다. 토큰을 갱신할 때마다 권한을 다시 읽는다.
+         */
+        var staff: Boolean = false
     }
 
     fun client(id: String?): Client? = clients.firstOrNull { it.id == id }
 }
+
+/** 직원 콘솔 클라이언트 ID 들. */
+fun OAuthProperties.staffClientIds(): Set<String> = clients.filter { it.staff }.mapNotNull { it.id }.toSet()

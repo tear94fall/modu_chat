@@ -44,7 +44,7 @@ class ChatNotifier @Inject constructor(
             senderName = data.senderName,
             memberCount = data.memberCount,
             message = data.message,
-            isImage = chatType == ChatType.IMAGE,
+            chatType = chatType,
         )
 
         ensureChannel()

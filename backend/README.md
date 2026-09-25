@@ -42,7 +42,7 @@
 ### 로컬 실행
 
 인프라(MySQL, MongoDB, Redis, Kafka, RabbitMQ, MinIO)와 관측성 스택(Prometheus, Grafana, Pinpoint)은 modu_infra(https://github.com/tear94fall/modu_infra), 플랫폼(config-service, discovery-service, gateway-service)은 modu_platform(https://github.com/tear94fall/modu_platform) 저장소에서 따로 띄웁니다(둘 다 이 저장소 옆에 clone).
-이 디렉터리의 `docker-compose.yml` 에는 메신저 애플리케이션 서비스(auth, member, chat, ws, push, storage, profile, chat-store)만 있습니다.
+이 디렉터리의 `docker-compose.yml` 에는 메신저 애플리케이션 서비스(auth, member, chat, ws, push, storage, profile, chat-store, point)만 있습니다. point-service 는 그로스(이벤트·출석·초대) 포인트 원장으로, 사용자를 userId 로만 식별해 채팅 DB 와 독립적입니다(`point-service/sql/schema.sql` 로 `modu-point` 스키마를 한 번 만들어 둡니다).
 
 1. modu_infra 의 `README.md` 순서대로 `modu-infra` 네트워크, pinpoint-docker, data, monitoring 을 먼저 띄웁니다.
 2. modu_platform 의 `README.md` 대로 config-service, discovery-service, gateway-service 를 띄웁니다. 설정 파일(`config-repo/`)도 그 저장소에 있습니다 — 메신저 서비스는 `messenger/` 폴더의 설정을 받습니다.
@@ -92,11 +92,19 @@ gateway 뒤에 위치한 서비스에 대한 정보를 알고 있다고 하더�
 | internal | `/api-internal/**` | 다른 서비스 (Feign) | 라우트 없음 | 각 서비스의 `InternalApiFilter` 가 `X-Internal-Token` 검사 (`modu.internal-api.token`) |
 | debug | `/api-debug/**` | 개발자 | 라우트 없음 | `@Profile("!prod")` + `X-Internal-Token` |
 | admin | `/api-admin/**` | 백오피스(브라우저) | 라우트 있음, `AuthorizationHeaderFilter=ROLE_ADMIN` + `AddRequestHeader=X-Internal-Token` | 서비스 `InternalApiFilter` |
+| staff | `/api-staff/**` (member-service) | 모두 인터널(브라우저) | 라우트 있음, `AuthorizationHeaderFilter=ROLE_INTERNAL` + `AddRequestHeader=X-Internal-Token` | 서비스 `InternalApiFilter` |
+| super | `/api-super/**` (member-service) | 모두 인터널의 직원 관리 | 라우트 있음, `AuthorizationHeaderFilter=ROLE_SUPER` + `AddRequestHeader=X-Internal-Token` | 서비스 `InternalApiFilter` |
 
 컨트롤러는 `<root>/api/pub`, `<root>/api/internal`, `<root>/api/debug` 패키지에 계층별로 두고 서비스 레이어를 공유합니다.
 앱과 다른 서비스가 둘 다 쓰는 엔드포인트는 두 컨트롤러에 각각 둡니다.
 내부 토큰은 `backend/.env` 의 `INTERNAL_API_TOKEN` 으로 각 컨테이너에 전달됩니다.
-`ADMIN_PASSWORD_HASH` (auth-service): 관리자 로그인 비밀번호의 bcrypt 해시.
+콘솔(모두의 어드민·시스템·인터널) 로그인은 직원의 구글 계정으로 한다(클라이언트 `modu-admin`, `staff: true`). 직원과 권한(SUPER·ADMIN·SYSTEM·INTERNAL)은 member-service 의 `staff`, `staff_permission` 테이블에 있고, auth-service 가 토큰 roles 로 바꾼다(SUPER 는 모든 콘솔 + `ROLE_SUPER`). 첫 최상위 관리자는 DB 에 직접 넣는다:
+
+```sql
+insert into staff (member_id, created_date, modified_date) values (<member_id>, now(), now());
+insert into staff_permission (member_id, permission) values (<member_id>, 'SUPER');
+```
+
 `ADMIN_ALLOWED_ORIGIN` (gateway): 백오피스 프런트엔드가 서비스되는 origin (CORS 허용 origin). 백오피스는 별도 저장소 [modu_admin](https://github.com/tear94fall/modu_admin) 이다(2026-09-18 에 `admin/` 에서 분리, 기본 개발 서버 `http://localhost:5173`).
 
 schedule-service 는 config-server 를 쓰지 않아 자체 `application.yml` 에서 정의합니다.

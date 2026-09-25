@@ -74,16 +74,28 @@ class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        // 회전·다크 모드·접기 등으로 다시 만들어진 액티비티는 NavHost 가 보던 화면을 복원하고, 세션을 판정하는 SPLASH 는
+        // 이미 백스택에서 빠져 다시 돌지 않는다. 여기서 붙잡으면 창이 영영 그려지지 않는다(검은 화면, 터치 불가).
+        // 그래서 시스템 스플래시는 처음 켤 때만 판정까지 잡아 둔다.
+        if (savedInstanceState != null) sessionDecided = true
         // Compose 스플래시가 바로 같은 그림을 이어 그리므로, 시스템 스플래시는 세션 판정까지만 잡아 둔다.
         splashScreen.setKeepOnScreenCondition { !sessionDecided }
 
-        pendingRoomId.value = intent?.getStringExtra(EXTRA_ROOM_ID)
+        // 알림으로 들어온 방은 처음 만들 때만 읽는다. 다시 만들어질 때 같은 intent 를 또 읽으면 방이 한 번 더 열린다.
+        if (savedInstanceState == null) pendingRoomId.value = intent?.getStringExtra(EXTRA_ROOM_ID)
 
         setContent {
             ModuTheme {
                 val navController = rememberNavController()
                 val locked by appLock.isLocked.collectAsState()
                 val loggedIn by sessionStore.isLoggedIn.collectAsState(initial = false)
+                val currentRoute = navController.currentBackStackEntryAsState().value
+                    ?.destination?.route
+                // 앱 스플래시(로고·이름·소개)는 잠금 여부와 상관없이 끝까지 보여 준다. 잠금 화면은 그다음에 덮는다.
+                // 스플래시에는 개인 정보가 없다. 스플래시가 끝나면 메인이 그려지는 같은 프레임에 잠금 화면이 올라간다.
+                // 경로가 아직 없는 첫 프레임(회전 등으로 다시 만들어질 때)은 스플래시가 아닌 것으로 본다 — 복원된 화면이
+                // 잠금 없이 한 프레임이라도 그려지면 안 된다. 처음 켤 때의 첫 프레임은 시스템 스플래시가 가리고 있다.
+                val splashDone = currentRoute != Routes.SPLASH
 
                 // 잠금 게이트: NavHost 위를 덮는다. 백스택은 그대로라 풀리면 보던 화면으로 돌아간다.
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -98,7 +110,7 @@ class MainActivity : FragmentActivity() {
                             loggedIn
                         },
                     )
-                    if (locked && loggedIn) {
+                    if (locked && loggedIn && splashDone) {
                         LockScreen(
                             // 잠금 화면에서 뒤로 가기는 앱을 뒤로 보낼 뿐 잠금을 풀지 않는다.
                             onBack = { moveTaskToBack(true) },
@@ -116,9 +128,6 @@ class MainActivity : FragmentActivity() {
                         window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
                     }
                 }
-
-                val currentRoute = navController.currentBackStackEntryAsState().value
-                    ?.destination?.route
 
                 LaunchedEffect(navController) {
                     sessionEvents.loggedOut.collect {

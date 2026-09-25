@@ -18,7 +18,12 @@ import com.example.modumessenger.core.session.SessionStore
 import com.example.modumessenger.core.util.ChatRoomNameUtil
 import com.example.modumessenger.core.util.ChatTime
 import com.example.modumessenger.core.util.DisplayName
+import com.example.modumessenger.core.model.AudioPlayback
+import com.example.modumessenger.core.model.FileDownloadUi
+import com.example.modumessenger.core.model.FileInfo
+import com.example.modumessenger.data.repository.AttachmentRepository
 import com.example.modumessenger.data.repository.ChatRepository
+import com.example.modumessenger.feature.chat.audio.AudioPlayer
 import com.example.modumessenger.data.repository.StorageRepository
 import com.example.modumessenger.navigation.Routes
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -51,6 +56,8 @@ data class ChatBubble(
     val shortTime: String,
     /** 내가 이 메시지에 남긴 이모지 키. 없으면 null. */
     val myReaction: String? = null,
+    /** 날짜가 바뀌는 첫 메시지면 그 위에 그릴 날짜(`2026년 9월 24일 목요일`). 아니면 null. */
+    val dateDivider: String? = null,
 ) {
     val showSender: Boolean get() = group == BubbleGroup.HEADER || group == BubbleGroup.SINGLE
     val showTime: Boolean get() = group == BubbleGroup.TAIL || group == BubbleGroup.SINGLE
@@ -68,6 +75,12 @@ data class ChatUiState(
     /** 0 이면 "아래로" 배지를 감춘다. */
     val jumpToBottomCount: Int = 0,
     val isLeaving: Boolean = false,
+    /** 파일 말풍선이 보여 줄 원본 이름·크기. 저장 이름 → 정보. */
+    val fileInfos: Map<String, FileInfo> = emptyMap(),
+    /** 파일 말풍선의 내려받기 상태. 저장 이름 → 상태. 없으면 아직 안 받은 것. */
+    val fileDownloads: Map<String, FileDownloadUi> = emptyMap(),
+    /** 음성 말풍선이 재생 전에도 보여 줄 길이(ms). 저장 이름 → 길이. */
+    val audioDurations: Map<String, Long> = emptyMap(),
 ) {
     val memberCount: Int get() = room?.members?.size ?: 0
     val memberUserIds: List<String> get() = room?.members?.map { it.userId }.orEmpty()
@@ -85,6 +98,8 @@ class ChatViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val chatRepository: ChatRepository,
     private val storageRepository: StorageRepository,
+    private val attachmentRepository: AttachmentRepository,
+    private val audioPlayer: AudioPlayer,
     private val sessionStore: SessionStore,
     private val friendNames: FriendNames,
     private val blockedUsers: BlockedUsers,
@@ -108,6 +123,9 @@ class ChatViewModel @Inject constructor(
     /** 스낵바로 띄울 문구. */
     val messages: SharedFlow<ChatUiMessage> = _messages.asSharedFlow()
 
+    /** 지금 재생 중인 음성. 말풍선이 자기 파일일 때만 진행 상태를 그린다. */
+    val audio: StateFlow<AudioPlayback?> = audioPlayer.state
+
     private val _leftRoom = MutableSharedFlow<Unit>(replay = 0, extraBufferCapacity = 1)
 
     /** 방을 나갔다. 화면이 뒤로 간다. */
@@ -124,6 +142,9 @@ class ChatViewModel @Inject constructor(
     private var initialized = false
 
     private var loadingPrev = false
+
+    private val requestingInfo = mutableSetOf<String>()
+    private val requestingDuration = mutableSetOf<String>()
 
     init {
         viewModelScope.launch {
@@ -151,9 +172,80 @@ class ChatViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
+        // 방을 나가면 음성도 멈춘다.
+        audioPlayer.stop()
         // viewModelScope 는 이미 취소됐다. 읽음 처리는 끝까지 가야 하므로 앱 스코프에서 돈다.
         appScope.launch { chatRepository.closeRoom(roomId) }
     }
+
+    // ---------- 파일·음성 ----------
+
+    /** 파일 말풍선이 처음 그려질 때 원본 이름·크기를 받아 두고, 이미 받아 둔 파일이 있는지도 본다. */
+    fun requestFileInfo(fileName: String) {
+        if (fileName.isBlank() || _uiState.value.fileInfos.containsKey(fileName) || fileName in requestingInfo) return
+        requestingInfo += fileName
+        viewModelScope.launch {
+            attachmentRepository.fileInfo(fileName)
+                .onSuccess { info ->
+                    _uiState.update { it.copy(fileInfos = it.fileInfos + (fileName to info)) }
+                    attachmentRepository.findDownloaded(info)?.let { downloaded ->
+                        setDownload(fileName, FileDownloadUi(FileDownloadUi.State.DONE, downloaded))
+                    }
+                }
+            requestingInfo -= fileName
+        }
+    }
+
+    /**
+     * 파일 말풍선을 눌렀을 때. 아직 안 받았으면 Downloads 에 원본 이름으로 저장하고, 받는 중이면 무시하고,
+     * 이미 받았으면 다시 받지 않고 다른 앱으로 연다.
+     */
+    fun openOrDownloadFile(fileName: String) {
+        val current = _uiState.value.fileDownloads[fileName] ?: FileDownloadUi()
+        when (current.state) {
+            FileDownloadUi.State.DOWNLOADING -> return
+            FileDownloadUi.State.DONE -> {
+                val file = current.file ?: return
+                val type = _uiState.value.fileInfos[fileName]?.contentType.orEmpty()
+                if (!attachmentRepository.open(file, type)) emit(R.string.chat_file_open_failed)
+                return
+            }
+            FileDownloadUi.State.IDLE -> Unit
+        }
+        setDownload(fileName, FileDownloadUi(FileDownloadUi.State.DOWNLOADING))
+        viewModelScope.launch {
+            attachmentRepository.saveToDownloads(fileName)
+                .onSuccess { file ->
+                    setDownload(fileName, FileDownloadUi(FileDownloadUi.State.DONE, file))
+                    emit(R.string.chat_file_download_done, file.displayName)
+                }
+                .onFailure {
+                    setDownload(fileName, FileDownloadUi())
+                    emit(R.string.chat_file_download_failed)
+                }
+        }
+    }
+
+    private fun setDownload(fileName: String, download: FileDownloadUi) {
+        _uiState.update { it.copy(fileDownloads = it.fileDownloads + (fileName to download)) }
+    }
+
+    /** 음성 말풍선이 처음 그려질 때 길이를 읽어 둔다(재생 전에도 총 길이를 보여 주기 위해). */
+    fun requestAudioDuration(fileName: String) {
+        if (fileName.isBlank() || _uiState.value.audioDurations.containsKey(fileName) || fileName in requestingDuration) return
+        requestingDuration += fileName
+        viewModelScope.launch {
+            attachmentRepository.audioDuration(fileName)
+                .onSuccess { ms -> _uiState.update { it.copy(audioDurations = it.audioDurations + (fileName to ms)) } }
+            requestingDuration -= fileName
+        }
+    }
+
+    fun toggleAudio(fileName: String) = audioPlayer.toggle(fileName)
+
+    fun seekAudio(positionMs: Long) = audioPlayer.seekTo(positionMs)
+
+    fun toggleAudioMute() = audioPlayer.toggleMute()
 
     // ---------- 방 정보 ----------
 
@@ -333,7 +425,8 @@ class ChatViewModel @Inject constructor(
             !wasAtBottom && lastSender.isNotEmpty() && lastSender != myUserId
 
         /**
-         * 메시지 목록을 말풍선으로 바꾼다. 묶음 판단은 "같은 발신자 + 같은 짧은 시각" 이다(부록 A §8a).
+         * 메시지 목록을 말풍선으로 바꾼다. 묶음 판단은 "같은 발신자 + 같은 날짜 + 같은 짧은 시각" 이다(부록 A §8a).
+         * 날짜(폰 시간대 기준)가 바뀌는 첫 메시지에는 [ChatBubble.dateDivider] 를 붙인다. 시각을 못 읽는 메시지는 앞 메시지와 같은 날로 본다.
          *
          * [blocked] 에 든 사람이 보낸 메시지는 아예 빼고 나서 묶음을 정한다 — 차단은 서버 흐름을
          * 바꾸지 않고 앱에서 거르므로(설계 §3), 걸러낸 뒤의 목록이 화면에 보이는 전부다.
@@ -344,6 +437,7 @@ class ChatViewModel @Inject constructor(
             myUserId: String,
             names: Map<String, String>,
             blocked: Set<String> = emptySet(),
+            zone: java.time.ZoneId = java.time.ZoneId.systemDefault(),
         ): List<ChatBubble> {
             val byUserId = members.associateBy { it.userId }
             val visible = if (blocked.isEmpty()) {
@@ -351,9 +445,13 @@ class ChatViewModel @Inject constructor(
             } else {
                 messages.filterNot { it.sender.isNotEmpty() && it.sender in blocked }
             }
-            val keys = visible.map { it.sender to ChatTime.shortTime(it.chatTime) }
+            // 날짜를 못 읽으면 앞 메시지의 날짜를 이어 쓴다(구분선을 엉뚱하게 넣지 않게).
+            val dates = visible.runningFold(null as java.time.LocalDate?) { prev, m -> ChatTime.localDate(m.chatTime, zone) ?: prev }.drop(1)
+            val times = visible.map { ChatTime.shortTime(it.chatTime, zone = zone) }
+            val keys = visible.indices.map { Triple(visible[it].sender, dates[it], times[it]) }
 
             return visible.mapIndexed { index, message ->
+                val newDay = dates[index] != null && (index == 0 || dates[index] != dates[index - 1])
                 val sameAsPrev = index > 0 && keys[index - 1] == keys[index]
                 val sameAsNext = index < visible.lastIndex && keys[index + 1] == keys[index]
                 val group = when {
@@ -372,8 +470,9 @@ class ChatViewModel @Inject constructor(
                         ?.takeIf { it.isNotBlank() },
                     senderImage = member?.profileImage.orEmpty(),
                     senderMemberId = member?.id?.takeIf { it > 0L },
-                    shortTime = keys[index].second,
+                    shortTime = times[index],
                     myReaction = ReactionEmoji.mine(message.reactions, myUserId),
+                    dateDivider = if (newDay) ChatTime.dayDivider(message.chatTime, zone) else null,
                 )
             }
         }

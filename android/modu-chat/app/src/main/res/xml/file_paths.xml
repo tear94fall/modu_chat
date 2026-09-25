@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 카메라 촬영 결과를 넘겨줄 때 쓰는 경로. filesDir/temp_images/temp_image.jpg 가
      content://com.example.modumessenger/files/temp_images/temp_image.jpg 로 열린다.
-     (기존 앱은 name 에 "@strings/temp_images" 라는 잘못된 참조 문자열이 들어가 있었다) -->
+     (기존 앱은 name 에 "@strings/temp_images" 라는 잘못된 참조 문자열이 들어가 있었다)
+     downloads 는 API 28 에서 공용 Downloads 폴더에 받은 채팅 파일을 다른 앱으로 열 때 쓴다. -->
 <paths>
     <files-path name="files" path="." />
+    <external-path name="downloads" path="Download/" />
 </paths>

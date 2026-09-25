@@ -11,6 +11,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.SocketPolicy
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -97,6 +98,58 @@ class TokenAuthenticatorTest {
         assertEquals(2, server.requestCount)
         coVerify(exactly = 1) { sessionStore.clearSession() }
         coVerify(exactly = 0) { sessionStore.saveTokens(any(), any()) }
+    }
+
+    @Test
+    fun `토큰 엔드포인트가 401 이면 거절로 보고 로그아웃한다`() {
+        server.enqueue(MockResponse().setResponseCode(401))
+        server.enqueue(MockResponse().setResponseCode(401).setBody("""{"error":"invalid_client"}"""))
+
+        val response = client.newCall(get("member-service/api-public/member/a@b.c")).execute()
+
+        assertEquals(401, response.code)
+        coVerify(exactly = 1) { sessionStore.clearSession() }
+    }
+
+    @Test
+    fun `갱신 요청이 서버 오류(503)를 받으면 세션을 지우지 않는다`() {
+        server.enqueue(MockResponse().setResponseCode(401))
+        server.enqueue(MockResponse().setResponseCode(503))
+
+        val response = client.newCall(get("member-service/api-public/member/a@b.c")).execute()
+
+        // 이 요청만 원래의 401 로 실패하고, 로그인은 유지된다.
+        assertEquals(401, response.code)
+        assertEquals(2, server.requestCount)
+        coVerify(exactly = 0) { sessionStore.clearSession() }
+        coVerify(exactly = 0) { sessionStore.saveTokens(any(), any()) }
+    }
+
+    @Test
+    fun `갱신 요청이 서버에 닿지 못하면 세션을 지우지 않는다`() {
+        server.enqueue(MockResponse().setResponseCode(401))
+        server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
+
+        val response = client.newCall(get("member-service/api-public/member/a@b.c")).execute()
+
+        assertEquals(401, response.code)
+        coVerify(exactly = 0) { sessionStore.clearSession() }
+    }
+
+    @Test
+    fun `일시 장애 뒤 다음 요청은 다시 갱신해서 성공한다`() {
+        server.enqueue(MockResponse().setResponseCode(401))
+        server.enqueue(MockResponse().setResponseCode(503))
+        server.enqueue(MockResponse().setResponseCode(401))
+        server.enqueue(MockResponse().setBody("""{"access_token":"$NEW_TOKEN","refresh_token":"new-refresh","token_type":"Bearer","expires_in":3600}"""))
+        server.enqueue(MockResponse().setBody("""{"email":"a@b.c"}"""))
+
+        assertEquals(401, client.newCall(get("member-service/api-public/member/a@b.c")).execute().code)
+        val second = client.newCall(get("member-service/api-public/member/a@b.c")).execute()
+
+        assertEquals(200, second.code)
+        coVerify(exactly = 0) { sessionStore.clearSession() }
+        coVerify(exactly = 1) { sessionStore.saveTokens(NEW_TOKEN, "new-refresh") }
     }
 
     @Test

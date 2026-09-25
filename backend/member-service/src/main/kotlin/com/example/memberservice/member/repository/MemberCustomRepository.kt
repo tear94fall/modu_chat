@@ -9,6 +9,7 @@ interface MemberCustomRepository {
     /**
      * 백오피스 회원 목록 한 페이지. keyword 가 있으면 email 또는 username 에 대소문자 구분 없이 포함되는 회원만 남긴다.
      * 정렬은 [MemberSort] 로만 정하고 Pageable 의 sort 는 쓰지 않는다 — 한글 우선 규칙을 Sort 로 표현할 수 없다.
+     * [memberIds] 가 있으면 그 회원들 안에서만 찾는다(직원만 보기). 빈 목록이면 결과도 비어 있다.
      */
-    fun searchForAdmin(keyword: String?, sort: MemberSort, pageable: Pageable): Page<Member>
+    fun searchForAdmin(keyword: String?, sort: MemberSort, pageable: Pageable, memberIds: Collection<Long>? = null): Page<Member>
 }

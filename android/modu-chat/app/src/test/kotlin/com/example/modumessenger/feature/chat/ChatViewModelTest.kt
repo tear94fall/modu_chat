@@ -83,6 +83,8 @@ class ChatViewModelTest {
             savedStateHandle = SavedStateHandle(mapOf(Routes.ARG_ROOM_ID to ROOM)),
             chatRepository = repository,
             storageRepository = storage,
+            attachmentRepository = FakeAttachmentRepository(),
+            audioPlayer = FakeAudioPlayer(),
             sessionStore = sessionStore,
             friendNames = FriendNames(sessionStore, Gson(), scope),
             blockedUsers = blockedUsers,
@@ -222,6 +224,41 @@ class ChatViewModelTest {
 
         assertEquals("LIKE", bubbles[0].myReaction)
         assertEquals(null, bubbles[1].myReaction)
+    }
+
+    @Test
+    fun `날짜가 바뀌는 첫 메시지 위에 날짜 구분선을 둔다`() {
+        val seoul = java.time.ZoneId.of("Asia/Seoul")
+        val messages = listOf(
+            message(1L, OTHER, "2026-09-22 14:00:00"), // 9/22 23:00 KST
+            message(2L, OTHER, "2026-09-22 14:30:00"), // 9/22 23:30 KST
+            message(3L, OTHER, "2026-09-22 15:10:00"), // 9/23 00:10 KST — UTC 로는 같은 날
+            message(4L, ME, "2026-09-23 02:00:00"), // 9/23 11:00 KST
+        )
+
+        val bubbles = ChatViewModel.buildBubbles(messages, emptyList(), ME, emptyMap(), zone = seoul)
+
+        assertEquals("2026년 9월 22일 화요일", bubbles[0].dateDivider)
+        assertEquals(null, bubbles[1].dateDivider)
+        assertEquals("2026년 9월 23일 수요일", bubbles[2].dateDivider)
+        assertEquals(null, bubbles[3].dateDivider)
+        assertEquals("오후 11:30", bubbles[1].shortTime)
+        assertEquals("오전 12:10", bubbles[2].shortTime)
+    }
+
+    @Test
+    fun `날짜가 다르면 같은 발신자 같은 시각이어도 묶지 않는다`() {
+        val seoul = java.time.ZoneId.of("Asia/Seoul")
+        val messages = listOf(
+            message(1L, OTHER, "2026-09-21 01:00:00"), // 9/21 10:00 KST
+            message(2L, OTHER, "2026-09-22 01:00:00"), // 9/22 10:00 KST
+        )
+
+        val bubbles = ChatViewModel.buildBubbles(messages, emptyList(), ME, emptyMap(), zone = seoul)
+
+        assertEquals(BubbleGroup.SINGLE, bubbles[0].group)
+        assertEquals(BubbleGroup.SINGLE, bubbles[1].group)
+        assertEquals("2026년 9월 22일 화요일", bubbles[1].dateDivider)
     }
 
     @Test

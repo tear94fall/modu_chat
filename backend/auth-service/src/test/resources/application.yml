@@ -21,8 +21,6 @@ eureka:
 modu:
   internal-api:
     token: test-internal-token
-  admin:
-    password-hash: ""
   oauth:
     issuer: http://localhost:8000/auth-service
     access-token-ttl: 1h
@@ -80,5 +78,6 @@ modu:
         grants: [google_id_token, sso_code, refresh_token]
         scopes: [openid, profile, commerce]
       - id: modu-admin
-        grants: [admin_password, refresh_token]
+        grants: [google_id_token, refresh_token]
         scopes: [openid, admin]
+        staff: true

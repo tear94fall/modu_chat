@@ -22,6 +22,10 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLDecoder
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import org.springframework.http.MediaType
 import java.nio.file.Path
 import java.time.LocalDateTime
 
@@ -64,17 +68,41 @@ class StorageService(
         }
     }
 
+    /**
+     * 저장 이름은 해시라 원본 이름이 사라진다. 채팅의 파일·음성 메시지는 본문이 저장 이름뿐이므로,
+     * 원본 이름과 종류를 객체 메타데이터에 함께 둔다(값은 ASCII 여야 해서 URL 인코딩).
+     * 내려받기와 [fileInfo] 가 이걸 읽어 원본 이름을 돌려준다.
+     */
     fun upload(file: MultipartFile): String =
         try {
-            val fileName = createFileName(requireNotNull(file.originalFilename))
+            val originalName = requireNotNull(file.originalFilename)
+            val fileName = createFileName(originalName)
             val inputStream = file.inputStream
+            val metadata = mapOf(META_ORIGINAL_NAME to URLEncoder.encode(originalName, StandardCharsets.UTF_8))
             minioClient.putObject(
-                PutObjectArgs.builder().bucket(bucket).`object`(fileName).stream(inputStream, inputStream.available().toLong(), -1).build(),
+                PutObjectArgs.builder().bucket(bucket).`object`(fileName)
+                    .stream(inputStream, inputStream.available().toLong(), -1)
+                    .contentType(file.contentType ?: MediaType.APPLICATION_OCTET_STREAM_VALUE)
+                    .userMetadata(metadata)
+                    .build(),
             )
             fileName
         } catch (e: Exception) {
             throw RuntimeException(e.message)
         }
+
+    /** 파일 정보. 메타데이터가 없는 옛 파일은 저장 이름이 곧 원본 이름이다. */
+    fun fileInfo(name: String): FileInfo {
+        val stat = getMetadata(name)
+        val encoded = stat.userMetadata()?.entries?.firstOrNull { it.key.equals(META_ORIGINAL_NAME, ignoreCase = true) }?.value
+        val originalName = encoded?.let { URLDecoder.decode(it, StandardCharsets.UTF_8) }?.takeIf { it.isNotBlank() } ?: name
+        return FileInfo(
+            name = name,
+            originalName = originalName,
+            size = stat.size(),
+            contentType = stat.contentType()?.takeIf { it.isNotBlank() } ?: MediaType.APPLICATION_OCTET_STREAM_VALUE,
+        )
+    }
 
     fun upload(filePath: String): String =
         try {
@@ -162,6 +190,8 @@ class StorageService(
     }
 
     companion object {
+        /** 업로드 때 원본 파일 이름을 두는 객체 메타데이터 키(x-amz-meta-*). */
+        const val META_ORIGINAL_NAME = "original-name"
         private const val SLASH = "/"
         private const val PARAMETER = "?"
     }

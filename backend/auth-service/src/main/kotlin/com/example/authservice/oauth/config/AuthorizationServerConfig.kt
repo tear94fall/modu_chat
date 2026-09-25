@@ -1,13 +1,11 @@
 package com.example.authservice.oauth.config
 
-import com.example.authservice.admin.AdminLoginService
 import com.example.authservice.member.client.MemberFeignClient
 import com.example.authservice.oauth.google.GoogleIdTokenVerifierService
 import com.example.authservice.oauth.grant.GrantSupport
+import com.example.authservice.oauth.grant.StaffAccess
 import com.example.authservice.oauth.grant.PublicClientAuthenticationConverter
 import com.example.authservice.oauth.grant.PublicClientAuthenticationProvider
-import com.example.authservice.oauth.grant.admin.AdminPasswordGrantConverter
-import com.example.authservice.oauth.grant.admin.AdminPasswordGrantProvider
 import com.example.authservice.oauth.grant.google.GoogleIdTokenGrantConverter
 import com.example.authservice.oauth.grant.google.GoogleIdTokenGrantProvider
 import com.example.authservice.oauth.grant.sso.SsoCodeGrantConverter
@@ -38,8 +36,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.GrantedAuthority
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
-import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod
 import org.springframework.security.oauth2.core.OAuth2Token
@@ -68,7 +64,8 @@ import org.springframework.security.web.SecurityFilterChain
 
 /**
  * auth-service 를 OAuth 2.0 / OIDC 인증 서버로 만든다. 브라우저 인가 코드 흐름은 쓰지 않고
- * 커스텀 grant 세 개(구글 ID 토큰, 앱 간 SSO 코드, 관리자 비밀번호)로 토큰을 발급한다.
+ * 커스텀 grant 두 개(구글 ID 토큰, 앱 간 SSO 코드)로 토큰을 발급한다. 직원 콘솔도 구글 ID 토큰으로 로그인한다
+ * (staff: true 인 클라이언트, [StaffAccess]).
  */
 @Configuration
 @EnableWebSecurity
@@ -81,14 +78,10 @@ class AuthorizationServerConfig(private val props: OAuthProperties) {
         @JvmField
         val SSO_CODE = AuthorizationGrantType("urn:modu:params:oauth:grant-type:sso_code")
 
-        @JvmField
-        val ADMIN_PASSWORD = AuthorizationGrantType("urn:modu:params:oauth:grant-type:admin_password")
-
         /** 설정의 grants 이름을 AuthorizationGrantType 으로. 모르는 이름은 기동 실패. */
         internal fun grantOf(name: String): AuthorizationGrantType = when (name) {
             "google_id_token" -> GOOGLE_ID_TOKEN
             "sso_code" -> SSO_CODE
-            "admin_password" -> ADMIN_PASSWORD
             "refresh_token" -> AuthorizationGrantType.REFRESH_TOKEN
             else -> throw IllegalArgumentException("지원하지 않는 grant: $name")
         }
@@ -114,7 +107,6 @@ class AuthorizationServerConfig(private val props: OAuthProperties) {
         verifier: GoogleIdTokenVerifierService,
         members: MemberFeignClient,
         ssoCodeStore: SsoCodeStore,
-        adminLoginService: AdminLoginService,
     ): SecurityFilterChain {
         val authorizationServer = OAuth2AuthorizationServerConfigurer.authorizationServer()
         val support = GrantSupport(tokenGenerator, authorizationService)
@@ -129,12 +121,10 @@ class AuthorizationServerConfig(private val props: OAuthProperties) {
                         t.accessTokenRequestConverters { list ->
                             list.add(GoogleIdTokenGrantConverter())
                             list.add(SsoCodeGrantConverter())
-                            list.add(AdminPasswordGrantConverter())
                         }
                             .authenticationProviders { list ->
-                                list.add(GoogleIdTokenGrantProvider(verifier, members, support))
+                                list.add(GoogleIdTokenGrantProvider(verifier, members, support, props.staffClientIds()))
                                 list.add(SsoCodeGrantProvider(ssoCodeStore, members, support))
-                                list.add(AdminPasswordGrantProvider(adminLoginService, support))
                             }
                     }
                     .oidc { oidc ->
@@ -144,7 +134,6 @@ class AuthorizationServerConfig(private val props: OAuthProperties) {
                                 p.providerConfigurationCustomizer { b ->
                                     b.grantType(GOOGLE_ID_TOKEN.value)
                                         .grantType(SSO_CODE.value)
-                                        .grantType(ADMIN_PASSWORD.value)
                                 }
                             }
                             .userInfoEndpoint { u ->
@@ -241,15 +230,24 @@ class AuthorizationServerConfig(private val props: OAuthProperties) {
         return DelegatingOAuth2TokenGenerator(jwt, OAuth2AccessTokenGenerator(), OAuth2RefreshTokenGenerator())
     }
 
-    /** 액세스 토큰에 roles 를 넣는다. 게이트웨이가 ROLE_* 로 라우트를 지킨다. */
+    /**
+     * 액세스 토큰에 roles 를 넣는다. 게이트웨이가 ROLE_* 로 라우트를 지킨다.
+     * 직원 콘솔 토큰을 갱신할 때는 직원 권한을 다시 읽는다. 권한이 바뀌면 다음 토큰부터, 직원에서 빠지면 갱신이 invalid_grant 로 끝난다.
+     */
     @Bean
-    fun rolesCustomizer(): OAuth2TokenCustomizer<JwtEncodingContext> = OAuth2TokenCustomizer { ctx ->
-        if (OAuth2TokenType.ACCESS_TOKEN == ctx.tokenType) {
-            val roles = ctx.getPrincipal<org.springframework.security.core.Authentication>().authorities.map(GrantedAuthority::getAuthority)
-            ctx.claims.claim("roles", roles)
+    fun rolesCustomizer(members: MemberFeignClient): OAuth2TokenCustomizer<JwtEncodingContext> {
+        val staffClients = props.staffClientIds()
+        return OAuth2TokenCustomizer { ctx ->
+            if (OAuth2TokenType.ACCESS_TOKEN == ctx.tokenType) {
+                val refreshingStaff = AuthorizationGrantType.REFRESH_TOKEN == ctx.authorizationGrantType &&
+                    ctx.registeredClient.clientId in staffClients
+                val roles = if (refreshingStaff) {
+                    StaffAccess.rolesOf(StaffAccess.byUserId(members, ctx.authorization!!.principalName).permissions)
+                } else {
+                    ctx.getPrincipal<org.springframework.security.core.Authentication>().authorities.map(GrantedAuthority::getAuthority)
+                }
+                ctx.claims.claim("roles", roles)
+            }
         }
     }
-
-    @Bean
-    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 }

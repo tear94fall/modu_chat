@@ -36,10 +36,12 @@ class StorageRepositoryImpl @Inject constructor(
 
     override suspend fun upload(uri: Uri): Result<String> = withContext(ioDispatcher) {
         safeCall {
-            val file = copyToCache(uri)
+            val originalName = displayName(uri) ?: "${System.currentTimeMillis()}.${extensionOf(uri)}"
+            val file = copyToCache(uri, originalName)
             try {
-                val body = file.asRequestBody(MULTIPART.toMediaTypeOrNull())
-                val part = MultipartBody.Part.createFormData(PART_NAME, file.name, body)
+                val body = file.asRequestBody(mimeTypeOf(uri).toMediaTypeOrNull())
+                // 서버는 이 이름을 원본 파일 이름으로 남긴다(파일 말풍선·내려받기 이름). 캐시 파일 이름을 주면 안 된다.
+                val part = MultipartBody.Part.createFormData(PART_NAME, originalName, body)
                 storageApi.upload(part).use { it.string() }.trim()
             } finally {
                 file.delete()
@@ -54,8 +56,7 @@ class StorageRepositoryImpl @Inject constructor(
     }
 
     /** Android 10+ 에서는 content Uri 를 그대로 파일로 못 읽으므로 캐시로 복사해서 올린다. */
-    private fun copyToCache(uri: Uri): File {
-        val name = displayName(uri) ?: "${System.currentTimeMillis()}.${extensionOf(uri)}"
+    private fun copyToCache(uri: Uri, name: String): File {
         val target = File(context.cacheDir, "upload_${System.currentTimeMillis()}_$name")
         context.contentResolver.openInputStream(uri).use { input ->
             requireNotNull(input) { "파일을 열 수 없다: $uri" }
@@ -71,6 +72,10 @@ class StorageRepositoryImpl @Inject constructor(
             }
     }.getOrNull()
 
+    /** 파트의 Content-Type. 서버가 이걸 파일 종류로 남긴다(내려받기·열기 때 쓴다). 모르면 octet-stream. */
+    private fun mimeTypeOf(uri: Uri): String =
+        runCatching { context.contentResolver.getType(uri) }.getOrNull()?.takeIf { it.isNotBlank() } ?: OCTET_STREAM
+
     private fun extensionOf(uri: Uri): String {
         val type = runCatching { context.contentResolver.getType(uri) }.getOrNull()
         return MimeTypeMap.getSingleton().getExtensionFromMimeType(type) ?: "jpg"
@@ -81,6 +86,6 @@ class StorageRepositoryImpl @Inject constructor(
         const val AUTHORITY = "com.example.modumessenger"
         const val TEMP_DIR = "temp_images"
         const val TEMP_IMAGE = "temp_image.jpg"
-        private const val MULTIPART = "multipart/form-data"
+        private const val OCTET_STREAM = "application/octet-stream"
     }
 }

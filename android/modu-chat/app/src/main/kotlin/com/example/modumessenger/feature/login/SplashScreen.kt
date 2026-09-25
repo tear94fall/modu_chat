@@ -1,14 +1,12 @@
 package com.example.modumessenger.feature.login
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.example.modumessenger.core.ui.components.BrandingHeader
+import com.example.modumessenger.core.ui.components.CenteredBranding
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -33,12 +31,8 @@ fun SplashScreen(
         onDecided(loggedIn)
     }
 
-    Box(
-        modifier = Modifier.fillMaxSize().background(Color.White),
-        contentAlignment = Alignment.Center,
-    ) {
-        BrandingHeader()
-    }
+    // 로고는 시스템 스플래시와 같은 자리(창 정중앙)에 둔다. 넘어가는 순간 로고가 움직이지 않는다.
+    CenteredBranding(modifier = Modifier.fillMaxSize().background(Color.White))
 }
 
 /** 브랜딩이 눈에 들어올 만큼은 머문다. */

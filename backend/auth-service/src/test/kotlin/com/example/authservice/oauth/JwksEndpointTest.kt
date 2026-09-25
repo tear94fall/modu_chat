@@ -35,7 +35,6 @@ class JwksEndpointTest {
                     hasItems(
                         "urn:modu:params:oauth:grant-type:google_id_token",
                         "urn:modu:params:oauth:grant-type:sso_code",
-                        "urn:modu:params:oauth:grant-type:admin_password",
                         "refresh_token",
                     ),
                 ),

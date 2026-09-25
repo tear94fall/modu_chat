@@ -2,6 +2,7 @@ package com.example.memberservice.member.repository
 
 import com.example.memberservice.member.entity.Member
 import com.example.memberservice.member.entity.QMember.member
+import com.querydsl.core.types.ExpressionUtils
 import com.querydsl.core.types.dsl.BooleanExpression
 import com.querydsl.jpa.impl.JPAQueryFactory
 import org.springframework.data.domain.Page
@@ -11,8 +12,11 @@ import org.springframework.util.StringUtils
 
 class MemberRepositoryImpl(private val queryFactory: JPAQueryFactory) : MemberCustomRepository {
 
-    override fun searchForAdmin(keyword: String?, sort: MemberSort, pageable: Pageable): Page<Member> {
-        val predicate = keywordPredicate(keyword)
+    override fun searchForAdmin(keyword: String?, sort: MemberSort, pageable: Pageable, memberIds: Collection<Long>?): Page<Member> {
+        if (memberIds != null && memberIds.isEmpty()) {
+            return PageImpl(emptyList(), pageable, 0)
+        }
+        val predicate = ExpressionUtils.allOf(keywordPredicate(keyword), memberIds?.let { member.id.`in`(it) })
 
         val query = queryFactory
             .selectFrom(member)

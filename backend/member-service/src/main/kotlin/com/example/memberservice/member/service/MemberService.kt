@@ -20,6 +20,9 @@ import com.example.memberservice.profile.client.ProfileFeignClient
 import com.example.memberservice.profile.dto.AddProfileDto
 import com.example.memberservice.profile.dto.ProfileDto
 import com.example.memberservice.profile.dto.ProfileType
+import com.example.memberservice.staff.StaffPermission
+import com.example.memberservice.staff.StaffRepository
+import com.example.memberservice.staff.sortedPermissions
 import com.example.memberservice.storage.client.StorageFeignClient
 import org.modelmapper.ModelMapper
 import org.slf4j.LoggerFactory
@@ -43,6 +46,7 @@ class MemberService(
     private val memberFriendRepository: MemberFriendRepository,
     private val chatFeignClient: ChatFeignClient,
     private val pushFeignClient: PushFeignClient,
+    private val staffRepository: StaffRepository,
 ) : UserDetailsService {
 
     private val log = LoggerFactory.getLogger(MemberService::class.java)
@@ -257,9 +261,19 @@ class MemberService(
      * "한글 먼저" 는 컬럼 하나로 표현할 수 없어 QueryDSL CASE 로 만들어야 한다.
      */
     @Transactional(readOnly = true)
-    fun searchMembers(keyword: String?, sort: MemberSort?, pageable: Pageable): Page<AdminMemberSummaryDto> =
-        memberRepository.searchForAdmin(keyword, sort ?: MemberSort.DEFAULT, pageable)
-            .map(AdminMemberSummaryDto::from)
+    fun searchMembers(keyword: String?, sort: MemberSort?, pageable: Pageable): Page<AdminMemberSummaryDto> {
+        val page = memberRepository.searchForAdmin(keyword, sort ?: MemberSort.DEFAULT, pageable)
+        val staff = staffPermissionsOf(page.content.mapNotNull { it.id })
+        return page.map { AdminMemberSummaryDto.from(it).withStaff(staff[it.id].orEmpty()) }
+    }
+
+    /** memberId → 직원 권한(SUPER, ADMIN, SYSTEM, INTERNAL 순). 직원이 아닌 회원은 맵에 없다. */
+    private fun staffPermissionsOf(memberIds: Collection<Long>): Map<Long, List<StaffPermission>> =
+        if (memberIds.isEmpty()) {
+            emptyMap()
+        } else {
+            staffRepository.findAllByMemberIdIn(memberIds).associate { it.memberId to it.sortedPermissions() }
+        }
 
     /** 백오피스 상세: 회원 + 친구 수. */
     fun getMemberDetail(id: Long): AdminMemberDetailDto {
@@ -298,8 +312,10 @@ class MemberService(
 
     private fun toAdminMemberDetailDto(member: Member): AdminMemberDetailDto {
         val friends = memberFriendService.listForAdmin(member.id!!)
+        val staff = staffPermissionsOf(friends.mapNotNull { it.id } + member.id!!)
         return AdminMemberDetailDto(
-            modelMapper.map(member, MemberDto::class.java), friends.size, member.createdDate, friends,
+            modelMapper.map(member, MemberDto::class.java), friends.size, member.createdDate,
+            friends.map { it.withStaff(staff[it.id].orEmpty()) }, staff[member.id].orEmpty(),
         )
     }
 }

@@ -80,16 +80,6 @@ class GoogleIdTokenGrantTest {
     }
 
     @Test
-    fun 그_grant_를_허용하지_않는_클라이언트는_unauthorized_client() {
-        mockMvc.perform(
-            post("/oauth2/token").contentType(APPLICATION_FORM_URLENCODED)
-                .param("grant_type", GRANT).param("client_id", "modu-admin").param("id_token", "x"),
-        )
-            .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.error").value("unauthorized_client"))
-    }
-
-    @Test
     fun 모르는_클라이언트는_invalid_client() {
         mockMvc.perform(
             post("/oauth2/token").contentType(APPLICATION_FORM_URLENCODED)

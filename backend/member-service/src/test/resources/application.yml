@@ -108,3 +108,6 @@ eureka:
 modu:
   internal-api:
     token: test-internal-token
+  # 탈퇴 때 커머스 고객 정리(CommerceClient). 테스트는 클라이언트를 목으로 바꾼다.
+  commerce:
+    url: http://commerce-service:8200

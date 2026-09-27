@@ -1,5 +1,6 @@
 package com.example.pointservice.api.internal
 
+import com.example.pointservice.api.dto.EarnAmountRequestDto
 import com.example.pointservice.api.dto.EarnRequestDto
 import com.example.pointservice.api.dto.EarnResultDto
 import com.example.pointservice.api.dto.PointBalanceDto
@@ -28,6 +29,11 @@ class PointInternalController(private val pointService: PointService) {
     @PostMapping("/earn")
     fun earn(@Valid @RequestBody request: EarnRequestDto): ResponseEntity<EarnResultDto> =
         ResponseEntity.ok(pointService.earn(request.userId, request.ruleCode, request.refId, request.memo))
+
+    /** 금액 지정 적립(구매 적립 등). 규칙·상한 없음. 같은 (userId, refId) 로 다시 오면 applied=false, reason=DUPLICATE(200). */
+    @PostMapping("/earn-amount")
+    fun earnAmount(@Valid @RequestBody request: EarnAmountRequestDto): ResponseEntity<EarnResultDto> =
+        ResponseEntity.ok(pointService.earnAmount(request.userId, request.amount, request.reason, request.refId, request.memo))
 
     /** 사용(차감). 부족하면 409 INSUFFICIENT_POINT. 같은 refId 로 다시 오면 applied=false. */
     @PostMapping("/spend")

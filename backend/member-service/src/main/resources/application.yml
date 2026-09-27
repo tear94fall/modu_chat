@@ -17,3 +17,8 @@ spring:
       # 설정 서버를 못 만나면 기본값으로 조용히 뜨지 않고 기동에 실패한다(compose 의 restart 가 다시 띄운다).
       name: messenger,${spring.application.name}
       fail-fast: true
+
+# 탈퇴 때 커머스 고객 정리를 부를 주소(CommerceClient). 커머스는 Eureka 밖이라 주소를 직접 쓴다.
+modu:
+  commerce:
+    url: http://commerce-service:8200

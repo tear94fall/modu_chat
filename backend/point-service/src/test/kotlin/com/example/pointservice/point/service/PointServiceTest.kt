@@ -85,6 +85,31 @@ class PointServiceTest {
     }
 
     @Test
+    @DisplayName("금액 지정 적립은 상한 없이 적립되고 출처가 원장에 남으며 refId 로 멱등이다")
+    fun earnAmount() {
+        val first = pointService.earnAmount(user, 1500L, "PURCHASE", "purchase:order:1", "구매 적립")
+        val second = pointService.earnAmount(user, 700L, "PURCHASE", "purchase:order:2")
+        val again = pointService.earnAmount(user, 1500L, "PURCHASE", "purchase:order:1")
+
+        assertThat(first.applied).isTrue()
+        assertThat(first.balance).isEqualTo(1500L)
+        assertThat(second.balance).isEqualTo(2200L)
+        assertThat(again.applied).isFalse()
+        assertThat(again.amount).isEqualTo(0L)
+        assertThat(again.reason).isEqualTo(EarnSkipReason.DUPLICATE)
+        assertThat(pointService.balance(user).balance).isEqualTo(2200L)
+        val history = pointService.history(user, PageRequest.of(0, 10)).content
+        assertThat(history).hasSize(2)
+        assertThat(history.map { it.type }).containsOnly(PointTransactionType.EARN)
+        assertThat(history.map { it.reason }).containsOnly("PURCHASE")
+        assertThat(history.map { it.ruleCode }).containsOnlyNulls()
+        assertThat(history[1].memo).isEqualTo("구매 적립")
+        assertThatThrownBy { pointService.earnAmount(user, 0L, "PURCHASE", "purchase:order:3") }
+            .isInstanceOf(CustomException::class.java)
+            .extracting("errorCode").isEqualTo(ErrorCode.INVALID_AMOUNT)
+    }
+
+    @Test
     @DisplayName("전체 상한(가입 축하 1회)을 넘으면 적용되지 않는다")
     fun totalLimit() {
         pointService.earn(user, "SIGNUP")

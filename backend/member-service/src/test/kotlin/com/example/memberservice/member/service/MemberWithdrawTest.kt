@@ -1,6 +1,7 @@
 package com.example.memberservice.member.service
 
 import com.example.memberservice.chat.client.ChatFeignClient
+import com.example.memberservice.commerce.client.CommerceClient
 import com.example.memberservice.member.dto.GoogleAccountDto
 import com.example.memberservice.member.entity.Member
 import com.example.memberservice.member.entity.MemberFriend
@@ -15,6 +16,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.ArgumentMatchers.anyLong
+import org.mockito.kotlin.doThrow
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
@@ -23,6 +25,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.ResponseEntity
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.client.ResourceAccessException
 
 /** 회원 탈퇴: 다른 서비스 정리를 요청하고, 친구 관계를 지우고, 회원 행은 개인정보만 비운 채 남긴다. */
 @SpringBootTest
@@ -36,6 +39,7 @@ class MemberWithdrawTest {
     @MockitoBean lateinit var pushFeignClient: PushFeignClient
     @MockitoBean lateinit var storageFeignClient: StorageFeignClient
     @MockitoBean lateinit var profileFeignClient: ProfileFeignClient
+    @MockitoBean lateinit var commerceClient: CommerceClient
 
     private fun saveMember(tag: String): Member = memberRepository.save(
         Member(
@@ -84,8 +88,24 @@ class MemberWithdrawTest {
 
         verify(chatFeignClient).exitAllChatRooms(me.id!!)
         verify(pushFeignClient).deleteToken(me.userId)
+        verify(commerceClient).deleteCustomer(me.userId)
         verify(storageFeignClient).delete("profile-$tag.png")
         verify(storageFeignClient).delete("wall-$tag.jpg")
+    }
+
+    @Test
+    fun withdraw_stillSucceeds_whenCommerceCallFails() {
+        val me = saveMember(tag())
+        whenever(chatFeignClient.exitAllChatRooms(anyLong())).thenReturn(listOf())
+        whenever(pushFeignClient.deleteToken(any())).thenReturn(ResponseEntity.noContent().build())
+        doThrow(ResourceAccessException("I/O error on DELETE: Read timed out")).whenever(commerceClient).deleteCustomer(any())
+
+        memberService.withdraw(me.userId)
+
+        verify(commerceClient).deleteCustomer(me.userId)
+        val after = memberRepository.findById(me.id!!).orElseThrow()
+        assertThat(after.status).isEqualTo(MemberStatus.WITHDRAWN)
+        assertThat(after.username).isEqualTo(Member.WITHDRAWN_USERNAME)
     }
 
     @Test

@@ -15,6 +15,7 @@ import java.time.LocalDateTime
 /**
  * 포인트 원장 한 줄. [amount] 는 부호가 있고(적립 +, 사용 −), [balanceAfter] 는 그 시점 잔액이다.
  * [refId] 는 호출 쪽이 주는 멱등 키(주문 번호, 초대 id 등) — 같은 사용자에 같은 refId 는 한 번만 적힌다.
+ * [reason] 은 규칙 없이 금액으로 적립한 줄(구매 적립 등)의 출처 코드다(PURCHASE 등). 규칙 적립·사용·조정에서는 null.
  * 원장은 고치지 않으므로 updatedDate 가 없고, [createdDate] 는 서비스의 시계(한국 시간)로 적는다 —
  * 하루 상한 계산이 같은 시계를 쓰기 때문이다.
  */
@@ -60,6 +61,10 @@ class PointTransaction protected constructor() {
     var refId: String? = null
         protected set
 
+    @Column(length = 32)
+    var reason: String? = null
+        protected set
+
     @Column(length = 200)
     var memo: String? = null
         protected set
@@ -77,6 +82,7 @@ class PointTransaction protected constructor() {
         ruleCode: String? = null,
         refId: String? = null,
         memo: String? = null,
+        reason: String? = null,
     ) : this() {
         this.createdDate = createdDate
         this.userId = userId
@@ -86,5 +92,6 @@ class PointTransaction protected constructor() {
         this.ruleCode = ruleCode
         this.refId = refId
         this.memo = memo
+        this.reason = reason
     }
 }

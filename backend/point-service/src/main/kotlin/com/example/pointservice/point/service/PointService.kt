@@ -77,6 +77,23 @@ class PointService(
         return EarnResultDto(true, rule.points, balance)
     }
 
+    /**
+     * 금액 지정 적립(구매 적립 등). 규칙·상한 없이 [amount] 를 그대로 적립하고 원장에 출처 [reason] 을 남긴다.
+     * 규칙 적립과 같이 (userId, refId) 로 멱등이다 — 다시 오면 applied=false, DUPLICATE.
+     */
+    fun earnAmount(userId: String, amount: Long, reason: String, refId: String, memo: String? = null): EarnResultDto {
+        if (amount <= 0L) throw CustomException(ErrorCode.INVALID_AMOUNT, amount.toString())
+        val account = lockOrCreate(userId)
+        if (transactionRepository.existsByUserIdAndRefId(userId, refId)) {
+            return EarnResultDto(false, 0L, account.balance, EarnSkipReason.DUPLICATE)
+        }
+        val balance = account.apply(amount)
+        transactionRepository.save(
+            PointTransaction(userId, PointTransactionType.EARN, amount, balance, now(), refId = refId, memo = memo, reason = reason),
+        )
+        return EarnResultDto(true, amount, balance)
+    }
+
     /** 출석 체크. 하루 한 번은 규칙(DAILY_CHECKIN 의 dailyLimit)이 막고, refId 로도 한 번 더 막는다. */
     fun checkIn(userId: String): EarnResultDto =
         earn(userId, CHECKIN_RULE, refId = "checkin:${LocalDate.now(clock)}")

@@ -5,6 +5,8 @@ import com.example.pointservice.point.entity.PointAccount
 import com.example.pointservice.point.entity.PointRule
 import com.example.pointservice.point.entity.PointTransaction
 import com.example.pointservice.point.entity.PointTransactionType
+import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
@@ -21,6 +23,8 @@ data class PointTransactionDto(
     val ruleCode: String?,
     val refId: String?,
     val memo: String?,
+    /** 금액 지정 적립의 출처(PURCHASE 등). 그 밖의 줄은 null. */
+    val reason: String?,
     val createdDate: LocalDateTime?,
 ) {
     companion object {
@@ -32,6 +36,7 @@ data class PointTransactionDto(
             ruleCode = t.ruleCode,
             refId = t.refId,
             memo = t.memo,
+            reason = t.reason,
             createdDate = t.createdDate,
         )
     }
@@ -43,6 +48,16 @@ data class EarnRequestDto(
     @field:NotBlank val ruleCode: String = "",
     /** 멱등 키. 같은 사용자·같은 refId 는 한 번만 적립된다(초대 id, 주문 번호 등). */
     @field:Size(max = 128) val refId: String? = null,
+    @field:Size(max = 200) val memo: String? = null,
+)
+
+/** 규칙 없이 금액을 정해 적립할 때(구매 적립 등). 규칙이 없으니 상한도 없고, 멱등 키는 필수다. */
+data class EarnAmountRequestDto(
+    @field:NotBlank val userId: String = "",
+    @field:NotNull @field:Min(1) @field:Max(1_000_000) val amount: Long = 0L,
+    /** 적립 출처 코드(PURCHASE 등). 원장의 reason 칸에 남아 관리자·사용자 화면이 출처를 보여 준다. */
+    @field:NotBlank @field:Size(max = 30) val reason: String = "",
+    @field:NotBlank @field:Size(max = 128) val refId: String = "",
     @field:Size(max = 200) val memo: String? = null,
 )
 

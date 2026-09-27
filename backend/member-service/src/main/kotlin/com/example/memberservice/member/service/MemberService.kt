@@ -3,6 +3,7 @@ package com.example.memberservice.member.service
 import com.example.memberservice.api.admin.dto.AdminMemberDetailDto
 import com.example.memberservice.api.admin.dto.AdminMemberSummaryDto
 import com.example.memberservice.chat.client.ChatFeignClient
+import com.example.memberservice.commerce.client.CommerceClient
 import com.example.memberservice.global.exception.CustomException
 import com.example.memberservice.global.exception.ErrorCode
 import com.example.memberservice.global.lock.ApiLock
@@ -47,6 +48,7 @@ class MemberService(
     private val chatFeignClient: ChatFeignClient,
     private val pushFeignClient: PushFeignClient,
     private val staffRepository: StaffRepository,
+    private val commerceClient: CommerceClient,
 ) : UserDetailsService {
 
     private val log = LoggerFactory.getLogger(MemberService::class.java)
@@ -99,7 +101,7 @@ class MemberService(
     /**
      * 회원 탈퇴(본인만, 컨트롤러가 확인한다). 이미 탈퇴한 회원이면 아무것도 하지 않는다.
      * 다른 서비스 정리(방 나가기·푸시 토큰)가 실패하면 예외가 그대로 올라가 탈퇴도 되지 않는다 — 앱이 다시 시도한다.
-     * 사진 파일 삭제만은 실패해도 탈퇴를 막지 않는다.
+     * 사진 파일 삭제와 커머스 고객 정리는 실패해도 탈퇴를 막지 않는다(로그만 남긴다).
      */
     fun withdraw(userId: String) {
         val member = memberRepository.findByUserId(userId)
@@ -110,11 +112,21 @@ class MemberService(
 
         chatFeignClient.exitAllChatRooms(member.id!!)
         pushFeignClient.deleteToken(userId)
+        deleteCommerceCustomerQuietly(userId)
         memberFriendRepository.deleteAllByMember_IdOrFriend_Id(member.id!!, member.id!!)
         deleteFileQuietly(member.profileImage)
         deleteFileQuietly(member.wallpaperImage)
 
         member.withdraw()
+    }
+
+    /** 커머스는 다른 제품이라 그쪽 장애로 메신저 탈퇴가 막히면 안 된다. 실패·시간 초과(3초)는 로그만 남긴다. */
+    private fun deleteCommerceCustomerQuietly(userId: String) {
+        try {
+            commerceClient.deleteCustomer(userId)
+        } catch (e: Exception) {
+            log.warn("탈퇴 회원의 커머스 고객 정리 실패, 계속 진행 userId={} message={}", userId, e.message)
+        }
     }
 
     private fun deleteFileQuietly(file: String?) {

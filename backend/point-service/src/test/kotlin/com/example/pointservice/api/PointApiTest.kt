@@ -139,6 +139,52 @@ class PointApiTest {
     }
 
     @Test
+    fun internal_earnAmount_idempotentAndValidated() {
+        val body = """{"userId":"$user","amount":1234,"reason":"PURCHASE","refId":"purchase:order:77","memo":"구매 적립"}"""
+        mockMvc.perform(post("/api-internal/point/earn-amount").contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isForbidden)
+        mockMvc.perform(post("/api-internal/point/earn-amount").header("X-Internal-Token", token).contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.applied").value(true))
+            .andExpect(jsonPath("$.amount").value(1234))
+            .andExpect(jsonPath("$.balance").value(1234))
+            .andExpect(jsonPath("$.reason").doesNotExist())
+        mockMvc.perform(post("/api-internal/point/earn-amount").header("X-Internal-Token", token).contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.applied").value(false))
+            .andExpect(jsonPath("$.amount").value(0))
+            .andExpect(jsonPath("$.balance").value(1234))
+            .andExpect(jsonPath("$.reason").value("DUPLICATE"))
+        // 같은 refId 는 규칙 적립과도 공유된다
+        mockMvc.perform(
+            post("/api-internal/point/earn").header("X-Internal-Token", token).contentType(MediaType.APPLICATION_JSON)
+                .content("""{"userId":"$user","ruleCode":"SIGNUP","refId":"purchase:order:77"}"""),
+        )
+            .andExpect(jsonPath("$.reason").value("DUPLICATE"))
+        listOf(
+            """{"userId":"$user","amount":0,"reason":"PURCHASE","refId":"r1"}""",
+            """{"userId":"$user","amount":1000001,"reason":"PURCHASE","refId":"r2"}""",
+            """{"userId":"$user","amount":10,"reason":"","refId":"r3"}""",
+            """{"userId":"$user","amount":10,"reason":"${"X".repeat(31)}","refId":"r4"}""",
+            """{"userId":"$user","amount":10,"reason":"PURCHASE","refId":""}""",
+            """{"userId":"","amount":10,"reason":"PURCHASE","refId":"r5"}""",
+        ).forEach { bad ->
+            mockMvc.perform(post("/api-internal/point/earn-amount").header("X-Internal-Token", token).contentType(MediaType.APPLICATION_JSON).content(bad))
+                .andExpect(status().isBadRequest)
+                .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+        }
+        mockMvc.perform(get("/api-internal/point/$user/history").header("X-Internal-Token", token))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.totalElements").value(1))
+            .andExpect(jsonPath("$.content[0].type").value("EARN"))
+            .andExpect(jsonPath("$.content[0].amount").value(1234))
+            .andExpect(jsonPath("$.content[0].reason").value("PURCHASE"))
+            .andExpect(jsonPath("$.content[0].ruleCode").doesNotExist())
+            .andExpect(jsonPath("$.content[0].refId").value("purchase:order:77"))
+            .andExpect(jsonPath("$.content[0].memo").value("구매 적립"))
+    }
+
+    @Test
     fun admin_adjustRulesAndAccounts() {
         mockMvc.perform(
             post("/api-admin/point/accounts/$user/adjust").header("X-Internal-Token", token).contentType(MediaType.APPLICATION_JSON)

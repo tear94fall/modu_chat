@@ -26,5 +26,8 @@ class OpenApiDocsTest {
         assertThat(JsonPath.read<String>(body, "$.info.version")).isEqualTo("v1")
         val paths: Map<String, Any> = JsonPath.read(body, "$.paths")
         assertThat(paths.keys).anyMatch { it.startsWith("/api-admin/chat") }
+        val tagNames: List<String> = JsonPath.read(body, "$.tags[*].name")
+        assertThat(tagNames).contains("채팅방 관리 (어드민)", "채팅방 (앱)")
+        assertThat(JsonPath.read<String>(body, "$.paths['/api-public/chat/chat/room'].post.summary")).isEqualTo("채팅방 만들기")
     }
 }

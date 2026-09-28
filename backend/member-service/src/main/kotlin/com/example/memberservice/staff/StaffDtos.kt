@@ -2,6 +2,7 @@ package com.example.memberservice.staff
 
 import com.example.memberservice.member.entity.Member
 import com.example.memberservice.member.entity.MemberStatus
+import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 
 /** auth-service 가 로그인·토큰 갱신 때 받는 직원 정보. */
@@ -62,7 +63,14 @@ data class StaffEntryDto(
     val modifiedByName: String?,
 )
 
-data class StaffPermissionRequest(val permissions: List<StaffPermission>? = null)
+@Schema(description = "직원 지정·권한 변경 요청. 권한 목록을 통째로 바꾼다.")
+data class StaffPermissionRequest(
+    @field:Schema(
+        description = "줄 권한. SUPER | ADMIN | SYSTEM | INTERNAL 중 하나 이상, 비면 400. SUPER 는 모든 콘솔과 직원 관리를 쓸 수 있다.",
+        example = "[\"ADMIN\", \"INTERNAL\"]",
+    )
+    val permissions: List<StaffPermission>? = null,
+)
 
 /** 권한은 늘 같은 순서(SUPER, ADMIN, SYSTEM, INTERNAL)로 내보낸다. */
 fun Staff.sortedPermissions(): List<StaffPermission> = permissions.sortedBy { it.ordinal }

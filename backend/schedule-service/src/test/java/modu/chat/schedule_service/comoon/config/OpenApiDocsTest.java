@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 import com.jayway.jsonpath.JsonPath;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,5 +30,8 @@ class OpenApiDocsTest {
         assertThat(JsonPath.<String>read(body, "$.info.version")).isEqualTo("v1");
         Map<String, Object> paths = JsonPath.read(body, "$.paths");
         assertThat(paths.keySet()).anyMatch(p -> p.startsWith("/api-internal/schedule"));
+        List<String> tagNames = JsonPath.read(body, "$.tags[*].name");
+        assertThat(tagNames).contains("스케줄 (내부)");
+        assertThat(JsonPath.<String>read(body, "$.paths['/api-internal/schedule'].post.summary")).isEqualTo("스케줄 등록");
     }
 }

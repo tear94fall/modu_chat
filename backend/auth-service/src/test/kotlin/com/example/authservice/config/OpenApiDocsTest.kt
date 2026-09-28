@@ -26,5 +26,8 @@ class OpenApiDocsTest {
         assertThat(JsonPath.read<String>(body, "$.info.version")).isEqualTo("v1")
         val paths: Map<String, Any> = JsonPath.read(body, "$.paths")
         assertThat(paths.keys).anyMatch { it.startsWith("/api-public/auth/sso-code") }
+        val tags: List<String> = JsonPath.read(body, "$.tags[*].name")
+        assertThat(tags).contains("SSO 코드 (앱)")
+        assertThat(JsonPath.read<String>(body, "$.paths['/api-public/auth/sso-code'].post.summary")).isEqualTo("SSO 1회용 코드 발급")
     }
 }

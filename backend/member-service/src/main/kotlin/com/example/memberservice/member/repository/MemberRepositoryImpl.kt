@@ -2,8 +2,12 @@ package com.example.memberservice.member.repository
 
 import com.example.memberservice.member.entity.Member
 import com.example.memberservice.member.entity.QMember.member
+import com.example.memberservice.usage.ModuService
+import com.example.memberservice.usage.QMemberServiceUsage.memberServiceUsage as usage
+import com.example.memberservice.usage.ServiceFilter
 import com.querydsl.core.types.ExpressionUtils
 import com.querydsl.core.types.dsl.BooleanExpression
+import com.querydsl.jpa.JPAExpressions
 import com.querydsl.jpa.impl.JPAQueryFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
@@ -12,11 +16,21 @@ import org.springframework.util.StringUtils
 
 class MemberRepositoryImpl(private val queryFactory: JPAQueryFactory) : MemberCustomRepository {
 
-    override fun searchForAdmin(keyword: String?, sort: MemberSort, pageable: Pageable, memberIds: Collection<Long>?): Page<Member> {
+    override fun searchForAdmin(
+        keyword: String?,
+        sort: MemberSort,
+        pageable: Pageable,
+        memberIds: Collection<Long>?,
+        service: ServiceFilter?,
+    ): Page<Member> {
         if (memberIds != null && memberIds.isEmpty()) {
             return PageImpl(emptyList(), pageable, 0)
         }
-        val predicate = ExpressionUtils.allOf(keywordPredicate(keyword), memberIds?.let { member.id.`in`(it) })
+        val predicate = ExpressionUtils.allOf(
+            keywordPredicate(keyword),
+            memberIds?.let { member.id.`in`(it) },
+            servicePredicate(service),
+        )
 
         val query = queryFactory
             .selectFrom(member)
@@ -40,6 +54,20 @@ class MemberRepositoryImpl(private val queryFactory: JPAQueryFactory) : MemberCu
     }
 
     companion object {
+        /** 이용 기록 존재 여부로 거른다. 행을 합치지 않고 exists 서브쿼리를 써서 회원이 중복되지 않는다. */
+        private fun servicePredicate(filter: ServiceFilter?): BooleanExpression? = when (filter) {
+            null -> null
+            ServiceFilter.CHAT -> uses(ModuService.CHAT)
+            ServiceFilter.COMMERCE -> uses(ModuService.COMMERCE)
+            ServiceFilter.BOTH -> uses(ModuService.CHAT).and(uses(ModuService.COMMERCE))
+            ServiceFilter.NONE -> JPAExpressions.selectOne().from(usage).where(usage.userId.eq(member.userId)).notExists()
+        }
+
+        private fun uses(service: ModuService): BooleanExpression =
+            JPAExpressions.selectOne().from(usage)
+                .where(usage.userId.eq(member.userId), usage.service.eq(service))
+                .exists()
+
         /** keyword 가 비어 있으면 null 을 돌려준다. QueryDSL 은 null where 조건을 조건 없음으로 본다. */
         private fun keywordPredicate(keyword: String?): BooleanExpression? {
             if (!StringUtils.hasText(keyword)) {

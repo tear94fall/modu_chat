@@ -1,5 +1,7 @@
 package com.example.memberservice.member.service
 
+import com.example.memberservice.api.admin.dto.AdminFriendDto
+import com.example.memberservice.api.admin.dto.AdminFriendPageDto
 import com.example.memberservice.api.admin.dto.AdminMemberDetailDto
 import com.example.memberservice.api.admin.dto.AdminMemberSummaryDto
 import com.example.memberservice.chat.client.ChatFeignClient
@@ -13,6 +15,7 @@ import com.example.memberservice.member.dto.GoogleAccountDto
 import com.example.memberservice.member.dto.MemberDto
 import com.example.memberservice.member.dto.UpdateProfileDto
 import com.example.memberservice.member.entity.Member
+import com.example.memberservice.member.repository.AdminFriendFilter
 import com.example.memberservice.member.repository.MemberFriendRepository
 import com.example.memberservice.member.repository.MemberRepository
 import com.example.memberservice.member.repository.MemberSort
@@ -25,16 +28,20 @@ import com.example.memberservice.staff.StaffPermission
 import com.example.memberservice.staff.StaffRepository
 import com.example.memberservice.staff.sortedPermissions
 import com.example.memberservice.storage.client.StorageFeignClient
+import com.example.memberservice.usage.MemberServiceUsageService
+import com.example.memberservice.usage.ServiceFilter
 import org.modelmapper.ModelMapper
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.http.HttpStatus
 import org.springframework.security.core.userdetails.User
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.server.ResponseStatusException
 
 @Service
 @Transactional
@@ -49,6 +56,7 @@ class MemberService(
     private val pushFeignClient: PushFeignClient,
     private val staffRepository: StaffRepository,
     private val commerceClient: CommerceClient,
+    private val usageService: MemberServiceUsageService,
 ) : UserDetailsService {
 
     private val log = LoggerFactory.getLogger(MemberService::class.java)
@@ -273,10 +281,18 @@ class MemberService(
      * "한글 먼저" 는 컬럼 하나로 표현할 수 없어 QueryDSL CASE 로 만들어야 한다.
      */
     @Transactional(readOnly = true)
-    fun searchMembers(keyword: String?, sort: MemberSort?, pageable: Pageable): Page<AdminMemberSummaryDto> {
-        val page = memberRepository.searchForAdmin(keyword, sort ?: MemberSort.DEFAULT, pageable)
+    fun searchMembers(
+        keyword: String?,
+        sort: MemberSort?,
+        pageable: Pageable,
+        service: ServiceFilter? = null,
+    ): Page<AdminMemberSummaryDto> {
+        val page = memberRepository.searchForAdmin(keyword, sort ?: MemberSort.DEFAULT, pageable, service = service)
         val staff = staffPermissionsOf(page.content.mapNotNull { it.id })
-        return page.map { AdminMemberSummaryDto.from(it).withStaff(staff[it.id].orEmpty()) }
+        val services = usageService.servicesOf(page.content.map { it.userId })
+        return page.map {
+            AdminMemberSummaryDto.from(it).withStaff(staff[it.id].orEmpty()).withServices(services[it.userId].orEmpty())
+        }
     }
 
     /** memberId → 직원 권한(SUPER, ADMIN, SYSTEM, INTERNAL 순). 직원이 아닌 회원은 맵에 없다. */
@@ -292,6 +308,38 @@ class MemberService(
         val member = memberRepository.findById(id)
             .orElseThrow { CustomException(ErrorCode.MEMBER_ID_NOT_FOUND_ERROR, id.toString()) }
         return toAdminMemberDetailDto(member)
+    }
+
+    /**
+     * 백오피스 회원 상세의 친구 탭. 이 회원이 소유한 친구 행(상세의 friends 와 같은 방향)을 필터·페이지로 자른다.
+     * 질의: 회원 존재 확인 1 + 상태별 수 1(전체 개수도 여기서 꺼낸다) + 페이지 1 + 직원 권한 1 + 이용 서비스 1.
+     * 없는 회원이면 404.
+     */
+    @Transactional(readOnly = true)
+    fun getMemberFriends(id: Long, filter: AdminFriendFilter, pageable: Pageable): AdminFriendPageDto {
+        if (!memberRepository.existsById(id)) {
+            throw ResponseStatusException(HttpStatus.NOT_FOUND, "회원을 찾을 수 없습니다: $id")
+        }
+        val counts = memberFriendRepository.countForAdmin(id)
+        val total = counts.of(filter)
+        val rows = if (pageable.isPaged && pageable.offset >= total) {
+            emptyList()
+        } else {
+            memberFriendRepository.findAdminPageContent(id, filter, pageable)
+        }
+        val staff = staffPermissionsOf(rows.mapNotNull { it.friend.id })
+        val services = usageService.servicesOf(rows.mapNotNull { it.friend.userId })
+        val size = pageable.pageSize
+        return AdminFriendPageDto(
+            content = rows.map {
+                AdminFriendDto.from(it, staff[it.friend.id].orEmpty(), services[it.friend.userId].orEmpty())
+            },
+            totalElements = total,
+            totalPages = if (total == 0L) 0 else ((total + size - 1) / size).toInt(),
+            number = pageable.pageNumber,
+            size = size,
+            counts = counts,
+        )
     }
 
     /** 백오피스에서 로그인한 본인 정보. userId 는 게이트웨이가 넣어 준 값이다. */
@@ -328,6 +376,7 @@ class MemberService(
         return AdminMemberDetailDto(
             modelMapper.map(member, MemberDto::class.java), friends.size, member.createdDate,
             friends.map { it.withStaff(staff[it.id].orEmpty()) }, staff[member.id].orEmpty(),
+            usageService.usagesOf(member.userId), member.status,
         )
     }
 }

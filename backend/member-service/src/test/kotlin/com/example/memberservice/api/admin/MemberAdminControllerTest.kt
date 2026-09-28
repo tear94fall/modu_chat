@@ -1,12 +1,19 @@
 package com.example.memberservice.api.admin
 
+import com.example.memberservice.api.admin.dto.AdminFriendPageDto
 import com.example.memberservice.api.admin.dto.AdminMemberDetailDto
 import com.example.memberservice.api.admin.dto.AdminMemberSummaryDto
 import com.example.memberservice.member.dto.MemberDto
 import com.example.memberservice.member.dto.UpdateProfileDto
+import com.example.memberservice.member.entity.MemberStatus
 import com.example.memberservice.member.entity.Role
+import com.example.memberservice.member.repository.AdminFriendFilter
+import com.example.memberservice.member.repository.FriendCounts
 import com.example.memberservice.member.repository.MemberSort
 import com.example.memberservice.member.service.MemberService
+import com.example.memberservice.usage.ModuService
+import com.example.memberservice.usage.ServiceFilter
+import com.example.memberservice.usage.dto.ServiceUsageDto
 import java.time.LocalDateTime
 import org.hamcrest.Matchers.matchesPattern
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -47,7 +54,7 @@ class MemberAdminControllerTest {
     @Test
     fun search_returnsPage() {
         val dto = AdminMemberSummaryDto(1L, "u1", "Alice", "profile.jpg", "a@b.c", Role.ROLE_MEMBER, LocalDateTime.now(), null)
-        whenever(memberService.searchMembers(eq("a"), anyOrNull(), any())).thenReturn(PageImpl(listOf(dto)))
+        whenever(memberService.searchMembers(eq("a"), anyOrNull(), any(), anyOrNull())).thenReturn(PageImpl(listOf(dto)))
 
         mockMvc.perform(get("/api-admin/member").param("keyword", "a").header("X-Internal-Token", "test-internal-token"))
             .andExpect(status().isOk)
@@ -61,13 +68,13 @@ class MemberAdminControllerTest {
     /** 정렬을 안 주면 이름 가나다순(한글 먼저)이다. 예전 기본값이던 최신 가입순이 아니다. */
     @Test
     fun list_defaultsToNameAsc() {
-        whenever(memberService.searchMembers(eq("a"), anyOrNull(), any())).thenReturn(PageImpl(listOf()))
+        whenever(memberService.searchMembers(eq("a"), anyOrNull(), any(), anyOrNull())).thenReturn(PageImpl(listOf()))
         mockMvc.perform(get("/api-admin/member").param("keyword", "a").header("X-Internal-Token", "test-internal-token"))
             .andExpect(status().isOk)
 
         val sortCaptor = argumentCaptor<MemberSort>()
         val pageableCaptor = argumentCaptor<org.springframework.data.domain.Pageable>()
-        verify(memberService).searchMembers(eq("a"), sortCaptor.capture(), pageableCaptor.capture())
+        verify(memberService).searchMembers(eq("a"), sortCaptor.capture(), pageableCaptor.capture(), anyOrNull())
         assertEquals(MemberSort.NAME_ASC, sortCaptor.firstValue)
         // 한글 우선 규칙은 Sort 로 못 담아 QueryDSL 이 만든다. Pageable 에는 정렬을 싣지 않는다.
         assertEquals(Sort.unsorted(), pageableCaptor.firstValue.sort)
@@ -75,7 +82,7 @@ class MemberAdminControllerTest {
 
     @Test
     fun list_acceptsEachAllowedSort() {
-        whenever(memberService.searchMembers(anyOrNull(), anyOrNull(), any())).thenReturn(PageImpl(listOf()))
+        whenever(memberService.searchMembers(anyOrNull(), anyOrNull(), any(), anyOrNull())).thenReturn(PageImpl(listOf()))
 
         assertSortParsedAs("name,asc", MemberSort.NAME_ASC)
         assertSortParsedAs("name,desc", MemberSort.NAME_DESC)
@@ -94,7 +101,7 @@ class MemberAdminControllerTest {
         mockMvc.perform(get("/api-admin/member").param("sort", param).header("X-Internal-Token", "test-internal-token"))
             .andExpect(status().isOk)
         val captor = argumentCaptor<MemberSort>()
-        verify(memberService).searchMembers(anyOrNull(), captor.capture(), any())
+        verify(memberService).searchMembers(anyOrNull(), captor.capture(), any(), anyOrNull())
         assertEquals(expected, captor.firstValue)
     }
 
@@ -106,7 +113,7 @@ class MemberAdminControllerTest {
         mockMvc.perform(get("/api-admin/member").param("sort", "name,sideways").header("X-Internal-Token", "test-internal-token"))
             .andExpect(status().isBadRequest)
 
-        verify(memberService, never()).searchMembers(anyOrNull(), anyOrNull(), any())
+        verify(memberService, never()).searchMembers(anyOrNull(), anyOrNull(), any(), anyOrNull())
     }
 
     @Test
@@ -175,5 +182,101 @@ class MemberAdminControllerTest {
             .andExpect(jsonPath("$.friends[0].username").value("김지우"))
             .andExpect(jsonPath("$.friends[0].userId").value("demo-jiwoo"))
             .andExpect(jsonPath("$.friends[0].friendName").value("지우야"))
+    }
+    @Test
+    fun list_passesEachServiceFilter() {
+        whenever(memberService.searchMembers(anyOrNull(), anyOrNull(), any(), anyOrNull())).thenReturn(PageImpl(listOf()))
+
+        for (filter in ServiceFilter.entries) {
+            clearInvocations(memberService)
+            mockMvc.perform(get("/api-admin/member").param("service", filter.name).header("X-Internal-Token", "test-internal-token"))
+                .andExpect(status().isOk)
+            verify(memberService).searchMembers(anyOrNull(), anyOrNull(), any(), eq(filter))
+        }
+
+        clearInvocations(memberService)
+        mockMvc.perform(get("/api-admin/member").header("X-Internal-Token", "test-internal-token"))
+            .andExpect(status().isOk)
+        verify(memberService).searchMembers(anyOrNull(), anyOrNull(), any(), eq(null))
+    }
+
+    @Test
+    fun list_rejectsUnknownServiceFilter() {
+        mockMvc.perform(get("/api-admin/member").param("service", "SHOP").header("X-Internal-Token", "test-internal-token"))
+            .andExpect(status().isBadRequest)
+        verify(memberService, never()).searchMembers(anyOrNull(), anyOrNull(), any(), anyOrNull())
+    }
+
+    @Test
+    fun list_itemsCarryServices() {
+        val dto = AdminMemberSummaryDto(
+            1L, "u1", "Alice", null, "a@b.c", Role.ROLE_MEMBER, LocalDateTime.now(), null,
+            services = listOf(ModuService.CHAT, ModuService.COMMERCE), status = MemberStatus.WITHDRAWN,
+        )
+        whenever(memberService.searchMembers(anyOrNull(), anyOrNull(), any(), anyOrNull())).thenReturn(PageImpl(listOf(dto)))
+
+        mockMvc.perform(get("/api-admin/member").param("service", "BOTH").header("X-Internal-Token", "test-internal-token"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.content[0].services[0]").value("CHAT"))
+            .andExpect(jsonPath("$.content[0].services[1]").value("COMMERCE"))
+            .andExpect(jsonPath("$.content[0].status").value("WITHDRAWN"))
+    }
+
+    @Test
+    fun detail_carriesServiceUsage() {
+        val usage = ServiceUsageDto(
+            ModuService.CHAT, LocalDateTime.parse("2026-09-01T01:02:03"), LocalDateTime.parse("2026-09-20T04:05:06"),
+        )
+        whenever(memberService.getMemberDetail(1L))
+            .thenReturn(AdminMemberDetailDto(MemberDto(username = "Alice"), 0, LocalDateTime.now(), listOf(), services = listOf(usage), status = MemberStatus.ACTIVE))
+
+        mockMvc.perform(get("/api-admin/member/1").header("X-Internal-Token", "test-internal-token"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.services[0].service").value("CHAT"))
+            .andExpect(jsonPath("$.services[0].firstUsedAt").value("2026-09-01T01:02:03"))
+            .andExpect(jsonPath("$.services[0].lastUsedAt").value("2026-09-20T04:05:06"))
+            .andExpect(jsonPath("$.status").value("ACTIVE"))
+    }
+
+    private fun emptyFriendPage() = AdminFriendPageDto(listOf(), 0, 0, 0, 10, FriendCounts())
+
+    @Test
+    fun friends_defaultsToAllFirstPageOfTen() {
+        whenever(memberService.getMemberFriends(eq(1L), any(), any())).thenReturn(emptyFriendPage())
+
+        mockMvc.perform(get("/api-admin/member/1/friends").header("X-Internal-Token", "test-internal-token"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.counts.all").value(0))
+
+        val filterCaptor = argumentCaptor<AdminFriendFilter>()
+        val pageableCaptor = argumentCaptor<org.springframework.data.domain.Pageable>()
+        verify(memberService).getMemberFriends(eq(1L), filterCaptor.capture(), pageableCaptor.capture())
+        assertEquals(AdminFriendFilter.ALL, filterCaptor.firstValue)
+        assertEquals(0, pageableCaptor.firstValue.pageNumber)
+        assertEquals(10, pageableCaptor.firstValue.pageSize)
+    }
+
+    @Test
+    fun friends_passesEachFilterAndCapsSizeAt50() {
+        whenever(memberService.getMemberFriends(any(), any(), any())).thenReturn(emptyFriendPage())
+
+        for (filter in AdminFriendFilter.entries) {
+            clearInvocations(memberService)
+            mockMvc.perform(
+                get("/api-admin/member/1/friends").param("filter", filter.name).param("page", "2").param("size", "500")
+                    .header("X-Internal-Token", "test-internal-token"),
+            ).andExpect(status().isOk)
+            val pageableCaptor = argumentCaptor<org.springframework.data.domain.Pageable>()
+            verify(memberService).getMemberFriends(eq(1L), eq(filter), pageableCaptor.capture())
+            assertEquals(2, pageableCaptor.firstValue.pageNumber)
+            assertEquals(50, pageableCaptor.firstValue.pageSize)
+        }
+    }
+
+    @Test
+    fun friends_rejectsUnknownFilter() {
+        mockMvc.perform(get("/api-admin/member/1/friends").param("filter", "DELETED").header("X-Internal-Token", "test-internal-token"))
+            .andExpect(status().isBadRequest)
+        verify(memberService, never()).getMemberFriends(any(), any(), any())
     }
 }

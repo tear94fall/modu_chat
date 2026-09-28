@@ -13,6 +13,8 @@ interface MemberRepository : JpaRepository<Member, Long>, MemberCustomRepository
 
     fun findByUserId(userId: String): Optional<Member>
 
+    fun existsByUserId(userId: String): Boolean
+
     fun findByEmail(email: String): Optional<Member>
 
     fun findAllByIdIn(ids: List<Long>): List<Member>

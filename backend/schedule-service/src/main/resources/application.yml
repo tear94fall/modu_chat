@@ -9,3 +9,10 @@ server:
 spring:
   profiles:
     active: dev
+
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_API_DOCS_ENABLED:true}
+    path: /v3/api-docs
+  default-produces-media-type: application/json
+  paths-to-exclude: /actuator/**, /error

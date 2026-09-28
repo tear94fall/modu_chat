@@ -28,3 +28,10 @@ management:
     distribution:
       percentiles-histogram:
         http.server.requests: true
+
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_API_DOCS_ENABLED:true}
+    path: /v3/api-docs
+  default-produces-media-type: application/json
+  paths-to-exclude: /actuator/**, /error

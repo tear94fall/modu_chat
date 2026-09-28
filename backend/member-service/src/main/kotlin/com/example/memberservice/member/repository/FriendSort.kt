@@ -5,6 +5,7 @@ import com.querydsl.core.types.OrderSpecifier
 import com.querydsl.core.types.dsl.CaseBuilder
 import com.querydsl.core.types.dsl.ComparableExpressionBase
 import com.querydsl.core.types.dsl.NumberExpression
+import com.querydsl.core.types.dsl.StringExpression
 import java.util.Locale
 
 /**
@@ -16,8 +17,8 @@ enum class FriendSort {
 
     /** 이 정렬이 요구하는 ORDER BY. 마지막 키는 항상 id 라서 같은 값끼리도 순서가 고정된다. */
     fun orders(): List<OrderSpecifier<*>> = when (this) {
-        NAME_ASC -> listOf(nameGroup(0, 1).asc(), nameKey().asc(), memberFriend.friend.email.asc(), memberFriend.friend.id.asc())
-        NAME_DESC -> listOf(nameGroup(1, 0).asc(), nameKey().desc(), memberFriend.friend.email.desc(), memberFriend.friend.id.desc())
+        NAME_ASC -> listOf(nameGroup(memberFriend.friendName, 0, 1).asc(), nameKey().asc(), memberFriend.friend.email.asc(), memberFriend.friend.id.asc())
+        NAME_DESC -> listOf(nameGroup(memberFriend.friendName, 1, 0).asc(), nameKey().desc(), memberFriend.friend.email.desc(), memberFriend.friend.id.desc())
         EMAIL_ASC -> listOf(memberFriend.friend.email.asc(), memberFriend.friend.id.asc())
         EMAIL_DESC -> listOf(memberFriend.friend.email.desc(), memberFriend.friend.id.desc())
     }
@@ -48,13 +49,34 @@ enum class FriendSort {
         }
 
         /**
-         * 이름(내가 정한 별칭, friend_name)을 세 그룹으로 나눈다. 빈 별칭은 방향과 상관없이 항상 마지막(2).
+         * 백오피스 친구 탭 순서: 즐겨찾기 먼저, 그다음 표시 이름(별칭, 비었으면 친구 username) 가나다순(한글 먼저),
+         * 마지막으로 친구 id. 앱 목록과 달리 별칭을 지운 친구도 username 으로 제자리에 선다.
+         */
+        @JvmStatic
+        fun adminOrders(): List<OrderSpecifier<*>> {
+            val displayName = displayName()
+            return listOf(
+                memberFriend.favorite.desc(),
+                nameGroup(displayName, 0, 1).asc(),
+                displayName.lower().asc(),
+                memberFriend.friend.id.asc(),
+            )
+        }
+
+        /** 화면에 보이는 친구 이름: 별칭이 있으면 별칭, 없으면 친구의 현재 username(없으면 빈 문자열). */
+        private fun displayName(): StringExpression =
+            CaseBuilder()
+                .`when`(memberFriend.friendName.eq("")).then(memberFriend.friend.username.coalesce(""))
+                .otherwise(memberFriend.friendName)
+
+        /**
+         * 이름을 세 그룹으로 나눈다. 빈 이름은 방향과 상관없이 항상 마지막(2).
          * 한글 음절로 시작하는 이름과 그 외 이름의 순서는 인자로 받는다. 범위 비교라 DB 콜레이션과 무관하다.
          */
-        private fun nameGroup(hangulRank: Int, otherRank: Int): NumberExpression<Int> =
+        private fun nameGroup(name: StringExpression, hangulRank: Int, otherRank: Int): NumberExpression<Int> =
             CaseBuilder()
-                .`when`(memberFriend.friendName.eq("")).then(2)
-                .`when`(memberFriend.friendName.goe("가").and(memberFriend.friendName.lt(AFTER_LAST_HANGUL_SYLLABLE))).then(hangulRank)
+                .`when`(name.eq("")).then(2)
+                .`when`(name.goe("가").and(name.lt(AFTER_LAST_HANGUL_SYLLABLE))).then(hangulRank)
                 .otherwise(otherRank)
 
         /** 소문자로 비교해 대소문자 구분이 다른 H2/MySQL 에서 같은 순서가 나오게 한다. */

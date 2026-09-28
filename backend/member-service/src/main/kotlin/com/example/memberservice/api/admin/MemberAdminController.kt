@@ -1,10 +1,13 @@
 package com.example.memberservice.api.admin
 
+import com.example.memberservice.api.admin.dto.AdminFriendPageDto
 import com.example.memberservice.api.admin.dto.AdminMemberDetailDto
 import com.example.memberservice.api.admin.dto.AdminMemberSummaryDto
 import com.example.memberservice.member.dto.UpdateProfileDto
+import com.example.memberservice.member.repository.AdminFriendFilter
 import com.example.memberservice.member.repository.MemberSort
 import com.example.memberservice.member.service.MemberService
+import com.example.memberservice.usage.ServiceFilter
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
@@ -28,6 +31,7 @@ class MemberAdminController(private val memberService: MemberService) {
      * 백오피스 목록. 기본은 이름 가나다순이고 한글 이름이 영문·숫자보다 먼저 온다 — 앱 친구 목록과 같은 규칙이다.
      * sort 는 [MemberSort] 허용 목록(name | email | userId | role | createdDate 에 ,asc 또는 ,desc)만 받고
      * 모르는 값이면 400 이다. 조용히 기본 정렬로 되돌리면 화면은 정렬된 것처럼 보이는데 값이 다르다.
+     * service(CHAT | COMMERCE | BOTH | NONE)가 있으면 이용 서비스로 거른다. 모르는 값이면 400.
      */
     @GetMapping
     fun search(
@@ -35,6 +39,7 @@ class MemberAdminController(private val memberService: MemberService) {
         @RequestParam(value = "sort", defaultValue = "name,asc") sort: String,
         @RequestParam(value = "page", defaultValue = "0") page: Int,
         @RequestParam(value = "size", defaultValue = "20") size: Int,
+        @RequestParam(value = "service", required = false) service: ServiceFilter?,
     ): ResponseEntity<Page<AdminMemberSummaryDto>> {
         val memberSort = MemberSort.parse(sort)
             ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "지원하지 않는 정렬입니다: $sort")
@@ -42,6 +47,7 @@ class MemberAdminController(private val memberService: MemberService) {
             memberService.searchMembers(
                 keyword, memberSort,
                 PageRequest.of(maxOf(page, 0), minOf(maxOf(size, 1), 100)),
+                service,
             ),
         )
     }
@@ -70,4 +76,22 @@ class MemberAdminController(private val memberService: MemberService) {
     @GetMapping("/{id}")
     fun detail(@PathVariable("id") id: Long): ResponseEntity<AdminMemberDetailDto> =
         ResponseEntity.ok(memberService.getMemberDetail(id))
+
+    /**
+     * 회원 상세의 친구 탭. filter = ALL(기본) | NORMAL | FAVORITE | HIDDEN | BLOCKED, 모르는 값이면 400.
+     * size 기본 10, 최대 50. 순서는 즐겨찾기 먼저, 표시 이름 가나다순(한글 먼저), id. 없는 회원이면 404.
+     */
+    @GetMapping("/{id}/friends")
+    fun friends(
+        @PathVariable("id") id: Long,
+        @RequestParam(value = "filter", required = false) filter: String?,
+        @RequestParam(value = "page", defaultValue = "0") page: Int,
+        @RequestParam(value = "size", defaultValue = "10") size: Int,
+    ): ResponseEntity<AdminFriendPageDto> {
+        val friendFilter = AdminFriendFilter.parse(filter)
+            ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "지원하지 않는 필터입니다: $filter")
+        return ResponseEntity.ok(
+            memberService.getMemberFriends(id, friendFilter, PageRequest.of(maxOf(page, 0), minOf(maxOf(size, 1), 50))),
+        )
+    }
 }

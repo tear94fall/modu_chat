@@ -12,6 +12,8 @@ import com.example.authservice.oauth.grant.sso.SsoCodeGrantConverter
 import com.example.authservice.oauth.grant.sso.SsoCodeGrantProvider
 import com.example.authservice.oauth.sso.SsoCodeStore
 import com.example.authservice.oauth.store.RedisOAuth2AuthorizationService
+import com.example.authservice.oauth.usage.MemberUsageNotifier
+import com.example.authservice.oauth.usage.UsageRecordingTokenResponseHandler
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet
@@ -59,6 +61,7 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Acce
 import org.springframework.security.oauth2.server.authorization.token.OAuth2RefreshTokenGenerator
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator
+import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AccessTokenResponseAuthenticationSuccessHandler
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver
 import org.springframework.security.web.SecurityFilterChain
 
@@ -107,6 +110,7 @@ class AuthorizationServerConfig(private val props: OAuthProperties) {
         verifier: GoogleIdTokenVerifierService,
         members: MemberFeignClient,
         ssoCodeStore: SsoCodeStore,
+        usageNotifier: MemberUsageNotifier,
     ): SecurityFilterChain {
         val authorizationServer = OAuth2AuthorizationServerConfigurer.authorizationServer()
         val support = GrantSupport(tokenGenerator, authorizationService)
@@ -126,6 +130,14 @@ class AuthorizationServerConfig(private val props: OAuthProperties) {
                                 list.add(GoogleIdTokenGrantProvider(verifier, members, support, props.staffClientIds()))
                                 list.add(SsoCodeGrantProvider(ssoCodeStore, members, support))
                             }
+                            // 토큰 응답을 쓴 뒤 member-service 에 서비스 이용을 알린다(비동기, 실패해도 응답은 그대로).
+                            .accessTokenResponseHandler(
+                                UsageRecordingTokenResponseHandler(
+                                    OAuth2AccessTokenResponseAuthenticationSuccessHandler(),
+                                    usageNotifier,
+                                    UsageRecordingTokenResponseHandler.defaultGrants(GOOGLE_ID_TOKEN, SSO_CODE),
+                                ),
+                            )
                     }
                     .oidc { oidc ->
                         oidc

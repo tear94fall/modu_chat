@@ -111,3 +111,9 @@ modu:
   # 탈퇴 때 커머스 고객 정리(CommerceClient). 테스트는 클라이언트를 목으로 바꾼다.
   commerce:
     url: http://commerce-service:8200
+  # 서비스 이용 기록(member_service_usage): auth-service 등록 클라이언트 ID → 서비스.
+  # 여기 없는 클라이언트(직원 콘솔 modu-admin 등)는 기록하지 않는다.
+  member:
+    usage-clients:
+      "[modu-chat]": CHAT
+      "[modu-commerce]": COMMERCE

@@ -3,7 +3,9 @@ package com.example.memberservice.api.admin.dto
 import com.example.memberservice.staff.StaffPermission
 import com.example.memberservice.member.entity.Member
 import com.example.memberservice.member.entity.MemberFriend
+import com.example.memberservice.member.entity.MemberStatus
 import com.example.memberservice.member.entity.Role
+import com.example.memberservice.usage.ModuService
 import java.time.LocalDateTime
 
 /** 백오피스 회원 목록에 노출할 요약 정보. */
@@ -22,9 +24,17 @@ class AdminMemberSummaryDto(
      * role 칼럼(ROLE_ADMIN/ROLE_MEMBER)은 콘솔 권한과 상관없는 옛 값이라, 백오피스는 이것을 보여 준다.
      */
     val staffPermissions: List<StaffPermission> = emptyList(),
+    /** 이용 서비스(CHAT, COMMERCE 순). 회원 목록에서만 채운다. 비어 있으면 아직 이용 기록이 없다. */
+    val services: List<ModuService> = emptyList(),
+    /** 회원 상태(ACTIVE | WITHDRAWN). */
+    val status: MemberStatus = MemberStatus.ACTIVE,
 ) {
     fun withStaff(permissions: List<StaffPermission>) = AdminMemberSummaryDto(
-        id, userId, username, profileImage, email, role, createdDate, friendName, permissions,
+        id, userId, username, profileImage, email, role, createdDate, friendName, permissions, services, status,
+    )
+
+    fun withServices(services: List<ModuService>) = AdminMemberSummaryDto(
+        id, userId, username, profileImage, email, role, createdDate, friendName, staffPermissions, services, status,
     )
 
     companion object {
@@ -38,6 +48,7 @@ class AdminMemberSummaryDto(
             member.role,
             member.createdDate,
             null,
+            status = member.status,
         )
 
         @JvmStatic
@@ -52,6 +63,7 @@ class AdminMemberSummaryDto(
                 friend.role,
                 friend.createdDate,
                 memberFriend.friendName,
+                status = friend.status,
             )
         }
     }

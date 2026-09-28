@@ -41,6 +41,49 @@ class MemberFriendRepositoryImpl(private val queryFactory: JPAQueryFactory) : Me
         return PageImpl(content, pageable, total ?: 0)
     }
 
+    override fun findAdminPageContent(memberId: Long, filter: AdminFriendFilter, pageable: Pageable): List<MemberFriend> {
+        val query = queryFactory
+            .selectFrom(memberFriend)
+            .join(memberFriend.friend, member).fetchJoin()
+            .where(memberFriend.member.id.eq(memberId), filter.predicate())
+            .orderBy(*FriendSort.adminOrders().toTypedArray())
+        if (pageable.isPaged) {
+            query.offset(pageable.offset).limit(pageable.pageSize.toLong())
+        }
+        return query.fetch()
+    }
+
+    override fun countForAdmin(memberId: Long): FriendCounts {
+        val count = memberFriend.count()
+        val rows = queryFactory
+            .select(memberFriend.status, memberFriend.favorite, count)
+            .from(memberFriend)
+            .where(memberFriend.member.id.eq(memberId))
+            .groupBy(memberFriend.status, memberFriend.favorite)
+            .fetch()
+
+        var all = 0L
+        var normal = 0L
+        var favorite = 0L
+        var hidden = 0L
+        var blocked = 0L
+        for (row in rows) {
+            val n = row.get(count) ?: 0L
+            val status = row.get(memberFriend.status)
+            all += n
+            when (status) {
+                FriendStatus.NORMAL -> normal += n
+                FriendStatus.HIDDEN -> hidden += n
+                FriendStatus.BLOCKED -> blocked += n
+                null -> {}
+            }
+            if (row.get(memberFriend.favorite) == true && status != FriendStatus.BLOCKED) {
+                favorite += n
+            }
+        }
+        return FriendCounts(all, normal, favorite, hidden, blocked)
+    }
+
     override fun findAllByMemberIdWithFriend(memberId: Long): List<MemberFriend> =
         queryFactory
             .selectFrom(memberFriend)

@@ -13,6 +13,15 @@ interface MemberFriendCustomRepository {
     /** 내 친구 한 페이지. 친구 Member 를 fetch join 한다. 정렬은 [FriendSort], Pageable 은 offset/limit 만 쓴다. */
     fun findPage(memberId: Long, filter: FriendFilter?, sort: FriendSort, pageable: Pageable): Page<MemberFriend>
 
+    /**
+     * 백오피스 친구 탭 한 페이지(내용만). 친구 Member 를 fetch join 하고 [FriendSort.adminOrders] 로 정렬한다.
+     * 전체 개수는 [countForAdmin] 결과에서 꺼내 쓰므로 여기서 count 질의를 하지 않는다.
+     */
+    fun findAdminPageContent(memberId: Long, filter: AdminFriendFilter, pageable: Pageable): List<MemberFriend>
+
+    /** 이 회원이 소유한 친구 행의 필터별 수. status·favorite 로 묶은 질의 한 번이다. */
+    fun countForAdmin(memberId: Long): FriendCounts
+
     /** 내 친구 전부(별칭 맵용). 친구 Member 를 fetch join 한다. 숨김·차단도 포함한다. */
     fun findAllByMemberIdWithFriend(memberId: Long): List<MemberFriend>
 

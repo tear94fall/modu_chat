@@ -1,66 +1,68 @@
+// 루트는 공통 설정만 가진다. 코드는 두 모듈에 있다.
+// - schedule-api: 실행 모듈(컨트롤러·필터·작업 스케줄러(바깥 호출)). bootJar 는 여기서만 나온다.
+// - schedule-application: 라이브러리 모듈(유스케이스·서비스·엔티티·ro/rw 저장소·JPA 설정).
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.4.2'
-	id 'io.spring.dependency-management' version '1.1.7'
-}
-
-group = 'modu.chat'
-version = '0.0.1-SNAPSHOT'
-
-java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
-}
-
-configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
-}
-
-repositories {
-	mavenCentral()
+	id 'org.springframework.boot' version '3.4.2' apply false
+	id 'io.spring.dependency-management' version '1.1.7' apply false
 }
 
 ext {
 	set('springCloudVersion', "2024.0.0")
 }
 
-dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.8'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
-	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
-	implementation 'org.springframework.cloud:spring-cloud-starter-sleuth'
-	implementation 'org.springframework.cloud:spring-cloud-starter-zipkin:2.2.3.RELEASE'
-	implementation 'org.springframework:spring-webflux'
+allprojects {
+	group = 'modu.chat'
+	version = '0.0.1-SNAPSHOT'
 
-	implementation 'com.fasterxml.jackson.core:jackson-databind'
-
-	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
-	annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
-	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
-	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
-
-	compileOnly 'org.projectlombok:lombok'
-	runtimeOnly 'com.h2database:h2'
-	runtimeOnly 'com.mysql:mysql-connector-j'
-	annotationProcessor 'org.projectlombok:lombok'
-
-	testCompileOnly 'org.projectlombok:lombok'
-	testAnnotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-}
-
-dependencyManagement {
-	imports {
-		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+	repositories {
+		mavenCentral()
 	}
 }
 
-tasks.named('test') {
-	useJUnitPlatform()
+subprojects {
+	// 실행 모듈(schedule-api)만 자기 build.gradle 에서 org.springframework.boot 플러그인을 적용한다.
+	// 라이브러리 모듈은 Boot BOM 만 가져온다.
+	apply plugin: 'java-library'
+	apply plugin: 'io.spring.dependency-management'
+
+	java {
+		toolchain {
+			languageVersion = JavaLanguageVersion.of(21)
+		}
+	}
+
+	configurations {
+		compileOnly {
+			extendsFrom annotationProcessor
+		}
+	}
+
+	dependencyManagement {
+		imports {
+			mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+			mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+		}
+	}
+
+	// Boot 플러그인이 없는 모듈도 파라미터 이름을 남긴다(@Qualifier·Spring Data 가 쓴다).
+	tasks.withType(JavaCompile).configureEach {
+		options.compilerArgs << '-parameters'
+		options.encoding = 'UTF-8'
+	}
+
+	tasks.withType(Test).configureEach {
+		useJUnitPlatform()
+	}
+
+	dependencies {
+		compileOnly 'org.projectlombok:lombok'
+		annotationProcessor 'org.projectlombok:lombok'
+
+		testCompileOnly 'org.projectlombok:lombok'
+		testAnnotationProcessor 'org.projectlombok:lombok'
+		testImplementation 'org.springframework.boot:spring-boot-starter-test'
+		testRuntimeOnly 'com.h2database:h2'
+		// Boot 플러그인이 없는 모듈은 JUnit Platform 런처가 자동으로 붙지 않는다.
+		testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	}
 }

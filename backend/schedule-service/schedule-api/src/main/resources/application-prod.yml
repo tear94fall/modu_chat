@@ -1,0 +1,9 @@
+# prod 에서는 스키마를 건드리지 않는다(기존 값 유지). 나머지는 application.yml 과 config-service 가 준다.
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  jpa:
+    hibernate:
+      ddl-auto: none

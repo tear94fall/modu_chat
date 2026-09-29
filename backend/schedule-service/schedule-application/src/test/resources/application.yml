@@ -1,0 +1,32 @@
+# schedule-application 모듈 테스트 설정(웹·Spring Cloud 없이 JPA 만).
+spring:
+  application:
+    name: schedule-service
+
+  profiles:
+    active: test
+
+  # master 와 replica 가 같은 H2 를 본다(복제 지연 없음).
+  datasource:
+    master:
+      url: jdbc:h2:mem:schedule_application;MODE=MYSQL;DB_CLOSE_DELAY=-1
+      username: sa
+      password:
+      driver-class-name: org.h2.Driver
+      hikari:
+        pool-name: test-master-pool
+        maximum-pool-size: 5
+
+    replica:
+      url: jdbc:h2:mem:schedule_application;MODE=MYSQL;DB_CLOSE_DELAY=-1
+      username: sa
+      password:
+      driver-class-name: org.h2.Driver
+      hikari:
+        pool-name: test-replica-pool
+        maximum-pool-size: 5
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false

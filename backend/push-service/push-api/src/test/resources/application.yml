@@ -1,0 +1,63 @@
+# 테스트 설정. 같은 이름(application.yml)이라 main 의 것을 가린다 — 필요한 값은 여기에 다 있다.
+server:
+  port: 9990
+
+spring:
+  application:
+    name: push-service
+
+  profiles:
+    active: test
+
+  # 테스트는 config-server 를 쓰지 않는다. enabled: false 면
+  # Spring Cloud Commons 의 spring.config.import 필수 검사도 통과한다.
+  cloud:
+    config:
+      enabled: false
+
+  # master 와 replica 가 같은 H2 를 본다(복제 지연 없음). 늦은 레플리카는 ReplicaLagTest 가 replica.url 만 바꿔 만든다.
+  datasource:
+    master:
+      url: jdbc:h2:mem:push_api;MODE=MYSQL;DB_CLOSE_DELAY=-1
+      username: sa
+      password:
+      driver-class-name: org.h2.Driver
+      hikari:
+        pool-name: test-master-pool
+        maximum-pool-size: 5
+
+    replica:
+      url: jdbc:h2:mem:push_api;MODE=MYSQL;DB_CLOSE_DELAY=-1
+      username: sa
+      password:
+      driver-class-name: org.h2.Driver
+      hikari:
+        pool-name: test-replica-pool
+        maximum-pool-size: 5
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_batch_fetch_size: 1000
+    open-in-view: false
+
+project:
+  properties:
+    firebase-sdk-path: "firebase/modu_chat_firebase_service_key.json"
+    firebase-multicast-message-size: 500
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+# InternalApiFilter 가 요구한다. 운영은 config-repo 가 내려준다.
+modu:
+  internal-api:
+    token: test-internal-token
+
+springdoc:
+  paths-to-exclude: /actuator/**, /error

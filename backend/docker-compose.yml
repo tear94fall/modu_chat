@@ -36,8 +36,11 @@ services:
       - 9090:9090
     environment:
       - CONFIG_SERVER_URI=http://config-service:8888
-      - spring.datasource.url=jdbc:mysql://mysql-chat:3306/modu-chat
-      - spring.datasource.username=root
+      - spring.datasource.master.url=jdbc:mysql://mysql-chat:3306/modu-chat
+      - spring.datasource.master.username=root
+      # 읽기 전용 복제본. 비밀번호(master/replica)는 config-service(messenger.yml)가 준다.
+      - spring.datasource.replica.url=jdbc:mysql://mysql-chat-replica:3306/modu-chat
+      - spring.datasource.replica.username=modu_ro
       - JAVA_TOOL_OPTIONS=${CHAT_AGENT_OPTS:-}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     volumes:

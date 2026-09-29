@@ -1,0 +1,171 @@
+### GET /api-public/chat/2
+200 application/json;charset=UTF-8
+{"id":2,"chatType":1,"roomId":"room-a","sender":"user-2","message":"hello two","chatTime":"2026-09-20 09:00:02","chatRoomDto":null,"reactions":[{"emoji":"LIKE","count":1,"userIds":["user-1"]}]}
+### GET /api-public/chat/999
+404 application/json;charset=UTF-8
+{"message":"채팅을 찾을수 없습니다. (999)","code":"CHAT_NOT_FOUND_ERROR"}
+### GET /api-public/chat?ids=1,2,5
+200 application/json;charset=UTF-8
+[{"id":1,"chatType":1,"roomId":"room-a","sender":"user-1","message":"hello one","chatTime":"2026-09-20 09:00:01","chatRoomDto":null,"reactions":[]},{"id":2,"chatType":1,"roomId":"room-a","sender":"user-2","message":"hello two","chatTime":"2026-09-20 09:00:02","chatRoomDto":null,"reactions":[{"emoji":"LIKE","count":1,"userIds":["user-1"]}]},{"id":5,"chatType":1,"roomId":"room-b","sender":"user-3","message":"group hello","chatTime":"2026-09-20 09:10:01","chatRoomDto":null,"reactions":[{"emoji":"HEART","count":2,"userIds":["user-1","user-2"]}]}]
+### GET /api-public/chat/room-a/chats
+200 application/json;charset=UTF-8
+[{"id":1,"chatType":1,"roomId":"room-a","sender":"user-1","message":"hello one","chatTime":"2026-09-20 09:00:01","chatRoomDto":null,"reactions":[]},{"id":2,"chatType":1,"roomId":"room-a","sender":"user-2","message":"hello two","chatTime":"2026-09-20 09:00:02","chatRoomDto":null,"reactions":[{"emoji":"LIKE","count":1,"userIds":["user-1"]}]},{"id":3,"chatType":2,"roomId":"room-a","sender":"user-1","message":"photo.jpg","chatTime":"2026-09-20 09:00:03","chatRoomDto":null,"reactions":[]},{"id":4,"chatType":1,"roomId":"room-a","sender":"user-2","message":"bye","chatTime":"2026-09-20 09:00:04","chatRoomDto":null,"reactions":[]}]
+### GET /api-public/chat/room-a/page?page=0&size=2
+200 application/json;charset=UTF-8
+[{"id":4,"chatType":1,"roomId":"room-a","sender":"user-2","message":"bye","chatTime":"2026-09-20 09:00:04","chatRoomDto":null,"reactions":[]},{"id":3,"chatType":2,"roomId":"room-a","sender":"user-1","message":"photo.jpg","chatTime":"2026-09-20 09:00:03","chatRoomDto":null,"reactions":[]}]
+### GET /api-public/chat/room-a/page/3
+200 application/json;charset=UTF-8
+[{"id":4,"chatType":1,"roomId":"room-a","sender":"user-2","message":"bye","chatTime":"2026-09-20 09:00:04","chatRoomDto":null,"reactions":[]},{"id":3,"chatType":2,"roomId":"room-a","sender":"user-1","message":"photo.jpg","chatTime":"2026-09-20 09:00:03","chatRoomDto":null,"reactions":[]},{"id":2,"chatType":1,"roomId":"room-a","sender":"user-2","message":"hello two","chatTime":"2026-09-20 09:00:02","chatRoomDto":null,"reactions":[{"emoji":"LIKE","count":1,"userIds":["user-1"]}]}]
+### GET /api-public/chat/room-a/4/2
+200 application/json;charset=UTF-8
+[{"id":3,"chatType":2,"roomId":"room-a","sender":"user-1","message":"photo.jpg","chatTime":"2026-09-20 09:00:03","chatRoomDto":null,"reactions":[]},{"id":2,"chatType":1,"roomId":"room-a","sender":"user-2","message":"hello two","chatTime":"2026-09-20 09:00:02","chatRoomDto":null,"reactions":[{"emoji":"LIKE","count":1,"userIds":["user-1"]}]}]
+### GET /api-public/chat/room-a/images/5
+200 application/json;charset=UTF-8
+[{"id":3,"chatType":2,"roomId":"room-a","sender":"user-1","message":"photo.jpg","chatTime":"2026-09-20 09:00:03","chatRoomDto":null,"reactions":[]}]
+### GET /api-public/chat/room-a/count
+200 text/plain;charset=UTF-8
+4
+### GET /api-public/chat/no-room/count
+200 text/plain;charset=UTF-8
+0
+### GET /api-public/chat/no-room/page/3
+200 application/json;charset=UTF-8
+[]
+### GET /api-public/chat/room-a/2
+200 application/json;charset=UTF-8
+{"id":2,"chatType":1,"roomId":"room-a","sender":"user-2","message":"hello two","chatTime":"2026-09-20 09:00:02","chatRoomDto":null,"reactions":[{"emoji":"LIKE","count":1,"userIds":["user-1"]}]}
+### GET /api-public/chat/room-a/chat?message=hello
+200 application/json;charset=UTF-8
+[{"id":1,"chatType":1,"roomId":"room-a","sender":"user-1","message":"hello one","chatTime":"2026-09-20 09:00:01","chatRoomDto":null,"reactions":[]},{"id":2,"chatType":1,"roomId":"room-a","sender":"user-2","message":"hello two","chatTime":"2026-09-20 09:00:02","chatRoomDto":null,"reactions":[{"emoji":"LIKE","count":1,"userIds":["user-1"]}]}]
+### GET /api-public/chat/1/rooms
+200 application/json;charset=UTF-8
+[{"id":1,"roomId":"room-a","roomName":"방 A","roomImage":"img-room-a.jpg","lastChatMsg":"last of room-a","lastChatId":"4","lastChatTime":"2026-09-20 10:00:02","members":[{"id":1,"userId":"user-1","auth":"google","role":"ROLE_MEMBER","email":"u1@example.com","username":"이름1","statusMessage":"상태1","profileImage":"p1.jpg","wallpaperImage":null},{"id":2,"userId":"user-2","auth":"google","role":"ROLE_MEMBER","email":"u2@example.com","username":"이름2","statusMessage":"상태2","profileImage":"p2.jpg","wallpaperImage":null}]},{"id":2,"roomId":"room-b","roomName":"방 B","roomImage":"img-room-b.jpg","lastChatMsg":"last of room-b","lastChatId":"6","lastChatTime":"2026-09-20 10:00:03","members":[{"id":1,"userId":"user-1","auth":"google","role":"ROLE_MEMBER","email":"u1@example.com","username":"이름1","statusMessage":"상태1","profileImage":"p1.jpg","wallpaperImage":null},{"id":2,"userId":"user-2","auth":"google","role":"ROLE_MEMBER","email":"u2@example.com","username":"이름2","statusMessage":"상태2","profileImage":"p2.jpg","wallpaperImage":null},{"id":3,"userId":"user-3","auth":"google","role":"ROLE_MEMBER","email":"u3@example.com","username":"이름3","statusMessage":"상태3","profileImage":"p3.jpg","wallpaperImage":null}]}]
+### GET /api-public/chat/room-a/room
+200 application/json;charset=UTF-8
+{"id":1,"roomId":"room-a","roomName":"방 A","roomImage":"img-room-a.jpg","lastChatMsg":"last of room-a","lastChatId":"4","lastChatTime":"2026-09-20 10:00:02","members":[{"id":1,"userId":"user-1","auth":"google","role":"ROLE_MEMBER","email":"u1@example.com","username":"이름1","statusMessage":"상태1","profileImage":"p1.jpg","wallpaperImage":null},{"id":2,"userId":"user-2","auth":"google","role":"ROLE_MEMBER","email":"u2@example.com","username":"이름2","statusMessage":"상태2","profileImage":"p2.jpg","wallpaperImage":null}]}
+### GET /api-public/chat/no-room/room
+404 application/json;charset=UTF-8
+{"message":"채팅방을 찾을수 없습니다. (no-room)","code":"CHATROOM_NOT_FOUND_ERROR"}
+### GET /api-public/chat/unread/1
+200 application/json;charset=UTF-8
+[{"roomId":"room-a","lastSendChatId":4,"lastReadChatId":1,"unreadChatCount":3},{"roomId":"room-b","lastSendChatId":6,"lastReadChatId":1,"unreadChatCount":0}]
+### GET /api-public/chat/read/room-a
+200 application/json;charset=UTF-8
+[{"userId":"user-1","lastReadChatId":1},{"userId":"user-2","lastReadChatId":1}]
+### POST /api-public/chat/read/room-a/1
+204 -
+
+### POST /api-public/chat/read/room-b/user-1
+204 -
+
+### GET /api-public/chat/unread/1 (after read)
+200 application/json;charset=UTF-8
+[{"roomId":"room-a","lastSendChatId":4,"lastReadChatId":4,"unreadChatCount":0},{"roomId":"room-b","lastSendChatId":6,"lastReadChatId":6,"unreadChatCount":0}]
+### GET /api-public/chat/read/room-b
+200 application/json;charset=UTF-8
+[{"userId":"user-1","lastReadChatId":6},{"userId":"user-2","lastReadChatId":1},{"userId":"user-3","lastReadChatId":1}]
+### POST /api-public/chat/room/user-1
+200 application/json;charset=UTF-8
+[{"id":1,"roomId":"room-a","roomName":"방 A","roomImage":"img-room-a.jpg","lastChatMsg":"last of room-a","lastChatId":"4","lastChatTime":"2026-09-20 10:00:02","members":[{"id":1,"userId":"user-1","auth":"google","role":"ROLE_MEMBER","email":"u1@example.com","username":"이름1","statusMessage":"상태1","profileImage":"p1.jpg","wallpaperImage":null},{"id":2,"userId":"user-2","auth":"google","role":"ROLE_MEMBER","email":"u2@example.com","username":"이름2","statusMessage":"상태2","profileImage":"p2.jpg","wallpaperImage":null}]}]
+### POST /api-public/chat/room-a/room
+200 application/json;charset=UTF-8
+{"id":1,"roomId":"room-a","roomName":"새 이름","roomImage":"new.jpg","lastChatMsg":"bye","lastChatId":"4","lastChatTime":"2026-09-20 09:00:04","members":[]}
+### POST /api-public/chat/chat/room [1,2]
+200 application/json;charset=UTF-8
+{"id":1,"roomId":"room-a","roomName":"새 이름","roomImage":"new.jpg","lastChatMsg":"bye","lastChatId":"4","lastChatTime":"2026-09-20 09:00:04","members":[{"id":1,"userId":"user-1","auth":"google","role":"ROLE_MEMBER","email":"u1@example.com","username":"이름1","statusMessage":"상태1","profileImage":"p1.jpg","wallpaperImage":null},{"id":2,"userId":"user-2","auth":"google","role":"ROLE_MEMBER","email":"u2@example.com","username":"이름2","statusMessage":"상태2","profileImage":"p2.jpg","wallpaperImage":null}]}
+### POST /api-public/chat/chat/room [1,4,4]
+200 application/json;charset=UTF-8
+{"id":4,"roomId":"<uuid>","roomName":"새로운 채팅방","roomImage":"","lastChatMsg":"","lastChatId":"","lastChatTime":"<now>","members":[]}
+### POST /api-public/chat/chat/room [99]
+403 application/json;charset=UTF-8
+{"message":"본인만 접근할 수 있습니다.","code":"FORBIDDEN"}
+### POST /api-public/chat/room-a/member
+200 application/json;charset=UTF-8
+{"id":1,"roomId":"room-a","roomName":"새 이름","roomImage":"new.jpg","lastChatMsg":"bye","lastChatId":"4","lastChatTime":"2026-09-20 09:00:04","members":[]}
+### GET /api-public/chat/room-a/room (after invite)
+200 application/json;charset=UTF-8
+{"id":1,"roomId":"room-a","roomName":"새 이름","roomImage":"new.jpg","lastChatMsg":"bye","lastChatId":"4","lastChatTime":"2026-09-20 09:00:04","members":[{"id":1,"userId":"user-1","auth":"google","role":"ROLE_MEMBER","email":"u1@example.com","username":"이름1","statusMessage":"상태1","profileImage":"p1.jpg","wallpaperImage":null},{"id":2,"userId":"user-2","auth":"google","role":"ROLE_MEMBER","email":"u2@example.com","username":"이름2","statusMessage":"상태2","profileImage":"p2.jpg","wallpaperImage":null},{"id":3,"userId":"user-3","auth":"google","role":"ROLE_MEMBER","email":"u3@example.com","username":"이름3","statusMessage":"상태3","profileImage":"p3.jpg","wallpaperImage":null}]}
+### DELETE /api-public/chat/room-a/3
+200 application/json;charset=UTF-8
+{"id":3,"chatType":2,"roomId":"room-a","sender":"user-1","message":"photo.jpg","chatTime":"2026-09-20 09:00:03","chatRoomDto":null,"reactions":null}
+### GET /api-public/chat/room-a/room (after delete chat)
+200 application/json;charset=UTF-8
+{"id":1,"roomId":"room-a","roomName":"새 이름","roomImage":"new.jpg","lastChatMsg":"삭제된 메시지 입니다.","lastChatId":"4","lastChatTime":"2026-09-20 09:00:04","members":[{"id":1,"userId":"user-1","auth":"google","role":"ROLE_MEMBER","email":"u1@example.com","username":"이름1","statusMessage":"상태1","profileImage":"p1.jpg","wallpaperImage":null},{"id":2,"userId":"user-2","auth":"google","role":"ROLE_MEMBER","email":"u2@example.com","username":"이름2","statusMessage":"상태2","profileImage":"p2.jpg","wallpaperImage":null},{"id":3,"userId":"user-3","auth":"google","role":"ROLE_MEMBER","email":"u3@example.com","username":"이름3","statusMessage":"상태3","profileImage":"p3.jpg","wallpaperImage":null}]}
+### DELETE /api-public/chat/room-b/member/user-1
+200 application/json;charset=UTF-8
+{"id":2,"roomId":"room-b","roomName":"방 B","roomImage":"img-room-b.jpg","lastChatMsg":"last of room-b","lastChatId":"6","lastChatTime":"2026-09-20 10:00:03","members":[]}
+### GET /api-public/chat/1/rooms (after leave)
+200 application/json;charset=UTF-8
+[{"id":1,"roomId":"room-a","roomName":"새 이름","roomImage":"new.jpg","lastChatMsg":"삭제된 메시지 입니다.","lastChatId":"4","lastChatTime":"2026-09-20 09:00:04","members":[{"id":1,"userId":"user-1","auth":"google","role":"ROLE_MEMBER","email":"u1@example.com","username":"이름1","statusMessage":"상태1","profileImage":"p1.jpg","wallpaperImage":null},{"id":2,"userId":"user-2","auth":"google","role":"ROLE_MEMBER","email":"u2@example.com","username":"이름2","statusMessage":"상태2","profileImage":"p2.jpg","wallpaperImage":null},{"id":3,"userId":"user-3","auth":"google","role":"ROLE_MEMBER","email":"u3@example.com","username":"이름3","statusMessage":"상태3","profileImage":"p3.jpg","wallpaperImage":null}]},{"id":4,"roomId":"<uuid>","roomName":"새로운 채팅방","roomImage":"","lastChatMsg":"","lastChatId":"","lastChatTime":"2026-09-21 00:00:00","members":[{"id":1,"userId":"user-1","auth":"google","role":"ROLE_MEMBER","email":"u1@example.com","username":"이름1","statusMessage":"상태1","profileImage":"p1.jpg","wallpaperImage":null},{"id":4,"userId":"user-4","auth":"google","role":"ROLE_MEMBER","email":"u4@example.com","username":"이름4","statusMessage":"상태4","profileImage":"p4.jpg","wallpaperImage":null}]}]
+### POST /api-internal/chat
+200 application/json;charset=UTF-8
+7
+### POST /api-internal/chat (no room)
+404 application/json;charset=UTF-8
+{"message":"채팅방을 찾을수 없습니다. (nope)","code":"CHATROOM_NOT_FOUND_ERROR"}
+### GET /api-internal/chat/7
+200 application/json;charset=UTF-8
+{"id":7,"chatType":1,"roomId":"room-a","sender":"user-2","message":"saved","chatTime":"2026-09-20 11:00:00","chatRoomDto":null,"reactions":[]}
+### GET /api-internal/chat/room-a/room
+200 application/json;charset=UTF-8
+{"id":1,"roomId":"room-a","roomName":"새 이름","roomImage":"new.jpg","lastChatMsg":"saved","lastChatId":"7","lastChatTime":"2026-09-20 09:00:04","members":[{"id":1,"userId":"user-1","auth":"google","role":"ROLE_MEMBER","email":"u1@example.com","username":"이름1","statusMessage":"상태1","profileImage":"p1.jpg","wallpaperImage":null},{"id":2,"userId":"user-2","auth":"google","role":"ROLE_MEMBER","email":"u2@example.com","username":"이름2","statusMessage":"상태2","profileImage":"p2.jpg","wallpaperImage":null},{"id":3,"userId":"user-3","auth":"google","role":"ROLE_MEMBER","email":"u3@example.com","username":"이름3","statusMessage":"상태3","profileImage":"p3.jpg","wallpaperImage":null}]}
+### GET /api-internal/chat/room-a/member/user-1
+200 text/plain;charset=UTF-8
+user-1
+### GET /api-internal/chat/room-a/member/user-4
+400 application/json;charset=UTF-8
+{"message":"채팅방 멤버가 아닙니다. (room-a)","code":"INVALID_CHAT_ROOM_MEMBER"}
+### POST /api-internal/chat/room-a/room
+200 application/json;charset=UTF-8
+{"id":1,"roomId":"room-a","roomName":"방 A","roomImage":"","lastChatMsg":"saved","lastChatId":"7","lastChatTime":"2026-09-20 11:00:00","members":[]}
+### POST /api-internal/chat/reaction/room-a/2/user-1 LIKE(cancel)
+200 application/json;charset=UTF-8
+{"chatId":2,"roomId":"room-a","authorUserId":"user-2","added":false,"emoji":null,"reactions":[]}
+### POST /api-internal/chat/reaction/room-a/7/user-1 WOW
+200 application/json;charset=UTF-8
+{"chatId":7,"roomId":"room-a","authorUserId":"user-2","added":true,"emoji":"WOW","reactions":[{"emoji":"WOW","count":1,"userIds":["user-1"]}]}
+### POST /api-internal/chat/reaction/room-a/7/user-1 SAD(replace)
+200 application/json;charset=UTF-8
+{"chatId":7,"roomId":"room-a","authorUserId":"user-2","added":true,"emoji":"SAD","reactions":[{"emoji":"SAD","count":1,"userIds":["user-1"]}]}
+### POST /api-internal/chat/reaction/room-a/7/user-2 (own)
+400 application/json;charset=UTF-8
+{"message":"내 메시지에는 반응을 남길 수 없습니다. (7)","code":"CANNOT_REACT_OWN_CHAT"}
+### GET /api-internal/chat/7 (after reaction)
+200 application/json;charset=UTF-8
+{"id":7,"chatType":1,"roomId":"room-a","sender":"user-2","message":"saved","chatTime":"2026-09-20 11:00:00","chatRoomDto":null,"reactions":[{"emoji":"SAD","count":1,"userIds":["user-1"]}]}
+### POST /api-internal/chat/read/room-a/user-2
+204 -
+
+### POST /api-internal/chat/read/room-a/user-4 (not member)
+400 application/json;charset=UTF-8
+{"message":"해당 사용자를 찾을 수 없습니다. (user-4)","code":"USERID_NOT_FOUND"}
+### GET /api-public/chat/read/room-a (after internal read)
+200 application/json;charset=UTF-8
+[{"userId":"user-1","lastReadChatId":4},{"userId":"user-2","lastReadChatId":7},{"userId":"user-3","lastReadChatId":4}]
+### GET /api-admin/chat/rooms
+200 application/json;charset=UTF-8
+{"content":[{"id":4,"roomId":"<uuid>","roomName":"새로운 채팅방","roomImage":"","memberCount":2,"lastChatMsg":"","lastChatTime":"2026-09-21 00:00:00","createdDate":"2026-09-21 00:00:00"},{"id":2,"roomId":"room-b","roomName":"방 B","roomImage":"img-room-b.jpg","memberCount":2,"lastChatMsg":"last of room-b","lastChatTime":"2026-09-20 10:00:03","createdDate":"2026-09-03 01:02:03"},{"id":1,"roomId":"room-a","roomName":"방 A","roomImage":"","memberCount":3,"lastChatMsg":"saved","lastChatTime":"2026-09-20 11:00:00","createdDate":"2026-09-02 01:02:03"},{"id":3,"roomId":"room-c","roomName":"방 C","roomImage":"img-room-c.jpg","memberCount":1,"lastChatMsg":"last of room-c","lastChatTime":"2026-09-20 10:00:01","createdDate":"2026-09-01 01:02:03"}],"pageable":{"pageNumber":0,"pageSize":20,"sort":[{"direction":"DESC","property":"createdDate","ignoreCase":false,"nullHandling":"NATIVE","ascending":false,"descending":true},{"direction":"DESC","property":"id","ignoreCase":false,"nullHandling":"NATIVE","ascending":false,"descending":true}],"offset":0,"unpaged":false,"paged":true},"totalPages":1,"totalElements":4,"last":true,"size":20,"number":0,"sort":[{"direction":"DESC","property":"createdDate","ignoreCase":false,"nullHandling":"NATIVE","ascending":false,"descending":true},{"direction":"DESC","property":"id","ignoreCase":false,"nullHandling":"NATIVE","ascending":false,"descending":true}],"numberOfElements":4,"first":true,"empty":false}
+### GET /api-admin/chat/rooms?sort=memberCount,desc&size=2
+200 application/json;charset=UTF-8
+{"content":[{"id":1,"roomId":"room-a","roomName":"방 A","roomImage":"","memberCount":3,"lastChatMsg":"saved","lastChatTime":"2026-09-20 11:00:00","createdDate":"2026-09-02 01:02:03"},{"id":4,"roomId":"<uuid>","roomName":"새로운 채팅방","roomImage":"","memberCount":2,"lastChatMsg":"","lastChatTime":"2026-09-21 00:00:00","createdDate":"2026-09-21 00:00:00"}],"pageable":{"pageNumber":0,"pageSize":2,"sort":[],"offset":0,"unpaged":false,"paged":true},"totalPages":2,"totalElements":4,"last":false,"size":2,"number":0,"sort":[],"numberOfElements":2,"first":true,"empty":false}
+### GET /api-admin/chat/rooms?sort=roomName,asc&page=1&size=2
+200 application/json;charset=UTF-8
+{"content":[{"id":3,"roomId":"room-c","roomName":"방 C","roomImage":"img-room-c.jpg","memberCount":1,"lastChatMsg":"last of room-c","lastChatTime":"2026-09-20 10:00:01","createdDate":"2026-09-01 01:02:03"},{"id":4,"roomId":"<uuid>","roomName":"새로운 채팅방","roomImage":"","memberCount":2,"lastChatMsg":"","lastChatTime":"2026-09-21 00:00:00","createdDate":"2026-09-21 00:00:00"}],"pageable":{"pageNumber":1,"pageSize":2,"sort":[{"direction":"ASC","property":"roomName","ignoreCase":false,"nullHandling":"NATIVE","ascending":true,"descending":false},{"direction":"ASC","property":"id","ignoreCase":false,"nullHandling":"NATIVE","ascending":true,"descending":false}],"offset":2,"unpaged":false,"paged":true},"totalPages":2,"totalElements":4,"last":true,"size":2,"number":1,"sort":[{"direction":"ASC","property":"roomName","ignoreCase":false,"nullHandling":"NATIVE","ascending":true,"descending":false},{"direction":"ASC","property":"id","ignoreCase":false,"nullHandling":"NATIVE","ascending":true,"descending":false}],"numberOfElements":2,"first":false,"empty":false}
+### GET /api-admin/chat/rooms?sort=bad
+400 application/json;charset=UTF-8
+{"message":"지원하지 않는 정렬입니다: bad","code":"INVALID_REQUEST"}
+### GET /api-admin/chat/rooms/room-a
+200 application/json;charset=UTF-8
+{"id":1,"roomId":"room-a","roomName":"방 A","roomImage":"","lastChatMsg":"saved","lastChatId":"7","lastChatTime":"2026-09-20 11:00:00","members":[{"id":1,"userId":"user-1","auth":"google","role":"ROLE_MEMBER","email":"u1@example.com","username":"이름1","statusMessage":"상태1","profileImage":"p1.jpg","wallpaperImage":null},{"id":2,"userId":"user-2","auth":"google","role":"ROLE_MEMBER","email":"u2@example.com","username":"이름2","statusMessage":"상태2","profileImage":"p2.jpg","wallpaperImage":null},{"id":3,"userId":"user-3","auth":"google","role":"ROLE_MEMBER","email":"u3@example.com","username":"이름3","statusMessage":"상태3","profileImage":"p3.jpg","wallpaperImage":null}],"createdDate":"2026-09-02 01:02:03"}
+### GET /api-admin/chat/rooms/no-room
+404 application/json;charset=UTF-8
+{"message":"채팅방을 찾을수 없습니다. (no-room)","code":"CHATROOM_NOT_FOUND_ERROR"}
+### GET /api-admin/chat/rooms/room-a/chats?size=3
+200 application/json;charset=UTF-8
+{"content":[{"id":7,"chatType":1,"roomId":"room-a","sender":"user-2","message":"saved","chatTime":"2026-09-20 11:00:00","chatRoomDto":null,"reactions":null},{"id":4,"chatType":1,"roomId":"room-a","sender":"user-2","message":"bye","chatTime":"2026-09-20 09:00:04","chatRoomDto":null,"reactions":null},{"id":2,"chatType":1,"roomId":"room-a","sender":"user-2","message":"hello two","chatTime":"2026-09-20 09:00:02","chatRoomDto":null,"reactions":null}],"pageable":{"pageNumber":0,"pageSize":3,"sort":[{"direction":"DESC","property":"createdDate","ignoreCase":false,"nullHandling":"NATIVE","ascending":false,"descending":true},{"direction":"DESC","property":"id","ignoreCase":false,"nullHandling":"NATIVE","ascending":false,"descending":true}],"offset":0,"unpaged":false,"paged":true},"totalPages":2,"totalElements":4,"last":false,"size":3,"number":0,"sort":[{"direction":"DESC","property":"createdDate","ignoreCase":false,"nullHandling":"NATIVE","ascending":false,"descending":true},{"direction":"DESC","property":"id","ignoreCase":false,"nullHandling":"NATIVE","ascending":false,"descending":true}],"numberOfElements":3,"first":true,"empty":false}
+### DELETE /api-internal/chat/member/3/rooms
+200 application/json;charset=UTF-8
+[2,3,1]
+### GET /api-admin/chat/rooms (after withdraw)
+200 application/json;charset=UTF-8
+{"content":[{"id":4,"roomId":"<uuid>","roomName":"새로운 채팅방","roomImage":"","memberCount":2,"lastChatMsg":"","lastChatTime":"2026-09-21 00:00:00","createdDate":"2026-09-21 00:00:00"},{"id":2,"roomId":"room-b","roomName":"방 B","roomImage":"img-room-b.jpg","memberCount":1,"lastChatMsg":"last of room-b","lastChatTime":"2026-09-20 10:00:03","createdDate":"2026-09-03 01:02:03"},{"id":1,"roomId":"room-a","roomName":"방 A","roomImage":"","memberCount":2,"lastChatMsg":"saved","lastChatTime":"2026-09-20 11:00:00","createdDate":"2026-09-02 01:02:03"}],"pageable":{"pageNumber":0,"pageSize":20,"sort":[{"direction":"DESC","property":"createdDate","ignoreCase":false,"nullHandling":"NATIVE","ascending":false,"descending":true},{"direction":"DESC","property":"id","ignoreCase":false,"nullHandling":"NATIVE","ascending":false,"descending":true}],"offset":0,"unpaged":false,"paged":true},"totalPages":1,"totalElements":3,"last":true,"size":20,"number":0,"sort":[{"direction":"DESC","property":"createdDate","ignoreCase":false,"nullHandling":"NATIVE","ascending":false,"descending":true},{"direction":"DESC","property":"id","ignoreCase":false,"nullHandling":"NATIVE","ascending":false,"descending":true}],"numberOfElements":3,"first":true,"empty":false}

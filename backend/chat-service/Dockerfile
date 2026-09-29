@@ -1,6 +1,6 @@
 FROM amazoncorretto:21
 
-ARG JAR_FILE=build/libs/chat-service-0.0.1-SNAPSHOT.jar
+ARG JAR_FILE=chat-api/build/libs/chat-api-0.0.1-SNAPSHOT.jar
 
 COPY ${JAR_FILE} chat-service.jar
 

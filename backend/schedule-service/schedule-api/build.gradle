@@ -1,0 +1,28 @@
+plugins {
+	id 'org.springframework.boot'
+}
+
+dependencies {
+	implementation project(':schedule-application')
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	// API 문서(GET /v3/api-docs, JSON 만). Boot 3.4 ↔ springdoc 2.8.x
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.8'
+	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+	implementation 'org.springframework.cloud:spring-cloud-starter-config'
+	implementation 'org.springframework.cloud:spring-cloud-starter-sleuth'
+	implementation 'org.springframework.cloud:spring-cloud-starter-zipkin:2.2.3.RELEASE'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'io.micrometer:micrometer-registry-prometheus'
+	// 예약 작업이 다른 서비스를 부를 때 쓰는 WebClient
+	implementation 'org.springframework:spring-webflux'
+
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+}
+
+springBoot {
+	mainClass = 'modu.chat.schedule_service.api.ScheduleApiApplication'
+}
+
+// 실행 jar(bootJar)만 만든다: schedule-api/build/libs/schedule-api-0.0.1-SNAPSHOT.jar
+tasks.named('jar') { enabled = false }

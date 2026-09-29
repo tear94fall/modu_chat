@@ -1,0 +1,65 @@
+server:
+  port: 8880
+
+spring:
+  application:
+    name: profile-service
+
+  config:
+    activate:
+      on-profile: dev
+
+  # replica 는 application.yml 의 기본값(= master)이나 compose 환경 변수를 따른다.
+  datasource:
+    master:
+      url: jdbc:mysql://localhost:3309/modu-chat?serverTimezone=Asia/Seoul
+      username: root
+      driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      # master 에서만 돈다. replica 의 EntityManagerFactory 는 항상 none 이다(RoJpaConfig).
+      ddl-auto: update
+    properties:
+      hibernate:
+        show-sql: true
+        format_sql: true
+        default_batch_fetch_size: 1000
+    open-in-view: false
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: full
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        failureRateThreshold: 50
+        slowCallRateThreshold: 100
+        slowCallDurationThreshold: 3000
+        permittedNumberOfCallsInHalfOpenState: 4
+        maxWaitDurationInHalfOpenState: 3000
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        waitDurationInOpenState: 1000
+    instances:
+      memberProfileCircuitBreaker:
+        baseConfig: default
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+
+eureka:
+  instance:
+    instance-id: profile-service
+
+  client:
+    register-with-eureka: true
+    fetch-registry: true

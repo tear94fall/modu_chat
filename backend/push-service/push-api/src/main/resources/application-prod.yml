@@ -1,0 +1,60 @@
+server:
+  port: 9990
+
+spring:
+  application:
+    name: push-service
+
+  config:
+    activate:
+      on-profile: prod
+
+  # master(읽기/쓰기) + replica(읽기 전용). 주소·계정은 compose 환경 변수가 덮어쓴다.
+  # 비밀번호는 config-service(messenger.yml)의 spring.datasource.master.password / replica.password 가 준다.
+  # 프로필 파일은 가져온 설정보다 우선하므로 여기에 password 를 적으면(빈 기본값이라도) 그 값을 덮어쓴다 — 적지 않는다.
+  # replica 기본값은 master 를 가리킨다(레플리카가 없는 환경).
+  datasource:
+    master:
+      url: ${DB_MASTER_URL:jdbc:mysql://localhost:3308/modu-chat?serverTimezone=Asia/Seoul}
+      username: ${DB_MASTER_USERNAME:root}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hikari:
+        pool-name: master-pool
+        maximum-pool-size: 10
+        minimum-idle: 2
+        connection-timeout: 30000
+
+    replica:
+      url: ${DB_REPLICA_URL:${spring.datasource.master.url}}
+      username: ${DB_REPLICA_USERNAME:${spring.datasource.master.username}}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hikari:
+        pool-name: replica-pool
+        maximum-pool-size: 10
+        minimum-idle: 2
+        connection-timeout: 30000
+        read-only: true
+
+  jpa:
+    hibernate:
+      # master 에서만 돈다. replica 의 EntityManagerFactory 는 항상 none 이다(RoJpaConfig).
+      ddl-auto: update
+    properties:
+      hibernate:
+        show-sql: true
+        format_sql: true
+        default_batch_fetch_size: 1000
+    open-in-view: false
+
+project:
+  properties:
+    firebase-sdk-path: "firebase/modu_chat_firebase_service_key.json"
+    firebase-multicast-message-size: 500
+
+eureka:
+  instance:
+    instance-id: push-service
+
+  client:
+    register-with-eureka: true
+    fetch-registry: true

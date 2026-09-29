@@ -1,6 +1,6 @@
 FROM amazoncorretto:21
 
-ARG JAR_FILE=build/libs/schedule-service-0.0.1-SNAPSHOT.jar
+ARG JAR_FILE=schedule-api/build/libs/schedule-api-0.0.1-SNAPSHOT.jar
 
 COPY ${JAR_FILE} schedule-service.jar
 

@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ApiLockProcessorTest {
 
     private static final String API_LOCK_SOURCE = """
-            package com.example.memberservice.global.lock;
+            package com.example.memberservice.application.common.lock;
 
             import java.lang.annotation.ElementType;
             import java.lang.annotation.Retention;
@@ -43,7 +43,7 @@ class ApiLockProcessorTest {
             """;
 
     private static final String LOCK_PARAM_SOURCE = """
-            package com.example.memberservice.global.lock;
+            package com.example.memberservice.application.common.lock;
 
             import java.lang.annotation.ElementType;
             import java.lang.annotation.Retention;
@@ -57,7 +57,7 @@ class ApiLockProcessorTest {
             """;
 
     private static final String LOCKABLE_SOURCE = """
-            package com.example.memberservice.global.lock;
+            package com.example.memberservice.application.common.lock;
 
             public interface Lockable {
                 String getKey();
@@ -69,8 +69,8 @@ class ApiLockProcessorTest {
         String source = """
                 package com.example.test;
 
-                import com.example.memberservice.global.lock.ApiLock;
-                import com.example.memberservice.global.lock.LockParam;
+                import com.example.memberservice.application.common.lock.ApiLock;
+                import com.example.memberservice.application.common.lock.LockParam;
 
                 public class StringKeyService {
                     @ApiLock
@@ -89,7 +89,7 @@ class ApiLockProcessorTest {
         String lockableImpl = """
                 package com.example.test;
 
-                import com.example.memberservice.global.lock.Lockable;
+                import com.example.memberservice.application.common.lock.Lockable;
 
                 public class MyLockable implements Lockable {
                     @Override
@@ -101,8 +101,8 @@ class ApiLockProcessorTest {
         String source = """
                 package com.example.test;
 
-                import com.example.memberservice.global.lock.ApiLock;
-                import com.example.memberservice.global.lock.LockParam;
+                import com.example.memberservice.application.common.lock.ApiLock;
+                import com.example.memberservice.application.common.lock.LockParam;
 
                 public class LockableKeyService {
                     @ApiLock
@@ -121,7 +121,7 @@ class ApiLockProcessorTest {
         String source = """
                 package com.example.test;
 
-                import com.example.memberservice.global.lock.ApiLock;
+                import com.example.memberservice.application.common.lock.ApiLock;
 
                 public class NoLockParamService {
                     @ApiLock
@@ -149,8 +149,8 @@ class ApiLockProcessorTest {
         String source = """
                 package com.example.test;
 
-                import com.example.memberservice.global.lock.ApiLock;
-                import com.example.memberservice.global.lock.LockParam;
+                import com.example.memberservice.application.common.lock.ApiLock;
+                import com.example.memberservice.application.common.lock.LockParam;
 
                 public class UnsupportedTypeService {
                     @ApiLock
@@ -171,7 +171,7 @@ class ApiLockProcessorTest {
         String source = """
                 package com.example.test;
 
-                import com.example.memberservice.global.lock.LockParam;
+                import com.example.memberservice.application.common.lock.LockParam;
 
                 public class OrphanLockParamService {
                     public void doWork(@LockParam String key) {
@@ -193,9 +193,9 @@ class ApiLockProcessorTest {
         Files.createDirectories(srcDir);
         Files.createDirectories(outDir);
 
-        writeSource(srcDir, "com.example.memberservice.global.lock", "ApiLock", API_LOCK_SOURCE);
-        writeSource(srcDir, "com.example.memberservice.global.lock", "LockParam", LOCK_PARAM_SOURCE);
-        writeSource(srcDir, "com.example.memberservice.global.lock", "Lockable", LOCKABLE_SOURCE);
+        writeSource(srcDir, "com.example.memberservice.application.common.lock", "ApiLock", API_LOCK_SOURCE);
+        writeSource(srcDir, "com.example.memberservice.application.common.lock", "LockParam", LOCK_PARAM_SOURCE);
+        writeSource(srcDir, "com.example.memberservice.application.common.lock", "Lockable", LOCKABLE_SOURCE);
 
         for (int i = 0; i < nameAndSourcePairs.length; i += 2) {
             writeSource(srcDir, "com.example.test", nameAndSourcePairs[i], nameAndSourcePairs[i + 1]);

@@ -1,0 +1,88 @@
+server:
+  port: 8080
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  application:
+    name: member-service
+
+  # datasource 는 application.yml 의 spring.datasource.master / replica 를 쓴다.
+  jpa:
+    hibernate:
+      # master 에서만 돈다. replica 의 EntityManagerFactory 는 항상 none 이다(RoJpaConfig).
+      ddl-auto: update
+    properties:
+      hibernate:
+        show-sql: true
+        format_sql: true
+        default_batch_fetch_size: 1000
+    open-in-view: false
+
+  kafka:
+    consumer:
+      group-id: member-service-group
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: full
+
+  circuit-breaker:
+    enabled: true
+
+resilience4j:
+  retry:
+    configs:
+      default:
+        max-attempts: 5
+        waitDuration: 500
+    instances:
+      customRetry:
+        base-config: default
+  circuit-breaker:
+    configs:
+      default:
+        waitDurationInOpenState: 30s
+        slowCallRateThreshold: 80
+        slowCallDurationThreshold: 5s
+        registerHealthIndicator: true
+    instances:
+      default:
+        baseConfig: default
+  time-limiter:
+    configs:
+      default:
+        timeoutDuration: 5s
+        cancelRunningFuture: true
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+
+management:
+  server:
+    port: 8082
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
+eureka:
+  instance:
+    instance-id: member-service
+
+  client:
+    register-with-eureka: true
+    fetch-registry: true

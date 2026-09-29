@@ -1,89 +1,88 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.springframework.boot.gradle.plugin.SpringBootPlugin
 
+// 루트는 공통 설정만 가진다. 코드는 두 모듈에 있다.
+// - member-api: 실행 모듈(컨트롤러·필터·Feign/RestClient 어댑터·Kafka 리스너). bootJar 는 여기서만 나온다.
+// - member-application: 라이브러리 모듈(유스케이스·서비스·엔티티·ro/rw 저장소·JPA 설정·분산락).
+// - lock-processor: @ApiLock 검증기(순수 자바). 자기 build.gradle 을 그대로 쓴다.
 plugins {
-    kotlin("jvm") version "2.1.10"
-    kotlin("plugin.spring") version "2.1.10"
-    kotlin("plugin.jpa") version "2.1.10"
-    kotlin("kapt") version "2.1.10"
-    id("org.springframework.boot") version "3.4.2"
-    id("io.spring.dependency-management") version "1.1.7"
+    id("org.springframework.boot") version "3.4.2" apply false
+    id("io.spring.dependency-management") version "1.1.7" apply false
+    kotlin("jvm") version "2.1.10" apply false
+    kotlin("plugin.spring") version "2.1.10" apply false
+    kotlin("plugin.jpa") version "2.1.10" apply false
+    kotlin("kapt") version "2.1.10" apply false
 }
 
-group = "com.example"
-version = "0.0.1-SNAPSHOT"
+// plugins 블록의 코틀린 버전과 같게 둔다.
+val kotlinVersion = "2.1.10"
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+allprojects {
+    group = "com.example"
+    version = "0.0.1-SNAPSHOT"
+
+    repositories {
+        mavenCentral()
     }
 }
 
-repositories {
-    mavenCentral()
-}
+configure(subprojects.filter { it.name != "lock-processor" }) {
+    // 실행 모듈(member-api)만 자기 build.gradle.kts 에서 org.springframework.boot 플러그인을 적용한다.
+    // 라이브러리 모듈은 Boot BOM 만 가져온다.
+    apply(plugin = "io.spring.dependency-management")
+    apply(plugin = "org.jetbrains.kotlin.jvm")
+    apply(plugin = "org.jetbrains.kotlin.plugin.spring")
+    apply(plugin = "org.jetbrains.kotlin.plugin.jpa")
 
-extra["springCloudVersion"] = "2024.0.0"
-
-dependencies {
-    implementation("org.springframework.boot:spring-boot-starter")
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.8")
-    implementation("org.springframework.security:spring-security-test")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.springframework.boot:spring-boot-starter-actuator")
-    implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
-    implementation("org.springframework.cloud:spring-cloud-starter-config")
-    implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
-    implementation("org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j")
-    implementation("org.springframework.kafka:spring-kafka")
-    implementation("org.redisson:redisson-spring-boot-starter:3.18.0")
-    implementation("org.modelmapper:modelmapper:3.1.0")
-    implementation("com.github.codemonstur:embedded-redis:1.4.3")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-
-    // QueryDSL: Q 클래스는 kapt 가 만든다(자바의 annotationProcessor 자리).
-    implementation("com.querydsl:querydsl-jpa:5.0.0:jakarta")
-    kapt("com.querydsl:querydsl-apt:5.0.0:jakarta")
-    kapt("jakarta.annotation:jakarta.annotation-api")
-    kapt("jakarta.persistence:jakarta.persistence-api")
-
-    // @ApiLock / @LockParam 컴파일 시점 검증기. 자바 애노테이션 프로세서라 kapt 로 돌린다.
-    kapt(project(":lock-processor"))
-
-    runtimeOnly("com.mysql:mysql-connector-j")
-    runtimeOnly("com.h2database:h2")
-    runtimeOnly("io.micrometer:micrometer-registry-prometheus")
-
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("com.github.codemonstur:embedded-redis:1.4.3")
-    testImplementation("org.springframework.kafka:spring-kafka-test")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
-}
-
-dependencyManagement {
-    imports {
-        mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
+    configure<JavaPluginExtension> {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        }
     }
-}
 
-kotlin {
-    compilerOptions {
-        freeCompilerArgs.add("-Xjsr305=strict")
-        // Feign 인터페이스의 default 메서드(폴백)를 JVM default 메서드로 컴파일한다.
-        freeCompilerArgs.add("-Xjvm-default=all")
-        jvmTarget.set(JvmTarget.JVM_21)
+    // Boot BOM 은 코틀린 1.9.25 를 관리한다. Boot 플러그인을 적용한 모듈은 코틀린 플러그인 버전에 자동으로 맞춰지지만
+    // BOM 만 가져오는 라이브러리 모듈은 그렇지 않아, 컴파일러 도구·stdlib 가 1.9.25 로 끌려간다. 두 모듈 모두 여기서 맞춘다.
+    extra["kotlin.version"] = kotlinVersion
+
+    configure<io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension> {
+        imports {
+            mavenBom(SpringBootPlugin.BOM_COORDINATES)
+            mavenBom("org.springframework.cloud:spring-cloud-dependencies:2024.0.0")
+        }
     }
-}
 
-allOpen {
-    annotation("jakarta.persistence.Entity")
-    annotation("jakarta.persistence.MappedSuperclass")
-    annotation("jakarta.persistence.Embeddable")
-}
+    // JPA 엔티티는 Hibernate 프록시 생성을 위해 open 이어야 한다.
+    configure<org.jetbrains.kotlin.allopen.gradle.AllOpenExtension> {
+        annotation("jakarta.persistence.Entity")
+        annotation("jakarta.persistence.MappedSuperclass")
+        annotation("jakarta.persistence.Embeddable")
+    }
 
-tasks.withType<Test> {
-    useJUnitPlatform()
+    tasks.withType<KotlinCompile> {
+        compilerOptions {
+            freeCompilerArgs.add("-Xjsr305=strict")
+            // 인터페이스의 default 메서드(Feign 폴백, 저장소 기본 인자)를 JVM default 메서드로 컴파일한다.
+            freeCompilerArgs.add("-Xjvm-default=all")
+            jvmTarget.set(JvmTarget.JVM_21)
+        }
+    }
+
+    tasks.withType<Test> {
+        useJUnitPlatform()
+    }
+
+    dependencies {
+        "implementation"("com.fasterxml.jackson.module:jackson-module-kotlin")
+        "implementation"("org.jetbrains.kotlin:kotlin-reflect")
+        "testImplementation"("org.springframework.boot:spring-boot-starter-test")
+        "testImplementation"("org.jetbrains.kotlin:kotlin-test-junit5")
+        // 코틀린 non-null 파라미터에 Mockito 매처(eq/any)를 쓰기 위해
+        "testImplementation"("org.mockito.kotlin:mockito-kotlin:5.4.0")
+        // 분산락(Redisson)이 붙을 테스트용 Redis
+        "testImplementation"("com.github.codemonstur:embedded-redis:1.4.3")
+        "testRuntimeOnly"("com.h2database:h2")
+        // Boot 플러그인이 없는 모듈은 JUnit Platform 런처가 자동으로 붙지 않는다.
+        "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
+    }
 }

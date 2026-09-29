@@ -1,0 +1,125 @@
+# 테스트 설정. 같은 이름(application.yml)이라 main 의 것을 가린다 — 필요한 값은 여기에 다 있다.
+server:
+  port: 8080
+
+spring:
+  application:
+    name: member-service
+
+  profiles:
+    active: test
+
+  # 테스트는 config-server 를 쓰지 않는다. enabled: false 면
+  # Spring Cloud Commons 의 spring.config.import 필수 검사도 통과한다.
+  cloud:
+    config:
+      enabled: false
+
+  # master 와 replica 가 같은 H2 를 본다(복제 지연 없음). 늦은 레플리카는 ReplicaLagTest 가 replica.url 만 바꿔 만든다.
+  datasource:
+    master:
+      url: jdbc:h2:mem:member_api;MODE=MYSQL;DB_CLOSE_DELAY=-1
+      username: sa
+      password:
+      driver-class-name: org.h2.Driver
+      hikari:
+        pool-name: test-master-pool
+        maximum-pool-size: 5
+
+    replica:
+      url: jdbc:h2:mem:member_api;MODE=MYSQL;DB_CLOSE_DELAY=-1
+      username: sa
+      password:
+      driver-class-name: org.h2.Driver
+      hikari:
+        pool-name: test-replica-pool
+        maximum-pool-size: 5
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show-sql: true
+        format_sql: true
+        default_batch_fetch_size: 1000
+    open-in-view: false
+
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  kafka:
+    consumer:
+      bootstrap-servers: localhost:29092
+      group-id: member-service-group
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: full
+
+  circuit-breaker:
+    enabled: true
+
+resilience4j:
+  retry:
+    configs:
+      default:
+        max-attempts: 5
+        waitDuration: 500
+    instances:
+      customRetry:
+        base-config: default
+  circuit-breaker:
+    configs:
+      default:
+        waitDurationInOpenState: 30s
+        slowCallRateThreshold: 80
+        slowCallDurationThreshold: 5s
+        registerHealthIndicator: true
+    instances:
+      default:
+        baseConfig: default
+  time-limiter:
+    configs:
+      default:
+        timeoutDuration: 5s
+        cancelRunningFuture: true
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+
+management:
+  server:
+    port: 8082
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+# InternalApiFilter / InternalApiFeignConfig 가 요구한다. 운영은 config-repo 가 내려준다.
+modu:
+  internal-api:
+    token: test-internal-token
+  # 탈퇴 때 커머스 고객 정리(CommerceClient). 테스트는 클라이언트를 목으로 바꾼다.
+  commerce:
+    url: http://commerce-service:8200
+  # 서비스 이용 기록(member_service_usage): auth-service 등록 클라이언트 ID → 서비스.
+  # 여기 없는 클라이언트(직원 콘솔 modu-admin 등)는 기록하지 않는다.
+  member:
+    usage-clients:
+      "[modu-chat]": CHAT
+      "[modu-commerce]": COMMERCE

@@ -5,6 +5,8 @@ name: modu-messenger
 # 서비스는 external 네트워크 modu-infra 에서 컨테이너 이름으로 인프라·플랫폼에 접근한다.
 # 다른 compose 프로젝트라 depends_on 을 걸 수 없다. 설정을 못 받으면 서비스가 기동에 실패하고(fail-fast)
 # restart: always 가 다시 띄우므로, 플랫폼이 뜨면 자연히 따라 올라온다.
+# healthcheck 는 readiness probe(/actuator/health/readiness)를 보고, stop_grace_period 30s 는 server.shutdown=graceful
+# (spring.lifecycle.timeout-per-shutdown-phase 20s)이 처리 중인 요청을 끝낼 시간을 준다. amazoncorretto:21 에 curl 이 있다.
 
 services:
 
@@ -26,6 +28,13 @@ services:
       - pinpoint
       - redis-cluster
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9900/actuator/health/readiness | grep -q '\"UP\"' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 90s
+    stop_grace_period: 30s
 
   chat-service:
     build:
@@ -49,6 +58,13 @@ services:
       - modu-infra
       - pinpoint
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9090/actuator/health/readiness | grep -q '\"UP\"' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 90s
+    stop_grace_period: 30s
 
   member-service:
     build:
@@ -73,6 +89,14 @@ services:
       - pinpoint
       - redis-cluster
     restart: always
+    # actuator 는 dev 프로필의 management.server.port(8082)에 뜬다.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8082/actuator/health/readiness | grep -q '\"UP\"' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 90s
+    stop_grace_period: 30s
 
   profile-service:
     build:
@@ -96,6 +120,13 @@ services:
       - modu-infra
       - pinpoint
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8880/actuator/health/readiness | grep -q '\"UP\"' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 90s
+    stop_grace_period: 30s
 
   push-service:
     build:
@@ -119,6 +150,13 @@ services:
       - modu-infra
       - pinpoint
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9990/actuator/health/readiness | grep -q '\"UP\"' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 90s
+    stop_grace_period: 30s
 
   storage-service:
     build:
@@ -138,6 +176,13 @@ services:
       - modu-infra
       - pinpoint
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9999/actuator/health/readiness | grep -q '\"UP\"' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 90s
+    stop_grace_period: 30s
     volumes:
       - /var/modu-chat/storage/data:/data
       - pinpoint-agent:/pinpoint-agent:ro
@@ -161,6 +206,14 @@ services:
       - modu-infra
       - pinpoint
     restart: always
+    # 종료 때 WebSocket 세션을 1001 로 닫고(WebSocketSessionCloser) 앱이 재접속한다.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8090/actuator/health/readiness | grep -q '\"UP\"' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 90s
+    stop_grace_period: 30s
 
   point-service:
     build:
@@ -185,6 +238,13 @@ services:
       - modu-infra
       - pinpoint
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9600/actuator/health/readiness | grep -q '\"UP\"' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 90s
+    stop_grace_period: 30s
 
   schedule-service:
     build:
@@ -209,6 +269,13 @@ services:
       - modu-infra
       - pinpoint
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8110/actuator/health/readiness | grep -q '\"UP\"' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 90s
+    stop_grace_period: 30s
 
   chat-store-service:
     build:
@@ -227,6 +294,13 @@ services:
       - modu-infra
       - pinpoint
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8100/actuator/health/readiness | grep -q '\"UP\"' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 90s
+    stop_grace_period: 30s
 
 networks:
   modu-infra:

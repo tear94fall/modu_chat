@@ -1,9 +1,14 @@
 server:
   port: 8080
+  # SIGTERM 뒤 새 요청은 거절하고 처리 중인 요청은 끝까지 보낸다(spring.lifecycle.timeout-per-shutdown-phase 안에서).
+  shutdown: graceful
 
 spring:
   application:
     name: member-service
+
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
 
   profiles:
     active: dev
@@ -57,9 +62,29 @@ modu:
       "[modu-chat]": CHAT
       "[modu-commerce]": COMMERCE
 
+# 프로필 파일(application-dev/local.yml)의 management.server.port(8082)·exposure 와 합쳐진다. probe 는 여기(main)에만 둔다.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    health:
+      # /actuator/health/liveness, /actuator/health/readiness — 쿠버네티스 probe 와 compose healthcheck 가 본다.
+      probes:
+        enabled: true
+      show-details: never
+      group:
+        readiness:
+          # 자동 db indicator 는 ro·rw 를 다 보므로 넣지 않는다 — 레플리카가 죽어도 unready 가 되면 안 된다. master 만 보는 masterDb(MasterDbHealthConfig).
+          include: readinessState, masterDb
+        liveness:
+          include: livenessState
+
 springdoc:
   api-docs:
     enabled: ${SPRINGDOC_API_DOCS_ENABLED:true}
     path: /v3/api-docs
   default-produces-media-type: application/json
   paths-to-exclude: /actuator/**, /error
+

@@ -40,6 +40,12 @@ spring:
       ddl-auto: update
     open-in-view: false
 
+  # shedlock 테이블은 엔티티가 아니라 ddl-auto 가 만들지 않는다. primary(master) 데이터소스에 스크립트로 만든다.
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema-shedlock.sql
+
 eureka:
   client:
     enabled: false

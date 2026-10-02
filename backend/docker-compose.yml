@@ -255,7 +255,7 @@ services:
       - 8110:8110
     environment:
       - CONFIG_SERVER_URI=http://config-service:8888
-      # mysql-member 인스턴스의 별도 스키마(modu-schedule). 테이블은 master 에서 ddl-auto(update)가 만들고 복제로 넘어간다.
+      # mysql-member 인스턴스의 별도 스키마(modu-schedule). 테이블은 DBA 가 master 에 만들고(modu_infra/data/mysql/schema) 복제로 넘어간다. 앱은 validate 만 한다.
       - spring.datasource.master.url=jdbc:mysql://mysql-member:3306/modu-schedule
       - spring.datasource.master.username=root
       # 읽기 전용 복제본. 비밀번호(master/replica)는 config-service(messenger.yml)가 준다.

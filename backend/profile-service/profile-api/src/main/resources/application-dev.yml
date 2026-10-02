@@ -56,11 +56,3 @@ resilience4j:
 logging:
   level:
     org.hibernate.SQL: debug
-
-eureka:
-  instance:
-    instance-id: profile-service
-
-  client:
-    register-with-eureka: true
-    fetch-registry: true

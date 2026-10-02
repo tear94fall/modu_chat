@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 
-@FeignClient("profile-service")
+@FeignClient(name = "profile-service", url = "\${modu.services.profile-service}")
 interface ProfileFeignClient {
 
     @Retry(name = "memberProfileRetry", fallbackMethod = "retryGetMemberProfileFallback")

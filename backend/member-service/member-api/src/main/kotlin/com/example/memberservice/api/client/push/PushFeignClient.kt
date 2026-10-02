@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 
-@FeignClient("push-service")
+@FeignClient(name = "push-service", url = "\${modu.services.push-service}")
 interface PushFeignClient {
 
     /** 회원 탈퇴: 그 회원의 FCM 토큰을 지운다. */

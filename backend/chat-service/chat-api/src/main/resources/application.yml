@@ -71,14 +71,6 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
-eureka:
-  instance:
-    instance-id: chat-service
-
-  client:
-    register-with-eureka: true
-    fetch-registry: true
-
 management:
   endpoints:
     web:

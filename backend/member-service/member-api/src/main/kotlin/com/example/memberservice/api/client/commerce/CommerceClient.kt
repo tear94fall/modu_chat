@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 
 /**
- * 회원 탈퇴 때 커머스(modu_commerce)에 고객 정리를 알린다. 커머스는 다른 저장소의 서비스라 Eureka 대신
- * `modu.commerce.url` 로 바로 부른다. Feign 을 쓰지 않는 까닭은 재시도·서킷 브레이커·config-repo 의 기본 타임아웃과
+ * 회원 탈퇴 때 커머스(modu_commerce)에 고객 정리를 알린다. 주소는 `modu.commerce.url`(기본값은 config-repo 의
+ * `modu.services.commerce-service`)로 바로 부른다. Feign 을 쓰지 않는 까닭은 재시도·서킷 브레이커·config-repo 의 기본 타임아웃과
  * 섞이지 않고 짧은 타임아웃([timeout])만 걸기 위해서다. 실패하면 예외를 던지고, 삼키는 건 호출 쪽(탈퇴 유스케이스) 몫이다.
  */
 @Component

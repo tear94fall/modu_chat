@@ -1,7 +1,7 @@
 name: modu-messenger
 
 # 인프라(MySQL, MongoDB, Redis, Kafka, RabbitMQ, MinIO)와 관측성 스택은 ~/workspace/modu_infra 에서,
-# 플랫폼(config-service, discovery-service, gateway-service)은 ~/workspace/modu_platform 에서 먼저 띄운다.
+# 플랫폼(config-service, gateway-service)은 ~/workspace/modu_platform 에서 먼저 띄운다.
 # 서비스는 external 네트워크 modu-infra 에서 컨테이너 이름으로 인프라·플랫폼에 접근한다.
 # 다른 compose 프로젝트라 depends_on 을 걸 수 없다. 설정을 못 받으면 서비스가 기동에 실패하고(fail-fast)
 # restart: always 가 다시 띄우므로, 플랫폼이 뜨면 자연히 따라 올라온다.

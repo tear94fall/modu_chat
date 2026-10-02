@@ -89,11 +89,3 @@ management:
     distribution:
       percentiles-histogram:
         http.server.requests: true
-
-eureka:
-  instance:
-    instance-id: member-service
-
-  client:
-    register-with-eureka: true
-    fetch-registry: true

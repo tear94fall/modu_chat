@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 
-@FeignClient("push-service")
+@FeignClient(name = "push-service", url = "\${modu.services.push-service}")
 interface FcmFeignClient {
 
     @PostMapping("/api-internal/push/chat")

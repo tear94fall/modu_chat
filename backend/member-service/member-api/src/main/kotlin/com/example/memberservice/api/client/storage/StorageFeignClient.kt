@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.multipart.MultipartFile
 
-@FeignClient("storage-service")
+@FeignClient(name = "storage-service", url = "\${modu.services.storage-service}")
 interface StorageFeignClient {
 
     @PostMapping("/api-internal/upload")

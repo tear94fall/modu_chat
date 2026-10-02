@@ -30,14 +30,6 @@ spring:
     template:
       default-topic: modu.modu-chat.chat
 
-eureka:
-  instance:
-    instance-id: chat-store-service
-
-  client:
-    register-with-eureka: true
-    fetch-registry: true
-
 management:
   endpoints:
     web:

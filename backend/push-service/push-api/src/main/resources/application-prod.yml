@@ -51,11 +51,3 @@ project:
   properties:
     firebase-sdk-path: "firebase/modu_chat_firebase_service_key.json"
     firebase-multicast-message-size: 500
-
-eureka:
-  instance:
-    instance-id: push-service
-
-  client:
-    register-with-eureka: true
-    fetch-registry: true

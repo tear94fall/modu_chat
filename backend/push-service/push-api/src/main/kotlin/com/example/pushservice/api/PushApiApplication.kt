@@ -3,7 +3,6 @@ package com.example.pushservice.api
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
 import org.springframework.boot.runApplication
-import org.springframework.cloud.client.discovery.EnableDiscoveryClient
 
 /**
  * 실행 모듈. push-api(`…pushservice.api`)와 push-application(`…pushservice.application`)을 함께 스캔한다.
@@ -13,7 +12,6 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient
     scanBasePackages = ["com.example.pushservice"],
     exclude = [DataSourceAutoConfiguration::class],
 )
-@EnableDiscoveryClient
 class PushApiApplication
 
 fun main(args: Array<String>) {

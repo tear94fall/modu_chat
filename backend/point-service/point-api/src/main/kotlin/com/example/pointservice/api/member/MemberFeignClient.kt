@@ -14,7 +14,7 @@ data class MemberSummaryDto(
 data class MemberPageDto(var content: List<MemberSummaryDto> = emptyList())
 
 /** 포인트 계정은 userId 만 알므로 이름·이메일은 member-service 에서 받아 붙인다. */
-@FeignClient("member-service")
+@FeignClient(name = "member-service", url = "\${modu.services.member-service}")
 interface MemberFeignClient {
 
     @GetMapping("/api-internal/member/members")

@@ -7,7 +7,6 @@
 - [Spring Boot](https://spring.io/projects/spring-boot)
 - [Spring Cloud](https://spring.io/projects/spring-cloud)
 - [Spring Cloud Api Gateway](https://spring.io/projects/spring-cloud-gateway)
-- [Spring Cloud Eureka](https://cloud.spring.io/spring-cloud-netflix/reference/html/)
 - [Spring Cloud Config](https://docs.spring.io/spring-cloud-config/docs/current/reference/html/)
 - [Spring Cloud OpenFeign](https://cloud.spring.io/spring-cloud-openfeign/reference/html)
 - [Spring Cloud Bus](https://docs.spring.io/spring-cloud-bus/docs/current/reference/html/)
@@ -41,12 +40,12 @@
 
 ### 로컬 실행
 
-인프라(MySQL, MongoDB, Redis, Kafka, RabbitMQ, MinIO)와 관측성 스택(Prometheus, Grafana, Pinpoint)은 modu_infra(https://github.com/tear94fall/modu_infra), 플랫폼(config-service, discovery-service, gateway-service)은 modu_platform(https://github.com/tear94fall/modu_platform) 저장소에서 따로 띄웁니다(둘 다 이 저장소 옆에 clone).
+인프라(MySQL, MongoDB, Redis, Kafka, RabbitMQ, MinIO)와 관측성 스택(Prometheus, Grafana, Pinpoint)은 modu_infra(https://github.com/tear94fall/modu_infra), 플랫폼(config-service, gateway-service)은 modu_platform(https://github.com/tear94fall/modu_platform) 저장소에서 따로 띄웁니다(둘 다 이 저장소 옆에 clone).
 이 디렉터리의 `docker-compose.yml` 에는 메신저 애플리케이션 서비스(auth, member, chat, ws, push, storage, profile, chat-store, point)만 있습니다. point-service 는 그로스(이벤트·출석·초대) 포인트 원장으로, 사용자를 userId 로만 식별해 채팅 DB 와 독립적입니다(`point-service/sql/schema.sql` 로 `modu-point` 스키마를 한 번 만들어 둡니다).
 
 1. modu_infra 의 `README.md` 순서대로 `modu-infra` 네트워크, pinpoint-docker, data, monitoring 을 먼저 띄웁니다.
-2. modu_platform 의 `README.md` 대로 config-service, discovery-service, gateway-service 를 띄웁니다. 설정 파일(`config-repo/`)도 그 저장소에 있습니다 — 메신저 서비스는 `messenger/` 폴더의 설정을 받습니다.
-3. `backend` 에서 `docker compose up -d --build`. 플랫폼이 아직 안 떠 있으면 서비스가 설정을 못 받아 기동에 실패하고 compose 가 재시작합니다(fail-fast). Eureka 등록에 1분쯤 걸리므로 그 사이 게이트웨이의 503 은 정상입니다.
+2. modu_platform 의 `README.md` 대로 config-service, gateway-service 를 띄웁니다. 설정 파일(`config-repo/`)도 그 저장소에 있습니다 — 메신저 서비스는 `messenger/` 폴더의 설정을 받습니다.
+3. `backend` 에서 `docker compose up -d --build`. 플랫폼이 아직 안 떠 있으면 서비스가 설정을 못 받아 기동에 실패하고 compose 가 재시작합니다(fail-fast).
 
 `.env` 의 `INTERNAL_API_TOKEN` 은 modu_platform, modu_commerce 의 `.env` 와 같은 값이어야 합니다. `ENCRYPT_KEY` 는 이제 modu_platform 에서만 씁니다.
 
@@ -111,26 +110,15 @@ schedule-service 는 config-server 를 쓰지 않아 자체 `application.yml` �
 `.env` 에 `INTERNAL_API_TOKEN` 이 없으면 서비스가 기동을 거부합니다 (빈 토큰 방지).
 config-server(modu_platform 의 config-service)가 죽어 있으면 설정을 못 받아 기동에 실패합니다(`fail-fast`).
 
-### Spring Cloud Eureka
-모놀리식 구조에서는 하나의 서비스에서 사용자 인증 부터 리소스 접근에 대한 모든 요청을 처리 하였습니다.  
-예를 들어, 회원 가입-로그인-서비스 이용이 하나의 서버에서 이뤄지다 보니 구조가 단순하였습니다.  
-하지만 MSA 구조에서는 하나의 요청을 처리하기 위해 내부의 다른 서비스로의 접근이 이뤄지는 경우가 많았습니다.  
-또한 클라이언트가 하나의 서비스에만 접근 하는것이 아닌 다수의 서비스에 서로 다른 요청을 전송하고 있었습니다.  
-
-클라이언트 또는 내부에서 서로 다른 서비스에 접근 하기 위해서는 접근 하려는 서비스에 대한 정보를 필요로 하였습니다.  
-하지만 각각의 서비스가 서로 다른 포트를 점유하고 있고, 서로 각각의 서비스의 포트를 모두 알고 있어야 했습니다.  
-또한 특정 서비스의 부하가 생기는 경우 해결하기 위해 동일한 기능을 하는 서비스를 일시적으로 다수 띄우는 경우도 존재합니다.  
-이런 경우 변경되는 서비스에 대한 정보를 모두 가지고 있을 수 없는데 기존의 방법으로는 이를 해결할수 없었습니다.   
-
-이러한 문제를 해결하고자, spring eureka를 사용하였습니다.  
-각각의 서비스는 discovery client 로써 eureka server로 자신의 정보를 주기적으로 요청을 전송합니다.  
-이런경우 서비스를 운영하면서 동적으로 변경되는 서비스의 구성을 모두 알고 있을 필요가 없었습니다.  
-모든 정보는 eureka server가 가지고 있으므로, eureka 서버에 대한 정보만을 가지고 있으면 되기 때문입니다.  
-
-eureka server는 등록된 서비스로를 알고 있다해도 부하 부산을 위해서는 로드 밸런싱 기능을 필요로 했습니다.  
-로드 밸런싱 기능은 spring api-gateway를 통해 처리하도록 하였습니다.  
-클라이언트는 서비스의 가장 앞단에 있는 spring api-gateway로 요청을 전송합니다.  
-gateway는 받은 요청의 서비스에 대한 정보를 eureka로 부터 전달 받고 요청에 해당되는 서비스로 요청을 전송하게 됩니다.  
+### 서비스 주소 (DNS 라우팅)
+서비스끼리의 호출과 게이트웨이 → 서비스 라우팅은 서비스 디스커버리 없이 고정된 `호스트:포트` 로 갑니다.
+주소는 config-repo(modu_platform) 의 `application.yml` 에 있는 `modu.services.*` 한 곳에서만 정합니다
+(예: `modu.services.member-service: http://member-service:8080`). docker compose 에서는 컨테이너 이름이 DNS 이름이고,
+k8s 에서는 같은 이름·같은 포트의 Service 를 만들어 맞춥니다. 로컬 프로필(`messenger-local.yml`)은 같은 키를 `http://localhost:<port>` 로 둡니다.  
+각 Feign 클라이언트는 `@FeignClient(name = "x-service", url = "\${modu.services.x-service}")` 로 이 값을 받고,
+Feign 을 쓰지 않는 호출(member-service 의 `modu.commerce.url` 등)도 기본값을 같은 키에서 가져옵니다.
+테스트는 `modu.services.*` 를 `http://localhost:1` 같은 가짜 주소로 두고 클라이언트를 목으로 바꿉니다.  
+(처음에는 Spring Cloud Eureka 로 서비스를 등록·조회했지만, k8s 이전을 준비하며 2026-10 에 걷어냈습니다.)
 
 ### Spring Cloud Open Feign
 MSA 구조에서는 서비스 끼리의 통신이 빈번하게 발생합니다.  
@@ -141,8 +129,7 @@ MSA 구조에서는 서비스 끼리의 통신이 빈번하게 발생합니다.
 
 OpenFeign을 기본 기능도 정말 훌륭하지만, 에러처리와 로깅에 대해서는 조금 수정을 해줘야 했습니다.  
 MSA 내부에서 요청에 실패한 경우에 대한 에러 처리가 필요하여, Error decoder를 통해 에러를 커스터 마이징 하였습니다.  
-서비스간에 발생하는 서비스에 대한 정보를 알고있어야 하는건 아닌가? 했는데, eureka client로 등록해었기 때문에,  
-eureka 서버에 등록된 서비스들의 이름을 통해 서비스 끼리의 통신이 가능했습니다.  
+서비스 주소는 위의 `modu.services.*` 에서 받아 `url` 로 넘기므로 클라이언트 코드에 포트가 들어가지 않습니다.  
 
 ### Spring Cloude Sleuth
 MSA 구조로 변경하면서 크게 고민하였던 문제가 있었습니다. 장애가 발생하는 구간을 어떻게 모니터링 할수 있을까? 였습니다.  

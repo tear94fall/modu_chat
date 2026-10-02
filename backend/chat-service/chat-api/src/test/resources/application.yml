@@ -50,13 +50,10 @@ spring:
       bootstrap-servers: localhost:29092
       group-id: chat-save-group
 
-eureka:
-  client:
-    enabled: false
-    register-with-eureka: false
-    fetch-registry: false
-
 modu:
+  # Feign 클라이언트는 기동 때 url 을 요구한다. 테스트는 목으로 바꾸므로 유효하기만 한 가짜 주소를 둔다.
+  services:
+    member-service: http://localhost:1
   # InternalApiFilter / InternalApiFeignConfig 가 요구한다. 운영은 config-repo 가 내려준다.
   internal-api:
     token: test-internal-token

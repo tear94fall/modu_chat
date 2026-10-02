@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 
-@FeignClient("chat-service")
+@FeignClient(name = "chat-service", url = "\${modu.services.chat-service}")
 interface ChatFeignClient {
 
     @PostMapping("/api-internal/chat")

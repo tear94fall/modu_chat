@@ -51,10 +51,10 @@ spring:
         connection-timeout: 30000
         read-only: true
 
-# 탈퇴 때 커머스 고객 정리를 부를 주소(CommerceClient). 커머스는 Eureka 밖이라 주소를 직접 쓴다.
+# 탈퇴 때 커머스 고객 정리를 부를 주소(CommerceClient). 기본은 config-repo 의 modu.services.commerce-service.
 modu:
   commerce:
-    url: http://commerce-service:8200
+    url: ${modu.services.commerce-service}
   # 서비스 이용 기록(member_service_usage): auth-service 등록 클라이언트 ID → 서비스.
   # 여기 없는 클라이언트(직원 콘솔 modu-admin 등)는 기록하지 않는다.
   member:

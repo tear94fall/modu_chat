@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody
  * 토큰 발급 뒤 member-service 에 이용 기록을 남긴다. 로그인 흐름의 [MemberFeignClient] 와 시간 제한을 따로 두려고
  * 클라이언트를 나눴다(contextId). X-Internal-Token 은 InternalApiFeignConfig 의 인터셉터가 붙인다.
  */
-@FeignClient(name = "member-service", contextId = "memberUsageClient", configuration = [MemberUsageFeignConfig::class])
+@FeignClient(name = "member-service", url = "\${modu.services.member-service}", contextId = "memberUsageClient", configuration = [MemberUsageFeignConfig::class])
 interface MemberUsageFeignClient {
 
     @PostMapping("/api-internal/member/usage")

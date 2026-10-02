@@ -23,7 +23,6 @@ spring:
     username: guest
     password: guest
 
-
   kafka:
     producer:
       bootstrap-servers: localhost:9092
@@ -40,16 +39,6 @@ minio:
   accessKey: minio
   secretKey: miniopass
   bucketImageName: file-storage
-
-eureka:
-  instance:
-    instance-id: storage-service
-
-  client:
-    register-with-eureka: true
-    fetch-registry: true
-    service-url:
-      defaultZone: http://localhost:8761/eureka
 
 logging:
   level:

@@ -13,7 +13,7 @@ data class MemberIdDto(
     var userId: String? = null,
 )
 
-@FeignClient("member-service")
+@FeignClient(name = "member-service", url = "\${modu.services.member-service}")
 interface MemberFeignClient {
 
     @PostMapping("/api-internal/member/profile/profile")

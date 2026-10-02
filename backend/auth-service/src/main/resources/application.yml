@@ -26,14 +26,6 @@ logging:
   level:
     org.hibernate.SQL: debug
 
-eureka:
-  instance:
-    instance-id: auth-service
-
-  client:
-    register-with-eureka: true
-    fetch-registry: true
-
 management:
   endpoints:
     web:

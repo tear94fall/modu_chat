@@ -45,7 +45,6 @@ spring:
         default_batch_fetch_size: 1000
     open-in-view: false
 
-
   data:
     redis:
       host: localhost
@@ -114,19 +113,20 @@ management:
         liveness:
           include: livenessState
 
-eureka:
-  client:
-    enabled: false
-    register-with-eureka: false
-    fetch-registry: false
-
 # InternalApiFilter / InternalApiFeignConfig 가 요구한다. 운영은 config-repo 가 내려준다.
 modu:
+  # Feign 클라이언트는 기동 때 url 을 요구한다. 테스트는 목으로 바꾸므로 유효하기만 한 가짜 주소를 둔다.
+  services:
+    chat-service: http://localhost:1
+    storage-service: http://localhost:1
+    push-service: http://localhost:1
+    profile-service: http://localhost:1
+    commerce-service: http://localhost:1
   internal-api:
     token: test-internal-token
   # 탈퇴 때 커머스 고객 정리(CommerceClient). 테스트는 클라이언트를 목으로 바꾼다.
   commerce:
-    url: http://commerce-service:8200
+    url: ${modu.services.commerce-service}
   # 서비스 이용 기록(member_service_usage): auth-service 등록 클라이언트 ID → 서비스.
   # 여기 없는 클라이언트(직원 콘솔 modu-admin 등)는 기록하지 않는다.
   member:

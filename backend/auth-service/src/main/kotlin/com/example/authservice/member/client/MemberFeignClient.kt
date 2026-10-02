@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 
-@FeignClient("member-service")
+@FeignClient(name = "member-service", url = "\${modu.services.member-service}")
 interface MemberFeignClient {
 
     @GetMapping("/api-internal/member/id/{userId}")

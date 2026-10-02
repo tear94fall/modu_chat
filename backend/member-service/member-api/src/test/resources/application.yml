@@ -96,13 +96,23 @@ logging:
   level:
     org.hibernate.SQL: debug
 
+# main 의 application.yml 과 같은 probe 설정(이 파일이 main 을 가리므로 여기에도 둔다). HealthProbesTest 가 본다.
+# dev/local 의 management.server.port(8082)는 두지 않는다 — 포트가 다르면 actuator 가 별도 컨텍스트에 떠 MockMvc 로 /actuator 를 못 부른다.
 management:
-  server:
-    port: 8082
   endpoints:
     web:
       exposure:
-        include: "*"
+        include: health, info, prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+      group:
+        readiness:
+          include: readinessState, masterDb
+        liveness:
+          include: livenessState
 
 eureka:
   client:

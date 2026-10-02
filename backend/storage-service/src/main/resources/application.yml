@@ -1,9 +1,14 @@
 server:
   port: 9999
+  # SIGTERM 뒤 새 요청은 거절하고 처리 중인 요청은 끝까지 보낸다(spring.lifecycle.timeout-per-shutdown-phase 안에서).
+  shutdown: graceful
 
 spring:
   application:
     name: storage-service
+
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
 
   config:
     import: optional:configserver:${CONFIG_SERVER_URI:http://localhost:8888}
@@ -44,6 +49,18 @@ management:
     web:
       exposure:
         include: health, info, prometheus
+  endpoint:
+    health:
+      # /actuator/health/liveness, /actuator/health/readiness — 쿠버네티스 probe 와 compose healthcheck 가 본다.
+      probes:
+        enabled: true
+      show-details: never
+      group:
+        readiness:
+          # MinIO 는 자동 indicator 가 없다 — MinioHealthIndicator(버킷 존재 확인).
+          include: readinessState, minio
+        liveness:
+          include: livenessState
   metrics:
     tags:
       application: ${spring.application.name}

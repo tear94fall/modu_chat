@@ -1,9 +1,14 @@
 server:
   port: 8090
+  # SIGTERM 뒤 새 요청은 거절하고 처리 중인 요청은 끝까지 보낸다(spring.lifecycle.timeout-per-shutdown-phase 안에서).
+  shutdown: graceful
 
 spring:
   application:
     name: ws-service
+
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
 
   config:
     import: optional:configserver:${CONFIG_SERVER_URI:http://localhost:8888}
@@ -37,6 +42,18 @@ management:
     web:
       exposure:
         include: health, info, prometheus
+  endpoint:
+    health:
+      # /actuator/health/liveness, /actuator/health/readiness — 쿠버네티스 probe 와 compose healthcheck 가 본다.
+      probes:
+        enabled: true
+      show-details: never
+      group:
+        readiness:
+          # DB 없음. Kafka 는 Spring Boot 자동 indicator 가 없어 readinessState 만 본다.
+          include: readinessState
+        liveness:
+          include: livenessState
   metrics:
     tags:
       application: ${spring.application.name}

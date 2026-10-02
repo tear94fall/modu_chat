@@ -196,6 +196,13 @@ Redis 클러스터(마스터 3 + 레플리카 3, `redis-node-1`~`redis-node-6`)�
 단일 노드에서는 CROSSSLOT 같은 클러스터 제약이 드러나지 않으므로, 여러 키를 한 명령으로 다루는 코드는 도커 스택에서 확인한다.  
 클러스터를 직접 들여다볼 때는 `docker exec -it redis-node-1 redis-cli -c` 를 쓴다.  
 
+### 스키마 관리
+JPA 서비스(chat·member·point·profile·push·schedule)의 `spring.jpa.hibernate.ddl-auto` 는 dev/prod 에서 `validate` 다. Hibernate 는 공용 DB 의 테이블을 만들거나 바꾸지 않고, 엔티티와 스키마가 어긋나면 기동 실패로 드러난다(`local` 프로필과 H2 테스트만 `update`).  
+스키마 기준선(테이블별 DDL)과 변경 이력은 [modu_infra](https://github.com/tear94fall/modu_infra) 의 `data/mysql/schema` 에 둔다.  
+스키마 변경은 DBA 가 gh-ost 로 온라인 적용한다(절차: `modu_infra/data/mysql/DBA.md`). 코드 쪽은 엔티티·마이그레이션 DDL 을 같은 PR 에 넣고, DB 에 먼저 적용된 뒤 배포한다.  
+운영 DB 에는 FK 를 두지 않는다. 삭제 순서·참조 정합성은 UseCase 가 책임지고, 어긋난 행은 고아 행 점검 쿼리(`modu_infra/data/mysql/schema`)로 찾는다. 테스트(H2)는 Hibernate 가 FK 를 만들므로 잘못된 삭제 순서는 테스트에서 걸린다.  
+2개 이상 파드에서 도는 스케줄러(schedule-service)는 ShedLock 으로 `shedlock` 테이블(master)에 락을 걸어 한 번만 돈다.  
+
 ### 도커를 이용한 컨테이너 기반 운영환경
 MSA 구조에서 서비스는 단일로 구동이 되기도 하지만, 트래픽의 부하 분산을 위해서 다수의 서비스를 운영하기도 합니다.  
 모두의 메신저는 트래픽의 부하에대해 서비스를 안정적으로 제공 하기 위해서 서비스를 다수로 구동하는것이 가능합니다.  

@@ -53,8 +53,9 @@ spring:
 
   jpa:
     hibernate:
-      # master 에서만 돈다(테이블 schedule 을 만든다). replica 의 EntityManagerFactory 는 항상 none 이다(RoJpaConfig).
-      ddl-auto: update
+      # master 에서만 돈다. replica 의 EntityManagerFactory 는 항상 none 이다(RoJpaConfig).
+      # 스키마는 DBA 가 gh-ost 로 바꾼다(modu_infra/data/mysql/schema). 코드와 어긋나면 기동 실패로 드러나게 validate.
+      ddl-auto: validate
     properties:
       hibernate:
         default_batch_fetch_size: 1000

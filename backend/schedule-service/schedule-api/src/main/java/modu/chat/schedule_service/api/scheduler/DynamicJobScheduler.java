@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.core.LockConfiguration;
+import net.javacrumbs.shedlock.core.LockingTaskExecutor;
 import modu.chat.schedule_service.application.domain.entity.DataType;
 import modu.chat.schedule_service.application.domain.entity.Protocol;
 import modu.chat.schedule_service.application.scheduler.JobScheduler;
@@ -17,6 +19,7 @@ import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,19 +31,47 @@ import java.util.concurrent.ScheduledFuture;
 /**
  * 예약 작업 실행기(JobScheduler 포트의 구현). cron 주기마다 스케줄이 가리키는 다른 서비스의 HTTP 엔드포인트를 부른다.
  * DB 트랜잭션과는 무관하게, 유스케이스가 쓰기를 끝낸 뒤에 불린다.
+ *
+ * <p>파드마다 저장된 스케줄을 전부 거므로(ScheduleJobInitializer) 파드가 2개면 같은 cron 이 두 번 울린다. 그래서 작업
+ * 본문은 {@code @Scheduled} 의 {@code @SchedulerLock} 과 같은 뜻으로 {@link LockingTaskExecutor} 로 감싼다 — 스케줄 id
+ * 단위 이름({@code schedule:job-<id>})으로 master DB 의 {@code shedlock} 행을 먼저 잡은 파드만 호출하고, 나머지는 그 회차를
+ * 건너뛴다(SchedulerLockConfig).
  */
 @Slf4j
 @Service
 public class DynamicJobScheduler implements JobScheduler {
 
+    /** 락 이름. 서비스 안에서 유일하고 {@code shedlock.name VARCHAR(64)} 안에 든다. */
+    static final String LOCK_NAME_PREFIX = "schedule:job-";
+    /** 호출 하나는 HTTP 한 번이라 짧다. 이 시간이 지나면 락을 쥔 파드가 죽었다고 보고 다른 파드가 가져간다. */
+    static final Duration LOCK_AT_MOST_FOR = Duration.ofMinutes(2);
+    /** 파드 간 시계 차이·거의 동시에 울리는 cron 때문에 본문이 1초 만에 끝나도 이만큼은 락을 쥐고 있어 두 번 돌지 않는다. */
+    static final Duration LOCK_AT_LEAST_FOR = Duration.ofSeconds(30);
+
     private final TaskScheduler taskScheduler;
+    private final LockingTaskExecutor lockingTaskExecutor;
     private final Map<Long, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
 
-    public DynamicJobScheduler() {
+    public DynamicJobScheduler(LockingTaskExecutor lockingTaskExecutor) {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
         scheduler.setPoolSize(5);  // 동시 실행 가능하도록 스레드 풀 설정
         scheduler.initialize();
         this.taskScheduler = scheduler;
+        this.lockingTaskExecutor = lockingTaskExecutor;
+    }
+
+    static String lockName(Long scheduleId) {
+        return LOCK_NAME_PREFIX + scheduleId;
+    }
+
+    /**
+     * 작업 본문을 스케줄 id 락 아래에서 돌린다. 다른 파드(또는 같은 파드의 직전 회차)가 락을 쥐고 있으면 본문은 돌지 않는다.
+     * cron 이 울릴 때마다 불리고, 테스트가 락 동작을 보려고 직접 부르기도 한다.
+     */
+    void runLocked(Long scheduleId, Runnable job) {
+        lockingTaskExecutor.executeWithLock(
+                job,
+                new LockConfiguration(Instant.now(), lockName(scheduleId), LOCK_AT_MOST_FOR, LOCK_AT_LEAST_FOR));
     }
 
     @Override
@@ -50,7 +81,7 @@ public class DynamicJobScheduler implements JobScheduler {
             return;
         }
 
-        Runnable task = (() -> {
+        Runnable job = (() -> {
             if (schedule.protocol().equals(Protocol.REST_API)) {
                 String response = "";
 
@@ -74,7 +105,7 @@ public class DynamicJobScheduler implements JobScheduler {
         });
 
         ScheduledFuture<?> scheduledTask = ((ThreadPoolTaskScheduler) taskScheduler)
-                .schedule(task, new CronTrigger(schedule.cronExpression()));
+                .schedule(() -> runLocked(schedule.id(), job), new CronTrigger(schedule.cronExpression()));
 
         scheduledTasks.put(schedule.id(), scheduledTask);
         System.out.println("Job [" + schedule.id() + "] 추가됨. Cron: " + schedule.cronExpression());

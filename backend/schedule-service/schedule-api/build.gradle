@@ -16,6 +16,9 @@ dependencies {
 	implementation 'io.micrometer:micrometer-registry-prometheus'
 	// 예약 작업이 다른 서비스를 부를 때 쓰는 WebClient
 	implementation 'org.springframework:spring-webflux'
+	// 파드가 2개 이상이어도 같은 스케줄이 한 번만 돌게 하는 DB 락(shedlock 테이블, master 에만 쓴다 — SchedulerLockConfig)
+	implementation 'net.javacrumbs.shedlock:shedlock-spring:6.3.0'
+	implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.3.0'
 
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
 }

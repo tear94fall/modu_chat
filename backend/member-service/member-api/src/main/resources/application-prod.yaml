@@ -13,7 +13,8 @@ spring:
   jpa:
     hibernate:
       # master 에서만 돈다. replica 의 EntityManagerFactory 는 항상 none 이다(RoJpaConfig).
-      ddl-auto: update
+      # 스키마는 DBA 가 gh-ost 로 바꾼다(modu_infra/data/mysql/schema). 코드와 어긋나면 기동 실패로 드러나게 validate.
+      ddl-auto: validate
     properties:
       hibernate:
         show-sql: true

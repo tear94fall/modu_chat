@@ -38,28 +38,21 @@
 - [Debezium](https://debezium.io/)
 - [Zipkin](https://zipkin.io/)
 
-### 로컬 실행
+### 실행 환경 (2026-10-04 부터 전부 k8s)
 
-인프라(MySQL, MongoDB, Redis, Kafka, RabbitMQ, MinIO)와 관측성 스택(Prometheus, Grafana, Pinpoint)은 modu_infra(https://github.com/tear94fall/modu_infra), 플랫폼(config-service, gateway-service)은 modu_platform(https://github.com/tear94fall/modu_platform) 저장소에서 따로 띄웁니다(둘 다 이 저장소 옆에 clone).
-이 디렉터리의 `docker-compose.yml` 에는 메신저 애플리케이션 서비스(auth, member, chat, ws, push, storage, profile, chat-store, point)만 있습니다. point-service 는 그로스(이벤트·출석·초대) 포인트 원장으로, 사용자를 userId 로만 식별해 채팅 DB 와 독립적입니다(`point-service/sql/schema.sql` 로 `modu-point` 스키마를 한 번 만들어 둡니다).
+인프라(MySQL, MongoDB, Redis, Kafka, RabbitMQ, MinIO)·관측성(OpenSearch, Prometheus, Grafana, Pinpoint)·플랫폼(config-service, gateway-service)·이 저장소의 서비스 10개가 모두 Docker Desktop Kubernetes(네임스페이스 `modu`)에서 돕니다. 매니페스트와 절차는 modu_infra(https://github.com/tear94fall/modu_infra) 의 `k8s/README.md`, 설정은 modu_platform(https://github.com/tear94fall/modu_platform) 의 `config-repo/` 입니다. compose 는 2026-10-04 에 걷어냈습니다.
 
-1. modu_infra 의 `README.md` 순서대로 `modu-infra` 네트워크, pinpoint-docker, data, monitoring 을 먼저 띄웁니다.
-2. modu_platform 의 `README.md` 대로 config-service, gateway-service 를 띄웁니다. 설정 파일(`config-repo/`)도 그 저장소에 있습니다 — 메신저 서비스는 `messenger/` 폴더의 설정을 받습니다.
-3. `backend` 에서 `docker compose up -d --build`. 플랫폼이 아직 안 떠 있으면 서비스가 설정을 못 받아 기동에 실패하고 compose 가 재시작합니다(fail-fast).
+point-service 는 그로스(이벤트·출석·초대) 포인트 원장으로, 사용자를 userId 로만 식별해 채팅 DB 와 독립적입니다(스키마 기준선은 modu_infra `data/mysql/schema/`).
 
-비밀값은 전부 modu_platform 의 config-repo 에 `{cipher}` 로 암호화해 두고 config-service 가 복호화해 내려줍니다 — 내부 API 토큰(`modu.internal-api.token`, 공통 `application.yml`), DB 비밀번호(`messenger/messenger.yml`), 구글 OAuth 클라이언트(`messenger/member-service.yml`), Firebase 서비스 계정 키(`messenger/push-service.yml` 의 `modu.push.firebase.credentials-base64`, JSON 을 base64 로 감싼 값).
-그래서 이 저장소에는 `application-oauth.yml` 도, `firebase/modu_chat_firebase_service_key.json` 도 더 이상 필요 없고, `backend/.env` 에는 Pinpoint 에이전트 옵션(`*_AGENT_OPTS`)만 둡니다. `ENCRYPT_KEY` 는 modu_platform 에서만 씁니다.
-config-server 없이 push-service 를 로컬에서 띄울 때만 예외로, gitignore 된 키 파일을 `push-api/src/main/resources/firebase/` 에 두면 `FirebaseConfig` 가 폴백으로 읽습니다(어느 쪽을 썼는지 INFO 로그로 남깁니다).
+비밀값은 전부 modu_platform 의 config-repo 에 `{cipher}` 로 암호화해 두고 config-service 가 복호화해 내려줍니다 — 내부 API 토큰(`modu.internal-api.token`, 공통 `application.yml`), DB 비밀번호(`messenger/messenger.yml`), Firebase 서비스 계정 키(`messenger/push-service.yml` 의 `modu.push.firebase.credentials-base64`, JSON 을 base64 로 감싼 값). 이 저장소에는 비밀 파일이 없습니다. config-server 없이 push-service 를 로컬에서 띄울 때만 예외로, gitignore 된 키 파일을 `push-api/src/main/resources/firebase/` 에 두면 `FirebaseConfig` 가 폴백으로 읽습니다.
 
 ### 이미지와 배포
 
-서비스 이미지는 GitHub Actions(`.github/workflows/images.yml`)가 각 서비스의 `Dockerfile`(멀티스테이지: corretto 21 에서 `gradlew bootJar` → corretto 21 실행)로 만들어 GHCR 에 올립니다. 로컬 `docker compose up -d --build` 도 같은 Dockerfile 을 쓰므로 jar 를 미리 빌드할 필요가 없고, Gradle 캐시는 BuildKit 캐시 마운트(`/root/.gradle`)로 재사용됩니다. 테스트는 Dockerfile 이 아니라 워크플로에서 돕니다(`-x test`). `.dockerignore` 가 `build/`·IDE 파일과 비밀값(`firebase/`, `application-oauth.yml`)을 빌드 컨텍스트에서 뺍니다.
+서비스 이미지는 GitHub Actions(`.github/workflows/images.yml`)가 각 서비스의 `Dockerfile`(멀티스테이지: corretto 21 에서 `gradlew bootJar` → corretto 21 실행)로 만들어 GHCR 에 올립니다. 테스트는 Dockerfile 이 아니라 워크플로에서 돕니다(`-x test`). `.dockerignore` 가 `build/`·IDE 파일과 비밀값을 빌드 컨텍스트에서 뺍니다.
 
 - 이미지 이름: `ghcr.io/tear94fall/modu-chat/<service>` (auth-service, chat-service, chat-store-service, member-service, point-service, profile-service, push-service, schedule-service, storage-service, ws-service)
-- 태그: `develop` 브랜치 push → `develop-<sha7>` + `develop`, `master` push → `master-<sha7>` + `latest`. PR 은 바뀐 서비스만 테스트·빌드하고 푸시하지 않습니다. `workflow_dispatch` 는 10개 전부 빌드(푸시 없음).
-- 배포(dev): `docker compose pull && docker compose up -d` — `IMAGE_TAG` 환경변수로 태그를 고릅니다(기본 `develop`, 예: `IMAGE_TAG=develop-ab12cd3 docker compose up -d`).
-- 로컬 빌드: `docker compose up -d --build` (compose 의 `image:` 이름으로 로컬에서 빌드).
-- GHCR 패키지는 처음 푸시될 때 private 로 만들어집니다. 서비스마다 한 번 GitHub UI(프로필 → Packages → 패키지 → Package settings → Change visibility)에서 public 으로 바꿔야 로그인 없이 `pull` 됩니다.
+- 태그: `develop` 브랜치 push → `develop-<sha7>` + `develop`, `master` push → `master-<sha7>` + `latest`. PR 은 바뀐 서비스만 테스트·빌드하고 푸시하지 않습니다. `workflow_dispatch` 는 10개 전부(develop·master 에서 돌리면 푸시).
+- 배포: dev 는 **k8s**(modu_infra `k8s/`, 네임스페이스 `modu`)에서 돕니다. CI 가 GHCR 에 올린 태그를 `modu_infra/k8s/overlays/dev/kustomization.yaml` 의 `images[].newTag` 에 적고 `kubectl apply -k overlays/dev` 하면 그 Deployment 만 롤링됩니다(빠르게는 `kubectl -n modu set image deploy/<svc> <svc>=<이미지>:<태그>`). 로컬에서 빌드한 이미지를 쓰려면 `docker build -t <이미지>:local <디렉터리>` → `docker save <이미지>:local | docker exec -i desktop-control-plane ctr -n k8s.io images import -` 뒤 태그를 `local` 로 적습니다(Dockerfile 은 CI 와 같은 파일). GHCR 패키지는 저장소가 public 이라 처음 푸시 때부터 public 으로 생깁니다(로그인 없이 pull).
 
 ## Project Architecture
 
@@ -108,7 +101,7 @@ gateway 뒤에 위치한 서비스에 대한 정보를 알고 있다고 하더�
 
 컨트롤러는 `<root>/api/pub`, `<root>/api/internal`, `<root>/api/debug` 패키지에 계층별로 두고 서비스 레이어를 공유합니다.
 앱과 다른 서비스가 둘 다 쓰는 엔드포인트는 두 컨트롤러에 각각 둡니다.
-내부 토큰(`modu.internal-api.token`)은 config-repo(modu_platform) 의 공통 `application.yml` 에서 각 서비스로 내려옵니다(`.env` 나 compose 환경 변수로 넘기지 않습니다).
+내부 토큰(`modu.internal-api.token`)은 config-repo(modu_platform) 의 공통 `application.yml` 에서 각 서비스로 내려옵니다(환경 변수로 넘기지 않습니다).
 콘솔(모두의 어드민·시스템·인터널) 로그인은 직원의 구글 계정으로 한다(클라이언트 `modu-admin`, `staff: true`). 직원과 권한(SUPER·ADMIN·SYSTEM·INTERNAL)은 member-service 의 `staff`, `staff_permission` 테이블에 있고, auth-service 가 토큰 roles 로 바꾼다(SUPER 는 모든 콘솔 + `ROLE_SUPER`). 첫 최상위 관리자는 DB 에 직접 넣는다:
 
 ```sql
@@ -124,7 +117,7 @@ config-server(modu_platform 의 config-service)가 죽어 있으면 설정을 �
 ### 서비스 주소 (DNS 라우팅)
 서비스끼리의 호출과 게이트웨이 → 서비스 라우팅은 서비스 디스커버리 없이 고정된 `호스트:포트` 로 갑니다.
 주소는 config-repo(modu_platform) 의 `application.yml` 에 있는 `modu.services.*` 한 곳에서만 정합니다
-(예: `modu.services.member-service: http://member-service:8080`). docker compose 에서는 컨테이너 이름이 DNS 이름이고,
+(예: `modu.services.member-service: http://member-service:8080`). k8s 에서는 같은 이름의 Service 가 그 이름이고,
 k8s 에서는 같은 이름·같은 포트의 Service 를 만들어 맞춥니다. 로컬 프로필(`messenger-local.yml`)은 같은 키를 `http://localhost:<port>` 로 둡니다.  
 각 Feign 클라이언트는 `@FeignClient(name = "x-service", url = "\${modu.services.x-service}")` 로 이 값을 받고,
 Feign 을 쓰지 않는 호출(member-service 의 `modu.commerce.url` 등)도 기본값을 같은 키에서 가져옵니다.

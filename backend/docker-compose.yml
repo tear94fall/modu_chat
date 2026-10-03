@@ -1,5 +1,9 @@
 name: modu-messenger
 
+# 이미지: CI(GitHub Actions, .github/workflows/images.yml)가 같은 Dockerfile 로 빌드해 GHCR 에 올린다.
+#   docker compose pull && docker compose up -d   → CI 이미지(IMAGE_TAG, 기본 develop)
+#   docker compose up -d --build                  → 로컬 빌드(같은 Dockerfile, 멀티스테이지라 jar 를 미리 만들 필요 없다)
+
 # 인프라(MySQL, MongoDB, Redis, Kafka, RabbitMQ, MinIO)와 관측성 스택은 ~/workspace/modu_infra 에서,
 # 플랫폼(config-service, gateway-service)은 ~/workspace/modu_platform 에서 먼저 띄운다.
 # 서비스는 external 네트워크 modu-infra 에서 컨테이너 이름으로 인프라·플랫폼에 접근한다.
@@ -20,14 +24,25 @@ x-logging: &logging
     max-size: "50m"
     max-file: "3"
 
+# 컨테이너 메모리 제한. JVM 은 -XX:MaxRAMPercentage=75 로 이 안에서 힙을 잡는다(1g → 힙 최대 768MiB).
+# k8s 의 resources.requests(mem_reservation)/limits(mem_limit) 와 같은 값으로 매니페스트에 옮긴다.
+x-jvm-resources: &jvm-resources
+  mem_limit: 1g
+  mem_reservation: 512m
+x-small-resources: &small-resources
+  mem_limit: 64m
+  mem_reservation: 16m
+
 services:
 
   auth-service:
+    image: ghcr.io/tear94fall/modu-chat/auth-service:${IMAGE_TAG:-develop}
     build:
       context: ./auth-service
       dockerfile: ./Dockerfile
     container_name: auth-service
     logging: *logging
+    <<: *jvm-resources
     ports:
       - 9900:9900
     environment:
@@ -49,11 +64,13 @@ services:
     stop_grace_period: 30s
 
   chat-service:
+    image: ghcr.io/tear94fall/modu-chat/chat-service:${IMAGE_TAG:-develop}
     build:
       context: ./chat-service
       dockerfile: ./Dockerfile
     container_name: chat-service
     logging: *logging
+    <<: *jvm-resources
     ports:
       - 9090:9090
     environment:
@@ -79,11 +96,15 @@ services:
     stop_grace_period: 30s
 
   member-service:
+    image: ghcr.io/tear94fall/modu-chat/member-service:${IMAGE_TAG:-develop}
     build:
       context: ./member-service
       dockerfile: ./Dockerfile
     container_name: member-service
     logging: *logging
+    <<: *jvm-resources
+    # 회원·친구·스태프·사용 기록까지 들고 있어 non-heap 이 가장 크다(측정 RSS 800MiB).
+    mem_limit: 1280m
     ports:
       - 8080:8080
     environment:
@@ -111,11 +132,13 @@ services:
     stop_grace_period: 30s
 
   profile-service:
+    image: ghcr.io/tear94fall/modu-chat/profile-service:${IMAGE_TAG:-develop}
     build:
       context: ./profile-service
       dockerfile: ./Dockerfile
     container_name: profile-service
     logging: *logging
+    <<: *jvm-resources
     ports:
       - 8880:8880
     environment:
@@ -141,11 +164,13 @@ services:
     stop_grace_period: 30s
 
   push-service:
+    image: ghcr.io/tear94fall/modu-chat/push-service:${IMAGE_TAG:-develop}
     build:
       context: ./push-service
       dockerfile: ./Dockerfile
     container_name: push-service
     logging: *logging
+    <<: *jvm-resources
     ports:
       - 9990:9990
     environment:
@@ -171,11 +196,13 @@ services:
     stop_grace_period: 30s
 
   storage-service:
+    image: ghcr.io/tear94fall/modu-chat/storage-service:${IMAGE_TAG:-develop}
     build:
       context: ./storage-service
       dockerfile: ./Dockerfile
     container_name: storage-service
     logging: *logging
+    <<: *jvm-resources
     ports:
       - 9999:9999
     environment:
@@ -200,11 +227,13 @@ services:
       - pinpoint-agent:/pinpoint-agent:ro
 
   ws-service:
+    image: ghcr.io/tear94fall/modu-chat/ws-service:${IMAGE_TAG:-develop}
     build:
       context: ./ws-service
       dockerfile: ./Dockerfile
     container_name: ws-service
     logging: *logging
+    <<: *jvm-resources
     ports:
       - 8090:8090
     environment:
@@ -228,11 +257,13 @@ services:
     stop_grace_period: 30s
 
   point-service:
+    image: ghcr.io/tear94fall/modu-chat/point-service:${IMAGE_TAG:-develop}
     build:
       context: ./point-service
       dockerfile: ./Dockerfile
     container_name: point-service
     logging: *logging
+    <<: *jvm-resources
     ports:
       - 9600:9600
     environment:
@@ -259,11 +290,13 @@ services:
     stop_grace_period: 30s
 
   schedule-service:
+    image: ghcr.io/tear94fall/modu-chat/schedule-service:${IMAGE_TAG:-develop}
     build:
       context: ./schedule-service
       dockerfile: ./Dockerfile
     container_name: schedule-service
     logging: *logging
+    <<: *jvm-resources
     ports:
       - 8110:8110
     environment:
@@ -290,11 +323,13 @@ services:
     stop_grace_period: 30s
 
   chat-store-service:
+    image: ghcr.io/tear94fall/modu-chat/chat-store-service:${IMAGE_TAG:-develop}
     build:
       context: ./chat-store-service
       dockerfile: ./Dockerfile
     container_name: chat-store-service
     logging: *logging
+    <<: *jvm-resources
     ports:
       - 8100:8100
     environment:

@@ -1,0 +1,129 @@
+# 서비스 이미지 빌드 → GHCR
+#
+# 흐름
+#   PR(develop·master 대상)      : 바뀐 서비스만 테스트 + 이미지 빌드(푸시 없음). 깨지면 PR 에 표시된다.
+#   develop·master 로 push(merge) : 바뀐 서비스만 테스트 + 빌드 + GHCR 푸시.
+#                                   develop → ghcr.io/tear94fall/modu-chat/<svc>:develop-<sha7>, :develop
+#                                   master  → ghcr.io/tear94fall/modu-chat/<svc>:master-<sha7>,  :latest
+#   workflow_dispatch           : 10개 서비스 전부 테스트 + 빌드. develop·master 에서 돌리면 푸시도 한다(첫 이미지·전체 재빌드).
+#
+# 이미지는 backend/<svc>/Dockerfile(멀티스테이지, 로컬 `docker compose up --build` 와 같은 파일)로 만든다.
+# 테스트는 Dockerfile 안이 아니라 여기서 돈다(Dockerfile 은 -x test).
+# 처음 푸시된 GHCR 패키지는 private 로 만들어지므로 GitHub UI(Packages → Package settings)에서 한 번 public 으로 바꿔야 한다.
+name: images
+
+on:
+  pull_request:
+    branches: [develop, master]
+  push:
+    branches: [develop, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_PREFIX: ghcr.io/tear94fall/modu-chat
+
+jobs:
+  # 어떤 서비스 디렉터리가 바뀌었는지 → build 매트릭스. workflow_dispatch 면 전부.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.list.outputs.services }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          # push 때는 같은 브랜치의 직전 커밋과 비교한다(기본값은 default branch 와 비교해 전부 바뀐 것으로 나온다). PR 은 PR base 와 비교.
+          base: ${{ github.event_name == 'push' && github.ref_name || '' }}
+          filters: |
+            auth-service: ['backend/auth-service/**']
+            chat-service: ['backend/chat-service/**']
+            chat-store-service: ['backend/chat-store-service/**']
+            member-service: ['backend/member-service/**']
+            point-service: ['backend/point-service/**']
+            profile-service: ['backend/profile-service/**']
+            push-service: ['backend/push-service/**']
+            schedule-service: ['backend/schedule-service/**']
+            storage-service: ['backend/storage-service/**']
+            ws-service: ['backend/ws-service/**']
+      - id: list
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo 'services=["auth-service","chat-service","chat-store-service","member-service","point-service","profile-service","push-service","schedule-service","storage-service","ws-service"]' >> "$GITHUB_OUTPUT"
+          else
+            echo 'services=${{ steps.filter.outputs.changes }}' >> "$GITHUB_OUTPUT"
+          fi
+          cat "$GITHUB_OUTPUT"
+
+  build:
+    needs: changes
+    if: needs.changes.outputs.services != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJSON(needs.changes.outputs.services) }}
+    # 같은 브랜치·서비스의 이전 실행은 취소한다(연속 push).
+    concurrency:
+      group: images-${{ github.ref }}-${{ matrix.service }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+
+      # 테스트: 서비스 디렉터리의 gradle wrapper 로. Java 21 toolchain 은 setup-java 가 깐 temurin 21 을 쓴다.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      # chat-store·storage 테스트는 실제 MongoDB·S3(MinIO) 에 붙는다(readiness 의 mongo·minio 인디케이터, 기동 때 버킷 확인).
+      # 로컬은 dev 스택이 있지만 러너엔 없으니 테스트 설정과 같은 주소·개발용 계정으로 띄운다.
+      - name: 테스트용 MongoDB
+        if: matrix.service == 'chat-store-service'
+        run: |
+          docker run -d --name mongo -p 27017:27017 mongo:7.0.8
+          for i in $(seq 1 30); do docker exec mongo mongosh --quiet --eval 'db.runCommand({ping:1}).ok' 2>/dev/null | grep -q 1 && break; sleep 2; done
+      # MinIO 공식 이미지·바이너리 배포가 막혀(Docker Hub 삭제, quay 인증 필요, dl.min.io 410) CI 에선 S3 호환 목(adobe/s3mock)을
+      # 같은 9000 포트에 띄운다. 테스트는 버킷 확인·생성(MinIO 클라이언트의 S3 API)만 쓴다. dev 스택은 받아 둔 MinIO 이미지를 그대로 쓴다.
+      - name: 테스트용 S3(MinIO 대신)
+        if: matrix.service == 'storage-service'
+        run: |
+          docker run -d --name s3mock -p 9000:9090 adobe/s3mock:4.7.0
+          for i in $(seq 1 30); do curl -s -o /dev/null http://localhost:9000/ && break; sleep 2; done
+      - name: 테스트
+        working-directory: backend/${{ matrix.service }}
+        run: ./gradlew test --no-daemon
+
+      # 이미지: PR 은 빌드만, develop·master push 는 GHCR 푸시. 레이어 캐시는 서비스별 GHA 캐시.
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        if: (github.event_name != 'pull_request' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master'))
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}
+          flavor: latest=false
+          # push: <branch>-<sha7> + 브랜치별 움직이는 태그(develop → develop, master → latest). PR: pr-<번호>(푸시 안 함).
+          tags: |
+            type=sha,prefix=${{ github.ref_name }}-,format=short,enable=${{ (github.event_name != 'pull_request' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master')) }}
+            type=raw,value=develop,enable=${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/develop' }}
+            type=raw,value=latest,enable=${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/master' }}
+            type=ref,event=pr
+      - uses: docker/build-push-action@v6
+        with:
+          context: backend/${{ matrix.service }}
+          platforms: linux/amd64
+          push: ${{ (github.event_name != 'pull_request' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master')) }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}

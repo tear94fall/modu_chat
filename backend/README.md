@@ -51,6 +51,16 @@
 그래서 이 저장소에는 `application-oauth.yml` 도, `firebase/modu_chat_firebase_service_key.json` 도 더 이상 필요 없고, `backend/.env` 에는 Pinpoint 에이전트 옵션(`*_AGENT_OPTS`)만 둡니다. `ENCRYPT_KEY` 는 modu_platform 에서만 씁니다.
 config-server 없이 push-service 를 로컬에서 띄울 때만 예외로, gitignore 된 키 파일을 `push-api/src/main/resources/firebase/` 에 두면 `FirebaseConfig` 가 폴백으로 읽습니다(어느 쪽을 썼는지 INFO 로그로 남깁니다).
 
+### 이미지와 배포
+
+서비스 이미지는 GitHub Actions(`.github/workflows/images.yml`)가 각 서비스의 `Dockerfile`(멀티스테이지: corretto 21 에서 `gradlew bootJar` → corretto 21 실행)로 만들어 GHCR 에 올립니다. 로컬 `docker compose up -d --build` 도 같은 Dockerfile 을 쓰므로 jar 를 미리 빌드할 필요가 없고, Gradle 캐시는 BuildKit 캐시 마운트(`/root/.gradle`)로 재사용됩니다. 테스트는 Dockerfile 이 아니라 워크플로에서 돕니다(`-x test`). `.dockerignore` 가 `build/`·IDE 파일과 비밀값(`firebase/`, `application-oauth.yml`)을 빌드 컨텍스트에서 뺍니다.
+
+- 이미지 이름: `ghcr.io/tear94fall/modu-chat/<service>` (auth-service, chat-service, chat-store-service, member-service, point-service, profile-service, push-service, schedule-service, storage-service, ws-service)
+- 태그: `develop` 브랜치 push → `develop-<sha7>` + `develop`, `master` push → `master-<sha7>` + `latest`. PR 은 바뀐 서비스만 테스트·빌드하고 푸시하지 않습니다. `workflow_dispatch` 는 10개 전부 빌드(푸시 없음).
+- 배포(dev): `docker compose pull && docker compose up -d` — `IMAGE_TAG` 환경변수로 태그를 고릅니다(기본 `develop`, 예: `IMAGE_TAG=develop-ab12cd3 docker compose up -d`).
+- 로컬 빌드: `docker compose up -d --build` (compose 의 `image:` 이름으로 로컬에서 빌드).
+- GHCR 패키지는 처음 푸시될 때 private 로 만들어집니다. 서비스마다 한 번 GitHub UI(프로필 → Packages → 패키지 → Package settings → Change visibility)에서 public 으로 바꿔야 로그인 없이 `pull` 됩니다.
+
 ## Project Architecture
 
 ### MSA (Micro Service Architecture)

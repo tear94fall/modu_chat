@@ -7,6 +7,8 @@ name: modu-messenger
 # restart: always 가 다시 띄우므로, 플랫폼이 뜨면 자연히 따라 올라온다.
 # healthcheck 는 readiness probe(/actuator/health/readiness)를 보고, stop_grace_period 30s 는 server.shutdown=graceful
 # (spring.lifecycle.timeout-per-shutdown-phase 20s)이 처리 중인 요청을 끝낼 시간을 준다. amazoncorretto:21 에 curl 이 있다.
+# 내부 API 토큰(modu.internal-api.token)을 비롯한 모든 비밀값(DB 비밀번호, 구글 OAuth 클라이언트, Firebase 키)은
+# 이 파일이나 .env 가 아니라 modu_platform 의 config-repo({cipher})에서 config-service 가 내려준다. .env 에는 Pinpoint 에이전트 옵션만 둔다.
 
 services:
 
@@ -20,7 +22,6 @@ services:
     environment:
       - CONFIG_SERVER_URI=http://config-service:8888
       - JAVA_TOOL_OPTIONS=${AUTH_AGENT_OPTS:-}
-      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -51,7 +52,6 @@ services:
       - spring.datasource.replica.url=jdbc:mysql://mysql-chat-replica:3306/modu-chat
       - spring.datasource.replica.username=modu_ro
       - JAVA_TOOL_OPTIONS=${CHAT_AGENT_OPTS:-}
-      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -81,7 +81,6 @@ services:
       - spring.datasource.replica.url=jdbc:mysql://mysql-member-replica:3306/modu-chat
       - spring.datasource.replica.username=modu_ro
       - JAVA_TOOL_OPTIONS=${MEMBER_AGENT_OPTS:-}
-      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -113,7 +112,6 @@ services:
       - spring.datasource.replica.url=jdbc:mysql://mysql-profile-replica:3306/modu-chat
       - spring.datasource.replica.username=modu_ro
       - JAVA_TOOL_OPTIONS=${PROFILE_AGENT_OPTS:-}
-      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -143,7 +141,6 @@ services:
       - spring.datasource.replica.url=jdbc:mysql://mysql-push-replica:3306/modu-chat
       - spring.datasource.replica.username=modu_ro
       - JAVA_TOOL_OPTIONS=${PUSH_AGENT_OPTS:-}
-      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -171,7 +168,6 @@ services:
       - spring.datasource.username=root
       - minio.endpoint=http://minio:9000
       - JAVA_TOOL_OPTIONS=${STORAGE_AGENT_OPTS:-}
-      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     networks:
       - modu-infra
       - pinpoint
@@ -199,7 +195,6 @@ services:
       - spring.datasource.url=jdbc:mysql://mysql:3306/modu-chat
       - spring.datasource.username=root
       - JAVA_TOOL_OPTIONS=${WS_SERVICE_AGENT_OPTS:-}
-      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -231,7 +226,6 @@ services:
       - spring.datasource.replica.url=jdbc:mysql://mysql-member-replica:3306/modu-point
       - spring.datasource.replica.username=modu_ro
       - JAVA_TOOL_OPTIONS=${POINT_AGENT_OPTS:-}
-      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -262,7 +256,6 @@ services:
       - spring.datasource.replica.url=jdbc:mysql://mysql-member-replica:3306/modu-schedule
       - spring.datasource.replica.username=modu_ro
       - JAVA_TOOL_OPTIONS=${SCHEDULE_AGENT_OPTS:-}
-      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -287,7 +280,6 @@ services:
     environment:
       - CONFIG_SERVER_URI=http://config-service:8888
       - JAVA_TOOL_OPTIONS=${CHAT_STORE_AGENT_OPTS:-}
-      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:

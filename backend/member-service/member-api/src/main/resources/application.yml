@@ -12,7 +12,6 @@ spring:
 
   profiles:
     active: dev
-    include: oauth
 
   config:
     import: optional:configserver:${CONFIG_SERVER_URI:http://localhost:8888}

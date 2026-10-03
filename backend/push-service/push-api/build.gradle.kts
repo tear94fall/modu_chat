@@ -10,6 +10,8 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.8")
     implementation("org.springframework.cloud:spring-cloud-starter-config")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    // 로그를 한 줄 JSON 으로(logback-spring.xml 의 LogstashEncoder, 접근 로그의 StructuredArguments)
+    implementation("net.logstash.logback:logstash-logback-encoder:8.1")
     implementation("io.micrometer:micrometer-registry-prometheus")
     // FCM 발송(FirebasePushSender). push-application 은 PushSender 포트만 안다.
     implementation("com.google.firebase:firebase-admin:9.9.0")

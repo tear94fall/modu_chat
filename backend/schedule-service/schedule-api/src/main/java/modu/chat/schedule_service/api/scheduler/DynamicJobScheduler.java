@@ -6,10 +6,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.LockConfiguration;
 import net.javacrumbs.shedlock.core.LockingTaskExecutor;
+import modu.chat.schedule_service.api.logging.RequestContext;
 import modu.chat.schedule_service.application.domain.entity.DataType;
 import modu.chat.schedule_service.application.domain.entity.Protocol;
 import modu.chat.schedule_service.application.scheduler.JobScheduler;
 import modu.chat.schedule_service.application.usecase.result.ScheduleResult;
+import org.slf4j.MDC;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -82,26 +84,16 @@ public class DynamicJobScheduler implements JobScheduler {
         }
 
         Runnable job = (() -> {
-            if (schedule.protocol().equals(Protocol.REST_API)) {
-                String response = "";
-
-                WebClient webClient = WebClient.builder()
-                        .baseUrl(String.format("https://%s:%d", schedule.address(), schedule.port()))
-                        .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .build();
-
-                if (schedule.method().equals(HttpMethod.GET.toString())) {
-                    response = getMethodCall(webClient, schedule);
-                } else if (schedule.method().equals(HttpMethod.POST.toString())) {
-                    response = postMethodCall(webClient, schedule);
-                }
-
-                log.info("response: " + response);
-            } else {
-                log.info("protocol: {} is not supported", schedule.protocol());
+            // 회차마다 새 requestId(job- 접두)와 작업 이름을 MDC 에 넣는다 — 이 안의 로그와 바깥 호출(X-Request-Id)이 같은 id 를 갖는다.
+            String requestId = "job-" + RequestContext.newId();
+            MDC.put(RequestContext.MDC_REQUEST_ID, requestId);
+            MDC.put(RequestContext.MDC_JOB, lockName(schedule.id()));
+            try {
+                runJob(schedule, requestId);
+            } finally {
+                MDC.remove(RequestContext.MDC_REQUEST_ID);
+                MDC.remove(RequestContext.MDC_JOB);
             }
-
-            System.out.println("[Dynamic Job] 실행됨! ID: " + schedule.id() + ", 설명: " + schedule.description() + ", 시간: " + Instant.now());
         });
 
         ScheduledFuture<?> scheduledTask = ((ThreadPoolTaskScheduler) taskScheduler)
@@ -109,6 +101,31 @@ public class DynamicJobScheduler implements JobScheduler {
 
         scheduledTasks.put(schedule.id(), scheduledTask);
         System.out.println("Job [" + schedule.id() + "] 추가됨. Cron: " + schedule.cronExpression());
+    }
+
+    /** 작업 본문 한 회차. 스케줄이 가리키는 엔드포인트를 부르고 응답을 로그로 남긴다. */
+    private void runJob(ScheduleResult schedule, String requestId) {
+        if (schedule.protocol().equals(Protocol.REST_API)) {
+            String response = "";
+
+            WebClient webClient = WebClient.builder()
+                    .baseUrl(String.format("https://%s:%d", schedule.address(), schedule.port()))
+                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .defaultHeader(RequestContext.REQUEST_ID_HEADER, requestId)
+                    .build();
+
+            if (schedule.method().equals(HttpMethod.GET.toString())) {
+                response = getMethodCall(webClient, schedule);
+            } else if (schedule.method().equals(HttpMethod.POST.toString())) {
+                response = postMethodCall(webClient, schedule);
+            }
+
+            log.info("response: " + response);
+        } else {
+            log.info("protocol: {} is not supported", schedule.protocol());
+        }
+
+        System.out.println("[Dynamic Job] 실행됨! ID: " + schedule.id() + ", 설명: " + schedule.description() + ", 시간: " + Instant.now());
     }
 
     public void addAllScheduleJobs(List<ScheduleResult> scheduleList) {

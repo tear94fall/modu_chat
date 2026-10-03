@@ -1,5 +1,6 @@
 package com.example.chatservice.api.kafka.config
 
+import com.example.chatservice.api.logging.RequestContextRecordInterceptor
 import com.example.chatservice.application.message.ChatMessage
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -56,6 +57,8 @@ class KafkaConsumerConfig(
         factory.setAutoStartup(autoStartup)
         factory.consumerFactory = consumerFactory()
         factory.setCommonErrorHandler(defaultErrorHandler())
+        // 레코드마다 헤더의 X-Request-Id 를 MDC 에 넣고 끝나면 지운다.
+        factory.setRecordInterceptor(RequestContextRecordInterceptor())
 
         return factory
     }

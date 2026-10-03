@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 테스트 출력은 사람이 읽는 형식으로. main 의 logback-spring.xml(JSON) 보다 먼저 잡힌다. -->
+<configuration>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} [req=%X{requestId:-} user=%X{userId:-}] - %msg%n%ex</pattern>
+        </encoder>
+    </appender>
+    <root level="INFO"><appender-ref ref="CONSOLE"/></root>
+</configuration>

@@ -13,6 +13,8 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j")
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    // 로그를 한 줄 JSON 으로(logback-spring.xml 의 LogstashEncoder, 접근 로그의 StructuredArguments)
+    implementation("net.logstash.logback:logstash-logback-encoder:8.1")
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")
     // local 프로필(application-local.yml)이 H2 로 뜬다.
     runtimeOnly("com.h2database:h2")

@@ -1,5 +1,6 @@
 package com.example.chatstoreservice.config
 
+import com.example.chatstoreservice.logging.RequestContextRecordInterceptor
 import com.example.chatstoreservice.message.ChatListener
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -51,6 +52,8 @@ class KafkaConsumerConfig(
         factory.setCommonErrorHandler(
             DefaultErrorHandler({ record, _ -> log.info("consumer retry: {}", record.value()) }, FixedBackOff(1000L, 3L)),
         )
+        // Debezium 이 보내는 레코드라 X-Request-Id 헤더는 없다 — 레코드마다 새 id 를 MDC 에 넣고 끝나면 지운다.
+        factory.setRecordInterceptor(RequestContextRecordInterceptor())
         return factory
     }
 

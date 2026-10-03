@@ -9,6 +9,16 @@ name: modu-messenger
 # (spring.lifecycle.timeout-per-shutdown-phase 20s)이 처리 중인 요청을 끝낼 시간을 준다. amazoncorretto:21 에 curl 이 있다.
 # 내부 API 토큰(modu.internal-api.token)을 비롯한 모든 비밀값(DB 비밀번호, 구글 OAuth 클라이언트, Firebase 키)은
 # 이 파일이나 .env 가 아니라 modu_platform 의 config-repo({cipher})에서 config-service 가 내려준다. .env 에는 Pinpoint 에이전트 옵션만 둔다.
+# JAVA_TOOL_OPTIONS 의 -Dprofiler.logback.logging.transactioninfo=true: Pinpoint 에이전트가 트랜잭션 id(PtxId·PspanId)를 MDC 에 넣어
+# JSON 로그 줄과 Pinpoint 호출 트리를 잇는다. 에이전트 옵션(*_AGENT_OPTS)이 비어 있으면 그냥 무시된다.
+
+# 모든 컨테이너 로그 줄에 compose 서비스·프로젝트 이름을 붙인다(json-file attrs). OTel Collector 가 container 필드와 앱/인프라 인덱스 구분에 쓴다(modu_infra monitoring).
+x-logging: &logging
+  driver: json-file
+  options:
+    labels: com.docker.compose.service,com.docker.compose.project
+    max-size: "50m"
+    max-file: "3"
 
 services:
 
@@ -17,11 +27,12 @@ services:
       context: ./auth-service
       dockerfile: ./Dockerfile
     container_name: auth-service
+    logging: *logging
     ports:
       - 9900:9900
     environment:
       - CONFIG_SERVER_URI=http://config-service:8888
-      - JAVA_TOOL_OPTIONS=${AUTH_AGENT_OPTS:-}
+      - JAVA_TOOL_OPTIONS=${AUTH_AGENT_OPTS:-} -Dprofiler.logback.logging.transactioninfo=true
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -42,6 +53,7 @@ services:
       context: ./chat-service
       dockerfile: ./Dockerfile
     container_name: chat-service
+    logging: *logging
     ports:
       - 9090:9090
     environment:
@@ -51,7 +63,7 @@ services:
       # 읽기 전용 복제본. 비밀번호(master/replica)는 config-service(messenger.yml)가 준다.
       - spring.datasource.replica.url=jdbc:mysql://mysql-chat-replica:3306/modu-chat
       - spring.datasource.replica.username=modu_ro
-      - JAVA_TOOL_OPTIONS=${CHAT_AGENT_OPTS:-}
+      - JAVA_TOOL_OPTIONS=${CHAT_AGENT_OPTS:-} -Dprofiler.logback.logging.transactioninfo=true
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -71,6 +83,7 @@ services:
       context: ./member-service
       dockerfile: ./Dockerfile
     container_name: member-service
+    logging: *logging
     ports:
       - 8080:8080
     environment:
@@ -80,7 +93,7 @@ services:
       # 읽기 전용 복제본. 비밀번호(master/replica)는 config-service(messenger.yml)가 준다.
       - spring.datasource.replica.url=jdbc:mysql://mysql-member-replica:3306/modu-chat
       - spring.datasource.replica.username=modu_ro
-      - JAVA_TOOL_OPTIONS=${MEMBER_AGENT_OPTS:-}
+      - JAVA_TOOL_OPTIONS=${MEMBER_AGENT_OPTS:-} -Dprofiler.logback.logging.transactioninfo=true
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -102,6 +115,7 @@ services:
       context: ./profile-service
       dockerfile: ./Dockerfile
     container_name: profile-service
+    logging: *logging
     ports:
       - 8880:8880
     environment:
@@ -111,7 +125,7 @@ services:
       # 읽기 전용 복제본. 비밀번호(master/replica)는 config-service(messenger.yml)가 준다.
       - spring.datasource.replica.url=jdbc:mysql://mysql-profile-replica:3306/modu-chat
       - spring.datasource.replica.username=modu_ro
-      - JAVA_TOOL_OPTIONS=${PROFILE_AGENT_OPTS:-}
+      - JAVA_TOOL_OPTIONS=${PROFILE_AGENT_OPTS:-} -Dprofiler.logback.logging.transactioninfo=true
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -131,6 +145,7 @@ services:
       context: ./push-service
       dockerfile: ./Dockerfile
     container_name: push-service
+    logging: *logging
     ports:
       - 9990:9990
     environment:
@@ -140,7 +155,7 @@ services:
       # 읽기 전용 복제본. 비밀번호(master/replica)는 config-service(messenger.yml)가 준다.
       - spring.datasource.replica.url=jdbc:mysql://mysql-push-replica:3306/modu-chat
       - spring.datasource.replica.username=modu_ro
-      - JAVA_TOOL_OPTIONS=${PUSH_AGENT_OPTS:-}
+      - JAVA_TOOL_OPTIONS=${PUSH_AGENT_OPTS:-} -Dprofiler.logback.logging.transactioninfo=true
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -160,6 +175,7 @@ services:
       context: ./storage-service
       dockerfile: ./Dockerfile
     container_name: storage-service
+    logging: *logging
     ports:
       - 9999:9999
     environment:
@@ -167,7 +183,7 @@ services:
       - spring.datasource.url=jdbc:mysql://mysql:3306/modu-chat
       - spring.datasource.username=root
       - minio.endpoint=http://minio:9000
-      - JAVA_TOOL_OPTIONS=${STORAGE_AGENT_OPTS:-}
+      - JAVA_TOOL_OPTIONS=${STORAGE_AGENT_OPTS:-} -Dprofiler.logback.logging.transactioninfo=true
     networks:
       - modu-infra
       - pinpoint
@@ -188,13 +204,14 @@ services:
       context: ./ws-service
       dockerfile: ./Dockerfile
     container_name: ws-service
+    logging: *logging
     ports:
       - 8090:8090
     environment:
       - CONFIG_SERVER_URI=http://config-service:8888
       - spring.datasource.url=jdbc:mysql://mysql:3306/modu-chat
       - spring.datasource.username=root
-      - JAVA_TOOL_OPTIONS=${WS_SERVICE_AGENT_OPTS:-}
+      - JAVA_TOOL_OPTIONS=${WS_SERVICE_AGENT_OPTS:-} -Dprofiler.logback.logging.transactioninfo=true
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -215,6 +232,7 @@ services:
       context: ./point-service
       dockerfile: ./Dockerfile
     container_name: point-service
+    logging: *logging
     ports:
       - 9600:9600
     environment:
@@ -225,7 +243,7 @@ services:
       # 읽기 전용 복제본. 비밀번호(master/replica)는 config-service(messenger.yml)가 준다.
       - spring.datasource.replica.url=jdbc:mysql://mysql-member-replica:3306/modu-point
       - spring.datasource.replica.username=modu_ro
-      - JAVA_TOOL_OPTIONS=${POINT_AGENT_OPTS:-}
+      - JAVA_TOOL_OPTIONS=${POINT_AGENT_OPTS:-} -Dprofiler.logback.logging.transactioninfo=true
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -245,6 +263,7 @@ services:
       context: ./schedule-service
       dockerfile: ./Dockerfile
     container_name: schedule-service
+    logging: *logging
     ports:
       - 8110:8110
     environment:
@@ -255,7 +274,7 @@ services:
       # 읽기 전용 복제본. 비밀번호(master/replica)는 config-service(messenger.yml)가 준다.
       - spring.datasource.replica.url=jdbc:mysql://mysql-member-replica:3306/modu-schedule
       - spring.datasource.replica.username=modu_ro
-      - JAVA_TOOL_OPTIONS=${SCHEDULE_AGENT_OPTS:-}
+      - JAVA_TOOL_OPTIONS=${SCHEDULE_AGENT_OPTS:-} -Dprofiler.logback.logging.transactioninfo=true
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:
@@ -275,11 +294,12 @@ services:
       context: ./chat-store-service
       dockerfile: ./Dockerfile
     container_name: chat-store-service
+    logging: *logging
     ports:
       - 8100:8100
     environment:
       - CONFIG_SERVER_URI=http://config-service:8888
-      - JAVA_TOOL_OPTIONS=${CHAT_STORE_AGENT_OPTS:-}
+      - JAVA_TOOL_OPTIONS=${CHAT_STORE_AGENT_OPTS:-} -Dprofiler.logback.logging.transactioninfo=true
     volumes:
       - pinpoint-agent:/pinpoint-agent:ro
     networks:

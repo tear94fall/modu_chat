@@ -1,5 +1,6 @@
 package com.example.storageservice.kafka.config
 
+import com.example.storageservice.logging.RequestContextRecordInterceptor
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.LoggerFactory
@@ -47,6 +48,8 @@ class KafkaConsumerConfig(
         factory.setConcurrency(3)
         factory.consumerFactory = consumerFactory()
         factory.setCommonErrorHandler(defaultErrorHandler())
+        // 레코드마다 헤더의 X-Request-Id 를 MDC 에 넣고 끝나면 지운다.
+        factory.setRecordInterceptor(RequestContextRecordInterceptor())
         return factory
     }
 

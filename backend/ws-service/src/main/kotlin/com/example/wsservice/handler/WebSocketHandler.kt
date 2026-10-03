@@ -13,10 +13,12 @@ import com.example.wsservice.fcm.dto.FcmMessageDto
 import com.example.wsservice.fcm.dto.FcmUserMessageDto
 import com.example.wsservice.fcm.service.FcmService
 import com.example.wsservice.kafka.producer.KafkaProducerService
+import com.example.wsservice.logging.RequestContext
 import com.example.wsservice.util.TimeUtil
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import org.springframework.stereotype.Component
 import org.springframework.web.socket.CloseStatus
 import org.springframework.web.socket.TextMessage
@@ -39,7 +41,23 @@ class WebSocketHandler(
     /** userId → 세션. 인스턴스 전체가 하나를 공유한다(옛 자바의 static 과 같다). 테스트가 같은 패키지에서 부른다. */
     val clients: ConcurrentHashMap<String, WebSocketSession> get() = CLIENTS
 
+    /**
+     * 소켓 프레임은 서블릿 필터를 타지 않는다. 프레임 하나를 처리하는 동안 MDC 에 새 requestId 와 세션의 userId 를 넣어
+     * 이 안의 로그·Feign 호출·Kafka 레코드가 같은 id 를 갖게 하고, 끝나면 지운다.
+     */
     public override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
+        MDC.put(RequestContext.MDC_REQUEST_ID, RequestContext.newId())
+        val userId = resolveUserId(session)
+        if (userId != null) MDC.put(RequestContext.MDC_USER_ID, userId)
+        try {
+            handleFrame(message)
+        } finally {
+            MDC.remove(RequestContext.MDC_REQUEST_ID)
+            if (userId != null) MDC.remove(RequestContext.MDC_USER_ID)
+        }
+    }
+
+    private fun handleFrame(message: TextMessage) {
         val payload = objectMapper.readTree(message.payload)
         // READ 는 채팅 파싱보다 먼저 갈라낸다. 저장할 채팅이 없고,
         // 아래 updateLastChat 경로는 chatType 이 유효할 때만 안전하다.

@@ -12,6 +12,14 @@ name: modu-messenger
 # JAVA_TOOL_OPTIONS 의 -Dprofiler.logback.logging.transactioninfo=true: Pinpoint 에이전트가 트랜잭션 id(PtxId·PspanId)를 MDC 에 넣어
 # JSON 로그 줄과 Pinpoint 호출 트리를 잇는다. 에이전트 옵션(*_AGENT_OPTS)이 비어 있으면 그냥 무시된다.
 
+# 모든 컨테이너 로그 줄에 compose 서비스·프로젝트 이름을 붙인다(json-file attrs). OTel Collector 가 container 필드와 앱/인프라 인덱스 구분에 쓴다(modu_infra monitoring).
+x-logging: &logging
+  driver: json-file
+  options:
+    labels: com.docker.compose.service,com.docker.compose.project
+    max-size: "50m"
+    max-file: "3"
+
 services:
 
   auth-service:
@@ -19,6 +27,7 @@ services:
       context: ./auth-service
       dockerfile: ./Dockerfile
     container_name: auth-service
+    logging: *logging
     ports:
       - 9900:9900
     environment:
@@ -44,6 +53,7 @@ services:
       context: ./chat-service
       dockerfile: ./Dockerfile
     container_name: chat-service
+    logging: *logging
     ports:
       - 9090:9090
     environment:
@@ -73,6 +83,7 @@ services:
       context: ./member-service
       dockerfile: ./Dockerfile
     container_name: member-service
+    logging: *logging
     ports:
       - 8080:8080
     environment:
@@ -104,6 +115,7 @@ services:
       context: ./profile-service
       dockerfile: ./Dockerfile
     container_name: profile-service
+    logging: *logging
     ports:
       - 8880:8880
     environment:
@@ -133,6 +145,7 @@ services:
       context: ./push-service
       dockerfile: ./Dockerfile
     container_name: push-service
+    logging: *logging
     ports:
       - 9990:9990
     environment:
@@ -162,6 +175,7 @@ services:
       context: ./storage-service
       dockerfile: ./Dockerfile
     container_name: storage-service
+    logging: *logging
     ports:
       - 9999:9999
     environment:
@@ -190,6 +204,7 @@ services:
       context: ./ws-service
       dockerfile: ./Dockerfile
     container_name: ws-service
+    logging: *logging
     ports:
       - 8090:8090
     environment:
@@ -217,6 +232,7 @@ services:
       context: ./point-service
       dockerfile: ./Dockerfile
     container_name: point-service
+    logging: *logging
     ports:
       - 9600:9600
     environment:
@@ -247,6 +263,7 @@ services:
       context: ./schedule-service
       dockerfile: ./Dockerfile
     container_name: schedule-service
+    logging: *logging
     ports:
       - 8110:8110
     environment:
@@ -277,6 +294,7 @@ services:
       context: ./chat-store-service
       dockerfile: ./Dockerfile
     container_name: chat-store-service
+    logging: *logging
     ports:
       - 8100:8100
     environment:

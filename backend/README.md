@@ -47,7 +47,9 @@
 2. modu_platform 의 `README.md` 대로 config-service, gateway-service 를 띄웁니다. 설정 파일(`config-repo/`)도 그 저장소에 있습니다 — 메신저 서비스는 `messenger/` 폴더의 설정을 받습니다.
 3. `backend` 에서 `docker compose up -d --build`. 플랫폼이 아직 안 떠 있으면 서비스가 설정을 못 받아 기동에 실패하고 compose 가 재시작합니다(fail-fast).
 
-`.env` 의 `INTERNAL_API_TOKEN` 은 modu_platform, modu_commerce 의 `.env` 와 같은 값이어야 합니다. `ENCRYPT_KEY` 는 이제 modu_platform 에서만 씁니다.
+비밀값은 전부 modu_platform 의 config-repo 에 `{cipher}` 로 암호화해 두고 config-service 가 복호화해 내려줍니다 — 내부 API 토큰(`modu.internal-api.token`, 공통 `application.yml`), DB 비밀번호(`messenger/messenger.yml`), 구글 OAuth 클라이언트(`messenger/member-service.yml`), Firebase 서비스 계정 키(`messenger/push-service.yml` 의 `modu.push.firebase.credentials-base64`, JSON 을 base64 로 감싼 값).
+그래서 이 저장소에는 `application-oauth.yml` 도, `firebase/modu_chat_firebase_service_key.json` 도 더 이상 필요 없고, `backend/.env` 에는 Pinpoint 에이전트 옵션(`*_AGENT_OPTS`)만 둡니다. `ENCRYPT_KEY` 는 modu_platform 에서만 씁니다.
+config-server 없이 push-service 를 로컬에서 띄울 때만 예외로, gitignore 된 키 파일을 `push-api/src/main/resources/firebase/` 에 두면 `FirebaseConfig` 가 폴백으로 읽습니다(어느 쪽을 썼는지 INFO 로그로 남깁니다).
 
 ## Project Architecture
 
@@ -96,7 +98,7 @@ gateway 뒤에 위치한 서비스에 대한 정보를 알고 있다고 하더�
 
 컨트롤러는 `<root>/api/pub`, `<root>/api/internal`, `<root>/api/debug` 패키지에 계층별로 두고 서비스 레이어를 공유합니다.
 앱과 다른 서비스가 둘 다 쓰는 엔드포인트는 두 컨트롤러에 각각 둡니다.
-내부 토큰은 `backend/.env` 의 `INTERNAL_API_TOKEN` 으로 각 컨테이너에 전달됩니다.
+내부 토큰(`modu.internal-api.token`)은 config-repo(modu_platform) 의 공통 `application.yml` 에서 각 서비스로 내려옵니다(`.env` 나 compose 환경 변수로 넘기지 않습니다).
 콘솔(모두의 어드민·시스템·인터널) 로그인은 직원의 구글 계정으로 한다(클라이언트 `modu-admin`, `staff: true`). 직원과 권한(SUPER·ADMIN·SYSTEM·INTERNAL)은 member-service 의 `staff`, `staff_permission` 테이블에 있고, auth-service 가 토큰 roles 로 바꾼다(SUPER 는 모든 콘솔 + `ROLE_SUPER`). 첫 최상위 관리자는 DB 에 직접 넣는다:
 
 ```sql
@@ -106,8 +108,7 @@ insert into staff_permission (member_id, permission) values (<member_id>, 'SUPER
 
 `ADMIN_ALLOWED_ORIGIN` (gateway): 백오피스 프런트엔드가 서비스되는 origin (CORS 허용 origin). 백오피스는 별도 저장소 [modu_admin](https://github.com/tear94fall/modu_admin) 이다(2026-09-18 에 `admin/` 에서 분리, 기본 개발 서버 `http://localhost:5173`).
 
-schedule-service 는 config-server 를 쓰지 않아 자체 `application.yml` 에서 정의합니다.
-`.env` 에 `INTERNAL_API_TOKEN` 이 없으면 서비스가 기동을 거부합니다 (빈 토큰 방지).
+내부 토큰이 비어 있으면 서비스가 기동을 거부합니다 (빈 토큰 방지).
 config-server(modu_platform 의 config-service)가 죽어 있으면 설정을 못 받아 기동에 실패합니다(`fail-fast`).
 
 ### 서비스 주소 (DNS 라우팅)

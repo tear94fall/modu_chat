@@ -32,9 +32,12 @@ spring:
     consumer:
       group-id: storage-service-group
 
-minio:
+# S3 호환 오브젝트 스토리지(AWS SDK v2). dev 는 Ceph RGW — path-style 주소, region 은 아무 값이나 받는다.
+# accessKey·secretKey 는 config-repo(messenger/storage-service.yml)가 {cipher} 로 내려준다.
+s3:
   endpoint: http://localhost:9000
-  bucketImageName: file-storage
+  region: us-east-1
+  bucket: file-storage
 
 management:
   endpoints:
@@ -49,8 +52,8 @@ management:
       show-details: never
       group:
         readiness:
-          # MinIO 는 자동 indicator 가 없다 — MinioHealthIndicator(버킷 존재 확인).
-          include: readinessState, minio
+          # S3 는 자동 indicator 가 없다 — S3HealthIndicator(버킷 존재 확인).
+          include: readinessState, s3
         liveness:
           include: livenessState
   metrics:

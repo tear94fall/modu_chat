@@ -32,7 +32,12 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-bus-amqp")
     implementation("io.micrometer:micrometer-registry-prometheus")
     implementation("org.springframework.kafka:spring-kafka")
-    implementation("io.minio:minio:8.5.1")
+    // S3 호환 오브젝트 스토리지(dev: Ceph RGW, CI: adobe/s3mock). 동기 HTTP 는 Apache 클라이언트 하나만 — 안 쓰는 netty 비동기 클라이언트는 뺀다.
+    implementation(platform("software.amazon.awssdk:bom:2.55.11"))
+    implementation("software.amazon.awssdk:s3") {
+        exclude(group = "software.amazon.awssdk", module = "netty-nio-client")
+    }
+    implementation("software.amazon.awssdk:apache-client")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
 

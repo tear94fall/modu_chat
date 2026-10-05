@@ -15,7 +15,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 /**
  * 쿠버네티스 probe·compose healthcheck 가 보는 경로. 토큰·인증 없이 200 + "UP" 이어야 한다.
- * readiness 는 MinIO(버킷)가 필수 의존이다. 그룹 구성은 웹 응답(show-details: never)에 안 보이므로 HealthEndpoint 로 확인한다.
+ * readiness 는 S3 호환 스토리지(버킷)가 필수 의존이다. 그룹 구성은 웹 응답(show-details: never)에 안 보이므로 HealthEndpoint 로 확인한다.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -41,8 +41,8 @@ class HealthProbesTest {
     @Test
     fun readiness_group_hasExpectedIndicators() {
         val readiness = healthEndpoint.healthForPath("readiness") as CompositeHealth
-        assertThat(readiness.components.keys).containsExactlyInAnyOrder("readinessState", "minio")
+        assertThat(readiness.components.keys).containsExactlyInAnyOrder("readinessState", "s3")
         assertThat(readiness.components["readinessState"]!!.status).isEqualTo(Status.UP)
-        assertThat(readiness.components["minio"]!!.status).isEqualTo(Status.UP)
+        assertThat(readiness.components["s3"]!!.status).isEqualTo(Status.UP)
     }
 }

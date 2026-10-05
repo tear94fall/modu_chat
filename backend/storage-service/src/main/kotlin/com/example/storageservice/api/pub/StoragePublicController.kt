@@ -30,7 +30,7 @@ class StoragePublicController(private val storageService: StorageService) {
 
     @Operation(
         summary = "파일 올리기",
-        description = "multipart 파일 하나를 저장소(MinIO)에 올리고 저장 이름(해시 + 원래 확장자)을 돌려준다. " +
+        description = "multipart 파일 하나를 저장소(S3)에 올리고 저장 이름(해시 + 원래 확장자)을 돌려준다. " +
             "원본 파일 이름은 메타데이터로 남겨 내려받기·파일 정보에서 쓴다. 최대 10MB, 넘으면 413 계열 오류.",
     )
     @PostMapping("/upload")

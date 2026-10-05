@@ -19,6 +19,6 @@ class OpenApiConfig {
             Info()
                 .title(name)
                 .version("v1")
-                .description("이미지·파일을 MinIO 에 올리고 내려받는 파일 저장소 서비스입니다."),
+                .description("이미지·파일을 S3 호환 오브젝트 스토리지에 올리고 내려받는 파일 저장소 서비스입니다."),
         )
 }

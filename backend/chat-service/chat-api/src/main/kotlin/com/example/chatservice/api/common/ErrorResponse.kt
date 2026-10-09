@@ -11,6 +11,7 @@ data class ErrorResponse(
         const val INVALID_REQUEST = "INVALID_REQUEST"
         const val NOT_FOUND = "NOT_FOUND"
         const val INTERNAL_ERROR = "INTERNAL_ERROR"
+        const val BUSY = "BUSY"
 
         fun of(e: CustomException): ErrorResponse = ErrorResponse(
             message = if (e.errorTarget.isBlank()) e.errorCode.message else "${e.errorCode.message} (${e.errorTarget})",

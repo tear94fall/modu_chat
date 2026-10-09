@@ -1,6 +1,7 @@
 package com.example.chatservice.api.common
 
 import com.example.chatservice.application.common.exception.CustomException
+import com.example.chatservice.application.common.lock.ApiLockAcquisitionException
 import jakarta.persistence.EntityNotFoundException
 import jakarta.validation.ConstraintViolationException
 import org.slf4j.LoggerFactory
@@ -18,6 +19,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
  * - [CustomException] → ErrorCode 의 상태(400/403/404/503)
  * - 없는 대상(NoSuchElement, EntityNotFound) → 404
  * - 검증 실패·잘못된 인자·읽을 수 없는 본문 → 400
+ * - Redis 락을 대기 시간 안에 못 잡음 → 503 "요청이 몰려…"
  * - Spring MVC 가 상태를 정한 예외(없는 경로 404, 메서드 405, 빠진 헤더·파라미터 400 등) → 그 상태 그대로
  * - 나머지 → 500 (원인은 로그에만 남기고 본문에는 싣지 않는다)
  */
@@ -33,6 +35,16 @@ class GlobalExceptionHandler {
     @ExceptionHandler(NoSuchElementException::class, EntityNotFoundException::class)
     fun handleNotFound(e: RuntimeException): ResponseEntity<ErrorResponse> =
         respond(HttpStatus.NOT_FOUND, ErrorResponse.NOT_FOUND, "대상을 찾을 수 없습니다.")
+
+    /**
+     * 같은 요청이 몰려 Redis 락(@ApiLock)을 대기 시간 안에 못 잡았다(방 만들기는 10초).
+     * 서버 오류가 아니므로 잠시 뒤 다시 하라고 503 으로 답한다.
+     */
+    @ExceptionHandler(ApiLockAcquisitionException::class)
+    fun handleLockFailure(e: Exception): ResponseEntity<ErrorResponse> {
+        log.warn("lock not acquired: {}", e.message)
+        return respond(HttpStatus.SERVICE_UNAVAILABLE, ErrorResponse.BUSY, BUSY_MESSAGE)
+    }
 
     /** `@Valid` 실패는 400 과 첫 번째 필드 메시지. */
     @ExceptionHandler(MethodArgumentNotValidException::class)
@@ -67,5 +79,6 @@ class GlobalExceptionHandler {
 
     companion object {
         private const val INVALID_MESSAGE = "잘못된 요청입니다."
+        const val BUSY_MESSAGE = "요청이 몰려 처리하지 못했어요. 잠시 후 다시 시도해 주세요."
     }
 }

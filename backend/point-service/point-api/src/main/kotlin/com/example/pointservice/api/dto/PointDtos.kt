@@ -3,19 +3,25 @@ package com.example.pointservice.api.dto
 import com.example.pointservice.application.domain.entity.PointTransactionType
 import com.example.pointservice.application.member.MemberSummary
 import com.example.pointservice.application.usecase.command.AdjustCommand
+import com.example.pointservice.application.usecase.command.CancelSpendCommand
 import com.example.pointservice.application.usecase.command.CreatePointRuleCommand
 import com.example.pointservice.application.usecase.command.EarnAmountCommand
 import com.example.pointservice.application.usecase.command.EarnCommand
 import com.example.pointservice.application.usecase.command.SpendCommand
+import com.example.pointservice.application.usecase.command.TransactionRef
 import com.example.pointservice.application.usecase.command.UpdatePointRuleCommand
 import com.example.pointservice.application.usecase.result.AdminPointAccountResult
 import com.example.pointservice.application.usecase.result.EarnResult
 import com.example.pointservice.application.usecase.result.EarnSkipReason
 import com.example.pointservice.application.usecase.result.PointBalanceResult
+import com.example.pointservice.application.usecase.result.PointRefResult
 import com.example.pointservice.application.usecase.result.PointRuleResult
 import com.example.pointservice.application.usecase.result.PointTransactionResult
+import com.example.pointservice.application.usecase.result.SpendCancelResult
+import com.example.pointservice.application.usecase.result.SpendCancelSkipReason
 import com.example.pointservice.application.usecase.result.SpendResult
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
@@ -127,6 +133,64 @@ data class SpendResultDto(val applied: Boolean, val amount: Long, val balance: L
         fun of(r: SpendResult) = SpendResultDto(r.applied, r.amount, r.balance)
     }
 }
+
+/** 사용 취소. 금액은 보내지 않는다 — 원래 사용 줄의 금액을 그대로 돌려준다. */
+@Schema(description = "포인트 사용 취소 요청. 원래 사용(SPEND) 의 refId 만 보내고, 금액은 원장의 사용 줄에서 가져온다.")
+data class SpendCancelRequestDto(
+    @field:Schema(description = "회원 userId. 필수", example = "11")
+    @field:NotBlank val userId: String = "",
+    /** 환불 줄은 "refund:" + refId 로 남으므로 128 − 7 = 121 자까지. */
+    @field:Schema(description = "원래 사용 때의 refId. 필수, 최대 121자(환불 줄은 refund: 를 붙여 남는다)", example = "order:20261009-ABC123")
+    @field:NotBlank @field:Size(max = 121) val refId: String = "",
+    @field:Schema(description = "원장 메모(선택, 최대 200자). 비우면 '사용 취소'", example = "결제 실패로 사용 취소")
+    @field:Size(max = 200) val memo: String? = null,
+) {
+    fun toCommand() = CancelSpendCommand(userId, refId, memo)
+}
+
+/** 사용 취소 결과. 되돌리지 않았으면 [cancelled]=false 와 [reason](NO_SPEND, ALREADY_REFUNDED). 오류가 아니다. */
+data class SpendCancelResultDto(
+    val cancelled: Boolean,
+    val reason: SpendCancelSkipReason?,
+    val amount: Long,
+    val balance: Long,
+) {
+    companion object {
+        fun of(r: SpendCancelResult) = SpendCancelResultDto(r.cancelled, r.reason, r.amount, r.balance)
+    }
+}
+
+@Schema(description = "원장 한 줄을 가리키는 (userId, refId).")
+data class PointRefDto(
+    @field:Schema(description = "회원 userId. 필수", example = "11")
+    @field:NotBlank val userId: String = "",
+    @field:Schema(description = "멱등 키. 필수, 최대 128자", example = "order:20261009-ABC123")
+    @field:NotBlank @field:Size(max = 128) val refId: String = "",
+) {
+    fun toRef() = TransactionRef(userId, refId)
+}
+
+@Schema(description = "refId 로 원장 줄 찾기 요청(대사). 최대 500 쌍.")
+data class PointRefsRequestDto(
+    @field:Schema(description = "찾을 (userId, refId) 쌍. 최대 500개(넘으면 400)")
+    @field:NotNull @field:Size(max = 500) @field:Valid val refs: List<PointRefDto> = emptyList(),
+)
+
+/** refId 로 찾은 원장 한 줄. amount 는 원장 그대로 부호가 있다(사용은 음수, 환불은 양수). */
+data class PointRefTransactionDto(
+    val userId: String,
+    val refId: String,
+    val type: PointTransactionType,
+    val amount: Long,
+    val createdDate: LocalDateTime?,
+) {
+    companion object {
+        fun of(r: PointRefResult) = PointRefTransactionDto(r.userId, r.refId, r.type, r.amount, r.createdDate)
+    }
+}
+
+/** 원장에 있는 줄만 담긴다. 없는 쌍은 빠진다. */
+data class PointRefsResultDto(val transactions: List<PointRefTransactionDto>)
 
 /** 관리자 수동 조정. 양수는 지급, 음수는 회수. */
 @Schema(description = "관리자 수동 조정. 양수는 지급, 음수는 회수.")

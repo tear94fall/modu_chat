@@ -12,6 +12,9 @@ interface PointTransactionRwRepository : RwRepository<PointTransaction, Long> {
 
     fun existsByUserIdAndRefId(userId: String, refId: String): Boolean
 
+    /** (user_id, ref_id) 유니크 키로 한 줄. 사용 취소가 원래 사용 줄을 찾을 때 쓴다. */
+    fun findByUserIdAndRefId(userId: String, refId: String): PointTransaction?
+
     fun countByUserIdAndRuleCode(userId: String, ruleCode: String): Long
 
     fun countByUserIdAndRuleCodeAndCreatedDateGreaterThanEqual(userId: String, ruleCode: String, since: LocalDateTime): Long

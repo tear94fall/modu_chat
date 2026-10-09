@@ -175,6 +175,63 @@ class PointApiTest {
     }
 
     @Test
+    fun internal_spendCancelAndRefs() {
+        fun internalPost(path: String, body: String) =
+            mockMvc.perform(post(path).header("X-Internal-Token", token).contentType(MediaType.APPLICATION_JSON).content(body))
+        internalPost("/api-internal/point/earn", """{"userId":"$user","ruleCode":"SIGNUP"}""")
+        internalPost("/api-internal/point/spend", """{"userId":"$user","amount":30,"refId":"order:20261009-ABC123"}""")
+            .andExpect(jsonPath("$.balance").value(70))
+
+        val cancel = """{"userId":"$user","refId":"order:20261009-ABC123","memo":"결제 실패"}"""
+        mockMvc.perform(post("/api-internal/point/spend/cancel").contentType(MediaType.APPLICATION_JSON).content(cancel))
+            .andExpect(status().isForbidden)
+        internalPost("/api-internal/point/spend/cancel", cancel)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.cancelled").value(true))
+            .andExpect(jsonPath("$.reason").doesNotExist())
+            .andExpect(jsonPath("$.amount").value(30))
+            .andExpect(jsonPath("$.balance").value(100))
+        internalPost("/api-internal/point/spend/cancel", cancel)
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.cancelled").value(false))
+            .andExpect(jsonPath("$.reason").value("ALREADY_REFUNDED"))
+            .andExpect(jsonPath("$.amount").value(0))
+            .andExpect(jsonPath("$.balance").value(100))
+        internalPost("/api-internal/point/spend/cancel", """{"userId":"$user","refId":"order:never"}""")
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.cancelled").value(false))
+            .andExpect(jsonPath("$.reason").value("NO_SPEND"))
+            .andExpect(jsonPath("$.balance").value(100))
+        internalPost("/api-internal/point/spend/cancel", """{"userId":"$user","refId":""}""")
+            .andExpect(status().isBadRequest).andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+        internalPost("/api-internal/point/spend/cancel", """{"userId":"$user","refId":"${"x".repeat(122)}"}""")
+            .andExpect(status().isBadRequest)
+
+        internalPost(
+            "/api-internal/point/refs",
+            """{"refs":[{"userId":"$user","refId":"order:20261009-ABC123"},{"userId":"$user","refId":"refund:order:20261009-ABC123"},""" +
+                """{"userId":"$user","refId":"order:never"}]}""",
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.transactions.length()").value(2))
+            .andExpect(jsonPath("$.transactions[?(@.refId=='order:20261009-ABC123')].type").value("SPEND"))
+            .andExpect(jsonPath("$.transactions[?(@.refId=='order:20261009-ABC123')].amount").value(-30))
+            .andExpect(jsonPath("$.transactions[?(@.refId=='refund:order:20261009-ABC123')].type").value("REFUND"))
+            .andExpect(jsonPath("$.transactions[?(@.refId=='refund:order:20261009-ABC123')].amount").value(30))
+            .andExpect(jsonPath("$.transactions[0].userId").value(user))
+            .andExpect(jsonPath("$.transactions[0].createdDate").isNotEmpty)
+        val tooMany = (1..501).joinToString(",", "{\"refs\":[", "]}") { """{"userId":"$user","refId":"r:$it"}""" }
+        internalPost("/api-internal/point/refs", tooMany)
+            .andExpect(status().isBadRequest).andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+        val max = (1..500).joinToString(",", "{\"refs\":[", "]}") { """{"userId":"$user","refId":"r:$it"}""" }
+        internalPost("/api-internal/point/refs", max)
+            .andExpect(status().isOk).andExpect(jsonPath("$.transactions.length()").value(0))
+        internalPost("/api-internal/point/refs", """{"refs":[{"userId":"","refId":"r"}]}""").andExpect(status().isBadRequest)
+        mockMvc.perform(post("/api-internal/point/refs").contentType(MediaType.APPLICATION_JSON).content("""{"refs":[]}"""))
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
     fun internal_earnAmount_idempotentAndValidated() {
         val body = """{"userId":"$user","amount":1234,"reason":"PURCHASE","refId":"purchase:order:77","memo":"구매 적립"}"""
         mockMvc.perform(post("/api-internal/point/earn-amount").contentType(MediaType.APPLICATION_JSON).content(body))

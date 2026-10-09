@@ -69,7 +69,7 @@ class JpaConfigTest {
     fun columnNames_followSpringNamingStrategy() {
         assertThat(columnsOf("chat_room")).containsExactlyInAnyOrder(
             "chat_room_id", "room_id", "room_name", "room_image", "last_chat_msg", "last_chat_id", "last_chat_time",
-            "created_date", "updated_date",
+            "member_key", "created_date", "updated_date",
         )
         assertThat(columnsOf("chat")).containsExactlyInAnyOrder(
             "chat_id", "chat_type", "room_id", "sender", "message", "chat_time", "chat_room_id", "created_date", "updated_date",

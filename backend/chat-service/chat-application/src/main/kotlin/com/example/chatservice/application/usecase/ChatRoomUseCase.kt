@@ -8,6 +8,7 @@ import com.example.chatservice.application.member.BlockedIdsCache
 import com.example.chatservice.application.member.MemberGateway
 import com.example.chatservice.application.member.MemberInfo
 import com.example.chatservice.application.service.ChatRoomCommandService
+import com.example.chatservice.application.service.RoomMemberSet
 import com.example.chatservice.application.usecase.command.UpdateChatRoomCommand
 import com.example.chatservice.application.usecase.result.ChatRoomView
 import com.example.chatservice.application.usecase.result.ReadCursor
@@ -79,7 +80,7 @@ class ChatRoomUseCase(
             throw CustomException(ErrorCode.USERID_NOT_FOUND_ERROR, ids.toString())
         }
 
-        val created = chatRoomCommandService.createOrGet(members.mapNotNull { it.id }.toSet())
+        val created = chatRoomCommandService.createOrGet(RoomMemberSet(members.mapNotNull { it.id }))
         if (!created.created) {
             return ChatRoomView(created.room, members)
         }

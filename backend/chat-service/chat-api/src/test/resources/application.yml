@@ -6,6 +6,10 @@ spring:
   application:
     name: chat-service
 
+  # Redisson 스타터의 자동 설정은 RedissonClient 가 없으면 localhost:6379 에 붙으려다 기동에 실패한다. 테스트엔 Redis 가 없다.
+  autoconfigure:
+    exclude: org.redisson.spring.starter.RedissonAutoConfiguration
+
   profiles:
     active: test
 
@@ -51,6 +55,9 @@ spring:
       group-id: chat-save-group
 
 modu:
+  # 테스트에는 Redis 가 없다. Redis 락(@ApiLock 애스펙트 + Redisson)을 끄고, 방 만들기의 정확성은 chat_room.member_key 유니크 키가 맡는다.
+  api-lock:
+    enabled: false
   # Feign 클라이언트는 기동 때 url 을 요구한다. 테스트는 목으로 바꾸므로 유효하기만 한 가짜 주소를 둔다.
   services:
     member-service: http://localhost:1

@@ -4,7 +4,12 @@ import com.example.pointservice.api.dto.EarnAmountRequestDto
 import com.example.pointservice.api.dto.EarnRequestDto
 import com.example.pointservice.api.dto.EarnResultDto
 import com.example.pointservice.api.dto.PointBalanceDto
+import com.example.pointservice.api.dto.PointRefTransactionDto
+import com.example.pointservice.api.dto.PointRefsRequestDto
+import com.example.pointservice.api.dto.PointRefsResultDto
 import com.example.pointservice.api.dto.PointTransactionDto
+import com.example.pointservice.api.dto.SpendCancelRequestDto
+import com.example.pointservice.api.dto.SpendCancelResultDto
 import com.example.pointservice.api.dto.SpendRequestDto
 import com.example.pointservice.api.dto.SpendResultDto
 import com.example.pointservice.application.usecase.PointUseCase
@@ -74,6 +79,32 @@ class PointInternalController(private val pointUseCase: PointUseCase) {
     @PostMapping("/refund")
     fun refund(@Valid @RequestBody request: SpendRequestDto): ResponseEntity<SpendResultDto> =
         ResponseEntity.ok(SpendResultDto.of(pointUseCase.refund(request.toCommand())))
+
+    /** 사용 취소: 사용했으면 되돌린다. 사용이 없거나 이미 환불됐으면 cancelled=false(200). */
+    @Operation(
+        summary = "포인트 사용 취소(사용했을 때만)",
+        description = "원래 사용(SPEND, 같은 userId·refId)이 원장에 있을 때만 그 금액을 돌려주고 REFUND 줄을 refId \"refund:\" + refId 로 남긴다. " +
+            "커머스 주문 취소 환불(refund:order:…)과 같은 키라 두 경로 중 어느 쪽으로 와도 한 번만 돌려준다. " +
+            "사용이 없으면 200 에 cancelled=false, reason=NO_SPEND(원장에 아무것도 쓰지 않는다). " +
+            "이미 환불됐으면 cancelled=false, reason=ALREADY_REFUNDED. 금액은 보내지 않는다(원장의 사용 금액을 쓴다). " +
+            "계정을 잠그고 처리하므로 동시에 여러 번 와도 한 번만 돌려준다 — 결제 실패·타임아웃 뒤 정리용으로 안전하게 재시도할 수 있다.",
+    )
+    @PostMapping("/spend/cancel")
+    fun cancelSpend(@Valid @RequestBody request: SpendCancelRequestDto): ResponseEntity<SpendCancelResultDto> =
+        ResponseEntity.ok(SpendCancelResultDto.of(pointUseCase.cancelSpend(request.toCommand())))
+
+    /** (userId, refId) 쌍으로 원장 줄 찾기. 커머스 야간 대사용. 레플리카에서 읽는다. */
+    @Operation(
+        summary = "refId 로 원장 줄 찾기(대사)",
+        description = "보낸 (userId, refId) 쌍 중 원장에 있는 줄만 type·amount(부호 있음, 사용은 음수)·createdDate 와 함께 돌려준다. " +
+            "없는 쌍은 결과에서 빠진다. 한 번에 최대 500쌍(넘으면 400). 커머스 야간 대사용이라 레플리카에서 읽는다 — " +
+            "방금 쓴 줄은 아직 안 보일 수 있다.",
+    )
+    @PostMapping("/refs")
+    fun transactionsByRefs(@Valid @RequestBody request: PointRefsRequestDto): ResponseEntity<PointRefsResultDto> =
+        ResponseEntity.ok(
+            PointRefsResultDto(pointUseCase.transactionsByRefs(request.refs.map { it.toRef() }).map { PointRefTransactionDto.of(it) }),
+        )
 
     @Operation(summary = "포인트 잔액 조회", description = "회원의 현재 잔액을 돌려준다. 계정이 없으면 0. 적립·사용 직후에 불러도 방금 값이 나온다(master 에서 읽는다).")
     @GetMapping("/{userId}/balance")

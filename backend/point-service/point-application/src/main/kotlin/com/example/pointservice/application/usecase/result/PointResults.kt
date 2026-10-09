@@ -80,3 +80,30 @@ data class AdminPointAccountResult(
         )
     }
 }
+
+/**
+ * 사용 취소 결과. 원래 사용이 없거나 이미 환불됐으면 [cancelled] 가 false 이고 [reason] 에 이유가 있다(오류가 아니다).
+ * [amount] 는 이번에 돌려준 금액(양수, 안 돌려줬으면 0), [balance] 는 처리 뒤 잔액.
+ */
+data class SpendCancelResult(
+    val cancelled: Boolean,
+    val reason: SpendCancelSkipReason?,
+    val amount: Long,
+    val balance: Long,
+)
+
+/** NO_SPEND: 그 refId 로 사용(SPEND)한 적이 없다. ALREADY_REFUNDED: "refund:" + refId 줄이 이미 있다. */
+enum class SpendCancelSkipReason { NO_SPEND, ALREADY_REFUNDED }
+
+/** refId 로 찾은 원장 한 줄(대사용). [amount] 는 원장 그대로 부호가 있다(사용은 음수). */
+data class PointRefResult(
+    val userId: String,
+    val refId: String,
+    val type: PointTransactionType,
+    val amount: Long,
+    val createdDate: LocalDateTime?,
+) {
+    companion object {
+        fun from(t: PointTransaction) = PointRefResult(t.userId, requireNotNull(t.refId), t.type, t.amount, t.createdDate)
+    }
+}

@@ -10,12 +10,18 @@ import com.example.pointservice.application.member.MemberSummary
 import com.example.pointservice.application.support.TestClock
 import com.example.pointservice.application.support.TestClockConfig
 import com.example.pointservice.application.usecase.command.AdjustCommand
+import com.example.pointservice.application.usecase.command.CancelSpendCommand
 import com.example.pointservice.application.usecase.command.CreatePointRuleCommand
 import com.example.pointservice.application.usecase.command.EarnAmountCommand
 import com.example.pointservice.application.usecase.command.EarnCommand
 import com.example.pointservice.application.usecase.command.SpendCommand
+import com.example.pointservice.application.usecase.command.TransactionRef
 import com.example.pointservice.application.usecase.command.UpdatePointRuleCommand
 import com.example.pointservice.application.usecase.result.EarnSkipReason
+import com.example.pointservice.application.usecase.result.SpendCancelSkipReason
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.AfterEach
@@ -177,6 +183,133 @@ class PointUseCaseTest {
             .isInstanceOf(CustomException::class.java)
             .extracting("errorCode").isEqualTo(ErrorCode.INVALID_AMOUNT)
         assertThat(pointUseCase.balance(user).balance).isEqualTo(70L)
+    }
+
+    @Test
+    @DisplayName("사용 취소는 사용 금액을 돌려주고 refund: 키로 REFUND 줄을 남긴다")
+    fun cancelSpendRestoresBalance() {
+        pointUseCase.earn(EarnCommand(user, "SIGNUP"))
+        pointUseCase.spend(SpendCommand(user, 30L, refId = "order:1"))
+
+        val result = pointUseCase.cancelSpend(CancelSpendCommand(user, "order:1", "결제 실패"))
+
+        assertThat(result.cancelled).isTrue()
+        assertThat(result.reason).isNull()
+        assertThat(result.amount).isEqualTo(30L)
+        assertThat(result.balance).isEqualTo(100L)
+        assertThat(pointUseCase.balance(user).balance).isEqualTo(100L)
+        val latest = pointUseCase.history(user, PageRequest.of(0, 10)).content[0]
+        assertThat(latest.type).isEqualTo(PointTransactionType.REFUND)
+        assertThat(latest.refId).isEqualTo("refund:order:1")
+        assertThat(latest.amount).isEqualTo(30L)
+        assertThat(latest.balanceAfter).isEqualTo(100L)
+        assertThat(latest.memo).isEqualTo("결제 실패")
+    }
+
+    @Test
+    @DisplayName("사용한 적 없는 refId 는 NO_SPEND — 원장·잔액·계정 모두 그대로")
+    fun cancelSpendWithoutSpend() {
+        val noAccount = pointUseCase.cancelSpend(CancelSpendCommand("nobody", "order:1"))
+        assertThat(noAccount.cancelled).isFalse()
+        assertThat(noAccount.reason).isEqualTo(SpendCancelSkipReason.NO_SPEND)
+        assertThat(noAccount.balance).isEqualTo(0L)
+        assertThat(accountRepository.findByUserId("nobody")).isEmpty
+
+        pointUseCase.earn(EarnCommand(user, "SIGNUP"))
+        pointUseCase.earnAmount(EarnAmountCommand(user, 20L, "PURCHASE", "purchase:order:9"))
+        val noSpend = pointUseCase.cancelSpend(CancelSpendCommand(user, "order:9"))
+        // 같은 refId 라도 SPEND 가 아니면(적립 줄) 되돌리지 않는다
+        val notSpend = pointUseCase.cancelSpend(CancelSpendCommand(user, "purchase:order:9"))
+
+        assertThat(noSpend.reason).isEqualTo(SpendCancelSkipReason.NO_SPEND)
+        assertThat(noSpend.amount).isEqualTo(0L)
+        assertThat(noSpend.balance).isEqualTo(120L)
+        assertThat(notSpend.reason).isEqualTo(SpendCancelSkipReason.NO_SPEND)
+        assertThat(transactionRepository.count()).isEqualTo(2L)
+        assertThat(pointUseCase.balance(user).balance).isEqualTo(120L)
+    }
+
+    @Test
+    @DisplayName("주문 취소 환불(refund:order:…)이 먼저 됐으면 ALREADY_REFUNDED, 두 번 불러도 한 번만 돌려준다")
+    fun cancelSpendAfterRefundOrTwice() {
+        pointUseCase.earn(EarnCommand(user, "SIGNUP"))
+        pointUseCase.spend(SpendCommand(user, 40L, refId = "order:1"))
+        pointUseCase.refund(SpendCommand(user, 40L, refId = "refund:order:1"))
+
+        val afterRefund = pointUseCase.cancelSpend(CancelSpendCommand(user, "order:1"))
+        assertThat(afterRefund.cancelled).isFalse()
+        assertThat(afterRefund.reason).isEqualTo(SpendCancelSkipReason.ALREADY_REFUNDED)
+        assertThat(afterRefund.balance).isEqualTo(100L)
+
+        pointUseCase.spend(SpendCommand(user, 25L, refId = "order:2"))
+        assertThat(pointUseCase.cancelSpend(CancelSpendCommand(user, "order:2")).cancelled).isTrue()
+        val second = pointUseCase.cancelSpend(CancelSpendCommand(user, "order:2"))
+        assertThat(second.reason).isEqualTo(SpendCancelSkipReason.ALREADY_REFUNDED)
+        assertThat(second.amount).isEqualTo(0L)
+        // 반대로 사용 취소가 먼저면 주문 취소 환불은 같은 키라 적용되지 않는다
+        assertThat(pointUseCase.refund(SpendCommand(user, 25L, refId = "refund:order:2")).applied).isFalse()
+        assertThat(pointUseCase.balance(user).balance).isEqualTo(100L)
+    }
+
+    @Test
+    @DisplayName("사용 취소가 동시에 여러 번 와도 한 번만 돌려준다")
+    fun cancelSpendConcurrently() {
+        pointUseCase.earn(EarnCommand(user, "SIGNUP"))
+        pointUseCase.spend(SpendCommand(user, 60L, refId = "order:1"))
+        val threads = 4
+        val ready = CountDownLatch(threads)
+        val go = CountDownLatch(1)
+        val pool = Executors.newFixedThreadPool(threads)
+        val futures = (1..threads).map {
+            pool.submit<Boolean> {
+                ready.countDown()
+                go.await()
+                pointUseCase.cancelSpend(CancelSpendCommand(user, "order:1")).cancelled
+            }
+        }
+        ready.await()
+        go.countDown()
+        val results = futures.map { it.get(10, TimeUnit.SECONDS) }
+        pool.shutdown()
+
+        assertThat(results.count { it }).isEqualTo(1)
+        assertThat(pointUseCase.balance(user).balance).isEqualTo(100L)
+        assertThat(pointUseCase.history(user, PageRequest.of(0, 10)).content.count { it.type == PointTransactionType.REFUND }).isEqualTo(1)
+    }
+
+    @Test
+    @DisplayName("refId 로 찾기는 있는 쌍만 돌려주고, 다른 사용자의 같은 refId 는 섞이지 않으며, 500 개를 넘으면 거절한다")
+    fun transactionsByRefs() {
+        pointUseCase.earn(EarnCommand(user, "SIGNUP"))
+        pointUseCase.earn(EarnCommand("other", "SIGNUP"))
+        pointUseCase.spend(SpendCommand(user, 30L, refId = "order:1"))
+        pointUseCase.spend(SpendCommand("other", 10L, refId = "order:2"))
+        pointUseCase.cancelSpend(CancelSpendCommand(user, "order:1"))
+
+        val found = pointUseCase.transactionsByRefs(
+            listOf(
+                TransactionRef(user, "order:1"),
+                TransactionRef(user, "refund:order:1"),
+                TransactionRef(user, "order:2"), // order:2 는 other 의 것
+                TransactionRef("other", "order:2"),
+                TransactionRef("other", "order:2"), // 중복 요청은 한 번만
+                TransactionRef(user, "order:404"),
+            ),
+        )
+
+        assertThat(found.map { Triple(it.userId, it.refId, it.amount) }).containsExactlyInAnyOrder(
+            Triple(user, "order:1", -30L),
+            Triple(user, "refund:order:1", 30L),
+            Triple("other", "order:2", -10L),
+        )
+        assertThat(found.first { it.refId == "refund:order:1" }.type).isEqualTo(PointTransactionType.REFUND)
+        assertThat(found.map { it.createdDate }).doesNotContainNull()
+        assertThat(pointUseCase.transactionsByRefs(emptyList())).isEmpty()
+        // 100 개씩 나눠 묻는다 — 경계를 넘는 요청도 빠짐없이
+        val many = (1..250).map { TransactionRef(user, "missing:$it") } + TransactionRef(user, "order:1")
+        assertThat(pointUseCase.transactionsByRefs(many).map { it.refId }).containsExactly("order:1")
+        assertThatThrownBy { pointUseCase.transactionsByRefs((1..501).map { TransactionRef(user, "r:$it") }) }
+            .isInstanceOf(IllegalArgumentException::class.java)
     }
 
     @Test

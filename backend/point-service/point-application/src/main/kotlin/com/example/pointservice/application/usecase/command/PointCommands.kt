@@ -31,3 +31,13 @@ data class AdjustCommand(
     val amount: Long,
     val memo: String,
 )
+
+/** 사용 취소. [refId] 는 원래 사용(SPEND) 때의 멱등 키(예: order:…). 환불 줄은 "refund:" + refId 로 남는다. */
+data class CancelSpendCommand(
+    val userId: String,
+    val refId: String,
+    val memo: String? = null,
+)
+
+/** 원장 한 줄을 가리키는 (userId, refId) 키. */
+data class TransactionRef(val userId: String, val refId: String)

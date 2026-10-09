@@ -95,6 +95,20 @@ class ReplicaLagTest {
     }
 
     @Test
+    fun spendCancel_checksOnMaster_whileRefsLookupBrowsesReplica() {
+        internalPost("/api-internal/point/earn-amount", """{"userId":"$user","amount":100,"reason":"PURCHASE","refId":"purchase:order:5"}""")
+        internalPost("/api-internal/point/spend", """{"userId":"$user","amount":40,"refId":"order:5"}""")
+        // 사용 줄·환불 키 확인은 master 에서 — 레플리카를 보면 NO_SPEND 로 오판한다.
+        internalPost("/api-internal/point/spend/cancel", """{"userId":"$user","refId":"order:5"}""")
+            .andExpect(jsonPath("$.cancelled").value(true)).andExpect(jsonPath("$.balance").value(100))
+        internalPost("/api-internal/point/spend/cancel", """{"userId":"$user","refId":"order:5"}""")
+            .andExpect(jsonPath("$.reason").value("ALREADY_REFUNDED"))
+        // 대사 조회는 레플리카라 복제 전에는 안 보인다.
+        internalPost("/api-internal/point/refs", """{"refs":[{"userId":"$user","refId":"order:5"}]}""")
+            .andExpect(status().isOk).andExpect(jsonPath("$.transactions.length()").value(0))
+    }
+
+    @Test
     fun idempotencyAndLimits_areCheckedOnMaster() {
         val earn = """{"userId":"$user","amount":500,"reason":"PURCHASE","refId":"purchase:order:9"}"""
         internalPost("/api-internal/point/earn-amount", earn).andExpect(jsonPath("$.applied").value(true))

@@ -10,6 +10,7 @@ import com.example.pointservice.application.domain.repository.rw.PointAccountRwR
 import com.example.pointservice.application.domain.repository.rw.PointRuleRwRepository
 import com.example.pointservice.application.domain.repository.rw.PointTransactionRwRepository
 import com.example.pointservice.application.usecase.command.AdjustCommand
+import com.example.pointservice.application.usecase.command.CancelSpendCommand
 import com.example.pointservice.application.usecase.command.EarnAmountCommand
 import com.example.pointservice.application.usecase.command.EarnCommand
 import com.example.pointservice.application.usecase.command.SpendCommand
@@ -18,6 +19,8 @@ import com.example.pointservice.application.usecase.result.EarnSkipReason
 import com.example.pointservice.application.usecase.result.PointAccountResult
 import com.example.pointservice.application.usecase.result.PointBalanceResult
 import com.example.pointservice.application.usecase.result.PointTransactionResult
+import com.example.pointservice.application.usecase.result.SpendCancelResult
+import com.example.pointservice.application.usecase.result.SpendCancelSkipReason
 import com.example.pointservice.application.usecase.result.SpendResult
 import java.time.Clock
 import java.time.LocalDate
@@ -138,6 +141,32 @@ class PointCommandService(
         return SpendResult(true, amount, balance)
     }
 
+    /**
+     * 사용 취소: "사용했으면 되돌린다". 원래 사용(SPEND, 같은 userId·refId) 이 있을 때만 그 금액을 REFUND 로 돌려주고,
+     * 환불 줄의 refId 는 "refund:" + refId 다 — 커머스 주문 취소 환불(refund:order:…)과 같은 키라 어느 쪽으로 와도 한 번만 돌려준다.
+     * 계정 행을 잠근 뒤 확인하고 쓰므로 동시에 두 번 와도 한 번만 돌려준다. 계정이 없으면 만들지 않는다(사용도 없었다).
+     */
+    fun cancelSpend(command: CancelSpendCommand): SpendCancelResult {
+        val (userId, refId, memo) = command
+        val account = accountRwRepository.findByUserIdForUpdate(userId).orElse(null)
+            ?: return SpendCancelResult(false, SpendCancelSkipReason.NO_SPEND, 0L, 0L)
+        val spend = transactionRwRepository.findByUserIdAndRefId(userId, refId)
+        if (spend == null || spend.type != PointTransactionType.SPEND) {
+            return SpendCancelResult(false, SpendCancelSkipReason.NO_SPEND, 0L, account.balance)
+        }
+        val refundRefId = refundRefIdOf(refId)
+        if (transactionRwRepository.existsByUserIdAndRefId(userId, refundRefId)) {
+            return SpendCancelResult(false, SpendCancelSkipReason.ALREADY_REFUNDED, 0L, account.balance)
+        }
+        // 사용 줄의 amount 는 음수(−차감액)로 적혀 있다.
+        val amount = Math.abs(spend.amount)
+        val balance = account.apply(amount)
+        transactionRwRepository.saveAndFlush(
+            PointTransaction(userId, PointTransactionType.REFUND, amount, balance, now(), refId = refundRefId, memo = memo ?: "사용 취소"),
+        )
+        return SpendCancelResult(true, null, amount, balance)
+    }
+
     /** 관리자 수동 조정. 회수는 잔액을 넘을 수 없다. */
     fun adjust(command: AdjustCommand): PointBalanceResult {
         val (userId, amount, memo) = command
@@ -162,5 +191,10 @@ class PointCommandService(
 
     companion object {
         const val CHECKIN_RULE = "DAILY_CHECKIN"
+
+        /** 사용 취소·주문 취소 환불이 같이 쓰는 환불 줄의 refId 접두사. */
+        const val REFUND_REF_PREFIX = "refund:"
+
+        fun refundRefIdOf(spendRefId: String): String = REFUND_REF_PREFIX + spendRefId
     }
 }

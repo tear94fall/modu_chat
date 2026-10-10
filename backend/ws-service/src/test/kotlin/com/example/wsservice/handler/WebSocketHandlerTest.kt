@@ -311,4 +311,58 @@ class WebSocketHandlerTest {
         verify(kafkaProducerService, never()).sendReactionMessage(any(), any())
         verify(fcmService, never()).sendUserMessage(any())
     }
+
+    // --- 발신자 위조 (프레임의 sender 는 믿지 않는다) ---
+
+    @Test
+    @DisplayName("남의 이름으로 보낸 채팅 프레임은 거절한다 — 저장·브로드캐스트·푸시 모두 없다")
+    fun chatFrameClaimingAnotherSender_isRejected() {
+        handler.handleTextMessage(session("user-b", true), chatFrame("room-1", "user-a"))
+
+        verify(chatService, never()).saveChat(any())
+        verify(kafkaProducerService, never()).sendMessage(any(), any())
+        verify(fcmService, never()).sendFcmMessage(any())
+        verify(chatRoomService, never()).getChatRoom(any())
+    }
+
+    @Test
+    @DisplayName("sender 를 비워 보내면 세션 주인으로 채운다")
+    fun chatFrameWithoutSender_usesSessionOwner() {
+        whenever(chatRoomService.getChatRoom("room-1")).thenReturn(room("room-1", "user-a", "user-b"))
+        whenever(chatService.saveChat(any())).thenReturn(1L)
+        whenever(chatRoomService.updateChatRoom(eq("room-1"), any())).thenReturn(room("room-1", "user-a", "user-b"))
+
+        handler.handleTextMessage(
+            session("user-a", true),
+            TextMessage("{\"roomId\":\"room-1\",\"message\":\"hello\",\"chatTime\":\"2026-09-13 10:00:00\",\"chatType\":1}"),
+        )
+
+        val captor = argumentCaptor<ChatDto>()
+        verify(chatService).saveChat(captor.capture())
+        assertThat(captor.firstValue.sender).isEqualTo("user-a")
+    }
+
+    @Test
+    @DisplayName("남의 이름으로 보낸 읽음 프레임은 거절한다")
+    fun readFrameClaimingAnotherSender_isRejected() {
+        handler.handleTextMessage(
+            session("user-b", true),
+            TextMessage("{\"type\":\"READ\",\"roomId\":\"room-1\",\"sender\":\"user-a\"}"),
+        )
+
+        verify(chatRoomService, never()).updateLastReadChat(any(), any())
+        verify(kafkaProducerService, never()).sendReadMessage(any(), any())
+    }
+
+    @Test
+    @DisplayName("남의 이름으로 보낸 반응 프레임은 거절한다")
+    fun reactionFrameClaimingAnotherSender_isRejected() {
+        handler.handleTextMessage(
+            session("user-b", true),
+            TextMessage("{\"type\":\"REACTION\",\"roomId\":\"room-1\",\"chatId\":\"7\",\"sender\":\"user-a\",\"emoji\":\"LIKE\"}"),
+        )
+
+        verify(chatService, never()).react(any(), any(), any(), any())
+        verify(kafkaProducerService, never()).sendReactionMessage(any(), any())
+    }
 }

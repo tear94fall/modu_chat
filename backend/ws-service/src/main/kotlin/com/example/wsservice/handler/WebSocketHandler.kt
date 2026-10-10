@@ -50,28 +50,38 @@ class WebSocketHandler(
         val userId = resolveUserId(session)
         if (userId != null) MDC.put(RequestContext.MDC_USER_ID, userId)
         try {
-            handleFrame(message)
+            if (userId == null) {
+                // afterConnectionEstablished 가 헤더 없는 연결을 닫지만, 경합으로 프레임이 먼저 올 수 있다 — 주인을 모르면 처리하지 않는다.
+                log.warn("[ws] frame from a session without userId, dropped (session {})", session.id)
+                return
+            }
+            handleFrame(message, userId)
         } finally {
             MDC.remove(RequestContext.MDC_REQUEST_ID)
             if (userId != null) MDC.remove(RequestContext.MDC_USER_ID)
         }
     }
 
-    private fun handleFrame(message: TextMessage) {
+    /**
+     * 프레임이 주장하는 `sender` 는 믿지 않는다. 핸드셰이크 헤더로 정해진 [sessionUserId] 가 이 연결의 주인이고,
+     * 프레임이 다른 사람을 적어 보내면 거절한다(남의 이름으로 메시지·읽음·반응을 보낼 수 있었다).
+     */
+    private fun handleFrame(message: TextMessage, sessionUserId: String) {
         val payload = objectMapper.readTree(message.payload)
         // READ 는 채팅 파싱보다 먼저 갈라낸다. 저장할 채팅이 없고,
         // 아래 updateLastChat 경로는 chatType 이 유효할 때만 안전하다.
         val type = payload.get("type")?.asText()
         if (type == "READ") {
-            handleReadMessage(payload)
+            handleReadMessage(payload, sessionUserId)
             return
         }
         if (type == "REACTION") {
-            handleReactionMessage(payload)
+            handleReactionMessage(payload, sessionUserId)
             return
         }
 
         val recvChatDto = objectMapper.treeToValue(payload, ChatDto::class.java)
+        recvChatDto.sender = senderOf(recvChatDto.sender, sessionUserId, "CHAT") ?: return
         val roomId = recvChatDto.roomId ?: return
         val chatRoomDto = chatRoomService.getChatRoom(roomId)
         if (chatRoomDto.checkChatRoomMember(recvChatDto.sender)) return
@@ -122,10 +132,10 @@ class WebSocketHandler(
      * 커서는 항상 방의 lastChatId 로 점프한다 — chat-service 의 updateLastReadChat 과 같은 값이라
      * 브로드캐스트에 실어 보내는 숫자와 DB 값이 어긋나지 않는다.
      */
-    private fun handleReadMessage(payload: JsonNode) {
+    private fun handleReadMessage(payload: JsonNode, sessionUserId: String) {
         val roomId = payload.get("roomId")?.asText()
-        val userId = payload.get("sender")?.asText()
-        if (roomId == null || userId == null) {
+        val userId = senderOf(payload.get("sender")?.asText(), sessionUserId, "READ") ?: return
+        if (roomId == null) {
             log.warn("[ws] malformed READ frame: {}", payload)
             return
         }
@@ -144,12 +154,12 @@ class WebSocketHandler(
      * 결과 집계를 방 인원에게 브로드캐스트한다. 남겨진 경우에만 메시지 작성자에게 푸시 한 통.
      * chat-service 가 거부하면(내 메시지·모르는 이모지) 프레임을 버리고 로그만 남긴다 — 세션은 닫지 않는다.
      */
-    private fun handleReactionMessage(payload: JsonNode) {
+    private fun handleReactionMessage(payload: JsonNode, sessionUserId: String) {
         val roomId = payload.get("roomId")?.asText()
         val chatId = payload.get("chatId")?.asText()
-        val userId = payload.get("sender")?.asText()
+        val userId = senderOf(payload.get("sender")?.asText(), sessionUserId, "REACTION") ?: return
         val emoji = payload.get("emoji")?.asText()
-        if (roomId == null || chatId == null || userId == null || emoji == null) {
+        if (roomId == null || chatId == null || emoji == null) {
             log.warn("[ws] malformed REACTION frame: {}", payload)
             return
         }
@@ -200,6 +210,16 @@ class WebSocketHandler(
     }
 
     private fun resolveUserId(session: WebSocketSession): String? = session.handshakeHeaders["userId"]?.firstOrNull()
+
+    /**
+     * 프레임이 적어 보낸 발신자를 세션 주인과 견준다. 비어 있으면 세션 주인으로 채우고, 다르면 null 을 돌려 프레임을 버린다.
+     * 조용히 덮어쓰지 않고 거절하는 이유: 위조 시도가 로그에 남아야 한다.
+     */
+    private fun senderOf(claimed: String?, sessionUserId: String, frameType: String): String? {
+        if (claimed == null || claimed == sessionUserId) return sessionUserId
+        log.warn("[ws] {} frame claims sender {} but the session belongs to {} — rejected", frameType, claimed, sessionUserId)
+        return null
+    }
 
     companion object {
         private val CLIENTS = ConcurrentHashMap<String, WebSocketSession>()

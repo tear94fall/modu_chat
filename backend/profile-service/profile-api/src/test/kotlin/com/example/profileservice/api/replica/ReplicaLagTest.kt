@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
@@ -62,7 +62,7 @@ class ReplicaLagTest {
         clearProfiles()
         // 복제가 멈추기 전에 있던 기록 하나: 레플리카에도 있다.
         master.update("insert into profile (member_id, profile_type, `value`, created_date) values (?, 2, 'old.png', now())", memberId)
-        val script = master.queryForList("SCRIPT", String::class.java)
+        val script = master.queryForList("SCRIPT", String::class.java).filterNotNull()
         replica.execute("DROP ALL OBJECTS")
         script.forEach { replica.execute(it) }
         whenever(memberFeignClient.getMember(user)).thenReturn(MemberIdDto(memberId, user))

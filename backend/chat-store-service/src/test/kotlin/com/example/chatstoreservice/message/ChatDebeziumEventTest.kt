@@ -1,8 +1,9 @@
 package com.example.chatstoreservice.message
 
 import com.example.chatstoreservice.chat.entity.Chat
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -10,7 +11,7 @@ import kotlin.test.assertNotNull
 /** Kotlin 모듈이 없는 ObjectMapper(KafkaConsumerConfig 와 같은 설정)로 Debezium 이벤트가 읽히는지 본다. */
 class ChatDebeziumEventTest {
 
-    private val mapper = ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    private val mapper = JsonMapper.builder().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).build()
 
     @Test
     fun snakeCaseRowIsMappedAndUnknownFieldsIgnored() {

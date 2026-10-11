@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.springframework.boot.gradle.plugin.SpringBootPlugin
 
@@ -6,15 +7,12 @@ import org.springframework.boot.gradle.plugin.SpringBootPlugin
 // - point-api: 실행 모듈(컨트롤러·필터·바깥 호출 어댑터). bootJar 는 여기서만 나온다.
 // - point-application: 라이브러리 모듈(유스케이스·서비스·엔티티·ro/rw 저장소·JPA 설정).
 plugins {
-    id("org.springframework.boot") version "3.4.2" apply false
+    id("org.springframework.boot") version "4.0.8" apply false
     id("io.spring.dependency-management") version "1.1.7" apply false
-    kotlin("jvm") version "2.1.10" apply false
-    kotlin("plugin.spring") version "2.1.10" apply false
-    kotlin("plugin.jpa") version "2.1.10" apply false
+    kotlin("jvm") version "2.4.21" apply false
+    kotlin("plugin.spring") version "2.4.21" apply false
+    kotlin("plugin.jpa") version "2.4.21" apply false
 }
-
-// plugins 블록의 코틀린 버전과 같게 둔다.
-val kotlinVersion = "2.1.10"
 
 allprojects {
     group = "com.example"
@@ -39,14 +37,15 @@ subprojects {
         }
     }
 
-    // Boot BOM 은 코틀린 1.9.25 를 관리한다. Boot 플러그인을 적용한 모듈은 코틀린 플러그인 버전에 자동으로 맞춰지지만
-    // BOM 만 가져오는 라이브러리 모듈은 그렇지 않아, 컴파일러 도구·stdlib 가 1.9.25 로 끌려간다. 두 모듈 모두 여기서 맞춘다.
-    extra["kotlin.version"] = kotlinVersion
-
     configure<io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension> {
         imports {
-            mavenBom(SpringBootPlugin.BOM_COORDINATES)
-            mavenBom("org.springframework.cloud:spring-cloud-dependencies:2024.0.0")
+            // Boot BOM 은 kotlin.version 을 자신이 빌드된 버전으로 고정한다. Boot 플러그인이 없는 라이브러리 모듈에서
+            // 컴파일러와 stdlib 이 어긋나지 않도록 실제 적용된 코틀린 플러그인 버전으로 덮어쓴다.
+            mavenBom(SpringBootPlugin.BOM_COORDINATES) {
+                bomProperty("kotlin.version", getKotlinPluginVersion())
+            }
+            // Boot 4.0.x 와 짝인 릴리스 트레인(2025.1.3 의 spring-boot.version = 4.0.8).
+            mavenBom("org.springframework.cloud:spring-cloud-dependencies:2025.1.3")
         }
     }
 
@@ -69,12 +68,13 @@ subprojects {
     }
 
     dependencies {
-        "implementation"("com.fasterxml.jackson.module:jackson-module-kotlin")
+        // Boot 4 는 Jackson 3 을 쓴다(좌표가 tools.jackson 으로 바뀌었다).
+        "implementation"("tools.jackson.module:jackson-module-kotlin")
         "implementation"("org.jetbrains.kotlin:kotlin-reflect")
         "testImplementation"("org.springframework.boot:spring-boot-starter-test")
         "testImplementation"("org.jetbrains.kotlin:kotlin-test-junit5")
         // 코틀린 non-null 파라미터에 Mockito 매처(eq/any)를 쓰기 위해
-        "testImplementation"("org.mockito.kotlin:mockito-kotlin:5.4.0")
+        "testImplementation"("org.mockito.kotlin:mockito-kotlin:6.4.0")
         "testRuntimeOnly"("com.h2database:h2")
         // Boot 플러그인이 없는 모듈은 JUnit Platform 런처가 자동으로 붙지 않는다.
         "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")

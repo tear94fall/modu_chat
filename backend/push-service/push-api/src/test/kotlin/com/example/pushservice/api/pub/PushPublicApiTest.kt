@@ -13,7 +13,7 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
@@ -54,7 +54,7 @@ class PushPublicApiTest {
         register("u1", "u1", "\"tok-1\"").andExpect(status().isOk).andExpect(content().string("tok-1"))
         register("u1", "u1", "\"tok-2\"").andExpect(status().isOk).andExpect(content().string("tok-2"))
 
-        assertThat(jdbc.queryForList("select fcm_token from fcm_token where user_id = 'u1'", String::class.java))
+        assertThat(jdbc.queryForList("select fcm_token from fcm_token where user_id = 'u1'", String::class.java).filterNotNull())
             .containsExactly("tok-2")
     }
 

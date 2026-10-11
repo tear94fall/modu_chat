@@ -24,11 +24,13 @@ spring:
     password: guest
 
   kafka:
+    # 내장 Kafka(@EmbeddedKafka bootstrapServersProperty)가 채우는 주소를 쓴다. 테스트 밖에서 띄우면 localhost:9092.
+    bootstrap-servers: localhost:9092
     producer:
-      bootstrap-servers: localhost:9092
+      bootstrap-servers: ${spring.kafka.bootstrap-servers}
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     consumer:
-      bootstrap-servers: localhost:9092
+      bootstrap-servers: ${spring.kafka.bootstrap-servers}
       group-id: test-group
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
 

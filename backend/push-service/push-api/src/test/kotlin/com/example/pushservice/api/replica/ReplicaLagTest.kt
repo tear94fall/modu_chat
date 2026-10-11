@@ -14,7 +14,7 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
@@ -63,7 +63,7 @@ class ReplicaLagTest {
     fun freezeReplica() {
         clearTokens()
         master.update("insert into fcm_token (user_id, fcm_token) values ('old-user', 'old-token')")
-        val script = master.queryForList("SCRIPT", String::class.java)
+        val script = master.queryForList("SCRIPT", String::class.java).filterNotNull()
         replica.execute("DROP ALL OBJECTS")
         script.forEach { replica.execute(it) }
     }
@@ -75,6 +75,7 @@ class ReplicaLagTest {
 
     private fun masterTokens(userId: String): List<String> =
         master.queryForList("select fcm_token from fcm_token where user_id = ? order by token_id", String::class.java, userId)
+            .filterNotNull()   // Spring Framework 7 의 널 표기로 List<String?> 이 된다
 
     private fun replicaCount(): Long = requireNotNull(replica.queryForObject("select count(*) from fcm_token", Long::class.java))
 

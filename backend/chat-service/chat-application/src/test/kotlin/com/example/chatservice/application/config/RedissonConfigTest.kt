@@ -2,7 +2,7 @@ package com.example.chatservice.application.config
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.boot.autoconfigure.data.redis.RedisProperties
+import org.springframework.boot.data.redis.autoconfigure.DataRedisProperties
 
 /**
  * spring.data.redis.cluster.nodes 유무에 따라 Redisson 이 클러스터/단일 서버 모드로 갈라지는지 확인한다.
@@ -12,9 +12,9 @@ class RedissonConfigTest {
 
     @Test
     fun clusterNodesPresent_usesClusterServers() {
-        val props = RedisProperties()
-        props.cluster = RedisProperties.Cluster()
-        props.cluster.nodes = listOf("redis-node-1:7001", "redis-node-2:7002")
+        val props = DataRedisProperties()
+        props.cluster = DataRedisProperties.Cluster()
+        props.cluster!!.nodes = listOf("redis-node-1:7001", "redis-node-2:7002")
 
         val config = RedissonConfig.buildConfig(props)
 
@@ -25,7 +25,7 @@ class RedissonConfigTest {
 
     @Test
     fun clusterNodesAbsent_usesSingleServer() {
-        val props = RedisProperties()
+        val props = DataRedisProperties()
         props.host = "localhost"
         props.port = 6379
 
@@ -37,11 +37,11 @@ class RedissonConfigTest {
 
     @Test
     fun clusterNodesEmpty_usesSingleServer() {
-        val props = RedisProperties()
+        val props = DataRedisProperties()
         props.host = "localhost"
         props.port = 6379
-        props.cluster = RedisProperties.Cluster()
-        props.cluster.nodes = listOf()
+        props.cluster = DataRedisProperties.Cluster()
+        props.cluster!!.nodes = listOf()
 
         val config = RedissonConfig.buildConfig(props)
 

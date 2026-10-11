@@ -3,10 +3,10 @@ package com.example.pointservice.api
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.actuate.health.CompositeHealth
-import org.springframework.boot.actuate.health.HealthEndpoint
-import org.springframework.boot.actuate.health.Status
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.health.actuate.endpoint.CompositeHealthDescriptor
+import org.springframework.boot.health.actuate.endpoint.HealthEndpoint
+import org.springframework.boot.health.contributor.Status
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -40,9 +40,11 @@ class HealthProbesTest {
 
     @Test
     fun readiness_group_hasExpectedIndicators() {
-        val readiness = healthEndpoint.healthForPath("readiness") as CompositeHealth
-        assertThat(readiness.components.keys).containsExactlyInAnyOrder("readinessState", "masterDb")
-        assertThat(readiness.components["readinessState"]!!.status).isEqualTo(Status.UP)
-        assertThat(readiness.components["masterDb"]!!.status).isEqualTo(Status.UP)
+        val readiness = healthEndpoint.healthForPath("readiness") as CompositeHealthDescriptor
+        // Boot 4 는 CompositeHealthDescriptor → CompositeHealthDescriptor 로 바뀌고 components 가 nullable 이다.
+        val components = readiness.components!!
+        assertThat(components.keys).containsExactlyInAnyOrder("readinessState", "masterDb")
+        assertThat(components["readinessState"]!!.status).isEqualTo(Status.UP)
+        assertThat(components["masterDb"]!!.status).isEqualTo(Status.UP)
     }
 }

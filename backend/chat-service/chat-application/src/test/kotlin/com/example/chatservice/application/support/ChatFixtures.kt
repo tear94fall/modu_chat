@@ -72,7 +72,7 @@ class ChatFixtures(
             "select m.member_id from chat_room_member m join chat_room r on r.chat_room_id = m.chat_room_id where r.room_id = ?",
             Long::class.java,
             roomId,
-        )
+        ).filterNotNull()   // Spring Framework 7 의 널 표기로 List<Long?> 이 된다
 
     fun roomExists(roomId: String): Boolean = chatRoomRepository.findByRoomId(roomId).isPresent
 }

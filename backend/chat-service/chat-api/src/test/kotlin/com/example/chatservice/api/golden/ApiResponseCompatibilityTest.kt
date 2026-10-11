@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
@@ -202,7 +202,7 @@ class ApiResponseCompatibilityTest {
         File("build/golden-actual.txt").writeText(out.toString())
         val expected = javaClass.getResource("/golden/api-responses.txt")!!.readText().trimEnd().lines()
         val actual = out.toString().trimEnd().lines()
-        val mapper = com.fasterxml.jackson.databind.ObjectMapper()
+        val mapper = tools.jackson.databind.ObjectMapper()
         org.assertj.core.api.Assertions.assertThat(actual).hasSameSizeAs(expected)
         var label = ""
         expected.zip(actual).forEach { (e, a) ->

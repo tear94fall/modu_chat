@@ -1,11 +1,13 @@
 package com.example.authservice.oauth.store
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.core.type.TypeReference
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.cfg.MapperBuilder
+import tools.jackson.databind.json.JsonMapper
 import java.time.Duration
 import java.time.Instant
 import org.springframework.data.redis.core.StringRedisTemplate
-import org.springframework.security.jackson2.SecurityJackson2Modules
+import org.springframework.security.jackson.SecurityJacksonModules
 import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.OAuth2AccessToken
 import org.springframework.security.oauth2.core.OAuth2RefreshToken
@@ -15,7 +17,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
-import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module
+import org.springframework.security.oauth2.server.authorization.jackson.OAuth2AuthorizationServerJacksonModule
 
 /**
  * 인가(액세스·리프레시·ID 토큰 묶음)를 Redis 에 JSON 으로 둔다. 인덱스 키로 토큰 값 → id 를 찾는다.
@@ -28,14 +30,15 @@ class RedisOAuth2AuthorizationService(
 ) : OAuth2AuthorizationService {
 
     /** StoredAuthorization POJO 용. 타입 정보 없이 평범한 JSON. */
-    private val plain: ObjectMapper = ObjectMapper().findAndRegisterModules()
+    // Jackson 3 의 매퍼는 불변이라 빌더로 만든다(만든 뒤 registerModule 이 없다).
+    private val plain: ObjectMapper = JsonMapper.builder().addModules(MapperBuilder.findModules()).build()
 
     /** attributes(principal 등)와 토큰 metadata 용. Spring Security 의 allowlist 기반 타입 정보를 쓴다. */
-    private val secured: ObjectMapper = ObjectMapper().also {
-        it.registerModules(SecurityJackson2Modules.getModules(RedisOAuth2AuthorizationService::class.java.classLoader))
-        it.registerModule(OAuth2AuthorizationServerJackson2Module())
-        it.findAndRegisterModules()
-    }
+    private val secured: ObjectMapper = JsonMapper.builder()
+        .addModules(SecurityJacksonModules.getModules(RedisOAuth2AuthorizationService::class.java.classLoader))
+        .addModule(OAuth2AuthorizationServerJacksonModule())
+        .addModules(MapperBuilder.findModules())
+        .build()
 
     override fun save(a: OAuth2Authorization) {
         val previous = findById(a.id)

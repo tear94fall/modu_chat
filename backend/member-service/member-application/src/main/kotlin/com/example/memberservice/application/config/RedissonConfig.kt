@@ -3,7 +3,7 @@ package com.example.memberservice.application.config
 import org.redisson.Redisson
 import org.redisson.api.RedissonClient
 import org.redisson.config.Config
-import org.springframework.boot.autoconfigure.data.redis.RedisProperties
+import org.springframework.boot.data.redis.autoconfigure.DataRedisProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -15,13 +15,13 @@ import org.springframework.context.annotation.Configuration
 class RedissonConfig {
 
     @Bean
-    fun redissonClient(redisProperties: RedisProperties): RedissonClient = Redisson.create(buildConfig(redisProperties))
+    fun redissonClient(redisProperties: DataRedisProperties): RedissonClient = Redisson.create(buildConfig(redisProperties))
 
     companion object {
         private const val REDISSON_HOST_PREFIX = "redis://"
 
         @JvmStatic
-        fun buildConfig(redisProperties: RedisProperties): Config {
+        fun buildConfig(redisProperties: DataRedisProperties): Config {
             val config = Config()
 
             val clusterNodes = redisProperties.cluster?.nodes

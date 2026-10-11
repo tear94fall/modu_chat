@@ -12,7 +12,8 @@ data class PageResponse<T>(
     val last: Boolean,
 ) {
     companion object {
-        fun <S, T> from(page: Page<S>, mapper: (S) -> T): PageResponse<T> = PageResponse(
+        // Spring Data 4 의 Page<T> 는 T : Any 라 타입 파라미터에 바운드가 필요하다.
+        fun <S : Any, T : Any> from(page: Page<S>, mapper: (S) -> T): PageResponse<T> = PageResponse(
             page.content.map(mapper),
             page.number,
             page.size,

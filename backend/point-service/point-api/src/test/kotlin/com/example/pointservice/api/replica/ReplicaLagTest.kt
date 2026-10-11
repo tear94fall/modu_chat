@@ -8,7 +8,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
@@ -55,7 +55,8 @@ class ReplicaLagTest {
     @BeforeEach
     fun freezeReplica() {
         clearLedger()
-        val script = master.queryForList("SCRIPT", String::class.java)
+        // Spring Framework 7 의 널 표기로 queryForList 가 List<String?> 이 됐다.
+        val script = master.queryForList("SCRIPT", String::class.java).filterNotNull()
         replica.execute("DROP ALL OBJECTS")
         script.forEach { replica.execute(it) }
     }

@@ -86,7 +86,7 @@ class JpaConfigTest {
         JdbcTemplate(rwHikari).queryForList(
             "select lower(column_name) from information_schema.columns where lower(table_name) = '$table'",
             String::class.java,
-        )
+        ).filterNotNull()   // Spring Framework 7 의 널 표기로 List<String?> 이 된다
 
     @Test
     fun repositories_areSplitByMarker() {

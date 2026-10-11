@@ -7,10 +7,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.actuate.health.CompositeHealth;
-import org.springframework.boot.actuate.health.HealthEndpoint;
-import org.springframework.boot.actuate.health.Status;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.health.actuate.endpoint.CompositeHealthDescriptor;
+import org.springframework.boot.health.actuate.endpoint.HealthEndpoint;
+import org.springframework.boot.health.contributor.Status;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -42,7 +42,7 @@ class HealthProbesTest {
 
     @Test
     void readiness_group_hasExpectedIndicators() {
-        CompositeHealth readiness = (CompositeHealth) healthEndpoint.healthForPath("readiness");
+        CompositeHealthDescriptor readiness = (CompositeHealthDescriptor) healthEndpoint.healthForPath("readiness");
         assertThat(readiness.getComponents().keySet()).containsExactlyInAnyOrder("readinessState", "masterDb");
         assertThat(readiness.getComponents().get("readinessState").getStatus()).isEqualTo(Status.UP);
         assertThat(readiness.getComponents().get("masterDb").getStatus()).isEqualTo(Status.UP);

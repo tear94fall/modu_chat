@@ -4,24 +4,26 @@ plugins {
 
 dependencies {
 	implementation project(':schedule-application')
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	// API 문서(GET /v3/api-docs, JSON 만). Boot 3.4 ↔ springdoc 2.8.x
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.8'
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	// API 문서(GET /v3/api-docs, JSON 만). Boot 4.0 ↔ springdoc 3.0.x
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-api:3.0.3'
 	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
 	implementation 'org.springframework.cloud:spring-cloud-starter-config'
-	implementation 'org.springframework.cloud:spring-cloud-starter-sleuth'
-	implementation 'org.springframework.cloud:spring-cloud-starter-zipkin:2.2.3.RELEASE'
+	// sleuth·zipkin 스타터는 Spring Cloud 2022 부터 없다(Micrometer Tracing 으로 대체) — 쓰지도 않아 뺐다.
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	// MockMvc 테스트 지원이 Boot 4 에서 별도 스타터로 갈라졌다.
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	// 로그를 한 줄 JSON 으로(logback-spring.xml 의 LogstashEncoder, 접근 로그의 StructuredArguments)
 	implementation 'net.logstash.logback:logstash-logback-encoder:8.1'
 	implementation 'io.micrometer:micrometer-registry-prometheus'
 	// 예약 작업이 다른 서비스를 부를 때 쓰는 WebClient
 	implementation 'org.springframework:spring-webflux'
 	// 파드가 2개 이상이어도 같은 스케줄이 한 번만 돌게 하는 DB 락(shedlock 테이블, master 에만 쓴다 — SchedulerLockConfig)
-	implementation 'net.javacrumbs.shedlock:shedlock-spring:6.3.0'
-	implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.3.0'
+	implementation 'net.javacrumbs.shedlock:shedlock-spring:7.10.1'
+	implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.10.1'
 
-	implementation 'com.fasterxml.jackson.core:jackson-databind'
+	// Boot 4 는 Jackson 3(tools.jackson) 을 쓴다.
+	implementation 'tools.jackson.core:jackson-databind'
 }
 
 springBoot {

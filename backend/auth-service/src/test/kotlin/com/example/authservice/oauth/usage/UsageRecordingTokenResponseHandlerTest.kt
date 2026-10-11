@@ -40,7 +40,8 @@ class UsageRecordingTokenResponseHandlerTest {
         val handler = UsageRecordingTokenResponseHandler(delegate, MemberUsageNotifier(client, direct), setOf("refresh_token"))
         val request = MockHttpServletRequest().apply { addParameter("grant_type", "client_credentials") }
         val response = MockHttpServletResponse()
-        val auth = TestingAuthenticationToken("x", null)
+        // Security 7 에서 credentials 파라미터가 non-null 이다.
+        val auth = TestingAuthenticationToken("x", "n/a")
 
         handler.onAuthenticationSuccess(request, response, auth)
         request.setParameter("grant_type", "refresh_token")

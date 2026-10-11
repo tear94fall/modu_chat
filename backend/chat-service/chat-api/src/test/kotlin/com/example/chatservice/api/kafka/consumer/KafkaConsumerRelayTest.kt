@@ -14,14 +14,14 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.springframework.kafka.support.Acknowledgment
-import org.springframework.kafka.support.serializer.JsonDeserializer
-import org.springframework.kafka.support.serializer.JsonSerializer
+import org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+import org.springframework.kafka.support.serializer.JacksonJsonSerializer
 
 /**
  * ws-service 가 1:1 차단 때 실어 보내는 excludeUserIds 는 chat-service 를 그냥 지나가야 한다.
  * 여기서 값이 떨어지면 다른 ws 인스턴스가 제외 대상을 몰라 차단이 새 나간다.
  *
- * 리스너(어댑터) → 유스케이스 → 발행 포트까지 태운다. 실제 컨슈머가 쓰는 JsonDeserializer(KafkaConsumerConfig 와 같은 설정)로 역직렬화해
+ * 리스너(어댑터) → 유스케이스 → 발행 포트까지 태운다. 실제 컨슈머가 쓰는 JacksonJsonDeserializer(KafkaConsumerConfig 와 같은 설정)로 역직렬화해
  * 릴레이까지 태운다.
  */
 class KafkaConsumerRelayTest {
@@ -31,7 +31,7 @@ class KafkaConsumerRelayTest {
     }
 
     private fun deserialize(json: String): ChatMessage =
-        JsonDeserializer(ChatMessage::class.java, false).use { deserializer ->
+        JacksonJsonDeserializer(ChatMessage::class.java, false).use { deserializer ->
             deserializer.addTrustedPackages("*")
             deserializer.deserialize(TOPIC, json.toByteArray(StandardCharsets.UTF_8))!!
         }
@@ -89,7 +89,7 @@ class KafkaConsumerRelayTest {
     @Test
     @DisplayName("제외 대상이 없으면 JSON 에 키를 넣지 않아 기존 메시지 모양 그대로다")
     fun nullExcludeUserIdsIsOmittedFromJson() {
-        JsonSerializer<ChatMessage>().use { serializer ->
+        JacksonJsonSerializer<ChatMessage>().use { serializer ->
             val json = String(serializer.serialize(TOPIC, ChatMessage(SubscribeType.BROAD_CAST, "r1", "10"))!!, StandardCharsets.UTF_8)
 
             assertThat(json).doesNotContain("excludeUserIds")
@@ -99,7 +99,7 @@ class KafkaConsumerRelayTest {
     @Test
     @DisplayName("제외 대상이 있으면 직렬화 결과에 남는다")
     fun excludeUserIdsSurvivesSerialization() {
-        JsonSerializer<ChatMessage>().use { serializer ->
+        JacksonJsonSerializer<ChatMessage>().use { serializer ->
             val message = ChatMessage(SubscribeType.BROAD_CAST, "r1", "10", listOf("blocked-user"))
             val json = String(serializer.serialize(TOPIC, message)!!, StandardCharsets.UTF_8)
 

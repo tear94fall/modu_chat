@@ -14,7 +14,7 @@ import com.example.wsservice.fcm.dto.FcmUserMessageDto
 import com.example.wsservice.fcm.service.FcmService
 import com.example.wsservice.kafka.producer.KafkaProducerService
 import com.example.wsservice.member.dto.MemberDto
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName

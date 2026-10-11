@@ -82,9 +82,8 @@ resilience4j:
         slowCallRateThreshold: 80
         slowCallDurationThreshold: 5s
         registerHealthIndicator: true
-    instances:
-      default:
-        baseConfig: default
+    # instances.default 는 뺐다 — resilience4j 2.3 부터 configs.default 를 baseConfig 로 가리키는 같은 이름의 인스턴스를
+    # 순환 참조로 거부한다. 이름이 없는 인스턴스는 어차피 configs.default 를 쓴다.
   time-limiter:
     configs:
       default:

@@ -9,7 +9,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import org.springframework.boot.web.context.WebServerGracefulShutdownLifecycle
+import org.springframework.boot.web.server.context.WebServerGracefulShutdownLifecycle
 import org.springframework.context.SmartLifecycle
 import org.springframework.web.socket.CloseStatus
 import org.springframework.web.socket.WebSocketSession

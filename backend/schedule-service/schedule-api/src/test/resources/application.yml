@@ -3,6 +3,10 @@ server:
   port: 8110
 
 spring:
+  # 테스트용 application.yml 은 main 의 것을 통째로 가린다 — Jackson 3 기본값 되돌림(main 과 같은 이유)을 여기도 둔다.
+  jackson:
+    deserialization:
+      fail-on-null-for-primitives: false
   application:
     name: schedule-service
 

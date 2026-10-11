@@ -4,7 +4,7 @@ import com.example.storageservice.kafka.dto.ProfileDto
 import com.example.storageservice.kafka.dto.ProfileType
 import com.example.storageservice.kafka.producer.KafkaProducerService
 import com.example.storageservice.service.StorageService
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener

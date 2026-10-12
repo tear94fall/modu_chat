@@ -127,7 +127,8 @@ class ReplicaLagTest {
         // 초대 직후의 멤버 목록·읽음 커서, 초대받은 사람의 방 입장(멤버 확인도 master).
         app(get("/api-public/chat/$OLD_ROOM/room")).andExpect(jsonPath("$.members.length()").value(3))
         app(get("/api-public/chat/read/$OLD_ROOM")).andExpect(jsonPath("$.length()").value(3))
-        app(get("/api-public/chat/$OLD_ROOM/page/30"), user = 3).andExpect(status().isOk).andExpect(jsonPath("$.length()").value(2))
+        // 기존 2개 + 초대 안내 행 1개
+        app(get("/api-public/chat/$OLD_ROOM/page/30"), user = 3).andExpect(status().isOk).andExpect(jsonPath("$.length()").value(3))
         app(get("/api-public/chat/$OLD_ROOM/chats"), user = 3).andExpect(status().isOk)
 
         app(delete("/api-public/chat/$OLD_ROOM/member/user-1")).andExpect(status().isOk)

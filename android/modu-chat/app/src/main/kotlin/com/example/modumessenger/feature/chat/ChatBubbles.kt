@@ -1,5 +1,7 @@
 package com.example.modumessenger.feature.chat
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material3.TextButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -112,11 +114,40 @@ fun ChatBubbleRow(
     onShowReactors: (Long) -> Unit = {},
     attachments: AttachmentUi = AttachmentUi(),
     attachmentActions: AttachmentActions = AttachmentActions(),
+    onReinvite: (String) -> Unit = {},
 ) {
+    if (bubble.isSystem) {
+        ChatSystemRow(text = bubble.message.message, reinviteUserId = bubble.reinviteUserId, onReinvite = onReinvite, modifier = modifier)
+        return
+    }
     if (bubble.isMine) {
         RightBubble(bubble, onOpenImage, onResend, onDelete, onShowReactors, attachments, attachmentActions, modifier)
     } else {
         LeftBubble(bubble, onOpenProfile, onOpenImage, onReact, onShowReactors, attachments, attachmentActions, modifier)
+    }
+}
+
+/**
+ * 서버가 남긴 안내 행(누가 초대됐다·나갔다). 날짜 구분선과 같은 톤으로 가운데 한 줄.
+ * 나간 사람이 아직 방에 없으면 그 아래 "다시 초대" 를 붙인다.
+ */
+@Composable
+fun ChatSystemRow(text: String, reinviteUserId: String?, onReinvite: (String) -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            color = colorResource(R.color.grey),
+            modifier = Modifier
+                .background(colorResource(R.color.chat_input_fill), RoundedCornerShape(12.dp))
+                .padding(horizontal = 12.dp, vertical = 4.dp)
+                .semantics { contentDescription = text },
+        )
+        if (reinviteUserId != null) {
+            TextButton(onClick = { onReinvite(reinviteUserId) }, contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)) {
+                Text(text = stringResource(R.string.chat_system_reinvite), style = MaterialTheme.typography.labelMedium)
+            }
+        }
     }
 }
 

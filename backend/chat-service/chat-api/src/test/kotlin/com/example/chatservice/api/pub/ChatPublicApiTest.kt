@@ -215,7 +215,8 @@ class ChatPublicApiTest {
         // 초대받으면 바로 읽을 수 있다.
         call(post("/api-public/chat/$ROOM/member").contentType(MediaType.APPLICATION_JSON).content("""["user-3"]"""))
             .andExpect(status().isOk)
-        call(get("/api-public/chat/$ROOM/page/30"), user = 3).andExpect(status().isOk).andExpect(jsonPath("$.length()").value(2))
+        // 기존 메시지 2개 + 초대 안내 행 1개
+        call(get("/api-public/chat/$ROOM/page/30"), user = 3).andExpect(status().isOk).andExpect(jsonPath("$.length()").value(3))
         verify(memberFeignClient).inviteChatRoom(any())
     }
 }

@@ -89,7 +89,8 @@ class ChatQueries(private val queryFactory: JPAQueryFactory) {
         queryFactory
             .select(chat.count())
             .from(chat)
-            .where(chat.roomId.eq(roomId).and(chat.id.between(startId, endId)), notFrom(blockedSenders))
+            // 초대·나감 안내는 사람이 보낸 글이 아니다 — 안 읽음 배지에 세지 않는다.
+            .where(chat.roomId.eq(roomId).and(chat.id.between(startId, endId)), chat.chatType.notIn(ChatType.SYSTEM_TYPES), notFrom(blockedSenders))
             .fetchOne() ?: 0L
 
     /**

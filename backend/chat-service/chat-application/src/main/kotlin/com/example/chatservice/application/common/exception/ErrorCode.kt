@@ -20,6 +20,7 @@ enum class ErrorCode(val status: HttpStatus, val message: String) {
     INVALID_CHAT_ROOM_MEMBER(BAD_REQUEST, "채팅방 멤버가 아닙니다."),
     INVALID_REACTION(BAD_REQUEST, "지원하지 않는 반응입니다."),
     CANNOT_REACT_OWN_CHAT(BAD_REQUEST, "내 메시지에는 반응을 남길 수 없습니다."),
+    CANNOT_REACT_SYSTEM_CHAT(BAD_REQUEST, "안내 메시지에는 반응을 남길 수 없습니다."),
 
     // 401
     UNAUTHORIZED_TOKEN_ERROR(UNAUTHORIZED, "인증되지 않은 토큰 입니다."),

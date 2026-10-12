@@ -83,6 +83,7 @@ class ChatTables(private val jdbc: JdbcTemplate) {
 
     fun memberIds(roomId: String): List<Long> =
         jdbc.queryForList("select member_id from chat_room_member where chat_room_id = ?", Long::class.java, roomPk(roomId))
+            .filterNotNull()   // Spring Framework 7 의 널 표기로 List<Long?> 이 된다
 
     fun count(table: String): Long = jdbc.queryForObject("select count(*) from $table", Long::class.java)!!
 

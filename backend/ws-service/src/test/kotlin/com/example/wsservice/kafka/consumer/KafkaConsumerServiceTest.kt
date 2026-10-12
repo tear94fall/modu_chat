@@ -9,7 +9,7 @@ import com.example.wsservice.chat.service.ChatRoomService
 import com.example.wsservice.chat.service.ChatService
 import com.example.wsservice.handler.WebSocketHandler
 import com.example.wsservice.member.dto.MemberDto
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach

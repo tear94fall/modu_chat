@@ -1,7 +1,7 @@
 package com.example.storageservice.kafka.consumer
 
 import com.example.storageservice.kafka.dto.ProfileDto
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Service

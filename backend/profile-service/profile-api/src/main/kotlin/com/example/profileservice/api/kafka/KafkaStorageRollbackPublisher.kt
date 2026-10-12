@@ -17,7 +17,7 @@ class KafkaStorageRollbackPublisher(private val kafkaTemplate: KafkaTemplate<Str
 
     override fun publish(key: String?, profile: ProfileResult) {
         val message = ProfileDto(profile)
-        kafkaTemplate.send(KafkaRequestHeaders.stamp(ProducerRecord(TOPIC, key, message))).whenComplete { result, ex ->
+        kafkaTemplate.send(KafkaRequestHeaders.stamp(ProducerRecord<String, Any>(TOPIC, key, message))).whenComplete { result, ex ->
             if (ex == null) {
                 log.info("Message sent successfully: {}", result.recordMetadata.topic() + " / " + message)
             } else {

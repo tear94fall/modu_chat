@@ -97,7 +97,8 @@ class MemberInternalController(
 
     @Operation(summary = "회원 역할 조회", description = "회원의 role(ROLE_MEMBER | ROLE_ADMIN)을 돌려준다. 없는 userId 면 404.")
     @GetMapping("/{userId}/role")
-    fun getUserRole(@Parameter(description = "회원 userId(구글 sub)", example = "112233445566778899001") @PathVariable("userId") userId: String): ResponseEntity<Role?> =
+    fun getUserRole(@Parameter(description = "회원 userId(구글 sub)", example = "112233445566778899001") @PathVariable("userId") userId: String): ResponseEntity<Role> =
+        // Spring Framework 7 의 ResponseEntity<T> 는 T : Any 다. body 자체는 @Nullable 이라 role 이 null 이면 전처럼 빈 200 이다.
         ResponseEntity.ok().body(memberUseCase.getRole(userId))
 
     /** userId 가 차단한 사람들의 userId. chat-service 가 이력·미읽음에서 뺄 때 쓴다. */

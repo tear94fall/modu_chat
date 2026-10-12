@@ -3,7 +3,7 @@ package com.example.memberservice.api.kafka
 import com.example.memberservice.api.dto.ProfileDto
 import com.example.memberservice.application.usecase.MemberUseCase
 import com.example.memberservice.application.usecase.command.RollbackProfileCommand
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener

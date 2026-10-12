@@ -1,7 +1,7 @@
 package com.example.authservice.oauth.sso
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.time.Duration
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Component
@@ -10,7 +10,8 @@ import org.springframework.stereotype.Component
 @Component
 class SsoCodeStore(private val redis: StringRedisTemplate) {
 
-    private val mapper: ObjectMapper = ObjectMapper().registerKotlinModule()
+    // Jackson 3 의 ObjectMapper 는 만든 뒤 모듈을 못 붙인다 — 코틀린 모듈이 붙은 매퍼를 바로 만든다.
+    private val mapper: ObjectMapper = jacksonObjectMapper()
 
     fun save(code: String, value: SsoCode, ttl: Duration) {
         try {

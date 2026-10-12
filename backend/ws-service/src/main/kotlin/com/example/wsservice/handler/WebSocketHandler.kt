@@ -15,8 +15,8 @@ import com.example.wsservice.fcm.service.FcmService
 import com.example.wsservice.kafka.producer.KafkaProducerService
 import com.example.wsservice.logging.RequestContext
 import com.example.wsservice.util.TimeUtil
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import org.springframework.stereotype.Component

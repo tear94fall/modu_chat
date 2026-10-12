@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.core.DefaultKafkaProducerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.core.ProducerFactory
-import org.springframework.kafka.support.serializer.JsonSerializer
+import org.springframework.kafka.support.serializer.JacksonJsonSerializer
 
 @Configuration
 class KafkaProducerConfig(
@@ -21,7 +21,7 @@ class KafkaProducerConfig(
         val config = HashMap<String, Any>()
         config[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = bootstrapServers
         config[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
-        config[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = JsonSerializer::class.java
+        config[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = JacksonJsonSerializer::class.java
 
         config[ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG] = true
         config[ProducerConfig.ACKS_CONFIG] = "all"

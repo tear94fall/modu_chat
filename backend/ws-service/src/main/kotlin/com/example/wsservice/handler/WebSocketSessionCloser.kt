@@ -2,7 +2,7 @@ package com.example.wsservice.handler
 
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.web.context.WebServerGracefulShutdownLifecycle
+import org.springframework.boot.web.server.context.WebServerGracefulShutdownLifecycle
 import org.springframework.context.SmartLifecycle
 import org.springframework.stereotype.Component
 import org.springframework.web.socket.CloseStatus

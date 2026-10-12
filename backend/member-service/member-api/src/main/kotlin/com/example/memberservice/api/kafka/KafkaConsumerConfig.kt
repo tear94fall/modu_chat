@@ -13,7 +13,7 @@ import org.springframework.kafka.core.ConsumerFactory
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory
 import org.springframework.kafka.listener.ContainerProperties
 import org.springframework.kafka.listener.DefaultErrorHandler
-import org.springframework.kafka.support.serializer.JsonDeserializer
+import org.springframework.kafka.support.serializer.JacksonJsonDeserializer
 import org.springframework.util.backoff.FixedBackOff
 
 @EnableKafka
@@ -31,13 +31,13 @@ class KafkaConsumerConfig(
         config[ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG] = bootstrapServers
         config[ConsumerConfig.GROUP_ID_CONFIG] = groupId
         config[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
-        config[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = JsonDeserializer::class.java
+        config[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = JacksonJsonDeserializer::class.java
         config[ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG] = false
         config[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
         config[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 500
         config[ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG] = 5000
 
-        val deserializer = JsonDeserializer(Any::class.java, false)
+        val deserializer = JacksonJsonDeserializer(Any::class.java, false)
 
         return DefaultKafkaConsumerFactory(config, StringDeserializer(), deserializer)
     }
@@ -50,7 +50,7 @@ class KafkaConsumerConfig(
         containerProperties.ackMode = ContainerProperties.AckMode.MANUAL_IMMEDIATE
 
         factory.setConcurrency(3)
-        factory.consumerFactory = consumerFactory()
+        factory.setConsumerFactory(consumerFactory())
         factory.setCommonErrorHandler(defaultErrorHandler())
         // 레코드마다 헤더의 X-Request-Id 를 MDC 에 넣고 끝나면 지운다.
         factory.setRecordInterceptor(RequestContextRecordInterceptor())

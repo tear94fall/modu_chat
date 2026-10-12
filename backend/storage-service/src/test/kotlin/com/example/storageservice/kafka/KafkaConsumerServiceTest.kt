@@ -19,7 +19,9 @@ import kotlin.test.assertTrue
 
 @SpringBootTest
 @DirtiesContext
-@EmbeddedKafka(partitions = 1, topics = ["test-topic"], brokerProperties = ["listeners=PLAINTEXT://localhost:9092"], ports = [9092])
+// Kafka 4(KRaft) 내장 브로커는 listeners 를 덮어쓰면 컨트롤러 리스너가 빠져 기동이 깨지고, 포트만 고정해도 광고 주소가 달라 클라이언트가 타임아웃된다.
+// 브로커가 고른 주소를 spring.kafka.bootstrap-servers 로 넘기고, 테스트 설정의 producer/consumer bootstrap-servers 가 그 값을 참조한다.
+@EmbeddedKafka(partitions = 1, topics = ["test-topic"], bootstrapServersProperty = "spring.kafka.bootstrap-servers")
 class KafkaConsumerServiceTest {
 
     @Autowired lateinit var kafkaProducer: KafkaProducer

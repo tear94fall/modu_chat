@@ -4,10 +4,10 @@ plugins {
 
 dependencies {
     implementation(project(":push-application"))
-    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-validation")
-    // API 문서(GET /v3/api-docs, JSON 만). Boot 3.4 ↔ springdoc 2.8.x
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.8")
+    // API 문서(GET /v3/api-docs, JSON 만). Boot 4.0 ↔ springdoc 3.0.x
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:3.0.3")
     implementation("org.springframework.cloud:spring-cloud-starter-config")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     // 로그를 한 줄 JSON 으로(logback-spring.xml 의 LogstashEncoder, 접근 로그의 StructuredArguments)

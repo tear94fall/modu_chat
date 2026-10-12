@@ -4,6 +4,11 @@ server:
   shutdown: graceful
 
 spring:
+  # Jackson 3 은 FAIL_ON_NULL_FOR_PRIMITIVES 가 기본 true 다. ScheduleDto 의 int port 처럼 요청 본문에 없는 원시 필드가 있으면
+  # (PATCH 는 cronExpression 만 보낸다) 400 이 나므로 Jackson 2 때의 동작(없으면 0)으로 되돌린다.
+  jackson:
+    deserialization:
+      fail-on-null-for-primitives: false
   application:
     name: schedule-service
 

@@ -17,7 +17,7 @@ import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -80,7 +80,7 @@ class ReplicaLagTest {
         alice = member("alice")
         bob = member("bob")
         boss = member("boss")
-        val script = master.queryForList("SCRIPT", String::class.java)
+        val script = master.queryForList("SCRIPT", String::class.java).filterNotNull()
         replica.execute("DROP ALL OBJECTS")
         script.forEach { replica.execute(it) }
         whenever(profileFeignClient.getMemberProfiles(anyLong())).thenReturn(ResponseEntity.ok(listOf()))

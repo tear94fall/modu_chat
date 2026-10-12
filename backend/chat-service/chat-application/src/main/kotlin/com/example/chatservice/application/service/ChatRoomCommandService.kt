@@ -277,7 +277,8 @@ class ChatRoomCommandService(
     }
 
     /**
-     * 방에 시스템 안내 행(초대·나감)을 남기고 마지막 메시지로 올린다. 호출자의 트랜잭션(멤버 변경)과 함께 커밋된다.
+     * 방에 시스템 안내 행(초대·나감·이름 변경)을 남긴다. 호출자의 트랜잭션(멤버 변경 등)과 함께 커밋된다.
+     * 방 목록 미리보기는 건드리지 않는다([ChatRoom.addSystemChatting]).
      * 시각은 ws-service 가 쓰는 것과 같은 꼴(UTC, yyyy-MM-dd HH:mm:ss).
      *
      * @return 저장된 채팅 id
@@ -287,7 +288,7 @@ class ChatRoomCommandService(
         val chatRoom = room(roomId)
         val chatTime = LocalDateTime.now(clock).format(SYSTEM_CHAT_TIME)
         val chat = chatRepository.save(Chat(message, roomId, chatRoom, sender, chatTime, type))
-        chatRoom.addChatting(chat)
+        chatRoom.addSystemChatting(chat)
         return requireNotNull(chat.id)
     }
 

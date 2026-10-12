@@ -5,4 +5,6 @@ object SystemMessages {
     fun invited(inviter: String, invitees: List<String>): String = "${inviter}님이 ${invitees.joinToString(", ")}님을 초대했습니다"
 
     fun left(name: String): String = "${name}님이 나갔습니다"
+
+    fun renamed(actor: String, newName: String): String = "${actor}님이 채팅방 이름을 '$newName'(으)로 변경했습니다"
 }

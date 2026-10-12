@@ -73,8 +73,17 @@ class ChatRoom protected constructor() : BaseTimeEntity() {
         this.chat.add(chat)
         this.lastChatId = chat.id.toString()
         this.lastChatMsg = chat.message
-        // ws-service 경로는 뒤이어 updateChatRoom 으로 같은 값을 다시 쓴다. 서버가 직접 남기는 안내 행은 여기서 끝이다.
+        // ws-service 경로는 뒤이어 updateChatRoom 으로 같은 값을 다시 쓴다.
         this.lastChatTime = chat.chatTime
+    }
+
+    /**
+     * 서버가 남기는 안내 행. 마지막 메시지 id 만 올리고 미리보기(lastChatMsg)와 시각은 그대로 둔다 —
+     * 방 목록에는 사람이 나눈 마지막 대화가 남아야 하고, 안내만으로 방이 목록 위로 올라오지도 않는다.
+     */
+    fun addSystemChatting(chat: Chat) {
+        this.chat.add(chat)
+        this.lastChatId = chat.id.toString()
     }
 
     /**

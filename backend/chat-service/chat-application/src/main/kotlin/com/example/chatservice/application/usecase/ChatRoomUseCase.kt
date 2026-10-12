@@ -88,6 +88,17 @@ class ChatRoomUseCase(
             return ChatRoomView(created.room, members)
         }
 
+        // 카카오톡처럼 여럿이 든 방은 첫 줄로 시작 안내를 남긴다. 1:1 방은 남기지 않는다.
+        val others = members.filter { it.id != caller.memberId }
+        if (others.size >= MIN_OTHERS_FOR_START_NOTICE) {
+            announce(
+                created.room.roomId!!,
+                ChatType.CHAT_TYPE_SYSTEM_INVITE,
+                caller.userId,
+                SystemMessages.invited(displayName(caller.userId), others.map(::displayName)),
+            )
+        }
+
         try {
             chatEventPublisher.roomCreated(created.room.roomId!!)
         } catch (e: Exception) {
@@ -120,10 +131,19 @@ class ChatRoomUseCase(
         return ChatRoomView(room, emptyList())
     }
 
-    /** 방 정보 수정. 방 멤버만 할 수 있다. */
+    /** 방 정보 수정. 방 멤버만 할 수 있다. 이름이 실제로 바뀌면 방에 안내 행을 남긴다(사진만 바꾸면 조용히 지나간다). */
     fun update(authUserId: String?, roomId: String, command: UpdateChatRoomCommand): ChatRoomView {
-        accessGuard.requireRoomMember(accessGuard.caller(authUserId), roomId)
-        return updateForInternal(roomId, command)
+        val caller = accessGuard.caller(authUserId)
+        accessGuard.requireRoomMember(caller, roomId)
+
+        val before = chatRoomCommandService.findRoom(roomId).roomName
+        val view = updateForInternal(roomId, command)
+        // 안내는 저장 뒤에 남긴다 — 수정 커맨드가 미리보기 값들을 통째로 덮어쓰기 때문이다.
+        val renamed = command.roomName?.trim()?.takeIf { it.isNotBlank() && it != before }
+        if (renamed != null) {
+            announce(roomId, ChatType.CHAT_TYPE_SYSTEM_RENAME, caller.userId, SystemMessages.renamed(displayName(caller.userId), renamed))
+        }
+        return view
     }
 
     /**
@@ -155,6 +175,11 @@ class ChatRoomUseCase(
     private fun announce(roomId: String, type: Int, sender: String, message: String) {
         val chatId = chatRoomCommandService.appendSystemChat(roomId, type, sender, message)
         chatEventPublisher.broadcast(roomId, ChatMessage(type = SubscribeType.BROAD_CAST, roomId = roomId, chatId = chatId.toString()))
+    }
+
+    private companion object {
+        /** 나 말고 2명 이상(= 방에 3명 이상)일 때만 시작 안내를 남긴다. */
+        const val MIN_OTHERS_FOR_START_NOTICE = 2
     }
 
     private fun displayName(userId: String): String =

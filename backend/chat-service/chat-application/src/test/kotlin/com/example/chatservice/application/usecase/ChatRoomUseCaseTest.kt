@@ -173,7 +173,7 @@ class ChatRoomUseCaseTest {
     @Test
     @DisplayName("초대하면 '누가 누구를 초대했습니다' 안내 행이 남고 방 안 세션에 브로드캐스트된다 — 안내는 안 읽음에 세지 않는다")
     fun invite_appendsSystemRow_andBroadcasts() {
-        fixtures.room("room-1", 1L)
+        fixtures.room("room-1", 1L, lastChatMsg = "안녕")
 
         chatRoomUseCase.invite(userId(1), "room-1", listOf(userId(2), userId(3)))
 
@@ -187,8 +187,8 @@ class ChatRoomUseCaseTest {
         verify(chatEventPublisher).broadcast(eq("room-1"), sent.capture())
         assertThat(sent.firstValue.type).isEqualTo(SubscribeType.BROAD_CAST)
         assertThat(sent.firstValue.chatId).isEqualTo(chats[0].id.toString())
-        // 방 목록 미리보기는 안내 문장이지만, 초대받은 2 의 안 읽음 배지는 0 이다.
-        assertThat(chatRoomUseCase.room(userId(2), "room-1").room.lastChatMsg).isEqualTo(chats[0].message)
+        // 안내 행은 방 목록 미리보기를 덮지 않는다(마지막 대화가 그대로 남는다). 초대받은 2 의 안 읽음 배지도 0 이다.
+        assertThat(chatRoomUseCase.room(userId(2), "room-1").room.lastChatMsg).isEqualTo("안녕")
         assertThat(chatRoomUseCase.unread(userId(2), "2").single().unreadChatCount).isZero()
     }
 
@@ -231,6 +231,58 @@ class ChatRoomUseCaseTest {
 
         assertThat(fixtures.roomExists("room-1")).isFalse()
         verify(chatEventPublisher, never()).broadcast(any(), any())
+    }
+
+    @Test
+    @DisplayName("방 이름을 바꾸면 '이름을 바꿨습니다' 안내 행이 남고 브로드캐스트되지만, 미리보기는 마지막 대화 그대로다")
+    fun update_roomName_appendsSystemRow_andKeepsPreview() {
+        val room = fixtures.room("room-1", 1L, 2L, roomName = "이전 이름", lastChatMsg = "안녕")
+        fixtures.chat(room, userId(1), "안녕")
+
+        chatRoomUseCase.update(userId(1), "room-1", UpdateChatRoomCommand("주말 모임", "", "안녕", "", "2026-09-13 00:00:00"))
+
+        val chats = fixtures.chatsOf("room-1")
+        assertThat(chats).hasSize(2)
+        assertThat(chats.last().chatType).isEqualTo(ChatType.CHAT_TYPE_SYSTEM_RENAME)
+        assertThat(chats.last().sender).isEqualTo(userId(1))
+        assertThat(chats.last().message).isEqualTo("이름1님이 채팅방 이름을 '주말 모임'(으)로 변경했습니다")
+        verify(chatEventPublisher).broadcast(eq("room-1"), any())
+        assertThat(chatRoomUseCase.room(userId(1), "room-1").room.lastChatMsg).isEqualTo("안녕")
+    }
+
+    @Test
+    @DisplayName("이름이 그대로면(사진만 바꿔도) 안내 행을 남기지 않는다")
+    fun update_withoutRoomNameChange_isSilent() {
+        fixtures.room("room-1", 1L, 2L, roomName = "이전 이름")
+
+        chatRoomUseCase.update(userId(1), "room-1", UpdateChatRoomCommand("이전 이름", "new.png", "", "", "2026-09-13 00:00:00"))
+
+        assertThat(fixtures.chatsOf("room-1")).isEmpty()
+        verify(chatEventPublisher, never()).broadcast(any(), any())
+    }
+
+    @Test
+    @DisplayName("3명 이상인 방을 새로 만들면 시작 안내(초대 문장)가 남는다")
+    fun create_groupRoom_appendsStartNotice() {
+        val view = chatRoomUseCase.create(userId(1), listOf(1L, 2L, 3L))
+
+        val chats = fixtures.chatsOf(view.room.roomId!!)
+        assertThat(chats).hasSize(1)
+        assertThat(chats[0].chatType).isEqualTo(ChatType.CHAT_TYPE_SYSTEM_INVITE)
+        assertThat(chats[0].sender).isEqualTo(userId(1))
+        assertThat(chats[0].message).isEqualTo("이름1님이 이름2, 이름3님을 초대했습니다")
+    }
+
+    @Test
+    @DisplayName("둘만 있는 방과 이미 있던 방에는 시작 안내를 남기지 않는다")
+    fun create_oneOnOneOrExistingRoom_isSilent() {
+        val oneOnOne = chatRoomUseCase.create(userId(1), listOf(1L, 2L))
+        assertThat(fixtures.chatsOf(oneOnOne.room.roomId!!)).isEmpty()
+
+        fixtures.room("room-existing", 1L, 2L, 3L)
+        val existing = chatRoomUseCase.create(userId(1), listOf(1L, 2L, 3L))
+        assertThat(existing.room.roomId).isEqualTo("room-existing")
+        assertThat(fixtures.chatsOf("room-existing")).isEmpty()
     }
 
     // ---------- 조회 ----------

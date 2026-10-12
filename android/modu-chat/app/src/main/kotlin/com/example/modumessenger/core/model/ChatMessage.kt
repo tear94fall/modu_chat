@@ -27,9 +27,13 @@ object ChatType {
     const val FILE = 3
     const val AUDIO = 4
 
-    /** 서버가 남기는 안내 행. 본문은 사람이 읽을 문장이고 sender 는 그 사건의 주인공(초대: 초대한 사람, 나감: 나간 사람)이다. */
+    /**
+     * 서버가 남기는 안내 행. 본문은 사람이 읽을 문장이고 sender 는 그 사건의 주인공이다
+     * (초대: 초대한 사람, 나감: 나간 사람, 이름 변경: 바꾼 사람).
+     */
     const val SYSTEM_INVITE = 5
     const val SYSTEM_LEAVE = 6
+    const val SYSTEM_RENAME = 7
 
-    fun isSystem(chatType: Int): Boolean = chatType == SYSTEM_INVITE || chatType == SYSTEM_LEAVE
+    fun isSystem(chatType: Int): Boolean = chatType == SYSTEM_INVITE || chatType == SYSTEM_LEAVE || chatType == SYSTEM_RENAME
 }

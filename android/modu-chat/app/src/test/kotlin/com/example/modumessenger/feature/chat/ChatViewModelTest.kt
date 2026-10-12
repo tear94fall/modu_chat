@@ -339,6 +339,24 @@ class ChatViewModelTest {
         assertEquals(BubbleGroup.SINGLE, bubbles[0].group)
     }
 
+    @Test
+    fun `방 이름 변경 안내도 가운데 행이고 다시 초대 버튼은 붙지 않는다`() {
+        val messages = listOf(
+            message(1L, OTHER, "2026-09-12 10:00:00"),
+            message(2L, "gone", "2026-09-12 10:00:05")
+                .copy(chatType = ChatType.SYSTEM_RENAME, message = "떠난님이 채팅방 이름을 '주말 모임'(으)로 변경했습니다"),
+        )
+        // 이름을 바꾼 사람이 지금 방에 없어도(나간 사람과 달리) 다시 초대할 일은 아니다.
+        val members = listOf(Member(id = 8L, userId = OTHER, username = "친구"))
+
+        val bubbles = ChatViewModel.buildBubbles(messages, members, ME, emptyMap())
+
+        assertTrue(bubbles[1].isSystem)
+        assertFalse(bubbles[1].isMine)
+        assertEquals(null, bubbles[1].reinviteUserId)
+        assertEquals(BubbleGroup.SINGLE, bubbles[0].group)
+    }
+
     private fun message(id: Long, sender: String, time: String) =
         com.example.modumessenger.core.model.ChatMessage(
             id = id,

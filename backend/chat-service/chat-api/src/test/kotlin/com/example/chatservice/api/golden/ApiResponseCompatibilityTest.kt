@@ -172,20 +172,20 @@ class ApiResponseCompatibilityTest {
             json(post("/api-internal/chat"), """{"chatType":1,"roomId":"room-a","sender":"user-2","message":"saved","chatTime":"2026-09-20 11:00:00"}"""),
         )
         call("POST /api-internal/chat (no room)", null, json(post("/api-internal/chat"), """{"chatType":1,"roomId":"nope","sender":"user-2","message":"x","chatTime":"t"}"""), normalizeTime = true)
-        call("GET /api-internal/chat/9", null, get("/api-internal/chat/9"))   // 7 은 room-a 초대 안내, 8 은 room-b 나감 안내 행
+        call("GET /api-internal/chat/10", null, get("/api-internal/chat/10"))   // 7 은 room-a 이름 변경, 8 은 room-a 초대, 9 는 room-b 나감 안내 행
         call("GET /api-internal/chat/room-a/room", null, get("/api-internal/chat/room-a/room"), normalizeTime = true)
         call("GET /api-internal/chat/room-a/member/user-1", null, get("/api-internal/chat/room-a/member/user-1"), normalizeTime = true)
         call("GET /api-internal/chat/room-a/member/user-4", null, get("/api-internal/chat/room-a/member/user-4"), normalizeTime = true)
         call(
             "POST /api-internal/chat/room-a/room", null,
-            json(post("/api-internal/chat/room-a/room"), """{"roomName":"방 A","roomImage":"","lastChatMsg":"saved","lastChatId":"9","lastChatTime":"2026-09-20 11:00:00"}"""),
+            json(post("/api-internal/chat/room-a/room"), """{"roomName":"방 A","roomImage":"","lastChatMsg":"saved","lastChatId":"10","lastChatTime":"2026-09-20 11:00:00"}"""),
         )
         call("POST /api-internal/chat/reaction/room-a/2/user-1 LIKE(cancel)", null, json(post("/api-internal/chat/reaction/room-a/2/user-1"), """{"emoji":"like"}"""), normalizeTime = true)
-        call("POST /api-internal/chat/reaction/room-a/9/user-1 WOW", null, json(post("/api-internal/chat/reaction/room-a/9/user-1"), """{"emoji":"WOW"}"""), normalizeTime = true)
-        call("POST /api-internal/chat/reaction/room-a/9/user-1 SAD(replace)", null, json(post("/api-internal/chat/reaction/room-a/9/user-1"), """{"emoji":"SAD"}"""), normalizeTime = true)
-        call("POST /api-internal/chat/reaction/room-a/9/user-2 (own)", null, json(post("/api-internal/chat/reaction/room-a/9/user-2"), """{"emoji":"SAD"}"""), normalizeTime = true)
-        call("POST /api-internal/chat/reaction/room-a/7/user-2 (system row)", null, json(post("/api-internal/chat/reaction/room-a/7/user-2"), """{"emoji":"WOW"}"""), normalizeTime = true)
-        call("GET /api-internal/chat/9 (after reaction)", null, get("/api-internal/chat/9"), normalizeTime = true)
+        call("POST /api-internal/chat/reaction/room-a/10/user-1 WOW", null, json(post("/api-internal/chat/reaction/room-a/10/user-1"), """{"emoji":"WOW"}"""), normalizeTime = true)
+        call("POST /api-internal/chat/reaction/room-a/10/user-1 SAD(replace)", null, json(post("/api-internal/chat/reaction/room-a/10/user-1"), """{"emoji":"SAD"}"""), normalizeTime = true)
+        call("POST /api-internal/chat/reaction/room-a/10/user-2 (own)", null, json(post("/api-internal/chat/reaction/room-a/10/user-2"), """{"emoji":"SAD"}"""), normalizeTime = true)
+        call("POST /api-internal/chat/reaction/room-a/7/user-2 (system row: 이름 변경)", null, json(post("/api-internal/chat/reaction/room-a/7/user-2"), """{"emoji":"WOW"}"""), normalizeTime = true)
+        call("GET /api-internal/chat/10 (after reaction)", null, get("/api-internal/chat/10"), normalizeTime = true)
         call("POST /api-internal/chat/read/room-a/user-2", null, post("/api-internal/chat/read/room-a/user-2"), normalizeTime = true)
         call("POST /api-internal/chat/read/room-a/user-4 (not member)", null, post("/api-internal/chat/read/room-a/user-4"), normalizeTime = true)
         call("GET /api-public/chat/read/room-a (after internal read)", me, get("/api-public/chat/read/room-a"), normalizeTime = true)

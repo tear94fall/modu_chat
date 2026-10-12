@@ -1,5 +1,6 @@
 package com.example.chatservice.application.service
 
+import com.example.chatservice.application.domain.entity.ChatType
 import com.example.chatservice.application.common.exception.CustomException
 import com.example.chatservice.application.common.exception.ErrorCode
 import com.example.chatservice.application.config.RwJpaConfig
@@ -29,6 +30,10 @@ class ChatReactionCommandService(
             .orElseThrow { CustomException(ErrorCode.CHAT_NOT_FOUND_ERROR, chatId) }
         if (roomId != chat.roomId) {
             throw CustomException(ErrorCode.CHAT_NOT_FOUND_ERROR, chatId)
+        }
+        // 초대·나감 안내는 사람이 보낸 글이 아니다.
+        if (ChatType.isSystem(chat.chatType)) {
+            throw CustomException(ErrorCode.CANNOT_REACT_SYSTEM_CHAT, chatId)
         }
         if (userId == chat.sender) {
             throw CustomException(ErrorCode.CANNOT_REACT_OWN_CHAT, chatId)

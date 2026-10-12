@@ -312,6 +312,7 @@ fun ChatScreen(
                                             audioDurations = uiState.audioDurations,
                                         ),
                                         attachmentActions = attachmentActions,
+                                        onReinvite = viewModel::reinvite,
                                     )
                                 }
                             }

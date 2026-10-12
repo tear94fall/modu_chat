@@ -58,7 +58,12 @@ data class ChatBubble(
     val myReaction: String? = null,
     /** 날짜가 바뀌는 첫 메시지면 그 위에 그릴 날짜(`2026년 9월 24일 목요일`). 아니면 null. */
     val dateDivider: String? = null,
+    /** "나갔습니다" 안내 행인데 그 사람이 지금 방에 없으면 다시 초대할 userId. 아니면 null. */
+    val reinviteUserId: String? = null,
 ) {
+    /** 서버가 남긴 안내 행(초대·나감). 가운데 한 줄로 그리고 아바타·반응·길게 누르기가 없다. */
+    val isSystem: Boolean get() = ChatType.isSystem(message.chatType)
+
     val showSender: Boolean get() = group == BubbleGroup.HEADER || group == BubbleGroup.SINGLE
     val showTime: Boolean get() = group == BubbleGroup.TAIL || group == BubbleGroup.SINGLE
     val isFailed: Boolean get() = message.status == SendStatus.FAILED
@@ -75,6 +80,7 @@ data class ChatUiState(
     /** 0 이면 "아래로" 배지를 감춘다. */
     val jumpToBottomCount: Int = 0,
     val isLeaving: Boolean = false,
+    val isReinviting: Boolean = false,
     /** 파일 말풍선이 보여 줄 원본 이름·크기. 저장 이름 → 정보. */
     val fileInfos: Map<String, FileInfo> = emptyMap(),
     /** 파일 말풍선의 내려받기 상태. 저장 이름 → 상태. 없으면 아직 안 받은 것. */
@@ -374,6 +380,21 @@ class ChatViewModel @Inject constructor(
 
     // ---------- 드로어 ----------
 
+    /** "나갔습니다" 안내 행의 다시 초대. 성공하면 방 정보를 다시 읽어 버튼이 사라진다. */
+    fun reinvite(userId: String) {
+        if (_uiState.value.isReinviting) return
+        _uiState.update { it.copy(isReinviting = true) }
+        viewModelScope.launch {
+            chatRepository.invite(roomId, listOf(userId))
+                .onSuccess { room ->
+                    if (room.members.any { it.userId == userId }) emit(R.string.chat_reinvite_done) else emit(R.string.chat_reinvite_failed)
+                    loadRoom()
+                }
+                .onFailure { emit(R.string.chat_reinvite_failed) }
+            _uiState.update { it.copy(isReinviting = false) }
+        }
+    }
+
     fun leaveRoom() {
         if (_uiState.value.isLeaving) return
         _uiState.update { it.copy(isLeaving = true) }
@@ -448,7 +469,8 @@ class ChatViewModel @Inject constructor(
             // 날짜를 못 읽으면 앞 메시지의 날짜를 이어 쓴다(구분선을 엉뚱하게 넣지 않게).
             val dates = visible.runningFold(null as java.time.LocalDate?) { prev, m -> ChatTime.localDate(m.chatTime, zone) ?: prev }.drop(1)
             val times = visible.map { ChatTime.shortTime(it.chatTime, zone = zone) }
-            val keys = visible.indices.map { Triple(visible[it].sender, dates[it], times[it]) }
+            // 안내 행은 사람 말풍선과 묶이지 않게 키에 종류를 섞는다.
+            val keys = visible.indices.map { Triple(visible[it].sender + if (ChatType.isSystem(visible[it].chatType)) "#system" else "", dates[it], times[it]) }
 
             return visible.mapIndexed { index, message ->
                 val newDay = dates[index] != null && (index == 0 || dates[index] != dates[index - 1])
@@ -461,10 +483,12 @@ class ChatViewModel @Inject constructor(
                     else -> BubbleGroup.BODY
                 }
                 val member = byUserId[message.sender]
+                val system = ChatType.isSystem(message.chatType)
                 ChatBubble(
                     message = message,
-                    isMine = message.sender == myUserId && myUserId.isNotEmpty(),
-                    group = group,
+                    // 안내 행은 누구의 말풍선도 아니다(내가 나간 안내라도 오른쪽에 붙지 않는다).
+                    isMine = !system && message.sender == myUserId && myUserId.isNotEmpty(),
+                    group = if (system) BubbleGroup.SINGLE else group,
                     senderName = member
                         ?.let { DisplayName.of(it.userId, it.username, names) }
                         ?.takeIf { it.isNotBlank() },
@@ -473,6 +497,10 @@ class ChatViewModel @Inject constructor(
                     shortTime = times[index],
                     myReaction = ReactionEmoji.mine(message.reactions, myUserId),
                     dateDivider = if (newDay) ChatTime.dayDivider(message.chatTime, zone) else null,
+                    // 나간 사람이 아직 방에 없을 때만 "다시 초대" 를 붙인다(다시 들어왔으면 버튼이 사라진다).
+                    reinviteUserId = message.sender.takeIf {
+                        message.chatType == ChatType.SYSTEM_LEAVE && it.isNotEmpty() && it !in byUserId && it != myUserId
+                    },
                 )
             }
         }

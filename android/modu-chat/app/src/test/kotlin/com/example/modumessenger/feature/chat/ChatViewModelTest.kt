@@ -312,6 +312,33 @@ class ChatViewModelTest {
         assertTrue(bubbles.single().isMine)
     }
 
+    @Test
+    fun `system rows are centered notices and only a leaver who is no longer a member gets a reinvite`() {
+        val messages = listOf(
+            message(1L, OTHER, "2026-09-12 10:00:00"),
+            message(2L, ME, "2026-09-12 10:00:05").copy(chatType = ChatType.SYSTEM_INVITE, message = "나님이 친구님을 초대했습니다"),
+            message(3L, OTHER, "2026-09-12 10:00:10").copy(chatType = ChatType.SYSTEM_LEAVE, message = "친구님이 나갔습니다"),
+            message(4L, "gone", "2026-09-12 10:00:20").copy(chatType = ChatType.SYSTEM_LEAVE, message = "떠난님이 나갔습니다"),
+        )
+        // OTHER 는 아직 방에 있고(다시 들어왔다), gone 은 없다.
+        val members = listOf(Member(id = 8L, userId = OTHER, username = "친구"))
+
+        val bubbles = ChatViewModel.buildBubbles(messages, members, ME, emptyMap())
+
+        assertFalse(bubbles[0].isSystem)
+        assertTrue(bubbles[1].isSystem)
+        // 내가 주인공인 안내라도 내 말풍선(오른쪽)이 아니다.
+        assertFalse(bubbles[1].isMine)
+        assertEquals(BubbleGroup.SINGLE, bubbles[1].group)
+        assertEquals(null, bubbles[1].reinviteUserId)
+        // 나갔지만 지금 멤버인 사람(다시 들어옴)에겐 버튼이 없다.
+        assertEquals(null, bubbles[2].reinviteUserId)
+        // 나갔고 지금 멤버가 아닌 사람에게만 다시 초대가 붙는다.
+        assertEquals("gone", bubbles[3].reinviteUserId)
+        // 안내 행은 앞의 사람 말풍선 묶음을 끊는다.
+        assertEquals(BubbleGroup.SINGLE, bubbles[0].group)
+    }
+
     private fun message(id: Long, sender: String, time: String) =
         com.example.modumessenger.core.model.ChatMessage(
             id = id,

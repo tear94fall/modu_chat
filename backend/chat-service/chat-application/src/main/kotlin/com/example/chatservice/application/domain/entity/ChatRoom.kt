@@ -73,6 +73,8 @@ class ChatRoom protected constructor() : BaseTimeEntity() {
         this.chat.add(chat)
         this.lastChatId = chat.id.toString()
         this.lastChatMsg = chat.message
+        // ws-service 경로는 뒤이어 updateChatRoom 으로 같은 값을 다시 쓴다. 서버가 직접 남기는 안내 행은 여기서 끝이다.
+        this.lastChatTime = chat.chatTime
     }
 
     /**

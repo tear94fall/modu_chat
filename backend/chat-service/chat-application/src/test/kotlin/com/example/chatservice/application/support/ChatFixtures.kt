@@ -74,5 +74,8 @@ class ChatFixtures(
             roomId,
         ).filterNotNull()   // Spring Framework 7 의 널 표기로 List<Long?> 이 된다
 
+    /** 방의 채팅을 id 순으로(안내 행 검증용). */
+    fun chatsOf(roomId: String): List<Chat> = chatRepository.findAll().filter { it.roomId == roomId }.sortedBy { it.id }
+
     fun roomExists(roomId: String): Boolean = chatRoomRepository.findByRoomId(roomId).isPresent
 }

@@ -106,4 +106,7 @@
     <string name="chat_audio_seek">재생 위치</string>
     <string name="chat_audio_label">음성 메시지</string>
     <string name="chat_audio_failed">음성을 불러오지 못했습니다.</string>
+    <string name="chat_system_reinvite">다시 초대</string>
+    <string name="chat_reinvite_done">다시 초대했습니다.</string>
+    <string name="chat_reinvite_failed">초대하지 못했습니다.</string>
 </resources>

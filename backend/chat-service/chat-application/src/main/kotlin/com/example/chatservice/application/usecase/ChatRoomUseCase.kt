@@ -1,5 +1,8 @@
 package com.example.chatservice.application.usecase
 
+import com.example.chatservice.application.message.SubscribeType
+import com.example.chatservice.application.message.ChatMessage
+import com.example.chatservice.application.domain.entity.ChatType
 import com.example.chatservice.application.access.ChatAccessGuard
 import com.example.chatservice.application.common.exception.CustomException
 import com.example.chatservice.application.common.exception.ErrorCode
@@ -102,7 +105,13 @@ class ChatRoomUseCase(
         val caller = accessGuard.caller(authUserId)
         accessGuard.requireSelf(caller, userId)
 
+        // 이름은 멤버 행을 지우기 전에 받아 둔다(나간 뒤엔 방 멤버가 아니라 조회 근거가 없다).
+        val leaverName = displayName(caller.userId)
         val room = chatRoomCommandService.removeMember(roomId, caller.memberId)
+        // 방이 남아 있을 때만 안내한다(마지막 사람이 나가면 방째 지워진다).
+        if (room.memberIds.isNotEmpty()) {
+            announce(roomId, ChatType.CHAT_TYPE_SYSTEM_LEAVE, caller.userId, SystemMessages.left(leaverName))
+        }
         try {
             memberGateway.exit(room.id, listOf(MemberInfo(id = caller.memberId, userId = caller.userId)))
         } catch (e: Exception) {
@@ -122,7 +131,8 @@ class ChatRoomUseCase(
      * 아직 방에 없는 사람만 멤버로 더한다.
      */
     fun invite(authUserId: String?, roomId: String, userIds: List<String>): ChatRoomView {
-        accessGuard.requireRoomMember(accessGuard.caller(authUserId), roomId)
+        val caller = accessGuard.caller(authUserId)
+        accessGuard.requireRoomMember(caller, roomId)
 
         val room = chatRoomCommandService.findRoom(roomId)
         val members = memberGateway.byUserIds(userIds)
@@ -131,8 +141,26 @@ class ChatRoomUseCase(
         }
 
         val invited = memberGateway.invite(room.id, members)
-        return ChatRoomView(chatRoomCommandService.addMembers(roomId, invited.mapNotNull { it.id }), emptyList())
+        val before = room.memberIds.toSet()
+        val result = chatRoomCommandService.addMembers(roomId, invited.mapNotNull { it.id })
+        // 실제로 새로 들어온 사람만 안내한다(이미 있던 사람을 또 초대한 경우는 조용히 지나간다).
+        val joined = invited.filter { it.id != null && it.id !in before }
+        if (joined.isNotEmpty()) {
+            announce(roomId, ChatType.CHAT_TYPE_SYSTEM_INVITE, caller.userId, SystemMessages.invited(displayName(caller.userId), joined.map(::displayName)))
+        }
+        return ChatRoomView(result, emptyList())
     }
+
+    /** 안내 행을 남기고 방 안 세션들에 바로 흘린다. 푸시는 ws-service 가 사람이 보낸 글에만 보내므로 여기서는 생기지 않는다. */
+    private fun announce(roomId: String, type: Int, sender: String, message: String) {
+        val chatId = chatRoomCommandService.appendSystemChat(roomId, type, sender, message)
+        chatEventPublisher.broadcast(roomId, ChatMessage(type = SubscribeType.BROAD_CAST, roomId = roomId, chatId = chatId.toString()))
+    }
+
+    private fun displayName(userId: String): String =
+        runCatching { memberGateway.byUserId(userId).username }.getOrNull()?.takeIf { it.isNotBlank() } ?: userId
+
+    private fun displayName(member: MemberInfo): String = member.username?.takeIf { it.isNotBlank() } ?: member.userId ?: "?"
 
     /**
      * 방별 안 읽은 개수. [id] 는 내 회원 id(안드로이드) 또는 내 userId(iOS)다.

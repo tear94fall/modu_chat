@@ -1,5 +1,8 @@
 package com.example.chatservice.application.usecase
 
+import com.example.chatservice.application.message.SubscribeType
+import com.example.chatservice.application.message.ChatMessage
+import com.example.chatservice.application.domain.entity.ChatType
 import com.example.chatservice.application.common.exception.ErrorCode
 import com.example.chatservice.application.domain.entity.ReactionEmoji
 import com.example.chatservice.application.event.ChatEventPublisher
@@ -163,6 +166,71 @@ class ChatRoomUseCaseTest {
         val view = chatRoomUseCase.room(userId(3), "room-1")
 
         assertThat(view.members).extracting<String> { it.userId }.containsExactlyInAnyOrder("user-1", "user-2", "user-3")
+    }
+
+    // ---------- 시스템 안내(초대·나감) ----------
+
+    @Test
+    @DisplayName("초대하면 '누가 누구를 초대했습니다' 안내 행이 남고 방 안 세션에 브로드캐스트된다 — 안내는 안 읽음에 세지 않는다")
+    fun invite_appendsSystemRow_andBroadcasts() {
+        fixtures.room("room-1", 1L)
+
+        chatRoomUseCase.invite(userId(1), "room-1", listOf(userId(2), userId(3)))
+
+        val chats = fixtures.chatsOf("room-1")
+        assertThat(chats).hasSize(1)
+        assertThat(chats[0].chatType).isEqualTo(ChatType.CHAT_TYPE_SYSTEM_INVITE)
+        assertThat(chats[0].sender).isEqualTo(userId(1))
+        assertThat(chats[0].message).isEqualTo("이름1님이 이름2, 이름3님을 초대했습니다")
+        assertThat(chats[0].chatTime).matches("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}")
+        val sent = argumentCaptor<ChatMessage>()
+        verify(chatEventPublisher).broadcast(eq("room-1"), sent.capture())
+        assertThat(sent.firstValue.type).isEqualTo(SubscribeType.BROAD_CAST)
+        assertThat(sent.firstValue.chatId).isEqualTo(chats[0].id.toString())
+        // 방 목록 미리보기는 안내 문장이지만, 초대받은 2 의 안 읽음 배지는 0 이다.
+        assertThat(chatRoomUseCase.room(userId(2), "room-1").room.lastChatMsg).isEqualTo(chats[0].message)
+        assertThat(chatRoomUseCase.unread(userId(2), "2").single().unreadChatCount).isZero()
+    }
+
+    @Test
+    @DisplayName("이미 방에 있는 사람만 초대하면 안내 행을 남기지 않는다")
+    fun invite_onlyExistingMembers_isSilent() {
+        fixtures.room("room-1", 1L, 2L)
+
+        chatRoomUseCase.invite(userId(1), "room-1", listOf(userId(2)))
+
+        assertThat(fixtures.chatsOf("room-1")).isEmpty()
+        verify(chatEventPublisher, never()).broadcast(any(), any())
+    }
+
+    @Test
+    @DisplayName("나가면 '누가 나갔습니다' 안내 행이 남고(sender = 나간 사람), 남은 사람에게 브로드캐스트된다")
+    fun leave_appendsSystemRow_withLeaverAsSender() {
+        fixtures.room("room-1", 1L, 2L)
+
+        chatRoomUseCase.leave(userId(1), "room-1", userId(1))
+
+        val chats = fixtures.chatsOf("room-1")
+        assertThat(chats).hasSize(1)
+        assertThat(chats[0].chatType).isEqualTo(ChatType.CHAT_TYPE_SYSTEM_LEAVE)
+        assertThat(chats[0].sender).isEqualTo(userId(1))
+        assertThat(chats[0].message).isEqualTo("이름1님이 나갔습니다")
+        verify(chatEventPublisher).broadcast(eq("room-1"), any())
+        // 나간 사람을 다시 초대하면 들어오고, 초대 안내가 또 남는다.
+        chatRoomUseCase.invite(userId(2), "room-1", listOf(userId(1)))
+        assertThat(fixtures.memberIdsOf("room-1")).containsExactlyInAnyOrder(1L, 2L)
+        assertThat(fixtures.chatsOf("room-1").last().message).isEqualTo("이름2님이 이름1님을 초대했습니다")
+    }
+
+    @Test
+    @DisplayName("마지막 사람이 나가 방이 지워지면 안내 행도 브로드캐스트도 없다")
+    fun leave_lastMember_isSilent() {
+        fixtures.room("room-1", 1L)
+
+        chatRoomUseCase.leave(userId(1), "room-1", userId(1))
+
+        assertThat(fixtures.roomExists("room-1")).isFalse()
+        verify(chatEventPublisher, never()).broadcast(any(), any())
     }
 
     // ---------- 조회 ----------

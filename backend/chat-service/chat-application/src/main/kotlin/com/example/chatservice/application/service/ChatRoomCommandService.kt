@@ -1,5 +1,6 @@
 package com.example.chatservice.application.service
 
+import com.example.chatservice.application.domain.entity.Chat
 import com.example.chatservice.application.access.RoomMembership
 import com.example.chatservice.application.common.exception.CustomException
 import com.example.chatservice.application.common.exception.ErrorCode
@@ -19,6 +20,7 @@ import com.example.chatservice.application.usecase.result.MemberReadCursor
 import com.example.chatservice.application.usecase.result.UnreadCount
 import com.example.chatservice.application.usecase.result.UnreadRoom
 import java.time.Clock
+import com.example.chatservice.application.domain.entity.ChatType
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -274,6 +276,21 @@ class ChatRoomCommandService(
         chatRoom.membershipChanged()
     }
 
+    /**
+     * 방에 시스템 안내 행(초대·나감)을 남기고 마지막 메시지로 올린다. 호출자의 트랜잭션(멤버 변경)과 함께 커밋된다.
+     * 시각은 ws-service 가 쓰는 것과 같은 꼴(UTC, yyyy-MM-dd HH:mm:ss).
+     *
+     * @return 저장된 채팅 id
+     */
+    fun appendSystemChat(roomId: String, type: Int, sender: String, message: String): Long {
+        require(ChatType.isSystem(type)) { "system chat type expected: $type" }
+        val chatRoom = room(roomId)
+        val chatTime = LocalDateTime.now(clock).format(SYSTEM_CHAT_TIME)
+        val chat = chatRepository.save(Chat(message, roomId, chatRoom, sender, chatTime, type))
+        chatRoom.addChatting(chat)
+        return requireNotNull(chat.id)
+    }
+
     fun update(roomId: String, command: UpdateChatRoomCommand): ChatRoomResult {
         val chatRoom = room(roomId)
         chatRoom.updateChatRoom(
@@ -322,6 +339,9 @@ class ChatRoomCommandService(
     }
 
     companion object {
+        /** ws-service TimeUtil 과 같은 chat_time 문자열 꼴. */
+        private val SYSTEM_CHAT_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+
         const val NEW_ROOM_NAME = "새로운 채팅방"
         private val CHAT_TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
     }

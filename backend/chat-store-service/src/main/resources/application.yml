@@ -19,8 +19,9 @@ spring:
       name: messenger,${spring.application.name}
       fail-fast: true
 
-  data:
-    mongodb:
+  # MongoDB 접속 URI(spring.mongodb.uri, 자격증명 포함)는 config-repo(messenger/chat-store-service.yml)가 {cipher} 로 내려준다.
+  # Spring Boot 4 부터 접속 속성 접두사는 spring.mongodb 다 — spring.data.mongodb.* 는 읽지 않는다.
+  mongodb:
 
   kafka:
     consumer:

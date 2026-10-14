@@ -88,8 +88,8 @@ class ApiLoggingFilter(
         response: ContentCachingResponseWrapper,
         durationMs: Long,
     ) {
-        val requestCharset = charsetOf(request.characterEncoding)
-        val responseCharset = charsetOf(response.characterEncoding)
+        val requestCharset = charsetOf(request.contentType, request.characterEncoding)
+        val responseCharset = charsetOf(response.contentType, response.characterEncoding)
         val args =
             listOfNotNull(
                 v("method", request.method),
@@ -146,9 +146,7 @@ class ApiLoggingFilter(
         }
 
         private fun isTextual(mediaType: MediaType): Boolean =
-            mediaType.isCompatibleWith(MediaType.APPLICATION_JSON) ||
-                mediaType.isCompatibleWith(MediaType.APPLICATION_FORM_URLENCODED) ||
-                (mediaType.type == "application" && mediaType.subtype.endsWith("+json"))
+            isJson(mediaType) || mediaType.isCompatibleWith(MediaType.APPLICATION_FORM_URLENCODED)
 
         fun truncate(bytes: ByteArray, charset: Charset, maxBodyBytes: Int): String {
             if (bytes.size <= maxBodyBytes) return String(bytes, charset)
@@ -156,7 +154,20 @@ class ApiLoggingFilter(
             return "$kept…[truncated ${bytes.size - maxBodyBytes} bytes]"
         }
 
-        private fun charsetOf(name: String?): Charset =
-            name?.let { runCatching { Charset.forName(it) }.getOrNull() } ?: StandardCharsets.UTF_8
+        /**
+         * 본문을 읽을 문자 집합. Content-Type 의 charset 이 있으면 그것, 없는데 JSON 이면 UTF-8(RFC 8259 — Jackson 도 UTF-8 로 쓴다),
+         * 그 밖엔 컨테이너가 보고하는 인코딩, 그것도 없으면 UTF-8. 톰캣은 charset 이 없는 응답에 기본값 ISO-8859-1 을 보고해
+         * 그대로 읽으면 한글이 깨진다.
+         */
+        fun charsetOf(contentType: String?, declared: String?): Charset {
+            val mediaType = contentType?.let { runCatching { MediaType.parseMediaType(it) }.getOrNull() }
+            mediaType?.charset?.let { return it }
+            if (mediaType != null && isJson(mediaType)) return StandardCharsets.UTF_8
+            return declared?.let { runCatching { Charset.forName(it) }.getOrNull() } ?: StandardCharsets.UTF_8
+        }
+
+        private fun isJson(mediaType: MediaType): Boolean =
+            mediaType.isCompatibleWith(MediaType.APPLICATION_JSON) ||
+                (mediaType.type == "application" && mediaType.subtype.endsWith("+json"))
     }
 }

@@ -90,8 +90,8 @@ public class ApiLoggingFilter extends OncePerRequestFilter {
     }
 
     private void log(ContentCachingRequestWrapper request, ContentCachingResponseWrapper response, long durationMs) {
-        Charset requestCharset = charsetOf(request.getCharacterEncoding());
-        Charset responseCharset = charsetOf(response.getCharacterEncoding());
+        Charset requestCharset = charsetOf(request.getContentType(), request.getCharacterEncoding());
+        Charset responseCharset = charsetOf(response.getContentType(), response.getCharacterEncoding());
         List<Object> args = new ArrayList<>();
         args.add(v("method", request.getMethod()));
         args.add(v("path", request.getRequestURI()));
@@ -161,8 +161,11 @@ public class ApiLoggingFilter extends OncePerRequestFilter {
     }
 
     private static boolean isTextual(MediaType mediaType) {
+        return isJson(mediaType) || mediaType.isCompatibleWith(MediaType.APPLICATION_FORM_URLENCODED);
+    }
+
+    private static boolean isJson(MediaType mediaType) {
         return mediaType.isCompatibleWith(MediaType.APPLICATION_JSON)
-                || mediaType.isCompatibleWith(MediaType.APPLICATION_FORM_URLENCODED)
                 || ("application".equals(mediaType.getType()) && mediaType.getSubtype().endsWith("+json"));
     }
 
@@ -174,12 +177,31 @@ public class ApiLoggingFilter extends OncePerRequestFilter {
         return kept + "…[truncated " + (bytes.length - maxBodyBytes) + " bytes]";
     }
 
-    private static Charset charsetOf(String name) {
-        if (name == null) {
+    /**
+     * 본문을 읽을 문자 집합. Content-Type 의 charset 이 있으면 그것, 없는데 JSON 이면 UTF-8(RFC 8259 — Jackson 도 UTF-8 로 쓴다),
+     * 그 밖엔 컨테이너가 보고하는 인코딩, 그것도 없으면 UTF-8. 톰캣은 charset 이 없는 응답에 기본값 ISO-8859-1 을 보고해
+     * 그대로 읽으면 한글이 깨진다.
+     */
+    public static Charset charsetOf(String contentType, String declared) {
+        MediaType mediaType = null;
+        if (StringUtils.hasText(contentType)) {
+            try {
+                mediaType = MediaType.parseMediaType(contentType);
+            } catch (InvalidMediaTypeException e) {
+                mediaType = null;
+            }
+        }
+        if (mediaType != null && mediaType.getCharset() != null) {
+            return mediaType.getCharset();
+        }
+        if (mediaType != null && isJson(mediaType)) {
+            return StandardCharsets.UTF_8;
+        }
+        if (declared == null) {
             return StandardCharsets.UTF_8;
         }
         try {
-            return Charset.forName(name);
+            return Charset.forName(declared);
         } catch (RuntimeException e) {
             return StandardCharsets.UTF_8;
         }

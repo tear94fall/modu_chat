@@ -6,9 +6,13 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
+import jakarta.servlet.FilterChain
+import jakarta.servlet.http.HttpServletResponseWrapper
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
+import org.springframework.mock.web.MockHttpServletRequest
+import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
@@ -139,6 +143,27 @@ class ApiLoggingFilterTest {
         mockMvc.get("/api-public/download?file=a.jpg").andExpect { status { isOk() } }
 
         assertTrue(capture.events.isEmpty())
+    }
+
+    /**
+     * 톰캣은 Content-Type 에 charset 이 없으면 getCharacterEncoding() 으로 기본값 ISO-8859-1 을 돌려준다. Jackson 은 UTF-8 로 쓰므로
+     * 그 값으로 읽으면 한글이 깨진다("소율" → "ìì¤ì"). JSON 은 charset 선언이 없으면 UTF-8 로 읽어야 한다.
+     */
+    @Test
+    fun `응답 본문의 한글은 컨테이너 기본 인코딩이 ISO-8859-1 이고 Content-Type 에 charset 이 없어도 UTF-8 로 남긴다`() {
+        val request = MockHttpServletRequest("GET", "/api-public/v1/korean")
+        val tomcatLike = object : HttpServletResponseWrapper(MockHttpServletResponse()) {
+            override fun getCharacterEncoding(): String = "ISO-8859-1"
+        }
+        val chain = FilterChain { _, res ->
+            res.contentType = MediaType.APPLICATION_JSON_VALUE
+            res.outputStream.write("""{"name":"소율"}""".toByteArray(Charsets.UTF_8))
+        }
+
+        ApiLoggingFilter(ApiLoggingProperties(enabled = true, maxBodyBytes = maxBodyBytes)).doFilter(request, tomcatLike, chain)
+
+        val fields = LogCapture.fields(capture.events.single())
+        assertEquals("""{"name":"소율"}""", fields["responseBody"])
     }
 
     @Test

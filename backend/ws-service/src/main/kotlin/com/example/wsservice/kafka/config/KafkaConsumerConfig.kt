@@ -1,6 +1,7 @@
 package com.example.wsservice.kafka.config
 
 import com.example.wsservice.chat.dto.ChatMessage
+import com.example.wsservice.logging.RequestContextRecordInterceptor
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.LoggerFactory
@@ -13,7 +14,7 @@ import org.springframework.kafka.core.ConsumerFactory
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory
 import org.springframework.kafka.listener.ContainerProperties
 import org.springframework.kafka.listener.DefaultErrorHandler
-import org.springframework.kafka.support.serializer.JsonDeserializer
+import org.springframework.kafka.support.serializer.JacksonJsonDeserializer
 import org.springframework.util.backoff.FixedBackOff
 
 @EnableKafka
@@ -32,13 +33,13 @@ class KafkaConsumerConfig(
             ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,
             ConsumerConfig.GROUP_ID_CONFIG to groupId,
             ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
-            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to JsonDeserializer::class.java,
+            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to JacksonJsonDeserializer::class.java,
             ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG to false,
             ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to autoOffsetReset,
             ConsumerConfig.MAX_POLL_RECORDS_CONFIG to 500,
             ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG to 5000,
         )
-        val deserializer = JsonDeserializer(ChatMessage::class.java, false).apply { addTrustedPackages("*") }
+        val deserializer = JacksonJsonDeserializer(ChatMessage::class.java, false).apply { addTrustedPackages("*") }
         return DefaultKafkaConsumerFactory(config, StringDeserializer(), deserializer)
     }
 
@@ -47,8 +48,10 @@ class KafkaConsumerConfig(
         val factory = ConcurrentKafkaListenerContainerFactory<String, ChatMessage>()
         factory.containerProperties.ackMode = ContainerProperties.AckMode.MANUAL_IMMEDIATE
         factory.setConcurrency(3)
-        factory.consumerFactory = consumerFactory()
+        factory.setConsumerFactory(consumerFactory())
         factory.setCommonErrorHandler(defaultErrorHandler())
+        // 레코드마다 헤더의 X-Request-Id 를 MDC 에 넣고 끝나면 지운다.
+        factory.setRecordInterceptor(RequestContextRecordInterceptor())
         return factory
     }
 

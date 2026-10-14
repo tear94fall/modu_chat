@@ -1,0 +1,17 @@
+# 이미지 빌드 컨텍스트에서 뺀다. 소스는 모두 들어가고(테스트는 -x test 로 건너뛴다) 빌드 산출물·IDE 파일·비밀값만 제외한다.
+build/
+*/build/
+.gradle/
+.kotlin/
+*/.kotlin/
+out/
+*/out/
+.idea/
+*.iml
+.DS_Store
+**/.DS_Store
+HELP.md
+http/
+# 비밀값은 이미지에 절대 넣지 않는다(config-service 가 내려준다)
+**/src/main/resources/firebase/
+**/application-oauth.yml

@@ -1,0 +1,45 @@
+# chat-application 모듈 테스트 설정(웹·Spring Cloud 없이 JPA 만).
+spring:
+  application:
+    name: chat-service
+
+  # Redisson 스타터의 자동 설정은 RedissonClient 가 없으면 localhost:6379 에 붙으려다 기동에 실패한다. 테스트엔 Redis 가 없다.
+  autoconfigure:
+    # Redisson 4.x 는 자동설정 클래스를 V2/V4 로 나눴다(옛 RedissonAutoConfiguration 은 자동설정이 아니라 exclude 하면 기동이 깨진다).
+    exclude: org.redisson.spring.starter.RedissonAutoConfigurationV2,org.redisson.spring.starter.RedissonAutoConfigurationV4
+
+  profiles:
+    active: test
+
+  # master 와 replica 가 같은 H2 를 본다(복제 지연 없음).
+  datasource:
+    master:
+      url: jdbc:h2:mem:chat_application;MODE=MYSQL;DB_CLOSE_DELAY=-1
+      username: sa
+      password:
+      driver-class-name: org.h2.Driver
+      hikari:
+        pool-name: test-master-pool
+        maximum-pool-size: 5
+
+    replica:
+      url: jdbc:h2:mem:chat_application;MODE=MYSQL;DB_CLOSE_DELAY=-1
+      username: sa
+      password:
+      driver-class-name: org.h2.Driver
+      hikari:
+        pool-name: test-replica-pool
+        maximum-pool-size: 5
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_batch_fetch_size: 1000
+    open-in-view: false
+
+# 테스트에는 Redis 가 없다. Redis 락(@ApiLock 애스펙트 + Redisson)을 끄고, 방 만들기의 정확성은 chat_room.member_key 유니크 키가 맡는다.
+modu:
+  api-lock:
+    enabled: false

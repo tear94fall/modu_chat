@@ -21,10 +21,26 @@ spring:
       # 컨텍스트만 띄운다. 브로커에 붙지 않는다.
       auto-startup: false
 
-eureka:
-  client:
-    enabled: false
-
 modu:
+  # Feign 클라이언트는 기동 때 url 을 요구한다. 테스트는 목으로 바꾸므로 유효하기만 한 가짜 주소를 둔다.
+  services:
+    chat-service: http://localhost:1
   internal-api:
     token: test-internal-token
+
+# main 의 application.yml 과 같은 probe 설정(이 파일이 main 을 가리므로 여기에도 둔다). HealthProbesTest 가 본다.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+      group:
+        readiness:
+          include: readinessState, mongo
+        liveness:
+          include: livenessState

@@ -7,7 +7,6 @@
 - [Spring Boot](https://spring.io/projects/spring-boot)
 - [Spring Cloud](https://spring.io/projects/spring-cloud)
 - [Spring Cloud Api Gateway](https://spring.io/projects/spring-cloud-gateway)
-- [Spring Cloud Eureka](https://cloud.spring.io/spring-cloud-netflix/reference/html/)
 - [Spring Cloud Config](https://docs.spring.io/spring-cloud-config/docs/current/reference/html/)
 - [Spring Cloud OpenFeign](https://cloud.spring.io/spring-cloud-openfeign/reference/html)
 - [Spring Cloud Bus](https://docs.spring.io/spring-cloud-bus/docs/current/reference/html/)
@@ -39,16 +38,21 @@
 - [Debezium](https://debezium.io/)
 - [Zipkin](https://zipkin.io/)
 
-### 로컬 실행
+### 실행 환경 (2026-10-04 부터 전부 k8s)
 
-인프라(MySQL, MongoDB, Redis, Kafka, RabbitMQ, MinIO)와 관측성 스택(Prometheus, Grafana, Pinpoint)은 modu_infra(https://github.com/tear94fall/modu_infra), 플랫폼(config-service, discovery-service, gateway-service)은 modu_platform(https://github.com/tear94fall/modu_platform) 저장소에서 따로 띄웁니다(둘 다 이 저장소 옆에 clone).
-이 디렉터리의 `docker-compose.yml` 에는 메신저 애플리케이션 서비스(auth, member, chat, ws, push, storage, profile, chat-store, point)만 있습니다. point-service 는 그로스(이벤트·출석·초대) 포인트 원장으로, 사용자를 userId 로만 식별해 채팅 DB 와 독립적입니다(`point-service/sql/schema.sql` 로 `modu-point` 스키마를 한 번 만들어 둡니다).
+인프라(MySQL, MongoDB, Redis, Kafka, RabbitMQ, MinIO)·관측성(OpenSearch, Prometheus, Grafana, Pinpoint)·플랫폼(config-service, gateway-service)·이 저장소의 서비스 10개가 모두 Docker Desktop Kubernetes(네임스페이스 `modu`)에서 돕니다. 매니페스트와 절차는 modu_infra(https://github.com/tear94fall/modu_infra) 의 `k8s/README.md`, 설정은 modu_platform(https://github.com/tear94fall/modu_platform) 의 `config-repo/` 입니다. compose 는 2026-10-04 에 걷어냈습니다.
 
-1. modu_infra 의 `README.md` 순서대로 `modu-infra` 네트워크, pinpoint-docker, data, monitoring 을 먼저 띄웁니다.
-2. modu_platform 의 `README.md` 대로 config-service, discovery-service, gateway-service 를 띄웁니다. 설정 파일(`config-repo/`)도 그 저장소에 있습니다 — 메신저 서비스는 `messenger/` 폴더의 설정을 받습니다.
-3. `backend` 에서 `docker compose up -d --build`. 플랫폼이 아직 안 떠 있으면 서비스가 설정을 못 받아 기동에 실패하고 compose 가 재시작합니다(fail-fast). Eureka 등록에 1분쯤 걸리므로 그 사이 게이트웨이의 503 은 정상입니다.
+point-service 는 그로스(이벤트·출석·초대) 포인트 원장으로, 사용자를 userId 로만 식별해 채팅 DB 와 독립적입니다(스키마 기준선은 modu_infra `data/mysql/schema/`).
 
-`.env` 의 `INTERNAL_API_TOKEN` 은 modu_platform, modu_commerce 의 `.env` 와 같은 값이어야 합니다. `ENCRYPT_KEY` 는 이제 modu_platform 에서만 씁니다.
+비밀값은 전부 modu_platform 의 config-repo 에 `{cipher}` 로 암호화해 두고 config-service 가 복호화해 내려줍니다 — 내부 API 토큰(`modu.internal-api.token`, 공통 `application.yml`), DB 비밀번호(`messenger/messenger.yml`), Firebase 서비스 계정 키(`messenger/push-service.yml` 의 `modu.push.firebase.credentials-base64`, JSON 을 base64 로 감싼 값). 이 저장소에는 비밀 파일이 없습니다. config-server 없이 push-service 를 로컬에서 띄울 때만 예외로, gitignore 된 키 파일을 `push-api/src/main/resources/firebase/` 에 두면 `FirebaseConfig` 가 폴백으로 읽습니다.
+
+### 이미지와 배포
+
+서비스 이미지는 GitHub Actions(`.github/workflows/images.yml`)가 각 서비스의 `Dockerfile`(멀티스테이지: corretto 21 에서 `gradlew bootJar` → corretto 21 실행)로 만들어 GHCR 에 올립니다. 테스트는 Dockerfile 이 아니라 워크플로에서 돕니다(`-x test`). `.dockerignore` 가 `build/`·IDE 파일과 비밀값을 빌드 컨텍스트에서 뺍니다.
+
+- 이미지 이름: `ghcr.io/tear94fall/modu-chat/<service>` (auth-service, chat-service, chat-store-service, member-service, point-service, profile-service, push-service, schedule-service, storage-service, ws-service)
+- 태그: `develop` 브랜치 push → `develop-<sha7>` + `develop`, `master` push → `master-<sha7>` + `latest`. PR 은 바뀐 서비스만 테스트·빌드하고 푸시하지 않습니다. `workflow_dispatch` 는 10개 전부(develop·master 에서 돌리면 푸시).
+- 배포: dev 는 **k8s**(modu_infra `k8s/`, 네임스페이스 `modu`)에서 돕니다. CI 가 GHCR 에 올린 태그를 `modu_infra/k8s/overlays/dev/kustomization.yaml` 의 `images[].newTag` 에 적고 `kubectl apply -k overlays/dev` 하면 그 Deployment 만 롤링됩니다(빠르게는 `kubectl -n modu set image deploy/<svc> <svc>=<이미지>:<태그>`). 로컬에서 빌드한 이미지를 쓰려면 `docker build -t <이미지>:local <디렉터리>` → `docker save <이미지>:local | docker exec -i desktop-control-plane ctr -n k8s.io images import -` 뒤 태그를 `local` 로 적습니다(Dockerfile 은 CI 와 같은 파일). GHCR 패키지는 저장소가 public 이라 처음 푸시 때부터 public 으로 생깁니다(로그인 없이 pull).
 
 ## Project Architecture
 
@@ -97,7 +101,7 @@ gateway 뒤에 위치한 서비스에 대한 정보를 알고 있다고 하더�
 
 컨트롤러는 `<root>/api/pub`, `<root>/api/internal`, `<root>/api/debug` 패키지에 계층별로 두고 서비스 레이어를 공유합니다.
 앱과 다른 서비스가 둘 다 쓰는 엔드포인트는 두 컨트롤러에 각각 둡니다.
-내부 토큰은 `backend/.env` 의 `INTERNAL_API_TOKEN` 으로 각 컨테이너에 전달됩니다.
+내부 토큰(`modu.internal-api.token`)은 config-repo(modu_platform) 의 공통 `application.yml` 에서 각 서비스로 내려옵니다(환경 변수로 넘기지 않습니다).
 콘솔(모두의 어드민·시스템·인터널) 로그인은 직원의 구글 계정으로 한다(클라이언트 `modu-admin`, `staff: true`). 직원과 권한(SUPER·ADMIN·SYSTEM·INTERNAL)은 member-service 의 `staff`, `staff_permission` 테이블에 있고, auth-service 가 토큰 roles 로 바꾼다(SUPER 는 모든 콘솔 + `ROLE_SUPER`). 첫 최상위 관리자는 DB 에 직접 넣는다:
 
 ```sql
@@ -107,30 +111,18 @@ insert into staff_permission (member_id, permission) values (<member_id>, 'SUPER
 
 `ADMIN_ALLOWED_ORIGIN` (gateway): 백오피스 프런트엔드가 서비스되는 origin (CORS 허용 origin). 백오피스는 별도 저장소 [modu_admin](https://github.com/tear94fall/modu_admin) 이다(2026-09-18 에 `admin/` 에서 분리, 기본 개발 서버 `http://localhost:5173`).
 
-schedule-service 는 config-server 를 쓰지 않아 자체 `application.yml` 에서 정의합니다.
-`.env` 에 `INTERNAL_API_TOKEN` 이 없으면 서비스가 기동을 거부합니다 (빈 토큰 방지).
+내부 토큰이 비어 있으면 서비스가 기동을 거부합니다 (빈 토큰 방지).
 config-server(modu_platform 의 config-service)가 죽어 있으면 설정을 못 받아 기동에 실패합니다(`fail-fast`).
 
-### Spring Cloud Eureka
-모놀리식 구조에서는 하나의 서비스에서 사용자 인증 부터 리소스 접근에 대한 모든 요청을 처리 하였습니다.  
-예를 들어, 회원 가입-로그인-서비스 이용이 하나의 서버에서 이뤄지다 보니 구조가 단순하였습니다.  
-하지만 MSA 구조에서는 하나의 요청을 처리하기 위해 내부의 다른 서비스로의 접근이 이뤄지는 경우가 많았습니다.  
-또한 클라이언트가 하나의 서비스에만 접근 하는것이 아닌 다수의 서비스에 서로 다른 요청을 전송하고 있었습니다.  
-
-클라이언트 또는 내부에서 서로 다른 서비스에 접근 하기 위해서는 접근 하려는 서비스에 대한 정보를 필요로 하였습니다.  
-하지만 각각의 서비스가 서로 다른 포트를 점유하고 있고, 서로 각각의 서비스의 포트를 모두 알고 있어야 했습니다.  
-또한 특정 서비스의 부하가 생기는 경우 해결하기 위해 동일한 기능을 하는 서비스를 일시적으로 다수 띄우는 경우도 존재합니다.  
-이런 경우 변경되는 서비스에 대한 정보를 모두 가지고 있을 수 없는데 기존의 방법으로는 이를 해결할수 없었습니다.   
-
-이러한 문제를 해결하고자, spring eureka를 사용하였습니다.  
-각각의 서비스는 discovery client 로써 eureka server로 자신의 정보를 주기적으로 요청을 전송합니다.  
-이런경우 서비스를 운영하면서 동적으로 변경되는 서비스의 구성을 모두 알고 있을 필요가 없었습니다.  
-모든 정보는 eureka server가 가지고 있으므로, eureka 서버에 대한 정보만을 가지고 있으면 되기 때문입니다.  
-
-eureka server는 등록된 서비스로를 알고 있다해도 부하 부산을 위해서는 로드 밸런싱 기능을 필요로 했습니다.  
-로드 밸런싱 기능은 spring api-gateway를 통해 처리하도록 하였습니다.  
-클라이언트는 서비스의 가장 앞단에 있는 spring api-gateway로 요청을 전송합니다.  
-gateway는 받은 요청의 서비스에 대한 정보를 eureka로 부터 전달 받고 요청에 해당되는 서비스로 요청을 전송하게 됩니다.  
+### 서비스 주소 (DNS 라우팅)
+서비스끼리의 호출과 게이트웨이 → 서비스 라우팅은 서비스 디스커버리 없이 고정된 `호스트:포트` 로 갑니다.
+주소는 config-repo(modu_platform) 의 `application.yml` 에 있는 `modu.services.*` 한 곳에서만 정합니다
+(예: `modu.services.member-service: http://member-service:8080`). k8s 에서는 같은 이름의 Service 가 그 이름이고,
+k8s 에서는 같은 이름·같은 포트의 Service 를 만들어 맞춥니다. 로컬 프로필(`messenger-local.yml`)은 같은 키를 `http://localhost:<port>` 로 둡니다.  
+각 Feign 클라이언트는 `@FeignClient(name = "x-service", url = "\${modu.services.x-service}")` 로 이 값을 받고,
+Feign 을 쓰지 않는 호출(member-service 의 `modu.commerce.url` 등)도 기본값을 같은 키에서 가져옵니다.
+테스트는 `modu.services.*` 를 `http://localhost:1` 같은 가짜 주소로 두고 클라이언트를 목으로 바꿉니다.  
+(처음에는 Spring Cloud Eureka 로 서비스를 등록·조회했지만, k8s 이전을 준비하며 2026-10 에 걷어냈습니다.)
 
 ### Spring Cloud Open Feign
 MSA 구조에서는 서비스 끼리의 통신이 빈번하게 발생합니다.  
@@ -141,8 +133,7 @@ MSA 구조에서는 서비스 끼리의 통신이 빈번하게 발생합니다.
 
 OpenFeign을 기본 기능도 정말 훌륭하지만, 에러처리와 로깅에 대해서는 조금 수정을 해줘야 했습니다.  
 MSA 내부에서 요청에 실패한 경우에 대한 에러 처리가 필요하여, Error decoder를 통해 에러를 커스터 마이징 하였습니다.  
-서비스간에 발생하는 서비스에 대한 정보를 알고있어야 하는건 아닌가? 했는데, eureka client로 등록해었기 때문에,  
-eureka 서버에 등록된 서비스들의 이름을 통해 서비스 끼리의 통신이 가능했습니다.  
+서비스 주소는 위의 `modu.services.*` 에서 받아 `url` 로 넘기므로 클라이언트 코드에 포트가 들어가지 않습니다.  
 
 ### Spring Cloude Sleuth
 MSA 구조로 변경하면서 크게 고민하였던 문제가 있었습니다. 장애가 발생하는 구간을 어떻게 모니터링 할수 있을까? 였습니다.  
@@ -195,6 +186,13 @@ Redis 클러스터(마스터 3 + 레플리카 3, `redis-node-1`~`redis-node-6`)�
 
 단일 노드에서는 CROSSSLOT 같은 클러스터 제약이 드러나지 않으므로, 여러 키를 한 명령으로 다루는 코드는 도커 스택에서 확인한다.  
 클러스터를 직접 들여다볼 때는 `docker exec -it redis-node-1 redis-cli -c` 를 쓴다.  
+
+### 스키마 관리
+JPA 서비스(chat·member·point·profile·push·schedule)의 `spring.jpa.hibernate.ddl-auto` 는 dev/prod 에서 `validate` 다. Hibernate 는 공용 DB 의 테이블을 만들거나 바꾸지 않고, 엔티티와 스키마가 어긋나면 기동 실패로 드러난다(`local` 프로필과 H2 테스트만 `update`).  
+스키마 기준선(테이블별 DDL)과 변경 이력은 [modu_infra](https://github.com/tear94fall/modu_infra) 의 `data/mysql/schema` 에 둔다.  
+스키마 변경은 DBA 가 gh-ost 로 온라인 적용한다(절차: `modu_infra/data/mysql/DBA.md`). 코드 쪽은 엔티티·마이그레이션 DDL 을 같은 PR 에 넣고, DB 에 먼저 적용된 뒤 배포한다.  
+운영 DB 에는 FK 를 두지 않는다. 삭제 순서·참조 정합성은 UseCase 가 책임지고, 어긋난 행은 고아 행 점검 쿼리(`modu_infra/data/mysql/schema`)로 찾는다. 테스트(H2)는 Hibernate 가 FK 를 만들므로 잘못된 삭제 순서는 테스트에서 걸린다.  
+2개 이상 파드에서 도는 스케줄러(schedule-service)는 ShedLock 으로 `shedlock` 테이블(master)에 락을 걸어 한 번만 돈다.  
 
 ### 도커를 이용한 컨테이너 기반 운영환경
 MSA 구조에서 서비스는 단일로 구동이 되기도 하지만, 트래픽의 부하 분산을 위해서 다수의 서비스를 운영하기도 합니다.  

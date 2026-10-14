@@ -33,9 +33,9 @@ import java.util.Set;
 @SupportedSourceVersion(SourceVersion.RELEASE_21)
 public class ApiLockProcessor extends AbstractProcessor {
 
-    static final String API_LOCK_ANNOTATION = "com.example.memberservice.global.lock.ApiLock";
-    static final String LOCK_PARAM_ANNOTATION = "com.example.memberservice.global.lock.LockParam";
-    private static final String LOCKABLE_TYPE = "com.example.memberservice.global.lock.Lockable";
+    static final String API_LOCK_ANNOTATION = "com.example.memberservice.application.common.lock.ApiLock";
+    static final String LOCK_PARAM_ANNOTATION = "com.example.memberservice.application.common.lock.LockParam";
+    private static final String LOCKABLE_TYPE = "com.example.memberservice.application.common.lock.Lockable";
     private static final String UUID_TYPE = "java.util.UUID";
     private static final String CHAR_SEQUENCE_TYPE = "java.lang.CharSequence";
     private static final String STRING_TYPE = "java.lang.String";

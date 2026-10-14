@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 로그는 stdout 으로만 쓴다. dev/prod 는 한 줄 JSON(OTel Collector 가 모아 OpenSearch 로), local 은 사람이 읽는 형식. -->
+<configuration>
+    <springProperty scope="context" name="service" source="spring.application.name" defaultValue="unknown"/>
+    <springProfile name="local">
+        <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} [req=%X{requestId:-} user=%X{userId:-}] - %msg%n%ex</pattern>
+            </encoder>
+        </appender>
+        <root level="INFO"><appender-ref ref="CONSOLE"/></root>
+    </springProfile>
+    <springProfile name="!local">
+        <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <customFields>{"service":"${service}"}</customFields>
+                <!-- springProperty 가 로거 컨텍스트 속성으로도 들어가 service 가 두 번 찍히는 것을 막는다. -->
+                <includeContext>false</includeContext>
+                <fieldNames>
+                    <timestamp>@timestamp</timestamp>
+                    <version>[ignore]</version>
+                    <levelValue>[ignore]</levelValue>
+                </fieldNames>
+                <!-- MDC 전부 포함: requestId, userId, PtxId, PspanId(Pinpoint) -->
+                <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                    <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                    <rootCauseFirst>true</rootCauseFirst>
+                    <exclude>^sun\.reflect\..*</exclude>
+                    <exclude>^java\.lang\.reflect\..*</exclude>
+                    <exclude>^org\.springframework\.(web|security|aop|cglib)\..*</exclude>
+                    <exclude>^org\.apache\.(catalina|coyote|tomcat)\..*</exclude>
+                </throwableConverter>
+            </encoder>
+        </appender>
+        <root level="INFO"><appender-ref ref="JSON"/></root>
+    </springProfile>
+</configuration>

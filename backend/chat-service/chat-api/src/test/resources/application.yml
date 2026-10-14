@@ -1,0 +1,91 @@
+# 테스트 설정. 같은 이름(application.yml)이라 main 의 것을 가린다 — 필요한 값은 여기에 다 있다.
+server:
+  port: 9090
+
+spring:
+  application:
+    name: chat-service
+
+  # Redisson 스타터의 자동 설정은 RedissonClient 가 없으면 localhost:6379 에 붙으려다 기동에 실패한다. 테스트엔 Redis 가 없다.
+  autoconfigure:
+    # Redisson 4.x 는 자동설정 클래스를 V2/V4 로 나눴다(옛 RedissonAutoConfiguration 은 자동설정이 아니라 exclude 하면 기동이 깨진다).
+    exclude: org.redisson.spring.starter.RedissonAutoConfigurationV2,org.redisson.spring.starter.RedissonAutoConfigurationV4
+
+  profiles:
+    active: test
+
+  # 테스트는 config-server 를 쓰지 않는다. enabled: false 면
+  # Spring Cloud Commons 의 spring.config.import 필수 검사도 통과한다.
+  cloud:
+    config:
+      enabled: false
+
+  # master 와 replica 가 같은 H2 를 본다(복제 지연 없음). 늦은 레플리카는 ReplicaLagTest 가 replica.url 만 바꿔 만든다.
+  datasource:
+    master:
+      url: jdbc:h2:mem:chat_api;MODE=MYSQL;DB_CLOSE_DELAY=-1
+      username: sa
+      password:
+      driver-class-name: org.h2.Driver
+      hikari:
+        pool-name: test-master-pool
+        maximum-pool-size: 5
+
+    replica:
+      url: jdbc:h2:mem:chat_api;MODE=MYSQL;DB_CLOSE_DELAY=-1
+      username: sa
+      password:
+      driver-class-name: org.h2.Driver
+      hikari:
+        pool-name: test-replica-pool
+        maximum-pool-size: 5
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_batch_fetch_size: 1000
+    open-in-view: false
+
+  kafka:
+    producer:
+      bootstrap-servers: localhost:29092
+    consumer:
+      bootstrap-servers: localhost:29092
+      group-id: chat-save-group
+
+modu:
+  # 테스트에는 Redis 가 없다. Redis 락(@ApiLock 애스펙트 + Redisson)을 끄고, 방 만들기의 정확성은 chat_room.member_key 유니크 키가 맡는다.
+  api-lock:
+    enabled: false
+  # Feign 클라이언트는 기동 때 url 을 요구한다. 테스트는 목으로 바꾸므로 유효하기만 한 가짜 주소를 둔다.
+  services:
+    member-service: http://localhost:1
+  # InternalApiFilter / InternalApiFeignConfig 가 요구한다. 운영은 config-repo 가 내려준다.
+  internal-api:
+    token: test-internal-token
+  # 테스트가 개발 Kafka 의 topic-chat-save 를 가져가(그리고 다시 보내) 버리지 않게 리스너를 띄우지 않는다.
+  kafka:
+    listener:
+      auto-startup: false
+
+springdoc:
+  paths-to-exclude: /actuator/**, /error
+
+# main 의 application.yml 과 같은 probe 설정(이 파일이 main 을 가리므로 여기에도 둔다). HealthProbesTest 가 본다.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+      group:
+        readiness:
+          include: readinessState, masterDb
+        liveness:
+          include: livenessState

@@ -1,9 +1,9 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    kotlin("jvm") version "2.1.10"
-    kotlin("plugin.spring") version "2.1.10"
-    id("org.springframework.boot") version "3.4.2"
+    kotlin("jvm") version "2.4.21"
+    kotlin("plugin.spring") version "2.4.21"
+    id("org.springframework.boot") version "4.0.8"
     id("io.spring.dependency-management") version "1.1.7"
 }
 
@@ -20,24 +20,35 @@ repositories {
     mavenCentral()
 }
 
-extra["springCloudVersion"] = "2024.0.0"
+extra["springCloudVersion"] = "2025.1.3"
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:3.0.3")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    // 로그를 한 줄 JSON 으로(logback-spring.xml 의 LogstashEncoder, 접근 로그의 StructuredArguments)
+    implementation("net.logstash.logback:logstash-logback-encoder:8.1")
     implementation("org.springframework.cloud:spring-cloud-starter-config")
     implementation("org.springframework.cloud:spring-cloud-starter-bus-amqp")
-    implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
     implementation("io.micrometer:micrometer-registry-prometheus")
     implementation("org.springframework.kafka:spring-kafka")
-    implementation("io.minio:minio:8.5.1")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    // S3 호환 오브젝트 스토리지(dev: Ceph RGW, CI: adobe/s3mock). 동기 HTTP 는 Apache 클라이언트 하나만 — 안 쓰는 netty 비동기 클라이언트는 뺀다.
+    implementation(platform("software.amazon.awssdk:bom:2.55.11"))
+    implementation("software.amazon.awssdk:s3") {
+        exclude(group = "software.amazon.awssdk", module = "netty-nio-client")
+    }
+    implementation("software.amazon.awssdk:apache-client")
+    implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+
+    // MockMvc 테스트 지원이 Boot 4 에서 별도 스타터로 갈라졌다.
+
+    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
     testImplementation("org.springframework.kafka:spring-kafka-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:6.4.0")
 }
 
 dependencyManagement {

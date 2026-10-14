@@ -4,7 +4,7 @@ import com.example.wsservice.chat.dto.ChatMessage
 import com.example.wsservice.chat.service.ChatRoomService
 import com.example.wsservice.chat.service.ChatService
 import com.example.wsservice.handler.WebSocketHandler
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener

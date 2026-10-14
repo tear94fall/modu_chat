@@ -1,9 +1,14 @@
 server:
   port: 9999
+  # SIGTERM 뒤 새 요청은 거절하고 처리 중인 요청은 끝까지 보낸다(spring.lifecycle.timeout-per-shutdown-phase 안에서).
+  shutdown: graceful
 
 spring:
   application:
     name: storage-service
+
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
 
   config:
     import: optional:configserver:${CONFIG_SERVER_URI:http://localhost:8888}
@@ -27,26 +32,40 @@ spring:
     consumer:
       group-id: storage-service-group
 
-minio:
+# S3 호환 오브젝트 스토리지(AWS SDK v2). dev 는 Ceph RGW — path-style 주소, region 은 아무 값이나 받는다.
+# accessKey·secretKey 는 config-repo(messenger/storage-service.yml)가 {cipher} 로 내려준다.
+s3:
   endpoint: http://localhost:9000
-  bucketImageName: file-storage
-
-eureka:
-  instance:
-    instance-id: storage-service
-
-  client:
-    register-with-eureka: true
-    fetch-registry: true
+  region: us-east-1
+  bucket: file-storage
 
 management:
   endpoints:
     web:
       exposure:
         include: health, info, prometheus
+  endpoint:
+    health:
+      # /actuator/health/liveness, /actuator/health/readiness — 쿠버네티스 probe 와 compose healthcheck 가 본다.
+      probes:
+        enabled: true
+      show-details: never
+      group:
+        readiness:
+          # S3 는 자동 indicator 가 없다 — S3HealthIndicator(버킷 존재 확인).
+          include: readinessState, s3
+        liveness:
+          include: livenessState
   metrics:
     tags:
       application: ${spring.application.name}
     distribution:
       percentiles-histogram:
         http.server.requests: true
+
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_API_DOCS_ENABLED:true}
+    path: /v3/api-docs
+  default-produces-media-type: application/json
+  paths-to-exclude: /actuator/**, /error

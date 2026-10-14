@@ -23,33 +23,25 @@ spring:
     username: guest
     password: guest
 
-
   kafka:
+    # 내장 Kafka(@EmbeddedKafka bootstrapServersProperty)가 채우는 주소를 쓴다. 테스트 밖에서 띄우면 localhost:9092.
+    bootstrap-servers: localhost:9092
     producer:
-      bootstrap-servers: localhost:9092
+      bootstrap-servers: ${spring.kafka.bootstrap-servers}
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     consumer:
-      bootstrap-servers: localhost:9092
+      bootstrap-servers: ${spring.kafka.bootstrap-servers}
       group-id: test-group
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
 
-minio:
+s3:
   endpoint: http://localhost:9000
-  # 이 테스트는 @PostConstruct 에서 실제 MinIO 에 접속하므로
-  # 로컬 docker 스택의 값과 일치해야 한다. 운영 자격증명이 아니라 개발용 고정값이다.
+  region: us-east-1
+  # 이 테스트는 @PostConstruct 에서 실제 S3 호환 스토리지에 접속하므로(로컬: dev 스택의 9000 포트,
+  # CI: adobe/s3mock) 로컬 dev 스택의 값과 일치해야 한다. 운영 자격증명이 아니라 개발용 고정값이다.
   accessKey: minio
   secretKey: miniopass
-  bucketImageName: file-storage
-
-eureka:
-  instance:
-    instance-id: storage-service
-
-  client:
-    register-with-eureka: true
-    fetch-registry: true
-    service-url:
-      defaultZone: http://localhost:8761/eureka
+  bucket: file-storage
 
 logging:
   level:
@@ -61,3 +53,20 @@ logging:
 modu:
   internal-api:
     token: test-internal-token
+
+# main 의 application.yml 과 같은 probe 설정(이 파일이 main 을 가리므로 여기에도 둔다). HealthProbesTest 가 본다.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+      group:
+        readiness:
+          include: readinessState, s3
+        liveness:
+          include: livenessState

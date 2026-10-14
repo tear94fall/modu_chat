@@ -1,9 +1,14 @@
 server:
   port: 8100
+  # SIGTERM 뒤 새 요청은 거절하고 처리 중인 요청은 끝까지 보낸다(spring.lifecycle.timeout-per-shutdown-phase 안에서).
+  shutdown: graceful
 
 spring:
   application:
     name: chat-store-service
+
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
 
   config:
     import: optional:configserver:${CONFIG_SERVER_URI:http://localhost:8888}
@@ -25,22 +30,33 @@ spring:
     template:
       default-topic: modu.modu-chat.chat
 
-eureka:
-  instance:
-    instance-id: chat-store-service
-
-  client:
-    register-with-eureka: true
-    fetch-registry: true
-
 management:
   endpoints:
     web:
       exposure:
         include: health, info, prometheus
+  endpoint:
+    health:
+      # /actuator/health/liveness, /actuator/health/readiness — 쿠버네티스 probe 와 compose healthcheck 가 본다.
+      probes:
+        enabled: true
+      show-details: never
+      group:
+        readiness:
+          # 채팅 이력 저장소 MongoDB 가 필수 의존(자동 mongo indicator).
+          include: readinessState, mongo
+        liveness:
+          include: livenessState
   metrics:
     tags:
       application: ${spring.application.name}
     distribution:
       percentiles-histogram:
         http.server.requests: true
+
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_API_DOCS_ENABLED:true}
+    path: /v3/api-docs
+  default-produces-media-type: application/json
+  paths-to-exclude: /actuator/**, /error

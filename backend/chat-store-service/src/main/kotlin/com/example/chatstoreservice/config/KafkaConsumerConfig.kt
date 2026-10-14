@@ -1,8 +1,10 @@
 package com.example.chatstoreservice.config
 
+import com.example.chatstoreservice.logging.RequestContextRecordInterceptor
 import com.example.chatstoreservice.message.ChatListener
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.LoggerFactory
@@ -15,7 +17,7 @@ import org.springframework.kafka.core.ConsumerFactory
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory
 import org.springframework.kafka.listener.ContainerProperties
 import org.springframework.kafka.listener.DefaultErrorHandler
-import org.springframework.kafka.support.serializer.JsonDeserializer
+import org.springframework.kafka.support.serializer.JacksonJsonDeserializer
 import org.springframework.util.backoff.FixedBackOff
 
 @Configuration
@@ -46,18 +48,21 @@ class KafkaConsumerConfig(
     @Bean
     fun chatKafkaListener(): ConcurrentKafkaListenerContainerFactory<String, ChatListener> {
         val factory = ConcurrentKafkaListenerContainerFactory<String, ChatListener>()
-        factory.consumerFactory = consumerFactory()
+        factory.setConsumerFactory(consumerFactory())
         factory.containerProperties.ackMode = ContainerProperties.AckMode.MANUAL
         factory.setCommonErrorHandler(
             DefaultErrorHandler({ record, _ -> log.info("consumer retry: {}", record.value()) }, FixedBackOff(1000L, 3L)),
         )
+        // Debezium 이 보내는 레코드라 X-Request-Id 헤더는 없다 — 레코드마다 새 id 를 MDC 에 넣고 끝나면 지운다.
+        factory.setRecordInterceptor(RequestContextRecordInterceptor())
         return factory
     }
 
     /** Debezium 이벤트에는 모르는 필드가 많다. 전용 ObjectMapper 로 모르는 필드를 무시한다. */
-    private fun customizedJsonDeserializer(): JsonDeserializer<ChatListener> {
-        val objectMapper = ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        return JsonDeserializer(ChatListener::class.java, objectMapper).apply {
+    private fun customizedJsonDeserializer(): JacksonJsonDeserializer<ChatListener> {
+        // Jackson 3 의 매퍼는 불변이라 빌더에서 기능을 끈다.
+        val objectMapper = JsonMapper.builder().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).build()
+        return JacksonJsonDeserializer(ChatListener::class.java, objectMapper).apply {
             setRemoveTypeHeaders(false)
             addTrustedPackages("*")
             setUseTypeMapperForKey(true)

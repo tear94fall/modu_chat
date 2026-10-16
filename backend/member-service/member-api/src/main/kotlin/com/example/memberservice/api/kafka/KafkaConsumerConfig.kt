@@ -52,7 +52,7 @@ class KafkaConsumerConfig(
         factory.setConcurrency(3)
         factory.setConsumerFactory(consumerFactory())
         factory.setCommonErrorHandler(defaultErrorHandler())
-        // 레코드마다 헤더의 X-Request-Id 를 MDC 에 넣고 끝나면 지운다.
+        // 레코드마다 헤더의 X-Request-Id 를 MDC 에 넣고, 리스너가 끝나면 kafka.consume 이벤트를 남긴 뒤 지운다.
         factory.setRecordInterceptor(RequestContextRecordInterceptor())
 
         return factory

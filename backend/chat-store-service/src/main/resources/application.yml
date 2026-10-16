@@ -19,8 +19,9 @@ spring:
       name: messenger,${spring.application.name}
       fail-fast: true
 
-  data:
-    mongodb:
+  # MongoDB 접속 URI(spring.mongodb.uri, 자격증명 포함)는 config-repo(messenger/chat-store-service.yml)가 {cipher} 로 내려준다.
+  # Spring Boot 4 부터 접속 속성 접두사는 spring.mongodb 다 — spring.data.mongodb.* 는 읽지 않는다.
+  mongodb:
 
   kafka:
     consumer:
@@ -60,3 +61,11 @@ springdoc:
     path: /v3/api-docs
   default-produces-media-type: application/json
   paths-to-exclude: /actuator/**, /error
+
+# API 요청·응답 전체 로그(logging/ApiLoggingFilter, 이벤트 api.access): /api- 아래 요청의 헤더·쿼리·요청 본문·응답 본문을 한 줄 JSON 으로.
+# 본문은 max-body-bytes 까지 남기고 넘으면 자른다(커머스 기본 4096 보다 크게 — 방 목록처럼 큰 응답도 전부 보려고). 끄려면 enabled: false.
+modu:
+  logging:
+    api:
+      enabled: true
+      max-body-bytes: 65536

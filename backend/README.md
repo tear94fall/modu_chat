@@ -114,6 +114,23 @@ insert into staff_permission (member_id, permission) values (<member_id>, 'SUPER
 내부 토큰이 비어 있으면 서비스가 기동을 거부합니다 (빈 토큰 방지).
 config-server(modu_platform 의 config-service)가 죽어 있으면 설정을 못 받아 기동에 실패합니다(`fail-fast`).
 
+### 요청 로그 (http.access · api.access · requestId)
+
+모든 서비스가 요청 로그를 한 줄 JSON 으로 stdout 에 쓰고(`logback-spring.xml`, local 프로필만 사람용 형식), otel-collector 가 OpenSearch 인덱스 `modu-app-logs` 로 보낸다(modu_infra `k8s/README.md`). 필드는 `attributes.*` 아래에 있다.
+
+- **`http.access`** (`logging/RequestContextFilter`): 요청마다 method·path·status·durationMs 한 줄. `/actuator` 는 뺀다. 게이트웨이도 같은 이벤트를 남긴다.
+- **`api.access`** (`logging/ApiLoggingFilter`): `/api-` 로 시작하는 요청(api-public·api-admin·api-internal·api-debug …)의 **헤더·쿼리·요청 본문·응답 본문 전부**. 커머스(commerce-service)와 같은 모양이다. authorization·cookie·x-internal-token·x-auth-* 헤더 값은 `***`, 본문은 JSON·폼만 문자열로 남기고 `modu.logging.api.max-body-bytes`(application.yml, 65536)를 넘으면 `…[truncated N bytes]` 로 자른다. multipart 는 `<multipart>`, 그 밖은 `<content-type>`. `modu.logging.api.exclude-paths` 로 시작하는 경로는 뺀다(storage-service 의 파일 내려받기·보기 — 응답을 메모리에 담지 않으려고). `modu.logging.api.enabled: false` 로 끈다.
+- **requestId**: 게이트웨이가 `X-Request-Id` 를 정해 뒤 서비스로 넘기고, 각 서비스는 MDC 에 넣어 모든 로그(SQL 포함)에 붙인다. Feign 호출(`RequestIdFeignInterceptor`)과 Kafka 레코드 헤더(`KafkaRequestHeaders` → `RequestContextRecordInterceptor`)로도 전파돼, 게이트웨이 → A → B → Kafka 컨슈머까지 한 요청이 같은 id 를 갖는다.
+
+OpenSearch Dashboards(http://localhost:5601, 인덱스 패턴 `modu-app-logs*`)에서 보는 법:
+
+```
+attributes.event:"http.access"                                   # 게이트웨이·서비스 접근 로그
+attributes.event:"api.access" and attributes.path:"/api-public/chat/11/rooms"   # 입력·출력 본문까지
+attributes.requestId:"a3f601661a814a10"                          # 요청 하나를 게이트웨이부터 끝까지
+attributes.event:"http.access" and attributes.status >= 500      # 실패한 요청
+```
+
 ### 서비스 주소 (DNS 라우팅)
 서비스끼리의 호출과 게이트웨이 → 서비스 라우팅은 서비스 디스커버리 없이 고정된 `호스트:포트` 로 갑니다.
 주소는 config-repo(modu_platform) 의 `application.yml` 에 있는 `modu.services.*` 한 곳에서만 정합니다

@@ -53,3 +53,11 @@ springdoc:
     path: /v3/api-docs
   default-produces-media-type: application/json
   paths-to-exclude: /actuator/**, /error
+
+# API 요청·응답 전체 로그(logging/ApiLoggingFilter, 이벤트 api.access): /api- 아래 요청의 헤더·쿼리·요청 본문·응답 본문을 한 줄 JSON 으로.
+# 본문은 max-body-bytes 까지 남기고 넘으면 자른다(커머스 기본 4096 보다 크게 — 방 목록처럼 큰 응답도 전부 보려고). 끄려면 enabled: false.
+modu:
+  logging:
+    api:
+      enabled: true
+      max-body-bytes: 65536

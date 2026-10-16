@@ -52,6 +52,12 @@ spring:
 
 # 탈퇴 때 커머스 고객 정리를 부를 주소(CommerceClient). 기본은 config-repo 의 modu.services.commerce-service.
 modu:
+  # API 요청·응답 전체 로그(logging/ApiLoggingFilter, 이벤트 api.access): /api- 아래 요청의 헤더·쿼리·요청 본문·응답 본문을 한 줄 JSON 으로.
+  # 본문은 max-body-bytes 까지 남기고 넘으면 자른다(커머스 기본 4096 보다 크게 — 큰 응답도 전부 보려고). 끄려면 enabled: false.
+  logging:
+    api:
+      enabled: true
+      max-body-bytes: 65536
   commerce:
     url: ${modu.services.commerce-service}
   # 서비스 이용 기록(member_service_usage): auth-service 등록 클라이언트 ID → 서비스.

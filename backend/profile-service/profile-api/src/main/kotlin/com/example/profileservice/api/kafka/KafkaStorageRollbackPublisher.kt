@@ -17,11 +17,15 @@ class KafkaStorageRollbackPublisher(private val kafkaTemplate: KafkaTemplate<Str
 
     override fun publish(key: String?, profile: ProfileResult) {
         val message = ProfileDto(profile)
+        // 발행 결과 콜백은 Kafka 네트워크 스레드에서 돌아 MDC 가 비어 있다 — 보낼 때 잡아 둔 컨텍스트를 콜백 로그에 되살린다.
+        val context = KafkaRequestHeaders.capture()
         kafkaTemplate.send(KafkaRequestHeaders.stamp(ProducerRecord<String, Any>(TOPIC, key, message))).whenComplete { result, ex ->
-            if (ex == null) {
-                log.info("Message sent successfully: {}", result.recordMetadata.topic() + " / " + message)
-            } else {
-                log.info("Message sent failed: {}", ex.message)
+            context.run {
+                if (ex == null) {
+                    log.info("Message sent successfully: {}", result.recordMetadata.topic() + " / " + message)
+                } else {
+                    log.info("Message sent failed: {}", ex.message)
+                }
             }
         }
     }

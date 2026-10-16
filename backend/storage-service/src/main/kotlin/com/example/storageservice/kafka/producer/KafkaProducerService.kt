@@ -15,11 +15,15 @@ class KafkaProducerService(private val kafkaTemplate: KafkaTemplate<String, Any>
         // 키가 null 일 수 있어(옛 자바와 같다) ProducerRecord 로 보낸다. MDC 의 requestId·userId 는 헤더로 같이 간다.
         // Spring Kafka 4 의 제네릭이 non-null 로 표시돼 타입을 명시한다(키는 Kafka 쪽 타입이라 null 이어도 된다).
         val record: ProducerRecord<String, Any> = ProducerRecord(TOPIC, key, message)
+        // 발행 결과 콜백은 Kafka 네트워크 스레드에서 돌아 MDC 가 비어 있다 — 보낼 때 잡아 둔 컨텍스트를 콜백 로그에 되살린다.
+        val context = KafkaRequestHeaders.capture()
         kafkaTemplate.send(KafkaRequestHeaders.stamp(record)).whenComplete { result, ex ->
-            if (ex == null) {
-                log.info("Message sent successfully: {}", result.recordMetadata.topic() + " / " + message)
-            } else {
-                log.info("Message sent failed: {}", ex.message)
+            context.run {
+                if (ex == null) {
+                    log.info("Message sent successfully: {}", result.recordMetadata.topic() + " / " + message)
+                } else {
+                    log.info("Message sent failed: {}", ex.message)
+                }
             }
         }
     }

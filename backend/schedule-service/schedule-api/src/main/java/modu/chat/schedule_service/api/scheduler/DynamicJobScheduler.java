@@ -6,6 +6,7 @@ import tools.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.LockConfiguration;
 import net.javacrumbs.shedlock.core.LockingTaskExecutor;
+import modu.chat.schedule_service.api.logging.JobRunLog;
 import modu.chat.schedule_service.api.logging.RequestContext;
 import modu.chat.schedule_service.application.domain.entity.DataType;
 import modu.chat.schedule_service.application.domain.entity.Protocol;
@@ -79,53 +80,72 @@ public class DynamicJobScheduler implements JobScheduler {
     @Override
     public void addScheduleJob(ScheduleResult schedule) {
         if (scheduledTasks.containsKey(schedule.id())) {
-            System.out.println("Job [" + schedule.id() + "] 이미 실행 중!");
+            log.info("schedule {} already registered", schedule.id());
             return;
         }
 
-        Runnable job = (() -> {
-            // 회차마다 새 requestId(job- 접두)와 작업 이름을 MDC 에 넣는다 — 이 안의 로그와 바깥 호출(X-Request-Id)이 같은 id 를 갖는다.
-            String requestId = "job-" + RequestContext.newId();
-            MDC.put(RequestContext.MDC_REQUEST_ID, requestId);
-            MDC.put(RequestContext.MDC_JOB, lockName(schedule.id()));
-            try {
-                runJob(schedule, requestId);
-            } finally {
-                MDC.remove(RequestContext.MDC_REQUEST_ID);
-                MDC.remove(RequestContext.MDC_JOB);
-            }
-        });
-
+        Runnable job = jobFor(schedule);
         ScheduledFuture<?> scheduledTask = ((ThreadPoolTaskScheduler) taskScheduler)
                 .schedule(() -> runLocked(schedule.id(), job), new CronTrigger(schedule.cronExpression()));
 
         scheduledTasks.put(schedule.id(), scheduledTask);
-        System.out.println("Job [" + schedule.id() + "] 추가됨. Cron: " + schedule.cronExpression());
+        log.info("schedule {} registered, cron {}", schedule.id(), schedule.cronExpression());
     }
 
-    /** 작업 본문 한 회차. 스케줄이 가리키는 엔드포인트를 부르고 응답을 로그로 남긴다. */
-    private void runJob(ScheduleResult schedule, String requestId) {
-        if (schedule.protocol().equals(Protocol.REST_API)) {
-            String response = "";
-
-            WebClient webClient = WebClient.builder()
-                    .baseUrl(String.format("https://%s:%d", schedule.address(), schedule.port()))
-                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                    .defaultHeader(RequestContext.REQUEST_ID_HEADER, requestId)
-                    .build();
-
-            if (schedule.method().equals(HttpMethod.GET.toString())) {
-                response = getMethodCall(webClient, schedule);
-            } else if (schedule.method().equals(HttpMethod.POST.toString())) {
-                response = postMethodCall(webClient, schedule);
+    /**
+     * 스케줄 한 회차의 본문. 회차마다 새 requestId(job- 접두)와 작업 이름(schedule-&lt;id&gt;)을 MDC 에 넣어 이 안의 로그와 바깥 호출(X-Request-Id)이
+     * 같은 id 를 갖게 하고, 끝나면 {@code job.run} 이벤트 한 줄(JobRunLog — target·outcome·durationMs·error)을 남기고 MDC 를 지운다.
+     * 실패는 여기서 삼킨다(이벤트로 남기고 다음 회차는 그대로 돈다). 테스트가 직접 부른다.
+     */
+    Runnable jobFor(ScheduleResult schedule) {
+        return () -> {
+            String requestId = "job-" + RequestContext.newId();
+            String job = lockName(schedule.id());
+            MDC.put(RequestContext.MDC_REQUEST_ID, requestId);
+            MDC.put(RequestContext.MDC_JOB, job);
+            long started = System.nanoTime();
+            try {
+                if (!Protocol.REST_API.equals(schedule.protocol())) {
+                    JobRunLog.skipped(job, schedule.id(), "protocol " + schedule.protocol() + " is not supported");
+                    return;
+                }
+                String target = targetOf(schedule);
+                try {
+                    String response = runJob(schedule, requestId);
+                    JobRunLog.ok(job, schedule.id(), target, elapsedMs(started), response);
+                } catch (RuntimeException e) {
+                    JobRunLog.failed(job, schedule.id(), target, elapsedMs(started), e);
+                }
+            } finally {
+                MDC.remove(RequestContext.MDC_REQUEST_ID);
+                MDC.remove(RequestContext.MDC_JOB);
             }
+        };
+    }
 
-            log.info("response: " + response);
-        } else {
-            log.info("protocol: {} is not supported", schedule.protocol());
+    /** 로그용 호출 대상: {@code GET https://host:port/path}. */
+    static String targetOf(ScheduleResult schedule) {
+        return String.format("%s https://%s:%d%s", schedule.method(), schedule.address(), schedule.port(), schedule.path());
+    }
+
+    private static long elapsedMs(long startedNanos) {
+        return (System.nanoTime() - startedNanos) / 1_000_000;
+    }
+
+    /** 스케줄이 가리키는 REST 엔드포인트를 부르고 응답 본문을 돌려준다. */
+    private String runJob(ScheduleResult schedule, String requestId) {
+        WebClient webClient = WebClient.builder()
+                .baseUrl(String.format("https://%s:%d", schedule.address(), schedule.port()))
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader(RequestContext.REQUEST_ID_HEADER, requestId)
+                .build();
+
+        if (schedule.method().equals(HttpMethod.GET.toString())) {
+            return getMethodCall(webClient, schedule);
+        } else if (schedule.method().equals(HttpMethod.POST.toString())) {
+            return postMethodCall(webClient, schedule);
         }
-
-        System.out.println("[Dynamic Job] 실행됨! ID: " + schedule.id() + ", 설명: " + schedule.description() + ", 시간: " + Instant.now());
+        return "";
     }
 
     public void addAllScheduleJobs(List<ScheduleResult> scheduleList) {
@@ -135,7 +155,7 @@ public class DynamicJobScheduler implements JobScheduler {
     @Override
     public void updateScheduleJob(ScheduleResult schedule) {
         if (!scheduledTasks.containsKey(schedule.id())) {
-            System.out.println("Job [" + schedule.id() + "]가 존재하지 않습니다.");
+            log.info("schedule {} is not registered", schedule.id());
             return;
         }
 
@@ -145,7 +165,7 @@ public class DynamicJobScheduler implements JobScheduler {
         // 새로운 Job 추가
         addScheduleJob(schedule);
 
-        System.out.println("Job [" + schedule.id() + "] 업데이트 완료. 새로운 Cron: " + schedule.cronExpression());
+        log.info("schedule {} updated, cron {}", schedule.id(), schedule.cronExpression());
     }
 
     @Override
@@ -154,9 +174,9 @@ public class DynamicJobScheduler implements JobScheduler {
         if (scheduledTask != null) {
             scheduledTask.cancel(false);
             scheduledTasks.remove(jobId);
-            System.out.println("Job [" + jobId + "] 제거됨.");
+            log.info("schedule {} removed", jobId);
         } else {
-            System.out.println("Job [" + jobId + "] 없음.");
+            log.info("schedule {} is not registered", jobId);
         }
     }
 
@@ -164,12 +184,12 @@ public class DynamicJobScheduler implements JobScheduler {
     public void removeAllScheduleJob() {
         scheduledTasks.values().forEach(task -> task.cancel(false));
         scheduledTasks.clear();
-        System.out.println("모든 Job 제거됨.");
+        log.info("all schedules removed");
     }
 
     public Long searchScheduleJob(Long jobId) {
         if (!scheduledTasks.containsKey(jobId)) {
-            System.out.println("Job [" + jobId + "]가 존재하지 않습니다.");
+            log.info("schedule {} is not registered", jobId);
             return -1L;
         }
 
@@ -180,7 +200,7 @@ public class DynamicJobScheduler implements JobScheduler {
         List<Long> scheduleIdList = new ArrayList<>();
 
         if (scheduledTasks.isEmpty()) {
-            System.out.println("현재 실행 중인 Job이 없습니다.");
+            log.info("no schedules registered");
         } else {
             scheduleIdList.addAll(scheduledTasks.keySet());
         }
@@ -190,10 +210,9 @@ public class DynamicJobScheduler implements JobScheduler {
 
     public void listAllScheduleJobs() {
         if (scheduledTasks.isEmpty()) {
-            System.out.println("현재 실행 중인 Job이 없습니다.");
+            log.info("no schedules registered");
         } else {
-            System.out.println("현재 실행 중인 Job 목록:");
-            scheduledTasks.keySet().forEach(jobId -> System.out.println("- " + jobId));
+            log.info("registered schedules: {}", scheduledTasks.keySet());
         }
     }
 

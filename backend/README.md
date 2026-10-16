@@ -121,6 +121,7 @@ config-server(modu_platform 의 config-service)가 죽어 있으면 설정을 �
 - **`http.access`** (`logging/RequestContextFilter`): 요청마다 method·path·status·durationMs 한 줄. `/actuator` 는 뺀다. 게이트웨이도 같은 이벤트를 남긴다.
 - **`api.access`** (`logging/ApiLoggingFilter`): `/api-` 로 시작하는 요청(api-public·api-admin·api-internal·api-debug …)의 **헤더·쿼리·요청 본문·응답 본문 전부**. 커머스(commerce-service)와 같은 모양이다. authorization·cookie·x-internal-token·x-auth-* 헤더 값은 `***`, 본문은 JSON·폼만 문자열로 남기고 `modu.logging.api.max-body-bytes`(application.yml, 65536)를 넘으면 `…[truncated N bytes]` 로 자른다. multipart 는 `<multipart>`, 그 밖은 `<content-type>`. `modu.logging.api.exclude-paths` 로 시작하는 경로는 뺀다(storage-service 의 파일 내려받기·보기 — 응답을 메모리에 담지 않으려고). `modu.logging.api.enabled: false` 로 끈다.
 - **`kafka.publish`** (`logging/KafkaPublishLog`, 프로듀서가 있는 chat·ws·storage·profile): Kafka 발행 결과 한 줄. `topic`·`key`·`payload`(보낸 메시지 JSON, 4096자 넘으면 자름)·`outcome`(ok/failed), 성공이면 `partition`·`offset`(INFO), 실패면 `error` 와 스택(ERROR). 콜백은 Kafka 네트워크 스레드에서 돌아 MDC 가 없으므로 `KafkaRequestHeaders.capture()` 로 잡아 둔 requestId·userId 를 되살려 붙인다.
+- **`kafka.consume`** (`logging/KafkaConsumeLog`, 컨슈머가 있는 ws·chat·chat-store·member·storage): Kafka 레코드 하나를 소비한 결과 한 줄. `topic`·`partition`·`offset`·`key`·`payload`(받은 메시지 JSON, 4096자 넘으면 자름)·`durationMs`·`outcome`(ok/failed), 실패면 `error` 와 스택(ERROR). `RequestContextRecordInterceptor` 가 리스너가 끝난 뒤(success/failure) MDC 를 지우기 전에 남겨 발행 쪽과 같은 requestId 가 붙는다. 리스너가 예외를 안에서 삼키면 ok 로 남는다.
 - **`job.run`** (schedule-service `logging/JobRunLog`, 커머스는 `JobMdc`): 스케줄 작업 한 회차의 결과 한 줄. `job`(schedule-service 는 `schedule:job-<id>`), `scheduleId`·`target`(부른 주소), `outcome`(ok/failed/skipped), `durationMs`, 실패면 `error` 와 스택(ERROR), 건너뛰면 `reason`(WARN). 회차의 requestId 는 `job-` 접두로 새로 만들고 바깥 호출에 `X-Request-Id` 로 실어 보내 그 회차의 로그를 한 id 로 본다.
 - **requestId**: 게이트웨이가 `X-Request-Id` 를 정해 뒤 서비스로 넘기고, 각 서비스는 MDC 에 넣어 모든 로그(SQL 포함)에 붙인다. Feign 호출(`RequestIdFeignInterceptor`)과 Kafka 레코드 헤더(`KafkaRequestHeaders` → `RequestContextRecordInterceptor`)로도 전파돼, 게이트웨이 → A → B → Kafka 컨슈머까지 한 요청이 같은 id 를 갖는다.
 
@@ -133,6 +134,8 @@ attributes.requestId:"a3f601661a814a10"                          # 요청 하나
 attributes.event:"http.access" and attributes.status >= 500      # 실패한 요청
 attributes.event:"kafka.publish" and attributes.topic:"topic-chat-broadcast"   # Kafka 로 무엇을 보냈나(payload)
 attributes.event:"kafka.publish" and attributes.outcome:"failed"  # 발행 실패
+attributes.event:"kafka.consume" and attributes.topic:"topic-chat-save"   # Kafka 에서 무엇을 받아 처리했나(payload·durationMs)
+attributes.event:"kafka.consume" and attributes.outcome:"failed"  # 소비 실패(리스너가 예외를 던진 경우)
 attributes.event:"job.run"                                        # 배치(스케줄 작업) 실행 이력 — 커머스 포함
 attributes.event:"job.run" and attributes.outcome:"failed"
 ```

@@ -1,11 +1,11 @@
 package com.example.profileservice.api.kafka
 
 import com.example.profileservice.api.dto.ProfileDto
+import com.example.profileservice.api.logging.KafkaPublishLog
 import com.example.profileservice.api.logging.KafkaRequestHeaders
 import com.example.profileservice.application.port.StorageRollbackPublisher
 import com.example.profileservice.application.usecase.result.ProfileResult
 import org.apache.kafka.clients.producer.ProducerRecord
-import org.slf4j.LoggerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
 
@@ -13,20 +13,13 @@ import org.springframework.stereotype.Component
 @Component
 class KafkaStorageRollbackPublisher(private val kafkaTemplate: KafkaTemplate<String, Any>) : StorageRollbackPublisher {
 
-    private val log = LoggerFactory.getLogger(KafkaStorageRollbackPublisher::class.java)
-
     override fun publish(key: String?, profile: ProfileResult) {
-        val message = ProfileDto(profile)
-        // 발행 결과 콜백은 Kafka 네트워크 스레드에서 돌아 MDC 가 비어 있다 — 보낼 때 잡아 둔 컨텍스트를 콜백 로그에 되살린다.
+        // 발행 결과는 kafka.publish 이벤트 한 줄(KafkaPublishLog). 콜백은 Kafka 네트워크 스레드에서 돌아 MDC 가 비어 있다 —
+        // 보낼 때 잡아 둔 컨텍스트를 콜백 안에서 되살려 requestId·userId 를 붙인다.
+        val record = KafkaRequestHeaders.stamp(ProducerRecord<String, Any>(TOPIC, key, ProfileDto(profile)))
         val context = KafkaRequestHeaders.capture()
-        kafkaTemplate.send(KafkaRequestHeaders.stamp(ProducerRecord<String, Any>(TOPIC, key, message))).whenComplete { result, ex ->
-            context.run {
-                if (ex == null) {
-                    log.info("Message sent successfully: {}", result.recordMetadata.topic() + " / " + message)
-                } else {
-                    log.info("Message sent failed: {}", ex.message)
-                }
-            }
+        kafkaTemplate.send(record).whenComplete { result, ex ->
+            context.run { if (ex == null) KafkaPublishLog.ok(record, result.recordMetadata) else KafkaPublishLog.failed(record, ex) }
         }
     }
 

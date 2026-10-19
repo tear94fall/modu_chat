@@ -23,8 +23,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/modu_ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Modu"
-        android:usesCleartextTraffic="true">
+        android:theme="@style/Theme.Modu">
 
         <!-- 하나뿐인 액티비티. 스플래시 유지 → 세션 판정 → NavHost, 그리고 알림의 roomId 딥링크. -->
         <activity

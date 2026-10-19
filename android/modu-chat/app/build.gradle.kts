@@ -21,8 +21,10 @@ android {
         versionCode = 2
         versionName = "2.0.0"
 
-        buildConfigField("String", "API_BASE_URL", "\"http://192.168.0.3:8000/\"")
-        buildConfigField("String", "WS_BASE_URL", "\"ws://192.168.0.3:8000/\"")
+        // dev 게이트웨이. Cloudflare Tunnel(modu_infra k8s README "바깥에서 들어오는 길")을 거치므로 LAN 밖(LTE)에서도 같은 주소로 붙는다.
+        // HTTPS 만 쓰므로 매니페스트에 cleartext 허용이 없다. LAN 직결(http://192.168.0.3:8000)로 돌리려면 여기와 usesCleartextTraffic 을 함께.
+        buildConfigField("String", "API_BASE_URL", "\"https://dev-api.joonsublim.com/\"")
+        buildConfigField("String", "WS_BASE_URL", "\"wss://dev-api.joonsublim.com/\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

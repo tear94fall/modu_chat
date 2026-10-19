@@ -1,4 +1,0 @@
-rootProject.name = 'schedule-service'
-
-include 'schedule-api'
-include 'schedule-application'

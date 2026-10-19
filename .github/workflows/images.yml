@@ -47,13 +47,12 @@ jobs:
             point-service: ['backend/point-service/**']
             profile-service: ['backend/profile-service/**']
             push-service: ['backend/push-service/**']
-            schedule-service: ['backend/schedule-service/**']
             storage-service: ['backend/storage-service/**']
             ws-service: ['backend/ws-service/**']
       - id: list
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo 'services=["auth-service","chat-service","chat-store-service","member-service","point-service","profile-service","push-service","schedule-service","storage-service","ws-service"]' >> "$GITHUB_OUTPUT"
+            echo 'services=["auth-service","chat-service","chat-store-service","member-service","point-service","profile-service","push-service","storage-service","ws-service"]' >> "$GITHUB_OUTPUT"
           else
             echo 'services=${{ steps.filter.outputs.changes }}' >> "$GITHUB_OUTPUT"
           fi

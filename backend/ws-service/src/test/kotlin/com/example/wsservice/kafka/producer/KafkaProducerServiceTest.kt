@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit
 class KafkaProducerServiceTest {
 
     private val kafkaTemplate: KafkaTemplate<String, ChatMessage> = mock()
-    private val publisher = KafkaProducerService(kafkaTemplate)
+    private val publisher = KafkaProducerService(kafkaTemplate, "chat.message-save.v1", "chat.message-read.v1", "chat.message-reaction.v1")
     private lateinit var capture: LogCapture
 
     @BeforeEach
@@ -67,15 +67,15 @@ class KafkaProducerServiceTest {
     fun successIsOneKafkaPublishEventWithTopicKeyPayloadOffsetAndRequestContext() {
         val future = pendingSend()
         publisher.sendMessage("room-1", ChatMessage(roomId = "room-1", chatId = "5"))
-        val record = ProducerRecord<String, ChatMessage>("topic-chat-save", "room-1", ChatMessage(roomId = "room-1", chatId = "5"))
-        onAnotherThreadWithoutMdc { future.complete(SendResult(record, RecordMetadata(TopicPartition("topic-chat-save", 2), 17, 0, 0, 0, 0))) }
+        val record = ProducerRecord<String, ChatMessage>("chat.message-save.v1", "room-1", ChatMessage(roomId = "room-1", chatId = "5"))
+        onAnotherThreadWithoutMdc { future.complete(SendResult(record, RecordMetadata(TopicPartition("chat.message-save.v1", 2), 17, 0, 0, 0, 0))) }
 
         val event = awaitLog()
         val fields = LogCapture.fields(event)
         assertEquals(Level.INFO, event.level)
         assertEquals("kafka.publish", fields["event"])
         assertEquals("ok", fields["outcome"])
-        assertEquals("topic-chat-save", fields["topic"])
+        assertEquals("chat.message-save.v1", fields["topic"])
         assertEquals("room-1", fields["key"])
         assertEquals(2, fields["partition"])
         assertEquals(17, fields["offset"])
@@ -95,7 +95,7 @@ class KafkaProducerServiceTest {
         assertEquals(Level.ERROR, event.level)
         assertEquals("kafka.publish", fields["event"])
         assertEquals("failed", fields["outcome"])
-        assertEquals("topic-chat-save", fields["topic"])
+        assertEquals("chat.message-save.v1", fields["topic"])
         assertEquals("room-1", fields["key"])
         assertTrue((fields["error"] as String).contains("kafka down"), fields["error"].toString())
         assertTrue((fields["payload"] as String).contains(""""chatId":"5""""), fields["payload"].toString())

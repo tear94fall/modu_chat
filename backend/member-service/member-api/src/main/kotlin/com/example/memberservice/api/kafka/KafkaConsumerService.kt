@@ -10,7 +10,7 @@ import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.kafka.support.Acknowledgment
 import org.springframework.stereotype.Service
 
-/** profile-service 가 프로필 저장에 실패했을 때 보내는 되돌리기 메시지(topic-member-rollback)를 받는다. */
+/** profile-service 가 프로필 저장에 실패했을 때 보내는 되돌리기 메시지(member-update-rollback 토픽)를 받는다. */
 @Service
 class KafkaConsumerService(
     private val objectMapper: ObjectMapper,
@@ -20,7 +20,7 @@ class KafkaConsumerService(
     private val log = LoggerFactory.getLogger(KafkaConsumerService::class.java)
 
     @KafkaListener(
-        topics = ["topic-member-rollback"],
+        topics = ["\${modu.kafka.topics.member-update-rollback}"],
         groupId = "\${spring.kafka.consumer.group-id}",
     )
     fun receive(consumerRecord: ConsumerRecord<String, Any>, acknowledgment: Acknowledgment) {

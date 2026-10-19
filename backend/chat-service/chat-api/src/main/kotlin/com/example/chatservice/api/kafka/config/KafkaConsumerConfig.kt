@@ -22,7 +22,7 @@ import org.springframework.util.backoff.FixedBackOff
 class KafkaConsumerConfig(
     @Value("\${spring.kafka.consumer.bootstrap-servers}") private val bootstrapServers: String,
     @Value("\${spring.kafka.consumer.group-id}") private val groupId: String,
-    /** 테스트는 false 로 둬서 개발 Kafka 의 topic-chat-save 를 테스트 컨슈머가 가져가지 않게 한다. */
+    /** 테스트는 false 로 둬서 개발 Kafka 의 chat.message-save.v1 를 테스트 컨슈머가 가져가지 않게 한다. */
     @Value("\${modu.kafka.listener.auto-startup:true}") private val autoStartup: Boolean,
 ) {
 

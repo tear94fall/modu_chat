@@ -53,7 +53,7 @@ spring:
   kafka:
     consumer:
       bootstrap-servers: localhost:29092
-      group-id: member-service-group
+      group-id: member-service.update-rollback
 
 feign:
   client:
@@ -114,6 +114,17 @@ management:
 
 # InternalApiFilter / InternalApiFeignConfig 가 요구한다. 운영은 config-repo 가 내려준다.
 modu:
+  # Kafka 토픽 이름 — 운영은 config-repo messenger.yml 이 내려준다(테스트는 config 서버가 없어 같은 값을 여기에).
+  kafka:
+    topics:
+      chat-message-save: chat.message-save.v1
+      chat-message-broadcast: chat.message-broadcast.v1
+      chat-message-read: chat.message-read.v1
+      chat-message-reaction: chat.message-reaction.v1
+      chat-room-created: chat.room-created.v1
+      member-update-rollback: member.update-rollback.v1
+      storage-upload-rollback: storage.upload-rollback.v1
+      chat-cdc: modu.modu-chat.chat
   # Feign 클라이언트는 기동 때 url 을 요구한다. 테스트는 목으로 바꾸므로 유효하기만 한 가짜 주소를 둔다.
   services:
     chat-service: http://localhost:1

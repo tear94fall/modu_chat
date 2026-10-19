@@ -53,7 +53,7 @@ spring:
       bootstrap-servers: localhost:29092
     consumer:
       bootstrap-servers: localhost:29092
-      group-id: chat-save-group
+      group-id: chat-service.message-save
 
 modu:
   # 테스트에는 Redis 가 없다. Redis 락(@ApiLock 애스펙트 + Redisson)을 끄고, 방 만들기의 정확성은 chat_room.member_key 유니크 키가 맡는다.
@@ -65,10 +65,15 @@ modu:
   # InternalApiFilter / InternalApiFeignConfig 가 요구한다. 운영은 config-repo 가 내려준다.
   internal-api:
     token: test-internal-token
-  # 테스트가 개발 Kafka 의 topic-chat-save 를 가져가(그리고 다시 보내) 버리지 않게 리스너를 띄우지 않는다.
+  # 테스트가 개발 Kafka 의 chat.message-save.v1 를 가져가(그리고 다시 보내) 버리지 않게 리스너를 띄우지 않는다.
   kafka:
     listener:
       auto-startup: false
+    # 토픽 이름 — 운영은 config-repo messenger.yml 이 내려준다(테스트는 config 서버가 없어 같은 값을 여기에).
+    topics:
+      chat-message-save: chat.message-save.v1
+      chat-message-broadcast: chat.message-broadcast.v1
+      chat-room-created: chat.room-created.v1
 
 springdoc:
   paths-to-exclude: /actuator/**, /error

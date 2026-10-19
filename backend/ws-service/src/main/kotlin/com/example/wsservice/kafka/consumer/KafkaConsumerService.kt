@@ -23,7 +23,7 @@ class KafkaConsumerService(
 
     private val log = LoggerFactory.getLogger(KafkaConsumerService::class.java)
 
-    @KafkaListener(topics = ["topic-chat-broadcast"], containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = ["\${modu.kafka.topics.chat-message-broadcast}"], containerFactory = "kafkaListenerContainerFactory")
     fun receive(consumerRecord: ConsumerRecord<String, ChatMessage>, acknowledgment: Acknowledgment) {
         try {
             val chatMessage = consumerRecord.value()
@@ -53,7 +53,7 @@ class KafkaConsumerService(
         }
     }
 
-    @KafkaListener(topics = ["topic-chat-read"], containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = ["\${modu.kafka.topics.chat-message-read}"], containerFactory = "kafkaListenerContainerFactory")
     fun receiveRead(consumerRecord: ConsumerRecord<String, ChatMessage>, acknowledgment: Acknowledgment) {
         try {
             val chatMessage = consumerRecord.value()
@@ -74,7 +74,7 @@ class KafkaConsumerService(
     }
 
     /** 반응 집계를 방 인원 전부에게(반응자 본인 포함 — 앱의 낙관적 표시를 확정한다). */
-    @KafkaListener(topics = ["topic-chat-reaction"], containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = ["\${modu.kafka.topics.chat-message-reaction}"], containerFactory = "kafkaListenerContainerFactory")
     fun receiveReaction(consumerRecord: ConsumerRecord<String, ChatMessage>, acknowledgment: Acknowledgment) {
         try {
             val chatMessage = consumerRecord.value()
@@ -98,7 +98,7 @@ class KafkaConsumerService(
      * getChatRoom 조회는 항상 성공한다. 프레임은 roomId 만 싣는다 - 안드로이드는
      * 이를 받으면 방 목록을 REST 로 다시 조회해 나머지 필드를 채운다.
      */
-    @KafkaListener(topics = ["topic-chat-room-created"], containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = ["\${modu.kafka.topics.chat-room-created}"], containerFactory = "kafkaListenerContainerFactory")
     fun receiveRoomCreated(consumerRecord: ConsumerRecord<String, ChatMessage>, acknowledgment: Acknowledgment) {
         try {
             val chatMessage = consumerRecord.value()

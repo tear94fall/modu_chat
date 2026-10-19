@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 
 /**
- * topic-chat-save 로 들어와 topic-chat-broadcast 로 나가는 메시지.
+ * chat.message-save.v1 로 들어와 chat.message-broadcast.v1 로 나가는 메시지.
  *
  * excludeUserIds 는 ws-service 가 1:1 차단 때 넣는 "이 세션들에는 보내지 말 것" 목록이다.
  * chat-service 는 판단하지 않고 그대로 실어 보낸다 — 값을 잃으면 다른 인스턴스의

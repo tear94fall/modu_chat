@@ -27,7 +27,7 @@ import org.springframework.kafka.support.serializer.JacksonJsonSerializer
 class KafkaConsumerRelayTest {
 
     companion object {
-        private const val TOPIC = "topic-chat-save"
+        private const val TOPIC = "chat.message-save.v1"
     }
 
     private fun deserialize(json: String): ChatMessage =

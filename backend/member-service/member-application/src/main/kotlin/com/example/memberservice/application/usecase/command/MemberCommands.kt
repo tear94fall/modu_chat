@@ -31,7 +31,7 @@ data class ChatRoomMembersCommand(val chatRoomId: Long, val memberIds: List<Long
 
 data class AddMemberProfileCommand(val memberId: Long, val profileId: Long)
 
-/** profile-service 가 저장에 실패해 되돌리라고 알린 프로필(Kafka topic-member-rollback). */
+/** profile-service 가 저장에 실패해 되돌리라고 알린 프로필(Kafka member-update-rollback 토픽). */
 data class RollbackProfileCommand(val memberId: Long, val profileType: ProfileType?)
 
 data class CreateNoticeCommand(val title: String, val content: String, val push: Boolean, val writerUserId: String?)

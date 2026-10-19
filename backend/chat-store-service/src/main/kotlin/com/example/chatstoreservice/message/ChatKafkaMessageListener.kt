@@ -8,13 +8,13 @@ import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.kafka.support.Acknowledgment
 import org.springframework.stereotype.Service
 
-/** Debezium 이 MySQL chat 테이블 변경을 실어 보내는 토픽을 받아 Mongo 미러에 반영한다. */
+/** Debezium 이 MySQL chat 테이블 변경을 실어 보내는 토픽(chat-cdc — 이름은 커넥터의 topic.prefix.db.table)을 받아 Mongo 미러에 반영한다. */
 @Service
 class ChatKafkaMessageListener(private val chatService: ChatService) {
 
     private val log = LoggerFactory.getLogger(ChatKafkaMessageListener::class.java)
 
-    @KafkaListener(topics = ["modu.modu-chat.chat"], containerFactory = "chatKafkaListener", groupId = "chat-store")
+    @KafkaListener(topics = ["\${modu.kafka.topics.chat-cdc}"], containerFactory = "chatKafkaListener", groupId = "\${spring.kafka.consumer.group-id}")
     fun debeziumListener(consumerRecord: ConsumerRecord<String, ChatListener>, acknowledgment: Acknowledgment) {
         try {
             val chatListener = consumerRecord.value()

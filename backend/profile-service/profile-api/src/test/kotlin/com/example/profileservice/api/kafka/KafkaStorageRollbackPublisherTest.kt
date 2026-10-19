@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit
 class KafkaStorageRollbackPublisherTest {
 
     private val kafkaTemplate: KafkaTemplate<String, Any> = mock()
-    private val publisher = KafkaStorageRollbackPublisher(kafkaTemplate)
+    private val publisher = KafkaStorageRollbackPublisher(kafkaTemplate, "storage.upload-rollback.v1")
     private lateinit var capture: LogCapture
 
     @BeforeEach
@@ -68,15 +68,15 @@ class KafkaStorageRollbackPublisherTest {
     fun successIsOneKafkaPublishEventWithTopicKeyPayloadOffsetAndRequestContext() {
         val future = pendingSend()
         publisher.publish("1", ProfileResult(null, 1L, ProfileType.PROFILE_IMAGE, "a.png", null, null))
-        val record = ProducerRecord<String, Any>("topic-storage-rollback", "1", mapOf("value" to "a.png"))
-        onAnotherThreadWithoutMdc { future.complete(SendResult(record, RecordMetadata(TopicPartition("topic-storage-rollback", 2), 17, 0, 0, 0, 0))) }
+        val record = ProducerRecord<String, Any>("storage.upload-rollback.v1", "1", mapOf("value" to "a.png"))
+        onAnotherThreadWithoutMdc { future.complete(SendResult(record, RecordMetadata(TopicPartition("storage.upload-rollback.v1", 2), 17, 0, 0, 0, 0))) }
 
         val event = awaitLog()
         val fields = LogCapture.fields(event)
         assertEquals(Level.INFO, event.level)
         assertEquals("kafka.publish", fields["event"])
         assertEquals("ok", fields["outcome"])
-        assertEquals("topic-storage-rollback", fields["topic"])
+        assertEquals("storage.upload-rollback.v1", fields["topic"])
         assertEquals("1", fields["key"])
         assertEquals(2, fields["partition"])
         assertEquals(17, fields["offset"])
@@ -96,7 +96,7 @@ class KafkaStorageRollbackPublisherTest {
         assertEquals(Level.ERROR, event.level)
         assertEquals("kafka.publish", fields["event"])
         assertEquals("failed", fields["outcome"])
-        assertEquals("topic-storage-rollback", fields["topic"])
+        assertEquals("storage.upload-rollback.v1", fields["topic"])
         assertEquals("1", fields["key"])
         assertTrue((fields["error"] as String).contains("kafka down"), fields["error"].toString())
         assertTrue((fields["payload"] as String).contains(""""value":"a.png""""), fields["payload"].toString())

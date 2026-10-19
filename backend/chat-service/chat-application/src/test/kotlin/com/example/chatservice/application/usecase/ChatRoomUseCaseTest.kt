@@ -56,7 +56,7 @@ class ChatRoomUseCaseTest {
     // ---------- 방 만들기 ----------
 
     @Test
-    @DisplayName("방을 만들면 topic-chat-room-created 로 roomId 를 발행한다")
+    @DisplayName("방을 만들면 chat.room-created.v1 로 roomId 를 발행한다")
     fun create_publishesRoomCreatedEvent() {
         val view = chatRoomUseCase.create(userId(1), listOf(1L, 2L))
 

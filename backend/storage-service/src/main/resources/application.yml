@@ -30,7 +30,7 @@ spring:
 
   kafka:
     consumer:
-      group-id: storage-service-group
+      group-id: storage-service.upload-rollback
 
 # S3 호환 오브젝트 스토리지(AWS SDK v2). dev 는 Ceph RGW — path-style 주소, region 은 아무 값이나 받는다.
 # accessKey·secretKey 는 config-repo(messenger/storage-service.yml)가 {cipher} 로 내려준다.

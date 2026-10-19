@@ -169,7 +169,7 @@ class KafkaConsumerServiceTest {
         val message = ChatMessage(type = SubscribeType.REACTION, roomId = "room-1", chatId = "7", userId = "user-b",
             authorUserId = "user-a", emoji = "LIKE", added = true, reactions = listOf(ReactionSummaryDto("LIKE", 1, listOf("user-b"))))
 
-        kafkaConsumerService.receiveReaction(ConsumerRecord("topic-chat-reaction", 0, 0L, "room-1", message), acknowledgment)
+        kafkaConsumerService.receiveReaction(ConsumerRecord("chat.message-reaction.v1", 0, 0L, "room-1", message), acknowledgment)
 
         val captor = argumentCaptor<TextMessage>()
         verify(a).sendMessage(captor.capture())
@@ -181,7 +181,7 @@ class KafkaConsumerServiceTest {
     }
 
     companion object {
-        private const val TOPIC = "topic-chat-room-created"
-        private const val BROADCAST_TOPIC = "topic-chat-broadcast"
+        private const val TOPIC = "chat.room-created.v1"
+        private const val BROADCAST_TOPIC = "chat.message-broadcast.v1"
     }
 }

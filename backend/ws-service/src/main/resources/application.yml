@@ -24,7 +24,8 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     consumer:
-      group-id: chat-broadcast-${random.uuid}
+      # 인스턴스마다 다른 그룹 — 모든 ws 인스턴스가 모든 팬아웃 레코드를 받아야 한다(자기 세션에만 보낸다).
+      group-id: ws-service.fanout.${random.uuid}
       auto-offset-reset: latest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer

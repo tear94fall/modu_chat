@@ -132,9 +132,9 @@ attributes.event:"http.access"                                   # 게이트웨�
 attributes.event:"api.access" and attributes.path:"/api-public/chat/11/rooms"   # 입력·출력 본문까지
 attributes.requestId:"a3f601661a814a10"                          # 요청 하나를 게이트웨이부터 끝까지
 attributes.event:"http.access" and attributes.status >= 500      # 실패한 요청
-attributes.event:"kafka.publish" and attributes.topic:"topic-chat-broadcast"   # Kafka 로 무엇을 보냈나(payload)
+attributes.event:"kafka.publish" and attributes.topic:"chat.message-broadcast.v1"   # Kafka 로 무엇을 보냈나(payload)
 attributes.event:"kafka.publish" and attributes.outcome:"failed"  # 발행 실패
-attributes.event:"kafka.consume" and attributes.topic:"topic-chat-save"   # Kafka 에서 무엇을 받아 처리했나(payload·durationMs)
+attributes.event:"kafka.consume" and attributes.topic:"chat.message-save.v1"   # Kafka 에서 무엇을 받아 처리했나(payload·durationMs)
 attributes.event:"kafka.consume" and attributes.outcome:"failed"  # 소비 실패(리스너가 예외를 던진 경우)
 attributes.event:"job.run"                                        # 배치(스케줄 작업) 실행 이력 — 커머스 포함
 attributes.event:"job.run" and attributes.outcome:"failed"
@@ -252,6 +252,25 @@ MSA 구조로 전환 함에 따라 각각의 서비스는 여러개의 컨테이
 이후 서비스에서는 클라이언트에게 데이터를 전송하기 직전에만 채팅 원본 내용을 알고 있어야 한다.    
 이때 메시지 큐로 부터 전달받은 id를 통해 데이터 베이스에 원본 데이터를 조회하는 요청을 통해 원본 데이터를 가져온다.   
 그리고 조회한 원본 데이터를 클라이언트에게 전송한다.    
+
+### Kafka 토픽·컨슈머 그룹 이름 (2026-10-20 부터)
+
+토픽은 **`<도메인>.<대상-동작>.v<N>`** — 소문자, 칸은 `.`, 칸 안은 `-`(`_` 금지 — Kafka 가 메트릭 이름에서 `.` 과 `_` 를 같은 것으로 취급해 경고한다). 첫 칸은 서비스가 아니라 **데이터의 주인(도메인)** 이다(서비스는 쪼개지고 이름이 바뀌지만 토픽은 남는다). 사건은 과거형(`room-created`), 명령·팬아웃은 동사 원형(`message-save`). `v<N>` 은 호환되지 않는 스키마 변경 때만 올리고 새 토픽을 만든다. 환경 접두어는 두지 않는다(환경마다 클러스터가 따로).
+
+| 토픽 | 흐름 | 뜻 |
+|---|---|---|
+| `chat.message-save.v1` | ws → chat | 받은 메시지를 저장해라 |
+| `chat.message-broadcast.v1` | chat → ws | 저장된 메시지를 방 인원에게 뿌려라 |
+| `chat.message-read.v1` | ws → ws | 읽음 팬아웃(다른 ws 인스턴스의 세션에도) |
+| `chat.message-reaction.v1` | ws → ws | 반응 집계 팬아웃 |
+| `chat.room-created.v1` | chat → ws | 방이 만들어졌다 |
+| `member.update-rollback.v1` | storage → member | 파일을 지웠으니 회원 변경을 되돌려라(사가 보상) |
+| `storage.upload-rollback.v1` | profile → storage | 프로필 저장 실패 — 올린 파일을 지워라(사가 보상) |
+| `modu.modu-chat.chat` | Debezium → chat-store | CDC. 이름은 커넥터(`data/debezium`, `topic.prefix.db.table`)가 정한다 — 별도 네임스페이스로 둔다 |
+
+이름은 코드에 박지 않고 **config-repo `messenger/messenger.yml` 의 `modu.kafka.topics.<키>`** 로 내려받는다(생산자·소비자가 같은 키를 본다, 다음 이름 변경은 재빌드 없이). 리스너는 `@KafkaListener(topics = ["\${modu.kafka.topics.chat-message-save}"])`, 프로듀서는 `@Value` 생성자 주입. 테스트는 config 서버가 없어 `src/test/resources/application.yml` 에 같은 값을 둔다.
+
+컨슈머 그룹은 **`<서비스>.<용도>`**: `chat-service.message-save`, `member-service.update-rollback`, `storage-service.upload-rollback`, `chat-store-service.chat-cdc`. ws-service 는 모든 인스턴스가 모든 팬아웃 레코드를 받아야 해서 인스턴스마다 `ws-service.fanout.<uuid>` — 내려간 인스턴스의 그룹은 브로커가 `offsets.retention.minutes`(기본 7일) 뒤에 지운다. 토픽은 auto-create(dev, 파티션 1). 옛 `topic-*` 이름은 2026-10-20 에 전부 바꿨다.
 
 ## Dev Diary
 

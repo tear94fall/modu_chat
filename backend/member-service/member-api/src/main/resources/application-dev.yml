@@ -24,7 +24,7 @@ spring:
 
   kafka:
     consumer:
-      group-id: member-service-group
+      group-id: member-service.update-rollback
 
 feign:
   client:

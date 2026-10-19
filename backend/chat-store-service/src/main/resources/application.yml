@@ -25,7 +25,7 @@ spring:
 
   kafka:
     consumer:
-      group-id: chat-store
+      group-id: chat-store-service.chat-cdc
       auto-offset-reset: latest
       enable-auto-commit: false
     template:

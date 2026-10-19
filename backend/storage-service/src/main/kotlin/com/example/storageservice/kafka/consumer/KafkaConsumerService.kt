@@ -21,7 +21,7 @@ class KafkaConsumerService(
 
     private val log = LoggerFactory.getLogger(KafkaConsumerService::class.java)
 
-    @KafkaListener(topics = ["topic-storage-rollback"], groupId = "\${spring.kafka.consumer.group-id}")
+    @KafkaListener(topics = ["\${modu.kafka.topics.storage-upload-rollback}"], groupId = "\${spring.kafka.consumer.group-id}")
     fun receive(consumerRecord: ConsumerRecord<String, Any>, acknowledgment: Acknowledgment) {
         try {
             val key = consumerRecord.key()

@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit
 class KafkaProducerServiceTest {
 
     private val kafkaTemplate: KafkaTemplate<String, Any> = mock()
-    private val publisher = KafkaProducerService(kafkaTemplate)
+    private val publisher = KafkaProducerService(kafkaTemplate, "member.update-rollback.v1")
     private lateinit var capture: LogCapture
 
     @BeforeEach
@@ -66,15 +66,15 @@ class KafkaProducerServiceTest {
     fun successIsOneKafkaPublishEventWithTopicKeyPayloadOffsetAndRequestContext() {
         val future = pendingSend()
         publisher.sendMessage("1", mapOf("profileType" to "PROFILE_IMAGE"))
-        val record = ProducerRecord<String, Any>("topic-member-rollback", "1", mapOf("profileType" to "PROFILE_IMAGE"))
-        onAnotherThreadWithoutMdc { future.complete(SendResult(record, RecordMetadata(TopicPartition("topic-member-rollback", 2), 17, 0, 0, 0, 0))) }
+        val record = ProducerRecord<String, Any>("member.update-rollback.v1", "1", mapOf("profileType" to "PROFILE_IMAGE"))
+        onAnotherThreadWithoutMdc { future.complete(SendResult(record, RecordMetadata(TopicPartition("member.update-rollback.v1", 2), 17, 0, 0, 0, 0))) }
 
         val event = awaitLog()
         val fields = LogCapture.fields(event)
         assertEquals(Level.INFO, event.level)
         assertEquals("kafka.publish", fields["event"])
         assertEquals("ok", fields["outcome"])
-        assertEquals("topic-member-rollback", fields["topic"])
+        assertEquals("member.update-rollback.v1", fields["topic"])
         assertEquals("1", fields["key"])
         assertEquals(2, fields["partition"])
         assertEquals(17, fields["offset"])
@@ -94,7 +94,7 @@ class KafkaProducerServiceTest {
         assertEquals(Level.ERROR, event.level)
         assertEquals("kafka.publish", fields["event"])
         assertEquals("failed", fields["outcome"])
-        assertEquals("topic-member-rollback", fields["topic"])
+        assertEquals("member.update-rollback.v1", fields["topic"])
         assertEquals("1", fields["key"])
         assertTrue((fields["error"] as String).contains("kafka down"), fields["error"].toString())
         assertTrue((fields["payload"] as String).contains(""""profileType":"PROFILE_IMAGE""""), fields["payload"].toString())

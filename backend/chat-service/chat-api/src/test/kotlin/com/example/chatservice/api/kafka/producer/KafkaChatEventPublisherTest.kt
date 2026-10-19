@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit
 class KafkaChatEventPublisherTest {
 
     private val kafkaTemplate: KafkaTemplate<String, ChatMessage> = mock()
-    private val publisher = KafkaChatEventPublisher(kafkaTemplate)
+    private val publisher = KafkaChatEventPublisher(kafkaTemplate, "chat.message-broadcast.v1", "chat.room-created.v1")
     private lateinit var capture: LogCapture
 
     @BeforeEach
@@ -68,15 +68,15 @@ class KafkaChatEventPublisherTest {
     fun successIsOneKafkaPublishEventWithTopicKeyPayloadOffsetAndRequestContext() {
         val future = pendingSend()
         publisher.roomCreated("room-1")
-        val record = ProducerRecord<String, ChatMessage>("topic-chat-room-created", "room-1", ChatMessage(SubscribeType.ROOM_CREATED, "room-1", null))
-        onAnotherThreadWithoutMdc { future.complete(SendResult(record, RecordMetadata(TopicPartition("topic-chat-room-created", 2), 17, 0, 0, 0, 0))) }
+        val record = ProducerRecord<String, ChatMessage>("chat.room-created.v1", "room-1", ChatMessage(SubscribeType.ROOM_CREATED, "room-1", null))
+        onAnotherThreadWithoutMdc { future.complete(SendResult(record, RecordMetadata(TopicPartition("chat.room-created.v1", 2), 17, 0, 0, 0, 0))) }
 
         val event = awaitLog()
         val fields = LogCapture.fields(event)
         assertEquals(Level.INFO, event.level)
         assertEquals("kafka.publish", fields["event"])
         assertEquals("ok", fields["outcome"])
-        assertEquals("topic-chat-room-created", fields["topic"])
+        assertEquals("chat.room-created.v1", fields["topic"])
         assertEquals("room-1", fields["key"])
         assertEquals(2, fields["partition"])
         assertEquals(17, fields["offset"])
@@ -96,7 +96,7 @@ class KafkaChatEventPublisherTest {
         assertEquals(Level.ERROR, event.level)
         assertEquals("kafka.publish", fields["event"])
         assertEquals("failed", fields["outcome"])
-        assertEquals("topic-chat-room-created", fields["topic"])
+        assertEquals("chat.room-created.v1", fields["topic"])
         assertEquals("room-1", fields["key"])
         assertTrue((fields["error"] as String).contains("kafka down"), fields["error"].toString())
         assertTrue((fields["payload"] as String).contains(""""roomId":"room-1""""), fields["payload"].toString())

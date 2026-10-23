@@ -3,14 +3,16 @@ package com.example.pointservice.api.admin
 import com.example.pointservice.api.dto.AdjustRequestDto
 import com.example.pointservice.api.dto.AdminPointAccountDto
 import com.example.pointservice.api.dto.PointBalanceDto
+import com.example.pointservice.api.dto.PointMemberDto
 import com.example.pointservice.api.dto.PointRuleCreateDto
 import com.example.pointservice.api.dto.PointRuleDto
 import com.example.pointservice.api.dto.PointRuleUpdateDto
 import com.example.pointservice.api.dto.PointTransactionDto
-import com.example.pointservice.api.dto.PointMemberDto
 import com.example.pointservice.application.usecase.PointAccountUseCase
 import com.example.pointservice.application.usecase.PointRuleUseCase
+import com.example.pointservice.application.usecase.PointStatsUseCase
 import com.example.pointservice.application.usecase.PointUseCase
+import com.example.pointservice.application.usecase.result.PointStatsResult
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -41,7 +43,18 @@ class PointAdminController(
     private val pointUseCase: PointUseCase,
     private val pointAccountUseCase: PointAccountUseCase,
     private val pointRuleUseCase: PointRuleUseCase,
+    private val pointStatsUseCase: PointStatsUseCase,
 ) {
+
+    @Operation(
+        summary = "포인트 통계(백오피스 홈)",
+        description = "표시 시간대(zone)의 달력 날짜로 묶은 최근 days 일(1~92, 오늘 포함)의 적립·사용·환불·조정 포인트 합.",
+    )
+    @GetMapping("/stats")
+    fun stats(
+        @Parameter(description = "며칠 치(오늘 포함). 1~92", example = "7") @RequestParam(defaultValue = "7") days: Int,
+        @Parameter(description = "날짜를 묶을 시간대(IANA)", example = "Asia/Seoul") @RequestParam(defaultValue = "Asia/Seoul") zone: String,
+    ): PointStatsResult = pointStatsUseCase.stats(days, AdminZone.parse(zone))
 
     @Operation(
         summary = "포인트 계정 목록 조회",

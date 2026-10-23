@@ -1,22 +1,29 @@
 package com.example.memberservice.api.admin
 
-import com.example.memberservice.application.usecase.MemberAdminUseCase
-import com.example.memberservice.application.usecase.command.UpdateProfileCommand
-import com.example.memberservice.application.usecase.result.AdminFriendPageResult
-import com.example.memberservice.application.usecase.result.AdminMemberDetailResult
-import com.example.memberservice.application.usecase.result.AdminMemberSummaryResult
-import com.example.memberservice.application.usecase.result.MemberResult
-import com.example.memberservice.application.usecase.result.ServiceUsageResult
 import com.example.memberservice.application.domain.entity.MemberStatus
+import com.example.memberservice.application.domain.entity.ModuService
 import com.example.memberservice.application.domain.entity.Role
 import com.example.memberservice.application.domain.repository.query.AdminFriendFilter
 import com.example.memberservice.application.domain.repository.query.FriendCounts
 import com.example.memberservice.application.domain.repository.query.MemberSort
-import com.example.memberservice.application.domain.entity.ModuService
 import com.example.memberservice.application.domain.repository.query.ServiceFilter
+import com.example.memberservice.application.usecase.MemberAdminUseCase
+import com.example.memberservice.application.usecase.MemberStatsUseCase
+import com.example.memberservice.application.usecase.command.UpdateProfileCommand
+import com.example.memberservice.application.usecase.result.ActiveMembersResult
+import com.example.memberservice.application.usecase.result.AdminFriendPageResult
+import com.example.memberservice.application.usecase.result.AdminMemberDetailResult
+import com.example.memberservice.application.usecase.result.AdminMemberSummaryResult
+import com.example.memberservice.application.usecase.result.MemberResult
+import com.example.memberservice.application.usecase.result.MemberStatsDay
+import com.example.memberservice.application.usecase.result.MemberStatsResult
+import com.example.memberservice.application.usecase.result.ServiceUsageResult
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneId
 import org.hamcrest.Matchers.matchesPattern
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.clearInvocations
 import org.mockito.kotlin.any
@@ -27,8 +34,8 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Sort
 import org.springframework.http.MediaType
@@ -45,6 +52,7 @@ class MemberAdminControllerTest {
 
     @Autowired lateinit var mockMvc: MockMvc
     @MockitoBean lateinit var memberService: MemberAdminUseCase
+    @MockitoBean lateinit var memberStatsUseCase: MemberStatsUseCase
 
     private fun member(username: String) = MemberResult(null, null, null, null, null, username, null, null, null)
 
@@ -288,5 +296,23 @@ class MemberAdminControllerTest {
         mockMvc.perform(get("/api-admin/member/1/friends").param("filter", "DELETED").header("X-Internal-Token", "test-internal-token"))
             .andExpect(status().isBadRequest)
         verify(memberService, never()).getMemberFriends(any(), any(), any())
+    }
+
+    @Test
+    @DisplayName("통계: zone 의 날짜로 묶은 결과를 돌려주고, 모르는 시간대는 400")
+    fun stats() {
+        whenever(memberStatsUseCase.stats(eq(7), eq(ZoneId.of("Asia/Seoul")))).thenReturn(
+            MemberStatsResult("Asia/Seoul", listOf(MemberStatsDay(LocalDate.parse("2026-10-23"), 3)), 42L, listOf(ActiveMembersResult("CHAT", 5L, 9L))),
+        )
+
+        mockMvc.perform(get("/api-admin/member/stats").param("zone", "Asia/Seoul").header("X-Internal-Token", "test-internal-token"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.days[0].date").value("2026-10-23"))
+            .andExpect(jsonPath("$.days[0].signups").value(3))
+            .andExpect(jsonPath("$.totalMembers").value(42))
+            .andExpect(jsonPath("$.active[0].service").value("CHAT"))
+
+        mockMvc.perform(get("/api-admin/member/stats").param("zone", "Mars/Olympus").header("X-Internal-Token", "test-internal-token"))
+            .andExpect(status().isBadRequest)
     }
 }

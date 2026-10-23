@@ -5,9 +5,13 @@ import com.example.chatservice.api.admin.dto.AdminChatRoomSummaryDto
 import com.example.chatservice.api.dto.ChatDto
 import com.example.chatservice.application.domain.repository.ChatRoomSort
 import com.example.chatservice.application.usecase.ChatAdminUseCase
+import com.example.chatservice.application.usecase.ChatStatsUseCase
+import com.example.chatservice.application.usecase.result.ChatStatsResult
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
+import kotlin.math.max
+import kotlin.math.min
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -19,8 +23,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
-import kotlin.math.max
-import kotlin.math.min
 
 /** 백오피스가 게이트웨이(ROLE_ADMIN JWT)를 거쳐 부른다. InternalApiFilter 가 토큰을 검사한다. */
 @Tag(
@@ -29,7 +31,20 @@ import kotlin.math.min
 )
 @RestController
 @RequestMapping("/api-admin/chat")
-class ChatAdminController(private val chatAdminUseCase: ChatAdminUseCase) {
+class ChatAdminController(
+    private val chatAdminUseCase: ChatAdminUseCase,
+    private val chatStatsUseCase: ChatStatsUseCase,
+) {
+
+    @Operation(
+        summary = "채팅 통계(백오피스 홈)",
+        description = "표시 시간대(zone)의 달력 날짜로 묶은 최근 days 일(1~92, 오늘 포함)의 보낸 메시지 수(시스템 안내 제외)와 만들어진 방 수.",
+    )
+    @GetMapping("/stats")
+    fun stats(
+        @Parameter(description = "며칠 치(오늘 포함). 1~92", example = "7") @RequestParam(defaultValue = "7") days: Int,
+        @Parameter(description = "날짜를 묶을 시간대(IANA)", example = "Asia/Seoul") @RequestParam(defaultValue = "Asia/Seoul") zone: String,
+    ): ChatStatsResult = chatStatsUseCase.stats(days, AdminZone.parse(zone))
 
     companion object {
         /** 방 안의 대화 목록은 최신 순. 같은 시각이면 id 내림차순. */

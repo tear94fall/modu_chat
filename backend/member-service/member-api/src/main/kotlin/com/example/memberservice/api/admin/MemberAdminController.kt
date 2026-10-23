@@ -6,8 +6,10 @@ import com.example.memberservice.api.admin.dto.AdminMemberSummaryDto
 import com.example.memberservice.api.dto.UpdateProfileDto
 import com.example.memberservice.application.domain.repository.query.AdminFriendFilter
 import com.example.memberservice.application.domain.repository.query.MemberSort
-import com.example.memberservice.application.usecase.MemberAdminUseCase
 import com.example.memberservice.application.domain.repository.query.ServiceFilter
+import com.example.memberservice.application.usecase.MemberAdminUseCase
+import com.example.memberservice.application.usecase.MemberStatsUseCase
+import com.example.memberservice.application.usecase.result.MemberStatsResult
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -29,7 +31,21 @@ import org.springframework.web.server.ResponseStatusException
 @Tag(name = "회원 관리 (어드민)", description = "어드민 콘솔용. 게이트웨이가 직원 토큰(ROLE_ADMIN, aud modu-admin)을 확인하고 X-Internal-Token 을 붙인다.")
 @RestController
 @RequestMapping("/api-admin/member")
-class MemberAdminController(private val memberAdminUseCase: MemberAdminUseCase) {
+class MemberAdminController(
+    private val memberAdminUseCase: MemberAdminUseCase,
+    private val memberStatsUseCase: MemberStatsUseCase,
+) {
+
+    @Operation(
+        summary = "회원 통계(백오피스 홈)",
+        description = "표시 시간대(zone)의 달력 날짜로 묶은 최근 days 일(1~92, 오늘 포함)의 가입 수와, 탈퇴하지 않은 회원 수, " +
+            "서비스별 활동 회원(마지막 이용이 오늘·7일 안) 수.",
+    )
+    @GetMapping("/stats")
+    fun stats(
+        @Parameter(description = "며칠 치(오늘 포함). 1~92", example = "7") @RequestParam(defaultValue = "7") days: Int,
+        @Parameter(description = "날짜를 묶을 시간대(IANA)", example = "Asia/Seoul") @RequestParam(defaultValue = "Asia/Seoul") zone: String,
+    ): MemberStatsResult = memberStatsUseCase.stats(days, AdminZone.parse(zone))
 
     /**
      * 백오피스 목록. 기본은 이름 가나다순이고 한글 이름이 영문·숫자보다 먼저 온다 — 앱 친구 목록과 같은 규칙이다.

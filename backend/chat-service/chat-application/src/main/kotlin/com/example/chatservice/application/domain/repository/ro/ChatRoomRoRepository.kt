@@ -2,10 +2,12 @@ package com.example.chatservice.application.domain.repository.ro
 
 import com.example.chatservice.application.config.RoRepository
 import com.example.chatservice.application.domain.entity.ChatRoom
+import java.time.LocalDateTime
 import java.util.Optional
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 
 /** 백오피스 방 목록·상세(replica). */
 interface ChatRoomRoRepository : RoRepository<ChatRoom, Long>, ChatRoomRoCustomRepository {
@@ -13,6 +15,10 @@ interface ChatRoomRoRepository : RoRepository<ChatRoom, Long>, ChatRoomRoCustomR
     fun findByRoomId(roomId: String): Optional<ChatRoom>
 
     fun findAll(pageable: Pageable): Page<ChatRoom>
+
+    /** 방이 만들어진 시각만(백오피스 통계). [from, to) — 저장된 시각(UTC). */
+    @Query("select r.createdDate from ChatRoom r where r.createdDate >= :from and r.createdDate < :to")
+    fun findCreatedDatesBetween(@Param("from") from: LocalDateTime, @Param("to") to: LocalDateTime): List<LocalDateTime>
 
     /**
      * 멤버 수 오름차순. 멤버 수는 컬렉션 크기라 Sort 로 못 담아 JPQL 의 size() 로 정렬한다.

@@ -2,6 +2,7 @@ package com.example.chatservice.api.admin
 
 import com.example.chatservice.application.domain.repository.ChatRoomSort
 import com.example.chatservice.application.usecase.ChatAdminUseCase
+import com.example.chatservice.application.usecase.ChatStatsUseCase
 import com.example.chatservice.application.usecase.result.AdminChatRoomSummary
 import com.example.chatservice.application.usecase.result.ChatRoomResult
 import com.example.chatservice.application.usecase.result.ChatRoomView
@@ -16,8 +17,8 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
@@ -33,6 +34,7 @@ class ChatAdminControllerTest {
 
     @Autowired lateinit var mockMvc: MockMvc
     @MockitoBean lateinit var chatAdminUseCase: ChatAdminUseCase
+    @MockitoBean lateinit var chatStatsUseCase: ChatStatsUseCase
 
     private fun summary(lastChatTime: String, createdDate: LocalDateTime? = null) = AdminChatRoomSummary(
         id = 1L, roomId = "r1", roomName = "room-name", roomImage = "room.jpg", memberCount = 2,

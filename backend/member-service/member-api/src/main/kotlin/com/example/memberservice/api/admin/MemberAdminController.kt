@@ -10,6 +10,7 @@ import com.example.memberservice.application.domain.repository.query.ServiceFilt
 import com.example.memberservice.application.usecase.MemberAdminUseCase
 import com.example.memberservice.application.usecase.MemberStatsUseCase
 import com.example.memberservice.application.usecase.result.MemberStatsResult
+import com.example.memberservice.application.usecase.result.MemberSummaryResult
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -47,6 +48,13 @@ class MemberAdminController(
         @Parameter(description = "날짜를 묶을 시간대(IANA)", example = "Asia/Seoul") @RequestParam(defaultValue = "Asia/Seoul") zone: String,
     ): MemberStatsResult = memberStatsUseCase.stats(days, AdminZone.parse(zone))
 
+    @Operation(
+        summary = "회원 요약(회원 목록 위 숫자)",
+        description = "탈퇴하지 않은 회원·탈퇴 회원·직원 수와, 활성 회원 가운데 채팅·커머스·둘 다·이용 기록 없음 의 수(목록의 서비스 필터와 같은 뜻).",
+    )
+    @GetMapping("/summary")
+    fun summary(): MemberSummaryResult = memberStatsUseCase.summary()
+
     /**
      * 백오피스 목록. 기본은 이름 가나다순이고 한글 이름이 영문·숫자보다 먼저 온다 — 앱 친구 목록과 같은 규칙이다.
      * sort 는 [MemberSort] 허용 목록(name | email | userId | role | createdDate 에 ,asc 또는 ,desc)만 받고
@@ -55,12 +63,12 @@ class MemberAdminController(
      */
     @Operation(
         summary = "회원 목록 검색",
-        description = "이메일·이름으로 회원을 찾아 페이지로 돌려준다(비우면 전체). 기본 정렬은 이름 가나다순, 한글 이름이 먼저이고 이름 없는 회원은 끝. " +
+        description = "이메일·이름·사용자 ID 로 회원을 찾아 페이지로 돌려준다(비우면 전체). 기본 정렬은 이름 가나다순, 한글 이름이 먼저이고 이름 없는 회원은 끝. " +
             "각 줄에 직원 권한과 이용 서비스가 붙는다. 모르는 sort·service 값이면 400.",
     )
     @GetMapping
     fun search(
-        @Parameter(description = "검색어. 이메일·이름에 들어 있으면(대소문자 무시) 걸린다. 비우면 전체 회원.", example = "소율")
+        @Parameter(description = "검색어. 이메일·이름·사용자 ID 에 들어 있으면(대소문자 무시) 걸린다. 비우면 전체 회원.", example = "소율")
         @RequestParam(value = "keyword", required = false) keyword: String?,
         @Parameter(
             description = "정렬. name | email | userId | role | createdDate 에 ,asc 또는 ,desc(방향 생략 시 asc). 기본 name,asc.",

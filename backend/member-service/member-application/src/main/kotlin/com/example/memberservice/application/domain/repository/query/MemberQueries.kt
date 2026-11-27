@@ -73,7 +73,7 @@ class MemberQueries(private val queryFactory: JPAQueryFactory) : MemberQueryOper
             if (!StringUtils.hasText(keyword)) {
                 return null
             }
-            return member.email.containsIgnoreCase(keyword).or(member.username.containsIgnoreCase(keyword))
+            return member.email.containsIgnoreCase(keyword).or(member.username.containsIgnoreCase(keyword)).or(member.userId.containsIgnoreCase(keyword))
         }
     }
 }

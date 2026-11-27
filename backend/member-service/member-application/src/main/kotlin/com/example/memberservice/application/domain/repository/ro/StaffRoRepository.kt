@@ -7,5 +7,7 @@ interface StaffRoRepository : RoRepository<Staff, Long> {
 
     fun findAll(): List<Staff>
 
+    fun count(): Long
+
     fun findAllByMemberIdIn(memberIds: Collection<Long>): List<Staff>
 }

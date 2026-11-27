@@ -4,6 +4,8 @@ import com.example.memberservice.application.domain.entity.MemberStatus
 import com.example.memberservice.application.domain.entity.ModuService
 import com.example.memberservice.application.domain.repository.ro.MemberRoRepository
 import com.example.memberservice.application.domain.repository.ro.MemberServiceUsageRoRepository
+import com.example.memberservice.application.domain.repository.ro.StaffRoRepository
+import com.example.memberservice.application.usecase.result.MemberSummaryResult
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -23,10 +25,11 @@ class MemberStatsQueryServiceTest {
     private val seoul = ZoneId.of("Asia/Seoul")
     private val members = mock<MemberRoRepository>()
     private val usages = mock<MemberServiceUsageRoRepository>()
+    private val staff = mock<StaffRoRepository>()
 
     // 2026-10-23 00:30 KST = 2026-10-22 15:30 UTC — UTC 로는 아직 어제다.
     private val clock = Clock.fixed(Instant.parse("2026-10-22T15:30:00Z"), ZoneOffset.UTC)
-    private val service = MemberStatsQueryService(members, usages, clock)
+    private val service = MemberStatsQueryService(members, usages, staff, clock)
 
     @Test
     @DisplayName("가입은 표시 시간대의 날짜로 묶고, 창의 모든 날짜를 0 포함해 돌려준다")
@@ -61,5 +64,19 @@ class MemberStatsQueryServiceTest {
         org.mockito.kotlin.verify(members).findCreatedDatesBetween(eq(LocalDateTime.parse("2026-10-16T15:00:00")), eq(LocalDateTime.parse("2026-10-23T15:00:00")))
         // 활동 회원 "오늘" 은 10-23 00:00 KST = 10-22 15:00 UTC 이후
         org.mockito.kotlin.verify(usages).countByServiceSince(eq(LocalDateTime.parse("2026-10-22T15:00:00")))
+    }
+
+    @Test
+    @DisplayName("요약: 둘 다 = 채팅 + 커머스 − 하나라도, 없음 = 활성 − 하나라도(음수 금지)")
+    fun summary() {
+        whenever(members.countByStatus(MemberStatus.ACTIVE)).thenReturn(10L)
+        whenever(members.countByStatus(MemberStatus.WITHDRAWN)).thenReturn(2L)
+        whenever(staff.count()).thenReturn(3L)
+        whenever(usages.countActiveMembersByService()).thenReturn(listOf(arrayOf<Any>(ModuService.CHAT, 7L), arrayOf<Any>(ModuService.COMMERCE, 4L)))
+        whenever(usages.countActiveMembersWithAnyService()).thenReturn(8L)
+
+        val r = service.summary()
+
+        assertEquals(MemberSummaryResult(active = 10, withdrawn = 2, staff = 3, chat = 7, commerce = 4, both = 3, none = 2), r)
     }
 }

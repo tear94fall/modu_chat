@@ -33,6 +33,8 @@ class StaffUseCase(
 
     fun list(): List<StaffEntryResult> = staffCommandService.list()
 
+    fun entry(memberId: Long): StaffEntryResult = staffCommandService.entry(memberId)
+
     fun setPermissions(command: SetStaffPermissionsCommand): StaffEntryResult = staffCommandService.setPermissions(command)
 
     fun remove(actorUserId: String, memberId: Long) = staffCommandService.remove(actorUserId, memberId)

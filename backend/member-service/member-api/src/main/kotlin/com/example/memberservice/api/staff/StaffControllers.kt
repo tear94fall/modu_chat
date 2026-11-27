@@ -22,25 +22,26 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * 모두 인터널의 회원 조회. 게이트웨이가 ROLE_INTERNAL 을 확인하고 내부 토큰을 붙인다(InternalApiFilter 가 검사).
+ * 직원을 지정하려고 회원을 찾는 조회(모두 인터널 "직원 추가"). 회원 이메일을 뒤지는 일이라 최상위(ROLE_SUPER)만 — 2026-11-27 에
+ * 인터널 콘솔이 직원 전용이 되면서 `/api-staff/member`(ROLE_INTERNAL)에서 옮겼다. 회원 운영 조회는 어드민(`/api-admin/member`)이 한다.
  */
 @Tag(
-    name = "회원 조회 (직원)",
-    description = "모두 인터널 콘솔용. 게이트웨이가 직원 토큰(ROLE_INTERNAL 또는 ROLE_SUPER)을 확인하고 X-Internal-Token 을 붙인다.",
+    name = "회원 찾기 (최상위)",
+    description = "모두 인터널의 직원 추가용. 게이트웨이가 최상위 관리자 토큰(ROLE_SUPER)만 통과시키고 X-Internal-Token 을 붙인다.",
 )
 @RestController
-@RequestMapping("/api-staff/member")
+@RequestMapping("/api-super/member")
 class StaffMemberController(private val staffUseCase: StaffUseCase) {
 
     /** 정렬 규칙은 백오피스 회원 목록과 같다. staffOnly=true 면 직원만. */
     @Operation(
         summary = "회원 목록 검색",
-        description = "이메일·이름으로 회원을 찾아 페이지로 돌려준다(비우면 전체). 각 줄에 직원 권한이 붙고, 비어 있으면 직원이 아니다. " +
+        description = "이메일·이름·사용자 ID 로 회원을 찾아 페이지로 돌려준다(비우면 전체). 각 줄에 직원 권한이 붙고, 비어 있으면 직원이 아니다. " +
             "정렬 규칙은 어드민 회원 목록과 같다(기본 이름 가나다순, 한글 먼저). 모르는 sort 면 400(`{status, error, message}`).",
     )
     @GetMapping
     fun search(
-        @Parameter(description = "검색어. 이메일·이름에 들어 있으면(대소문자 무시) 걸린다. 비우면 전체 회원.", example = "소율")
+        @Parameter(description = "검색어. 이메일·이름·사용자 ID 에 들어 있으면(대소문자 무시) 걸린다. 비우면 전체 회원.", example = "소율")
         @RequestParam(value = "keyword", required = false) keyword: String?,
         @Parameter(
             description = "정렬. name | email | userId | role | createdDate 에 ,asc 또는 ,desc(방향 생략 시 asc). 기본 name,asc.",
@@ -70,7 +71,29 @@ class StaffMemberController(private val staffUseCase: StaffUseCase) {
 }
 
 /**
- * 직원 지정·권한 변경. 게이트웨이가 ROLE_SUPER(최상위 관리자)만 통과시킨다. 누가 바꿨는지는 X-Auth-User-Id 로 안다.
+ * 직원 보기(모두 인터널). 게이트웨이가 ROLE_INTERNAL(최상위 포함)을 확인하고 내부 토큰을 붙인다 — 인터널 권한만 있는 직원이 콘솔에서 보는 전부다.
+ * 쓰기(지정·변경·해제)는 [StaffController](`/api-super`)에 있다. 두 계층은 첫 경로 조각부터 다르다(아래 설명).
+ */
+@Tag(
+    name = "직원 조회 (직원)",
+    description = "모두 인터널 콘솔용. 게이트웨이가 직원 토큰(ROLE_INTERNAL 또는 ROLE_SUPER)을 확인하고 X-Internal-Token 을 붙인다.",
+)
+@RestController
+@RequestMapping("/api-staff/staff")
+class StaffReadController(private val staffUseCase: StaffUseCase) {
+
+    @Operation(summary = "직원 목록 조회", description = "직원 전부를 이름(없으면 이메일) 가나다순으로 돌려준다. 권한과 마지막으로 바꾼 사람이 함께 온다.")
+    @GetMapping
+    fun list(): List<StaffEntryDto> = staffUseCase.list().map(StaffEntryDto::of)
+
+    @Operation(summary = "직원 한 명 조회", description = "직원 한 명의 권한과 지정·변경 이력. 직원이 아니면 404.")
+    @GetMapping("/{memberId}")
+    fun entry(@Parameter(description = "회원 id(member.id)", example = "11") @PathVariable("memberId") memberId: Long): StaffEntryDto =
+        StaffEntryDto.of(staffUseCase.entry(memberId))
+}
+
+/**
+ * 직원 지정·권한 변경·해제. 게이트웨이가 ROLE_SUPER(최상위 관리자)만 통과시킨다. 누가 바꿨는지는 X-Auth-User-Id 로 안다.
  *
  * `/api-staff` 아래에 두지 않는다. 톰캣이 `//` 를 하나로 합치므로 `/api-staff//staff` 가 인터널 권한 라우트를 지나
  * 여기에 닿을 수 있다. 계층 자체를 나누면 게이트웨이의 첫 경로 조각만으로 권한이 갈린다.
@@ -82,10 +105,6 @@ class StaffMemberController(private val staffUseCase: StaffUseCase) {
 @RestController
 @RequestMapping("/api-super/staff")
 class StaffController(private val staffUseCase: StaffUseCase) {
-
-    @Operation(summary = "직원 목록 조회", description = "직원 전부를 이름(없으면 이메일) 가나다순으로 돌려준다. 권한과 마지막으로 바꾼 사람이 함께 온다.")
-    @GetMapping
-    fun list(): List<StaffEntryDto> = staffUseCase.list().map(StaffEntryDto::of)
 
     @Operation(
         summary = "직원 지정·권한 변경",

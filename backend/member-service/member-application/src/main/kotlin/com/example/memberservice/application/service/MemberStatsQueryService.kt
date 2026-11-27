@@ -5,9 +5,11 @@ import com.example.memberservice.application.domain.entity.MemberStatus
 import com.example.memberservice.application.domain.entity.ModuService
 import com.example.memberservice.application.domain.repository.ro.MemberRoRepository
 import com.example.memberservice.application.domain.repository.ro.MemberServiceUsageRoRepository
+import com.example.memberservice.application.domain.repository.ro.StaffRoRepository
 import com.example.memberservice.application.usecase.result.ActiveMembersResult
 import com.example.memberservice.application.usecase.result.MemberStatsDay
 import com.example.memberservice.application.usecase.result.MemberStatsResult
+import com.example.memberservice.application.usecase.result.MemberSummaryResult
 import java.time.Clock
 import java.time.ZoneId
 import org.springframework.stereotype.Service
@@ -22,8 +24,28 @@ import org.springframework.transaction.annotation.Transactional
 class MemberStatsQueryService(
     private val members: MemberRoRepository,
     private val usages: MemberServiceUsageRoRepository,
+    private val staff: StaffRoRepository,
     private val clock: Clock,
 ) {
+    /** 회원 목록 위 요약. 서비스 숫자는 활성 회원 기준이라 chat + commerce − any = both, active − any = none 이 성립한다(서비스가 둘일 때만). */
+    fun summary(): MemberSummaryResult {
+        check(ModuService.entries.size == 2) { "both 계산은 서비스가 둘(CHAT·COMMERCE)일 때만 맞다 — 서비스가 늘면 count 질의로 바꿔라." }
+        val active = members.countByStatus(MemberStatus.ACTIVE)
+        val byService = usages.countActiveMembersByService().associate { it[0] as ModuService to (it[1] as Number).toLong() }
+        val chat = byService[ModuService.CHAT] ?: 0L
+        val commerce = byService[ModuService.COMMERCE] ?: 0L
+        val any = usages.countActiveMembersWithAnyService()
+        return MemberSummaryResult(
+            active = active,
+            withdrawn = members.countByStatus(MemberStatus.WITHDRAWN),
+            staff = staff.count(),
+            chat = chat,
+            commerce = commerce,
+            both = chat + commerce - any,
+            none = (active - any).coerceAtLeast(0),
+        )
+    }
+
     fun stats(days: Int, zone: ZoneId): MemberStatsResult {
         val window = DayWindow(zone, days, clock)
         val signups = window.byDate(members.findCreatedDatesBetween(window.fromStored, window.toStored)) { it }

@@ -15,3 +15,17 @@ data class MemberStatsResult(
 data class MemberStatsDay(val date: LocalDate, val signups: Int)
 
 data class ActiveMembersResult(val service: String, val today: Long, val week: Long)
+
+/**
+ * 어드민 회원 목록 위의 요약 숫자. 이용 서비스 숫자는 탈퇴하지 않은 회원만 센다([both] 는 둘 다, [none] 은 이용 기록이 없는 회원 —
+ * 목록의 서비스 필터와 같은 뜻). 가입자 합계는 [active] + [withdrawn].
+ */
+data class MemberSummaryResult(
+    val active: Long,
+    val withdrawn: Long,
+    val staff: Long,
+    val chat: Long,
+    val commerce: Long,
+    val both: Long,
+    val none: Long,
+)

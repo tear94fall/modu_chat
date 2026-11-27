@@ -205,10 +205,10 @@ class ReplicaLagTest {
 
         internal(get("/api-internal/staff/user/${alice.userId}")).andExpect(status().isOk).andExpect(jsonPath("$.permissions[1]").value("INTERNAL"))
         internal(get("/api-internal/staff/by-email/${alice.email}")).andExpect(status().isOk)
-        internal(get("/api-super/staff")).andExpect(jsonPath("$[0].userId").value(alice.userId))
-        internal(get("/api-staff/member/${alice.id}")).andExpect(jsonPath("$.staff.permissions[0]").value("ADMIN"))
+        internal(get("/api-staff/staff")).andExpect(jsonPath("$[0].userId").value(alice.userId))
+        internal(get("/api-super/member/${alice.id}")).andExpect(jsonPath("$.staff.permissions[0]").value("ADMIN"))
 
-        internal(get("/api-staff/member").param("staffOnly", "true")).andExpect(jsonPath("$.totalElements").value(0))
+        internal(get("/api-super/member").param("staffOnly", "true")).andExpect(jsonPath("$.totalElements").value(0))
 
         internal(delete("/api-super/staff/${alice.id}"), actor = boss.userId).andExpect(status().isNoContent)
         internal(get("/api-internal/staff/user/${alice.userId}")).andExpect(status().isNotFound)

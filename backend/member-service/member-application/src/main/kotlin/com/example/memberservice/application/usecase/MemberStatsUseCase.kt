@@ -2,6 +2,7 @@ package com.example.memberservice.application.usecase
 
 import com.example.memberservice.application.service.MemberStatsQueryService
 import com.example.memberservice.application.usecase.result.MemberStatsResult
+import com.example.memberservice.application.usecase.result.MemberSummaryResult
 import java.time.ZoneId
 import org.springframework.stereotype.Component
 
@@ -9,4 +10,6 @@ import org.springframework.stereotype.Component
 @Component
 class MemberStatsUseCase(private val memberStatsQueryService: MemberStatsQueryService) {
     fun stats(days: Int, zone: ZoneId): MemberStatsResult = memberStatsQueryService.stats(days, zone)
+
+    fun summary(): MemberSummaryResult = memberStatsQueryService.summary()
 }

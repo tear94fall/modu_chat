@@ -65,6 +65,13 @@ class StaffCommandService(
             .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.username ?: it.email })
     }
 
+    /** 직원 한 명. 직원이 아니면 404. */
+    fun entry(memberId: Long): StaffEntryResult {
+        val staff = staffRwRepository.findById(memberId).orElseThrow { StaffException(HttpStatus.NOT_FOUND, "직원이 아닙니다.") }
+        val member = memberRwRepository.findById(memberId).orElseThrow { StaffException(HttpStatus.NOT_FOUND, "회원을 찾을 수 없습니다.") }
+        return entryOf(member, staff, modifierNames(listOf(staff)))
+    }
+
     /** 직원으로 지정하거나 권한을 바꾼다. actorUserId 는 게이트웨이가 넣어 준 최상위 관리자 본인이다. */
     @Transactional(transactionManager = RwJpaConfig.TRANSACTION_MANAGER)
     fun setPermissions(command: SetStaffPermissionsCommand): StaffEntryResult {
